@@ -1,0 +1,58 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable GitHub Pages (first run only)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Detect Pages visibility
+        id: pages-check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VISIBILITY=$(gh api repos/${{ github.repository }}/pages --jq '.public' 2>/dev/null || echo 'false')
+          echo "pages_public=${VISIBILITY}" >> $GITHUB_OUTPUT
+          if [ "$VISIBILITY" = "true" ]; then
+            echo "📢 Pages is PUBLIC — building with base=/CEE-406/"
+          else
+            echo "🔒 Pages is PRIVATE — building with base=/"
+          fi
+
+      - name: Build Astro
+        uses: withastro/action@v3
+        with:
+          node-version: 22
+        env:
+          PAGES_PUBLIC: ${{ steps.pages-check.outputs.pages_public }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

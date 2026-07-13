@@ -1,0 +1,222 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { chapters, appendices } from '../../data/textbook';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout
+  title="Textbook · CEE 406"
+  description="Huang, Pavement Analysis and Design (2nd ed., 2004) — read the course textbook online, chapter by chapter."
+>
+  <div class="container tb-page">
+    <header class="tb-header gsap-fade-up">
+      <span class="tb-header__eyebrow">Course textbook</span>
+      <h1>Pavement Analysis and Design</h1>
+      <p class="tb-header__byline">Yang H. Huang &middot; 2nd edition, 2004 &middot; Pearson</p>
+      <p class="tb-header__desc">
+        The complete textbook, one chapter per page. Each chapter opens in an embedded reader
+        with a download link, and points back to the homeworks that use it.
+        Provided for enrolled CEE 406 students only.
+      </p>
+    </header>
+
+    <section class="tb-group">
+      <div class="tb-group__label gsap-fade-up">
+        <span>Chapters</span>
+        <span class="tb-group__rule"></span>
+      </div>
+      <div class="tb-grid stagger-grid">
+        {chapters.map(ch => (
+          <a href={`${base}textbook/${ch.id}/`} class="tb-card gsap-stagger">
+            <span class="tb-card__num">{ch.num}</span>
+            <div class="tb-card__body">
+              <h2 class="tb-card__title">{ch.title}</h2>
+              <p class="tb-card__desc">{ch.desc}</p>
+              {ch.relatedHws.length > 0 && (
+                <div class="tb-card__hws">
+                  {ch.relatedHws.map(h => <span class="tb-card__hw">{h.label}</span>)}
+                </div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="tb-group">
+      <div class="tb-group__label gsap-fade-up">
+        <span>Appendices</span>
+        <span class="tb-group__rule"></span>
+      </div>
+      <div class="tb-grid stagger-grid">
+        {appendices.map(ap => (
+          <a href={`${base}textbook/${ap.id}/`} class="tb-card tb-card--appendix gsap-stagger">
+            <span class="tb-card__num">{ap.num}</span>
+            <div class="tb-card__body">
+              <h2 class="tb-card__title">{ap.title}</h2>
+              <p class="tb-card__desc">{ap.desc}</p>
+              {ap.relatedHws.length > 0 && (
+                <div class="tb-card__hws">
+                  {ap.relatedHws.map(h => <span class="tb-card__hw">{h.label}</span>)}
+                </div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .tb-page {
+    padding-top: 3rem;
+    padding-bottom: 5rem;
+  }
+
+  .tb-header {
+    max-width: 42rem;
+    margin-bottom: 3rem;
+  }
+
+  .tb-header__eyebrow {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-accent);
+    margin-bottom: 0.625rem;
+  }
+
+  .tb-header h1 {
+    margin: 0 0 0.35rem;
+    font-size: clamp(2rem, 4.5vw, 2.75rem);
+    font-style: italic;
+  }
+
+  .tb-header__byline {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin: 0 0 0.875rem;
+  }
+
+  .tb-header__desc {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .tb-group { margin-bottom: 2.5rem; }
+
+  .tb-group__label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-text-muted);
+  }
+
+  .tb-group__rule {
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  .tb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .tb-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.125rem 1.25rem;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .tb-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 26, 46, 0.08);
+  }
+
+  :global([data-theme="dark"]) .tb-card {
+    background: #162033;
+    border-color: #2D3F59;
+  }
+
+  :global([data-theme="dark"]) .tb-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .tb-card__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+    background: rgba(232, 119, 34, 0.09);
+    color: var(--color-accent);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .tb-card--appendix .tb-card__num {
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+  }
+
+  :global([data-theme="dark"]) .tb-card--appendix .tb-card__num {
+    background: #1B2D4A;
+  }
+
+  .tb-card__body { min-width: 0; }
+
+  .tb-card__title {
+    font-size: 0.9375rem;
+    margin: 0.15rem 0 0.35rem;
+    line-height: 1.35;
+  }
+
+  .tb-card__desc {
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+    margin: 0 0 0.55rem;
+  }
+
+  .tb-card__hws {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .tb-card__hw {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.08);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+  }
+</style>

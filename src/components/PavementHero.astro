@@ -1,0 +1,404 @@
+---
+// Signature hero: animated pavement cross-section with a rolling wheel load
+// and Boussinesq-style pressure bulbs diffusing through the layers.
+const base = import.meta.env.BASE_URL;
+---
+
+<section class="hero" aria-label="Course introduction">
+  <canvas class="hero-canvas" id="pavement-canvas" aria-hidden="true"></canvas>
+  <div class="hero-scrim" aria-hidden="true"></div>
+
+  <div class="container hero-content">
+    <p class="hero-eyebrow gsap-fade-up">
+      <img src={`${base}favicon.png`} alt="" width="16" height="16" />
+      <span>CEE 406 &middot; University of Illinois Urbana-Champaign</span>
+    </p>
+    <h1 class="hero-title gsap-fade-up">Pavement Design&nbsp;I</h1>
+    <p class="hero-sub gsap-fade-up">
+      From wheel load to layer thickness. Work each homework with its online tools,
+      read the textbook chapter behind it, and follow the stress path all the way
+      down to the subgrade.
+    </p>
+    <div class="hero-actions gsap-fade-up">
+      <a href={`${base}homeworks/`} class="btn btn-primary">Browse homeworks</a>
+      <a href={`${base}textbook/`} class="btn btn-outline">Open the textbook</a>
+    </div>
+    <dl class="hero-stats gsap-fade-up">
+      <div class="hero-stat">
+        <dt>Homeworks</dt>
+        <dd>10</dd>
+      </div>
+      <div class="hero-stat">
+        <dt>Textbook chapters</dt>
+        <dd>13 + 7</dd>
+      </div>
+      <div class="hero-stat">
+        <dt>Online tools</dt>
+        <dd>2 live</dd>
+      </div>
+      <div class="hero-stat">
+        <dt>Instructor</dt>
+        <dd>Prof. Al-Qadi</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<script>
+  function initPavementCanvas() {
+    const canvas = document.getElementById('pavement-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let W = 0, H = 0, dpr = 1;
+    let speckles: { x: number; y: number; r: number; a: number; band: number }[] = [];
+    let rafId = 0;
+
+    function resize() {
+      const rect = canvas!.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = rect.width;
+      H = rect.height;
+      canvas!.width = Math.round(W * dpr);
+      canvas!.height = Math.round(H * dpr);
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      makeSpeckles();
+    }
+
+    // Layer geometry — road section anchored to the bottom of the hero
+    const roadDepth = () => Math.min(H * 0.42, 360);
+    const surfY = () => H - roadDepth();
+    const acBot = () => surfY() + roadDepth() * 0.21;
+    const baseBot = () => surfY() + roadDepth() * 0.48;
+    const subbaseBot = () => surfY() + roadDepth() * 0.72;
+
+    function makeSpeckles() {
+      speckles = [];
+      const bands = [
+        { top: surfY(), bot: acBot(), n: Math.round(W / 6), rMin: 0.5, rMax: 1.4, band: 0 },
+        { top: acBot(), bot: baseBot(), n: Math.round(W / 3), rMin: 0.8, rMax: 2.6, band: 1 },
+        { top: baseBot(), bot: subbaseBot(), n: Math.round(W / 4), rMin: 0.6, rMax: 2.0, band: 2 },
+      ];
+      for (const b of bands) {
+        for (let i = 0; i < b.n; i++) {
+          speckles.push({
+            x: Math.random() * W,
+            y: b.top + 2 + Math.random() * (b.bot - b.top - 4),
+            r: b.rMin + Math.random() * (b.rMax - b.rMin),
+            a: 0.05 + Math.random() * 0.16,
+            band: b.band,
+          });
+        }
+      }
+    }
+
+    function theme() {
+      return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    }
+
+    function drawScene(t: number) {
+      const dark = theme() === 'dark';
+      ctx!.clearRect(0, 0, W, H);
+
+      const sy = surfY();
+
+      // ── Sky (transparent — CSS gradient behind) ──
+
+      // ── Layers ──
+      // Asphalt concrete
+      ctx!.fillStyle = dark ? '#171c26' : '#20242e';
+      ctx!.fillRect(0, sy, W, acBot() - sy);
+      // Aggregate base
+      ctx!.fillStyle = dark ? '#4d4130' : '#8a7452';
+      ctx!.fillRect(0, acBot(), W, baseBot() - acBot());
+      // Subbase
+      ctx!.fillStyle = dark ? '#3c3527' : '#a8946e';
+      ctx!.fillRect(0, baseBot(), W, subbaseBot() - baseBot());
+      // Subgrade (fades down)
+      const sgGrad = ctx!.createLinearGradient(0, subbaseBot(), 0, H);
+      if (dark) {
+        sgGrad.addColorStop(0, '#2b2620');
+        sgGrad.addColorStop(1, '#10141d');
+      } else {
+        sgGrad.addColorStop(0, '#6e5c42');
+        sgGrad.addColorStop(1, '#3f3527');
+      }
+      ctx!.fillStyle = sgGrad;
+      ctx!.fillRect(0, subbaseBot(), W, H - subbaseBot());
+
+      // Speckles (aggregate texture)
+      for (const s of speckles) {
+        ctx!.beginPath();
+        ctx!.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx!.fillStyle =
+          s.band === 0 ? `rgba(255,255,255,${s.a * 0.5})` :
+          s.band === 1 ? `rgba(30,24,14,${s.a + 0.08})` :
+          `rgba(38,31,20,${s.a})`;
+        ctx!.fill();
+      }
+
+      // Layer interfaces
+      ctx!.strokeStyle = 'rgba(0,0,0,0.25)';
+      ctx!.lineWidth = 1;
+      for (const y of [acBot(), baseBot(), subbaseBot()]) {
+        ctx!.beginPath();
+        ctx!.moveTo(0, y);
+        ctx!.lineTo(W, y);
+        ctx!.stroke();
+      }
+
+      // Surface line + lane dashes
+      ctx!.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx!.lineWidth = 1.5;
+      ctx!.beginPath();
+      ctx!.moveTo(0, sy);
+      ctx!.lineTo(W, sy);
+      ctx!.stroke();
+
+      // ── Wheel position ──
+      const R = Math.max(26, H * 0.055);
+      const span = W + 6 * R;
+      const speed = W / 14; // px per second
+      const wx = reduced ? W * 0.62 : ((t * speed) % span) - 3 * R;
+      const wy = sy - R;
+
+      // ── Pressure bulbs (Boussinesq isobars) under the contact point ──
+      const a = R * 0.62; // contact radius
+      const bulbs = [
+        { k: 0.55, alpha: 0.55, label: '0.9p' },
+        { k: 1.15, alpha: 0.40, label: '0.7p' },
+        { k: 1.9, alpha: 0.30, label: '0.5p' },
+        { k: 2.9, alpha: 0.20, label: '0.3p' },
+        { k: 4.3, alpha: 0.12, label: '0.1p' },
+      ];
+      const pulse = reduced ? 1 : 0.92 + 0.08 * Math.sin(t * 2.2);
+
+      // Contact glow
+      const glow = ctx!.createRadialGradient(wx, sy, 0, wx, sy, a * 6.5);
+      glow.addColorStop(0, 'rgba(232,119,34,0.28)');
+      glow.addColorStop(1, 'rgba(232,119,34,0)');
+      ctx!.fillStyle = glow;
+      ctx!.fillRect(wx - a * 7, sy, a * 14, a * 7);
+
+      ctx!.lineWidth = 1.25;
+      for (const b of bulbs) {
+        const ry = a * b.k * pulse;
+        const rx = a * (1 + b.k * 0.78) * pulse;
+        ctx!.beginPath();
+        ctx!.ellipse(wx, sy, rx, ry, 0, 0, Math.PI);
+        ctx!.strokeStyle = `rgba(232,119,34,${b.alpha})`;
+        ctx!.stroke();
+      }
+      // Isobar labels (only when wheel is well inside the viewport)
+      if (wx > W * 0.12 && wx < W * 0.88) {
+        ctx!.font = '500 9px "IBM Plex Mono", monospace';
+        ctx!.fillStyle = 'rgba(245,155,75,0.75)';
+        ctx!.textAlign = 'left';
+        for (const b of [bulbs[1], bulbs[3]]) {
+          const ry = a * b.k * pulse;
+          const rx = a * (1 + b.k * 0.78) * pulse;
+          ctx!.fillText(b.label, wx + rx * 0.72, sy + ry * 0.78);
+        }
+      }
+
+      // ── Wheel ──
+      // Tire
+      ctx!.beginPath();
+      ctx!.arc(wx, wy, R, 0, Math.PI * 2);
+      ctx!.fillStyle = dark ? '#0c0f16' : '#14161c';
+      ctx!.fill();
+      ctx!.lineWidth = 2;
+      ctx!.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx!.stroke();
+      // Rim
+      ctx!.beginPath();
+      ctx!.arc(wx, wy, R * 0.52, 0, Math.PI * 2);
+      ctx!.fillStyle = dark ? '#232a38' : '#2d3442';
+      ctx!.fill();
+      ctx!.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx!.lineWidth = 1.5;
+      ctx!.stroke();
+      // Spokes (rotate with travel)
+      const rot = wx / R;
+      ctx!.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx!.lineWidth = 1.5;
+      for (let i = 0; i < 5; i++) {
+        const ang = rot + (i * Math.PI * 2) / 5;
+        ctx!.beginPath();
+        ctx!.moveTo(wx, wy);
+        ctx!.lineTo(wx + Math.cos(ang) * R * 0.44, wy + Math.sin(ang) * R * 0.44);
+        ctx!.stroke();
+      }
+      // Hub
+      ctx!.beginPath();
+      ctx!.arc(wx, wy, R * 0.1, 0, Math.PI * 2);
+      ctx!.fillStyle = '#E87722';
+      ctx!.fill();
+
+      // Load arrow above the wheel
+      ctx!.strokeStyle = 'rgba(232,119,34,0.85)';
+      ctx!.fillStyle = 'rgba(232,119,34,0.85)';
+      ctx!.lineWidth = 2;
+      const ax = wx, ay0 = wy - R - 34, ay1 = wy - R - 8;
+      ctx!.beginPath();
+      ctx!.moveTo(ax, ay0);
+      ctx!.lineTo(ax, ay1);
+      ctx!.stroke();
+      ctx!.beginPath();
+      ctx!.moveTo(ax, ay1 + 5);
+      ctx!.lineTo(ax - 5, ay1 - 4);
+      ctx!.lineTo(ax + 5, ay1 - 4);
+      ctx!.closePath();
+      ctx!.fill();
+      ctx!.font = '500 10px "IBM Plex Mono", monospace';
+      ctx!.textAlign = 'center';
+      ctx!.fillText('P', ax + 10, ay0 + 8);
+
+      // ── Layer labels ──
+      ctx!.font = '600 9.5px "IBM Plex Mono", monospace';
+      ctx!.textAlign = 'left';
+      const labels: [string, number, string][] = [
+        ['ASPHALT CONCRETE', (sy + acBot()) / 2, 'rgba(255,255,255,0.5)'],
+        ['AGGREGATE BASE', (acBot() + baseBot()) / 2, 'rgba(20,14,6,0.6)'],
+        ['SUBBASE', (baseBot() + subbaseBot()) / 2, 'rgba(20,14,6,0.55)'],
+        ['SUBGRADE', subbaseBot() + (H - subbaseBot()) * 0.35, 'rgba(255,255,255,0.35)'],
+      ];
+      for (const [text, y, color] of labels) {
+        ctx!.fillStyle = dark ? 'rgba(255,255,255,0.35)' : color;
+        ctx!.fillText(text, 16, y + 3.5);
+      }
+    }
+
+    function loop(ms: number) {
+      drawScene(ms / 1000);
+      if (!reduced) rafId = requestAnimationFrame(loop);
+    }
+
+    resize();
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(rafId);
+      resize();
+      rafId = requestAnimationFrame(loop);
+    });
+    rafId = requestAnimationFrame(loop);
+
+    document.addEventListener('astro:before-swap', () => cancelAnimationFrame(rafId), { once: true });
+  }
+
+  initPavementCanvas();
+  document.addEventListener('astro:after-swap', initPavementCanvas);
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: min(88vh, 820px);
+    display: flex;
+    align-items: flex-start;
+    background: linear-gradient(180deg, #0F1A2E 0%, #13223C 55%, #0F1A2E 100%);
+    overflow: hidden;
+    margin-top: -3.25rem; /* pull under fixed nav */
+    padding-top: 3.25rem;
+  }
+
+  .hero-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, rgba(15, 26, 46, 0.88) 0%, rgba(15, 26, 46, 0.55) 45%, rgba(15, 26, 46, 0.1) 75%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding-top: clamp(3.5rem, 9vh, 6.5rem);
+    padding-bottom: clamp(3rem, 30vh, 20rem);
+    max-width: var(--max-width);
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2rem;
+    padding: 0.3rem 0.8rem 0.3rem 0.5rem;
+    margin: 0 0 1.25rem;
+  }
+
+  .hero-title {
+    color: #fff;
+    font-size: clamp(2.5rem, 6.5vw, 4.5rem);
+    margin: 0 0 1rem;
+    max-width: 14ch;
+  }
+
+  .hero-sub {
+    color: rgba(255, 255, 255, 0.62);
+    font-size: clamp(0.9375rem, 1.6vw, 1.0625rem);
+    line-height: 1.65;
+    max-width: 34rem;
+    margin: 0 0 1.75rem;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.25rem;
+  }
+
+  /* ── Stats: HUD chip that can safely overlap the road section ── */
+  .hero-stats {
+    display: inline-flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 0.875rem 1.375rem;
+    background: rgba(11, 18, 32, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .hero-stat dt {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 0.15rem;
+  }
+
+  .hero-stat dd {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  @media (max-width: 640px) {
+    .hero-content {
+      padding-bottom: clamp(14rem, 46vh, 20rem);
+    }
+    .hero-stats { gap: 1.25rem 1.75rem; }
+  }
+</style>

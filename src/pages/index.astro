@@ -1,0 +1,427 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PavementHero from '../components/PavementHero.astro';
+import LayerGlyph from '../components/LayerGlyph.astro';
+import { homeworks } from '../data/homeworks';
+import { chapters, appendices } from '../data/textbook';
+
+const base = import.meta.env.BASE_URL;
+
+const liveTools = [
+  {
+    name: 'Stress Explorer',
+    href: `${base}tools/stress-explorer/`,
+    color: '#0ea5e9',
+    tag: 'HW3 · HW4',
+    desc: 'One-layer elastic response under a circular load — stresses, strains, and deflection versus depth, live.',
+  },
+  {
+    name: 'ESAL Calculator',
+    href: `${base}tools/esal-calculator/`,
+    color: '#10b981',
+    tag: 'HW5 · HW7',
+    desc: 'AASHTO load equivalency factors and design-lane ESALs with growth, lane, and directional factors.',
+  },
+];
+---
+
+<BaseLayout
+  title="CEE 406 · Pavement Design I"
+  description="Course portal for CEE 406 Pavement Design I at UIUC — homework assignments, online design tools, and the Huang (2004) textbook."
+>
+  <PavementHero />
+
+  <!-- ── Homework timeline ── -->
+  <section class="section" id="homeworks">
+    <div class="container">
+      <div class="section-head gsap-fade-up">
+        <span class="section-eyebrow">The semester, homework by homework</span>
+        <h2>Ten assignments, one structure</h2>
+        <p>
+          The course is organized around its homeworks. Each one pairs the assignment with
+          the textbook chapters behind it and the tools you need to solve it — from surface
+          distresses down to the subgrade, and back up through design.
+        </p>
+      </div>
+
+      <ol class="hw-grid stagger-grid" role="list">
+        {homeworks.map(hw => (
+          <li class="gsap-stagger">
+            <a href={`${base}homeworks/${hw.id}/`} class="hw-card">
+              <div class="hw-card__top">
+                <LayerGlyph focus={hw.layerFocus} />
+                <span class="hw-card__num">HW{hw.num}</span>
+                <span class="hw-card__due">due {hw.due}</span>
+              </div>
+              <h3 class="hw-card__title">{hw.title}</h3>
+              <p class="hw-card__desc">{hw.overview.slice(0, 110)}&hellip;</p>
+              <div class="hw-card__foot">
+                <span class="hw-card__phase">{hw.phase}</span>
+                {hw.tools.some(t => t.href) && <span class="hw-card__tool">tool online</span>}
+              </div>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ── Tools ── -->
+  <section class="section section--alt" id="tools">
+    <div class="container">
+      <div class="section-head gsap-fade-up">
+        <span class="section-eyebrow">Online tools</span>
+        <h2>Solve it in the browser</h2>
+        <p>
+          Interactive calculators built for the homeworks — no installation, no license.
+          More tools come online as the semester progresses.
+        </p>
+      </div>
+
+      <div class="tools-grid stagger-grid">
+        {liveTools.map(tool => (
+          <a href={tool.href} class="tool-card gsap-stagger" style={`--tool-color: ${tool.color}`}>
+            <div class="tool-card__head">
+              <span class="tool-card__dot"></span>
+              <span class="tool-card__name">{tool.name}</span>
+              <span class="tool-card__tag">{tool.tag}</span>
+            </div>
+            <p class="tool-card__desc">{tool.desc}</p>
+            <span class="tool-card__cta">Open tool &rarr;</span>
+          </a>
+        ))}
+        <a href={`${base}tools/`} class="tool-card tool-card--all gsap-stagger">
+          <span class="tool-card__name">All tools</span>
+          <p class="tool-card__desc">See what's live and what's in development for upcoming homeworks.</p>
+          <span class="tool-card__cta">Browse &rarr;</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Textbook ── -->
+  <section class="section" id="textbook">
+    <div class="container">
+      <div class="section-head gsap-fade-up">
+        <span class="section-eyebrow">Course textbook</span>
+        <h2>Huang — <em>Pavement Analysis and Design</em></h2>
+        <p>
+          The full second edition (2004), readable online chapter by chapter:
+          {chapters.length} chapters and {appendices.length} appendices, each linked from the
+          homework that uses it.
+        </p>
+      </div>
+
+      <div class="tb-strip gsap-fade-up" role="list">
+        {chapters.map(ch => (
+          <a href={`${base}textbook/${ch.id}/`} class="tb-chip" role="listitem" title={ch.title}>
+            <span class="tb-chip__num">{ch.num}</span>
+            <span class="tb-chip__title">{ch.title}</span>
+          </a>
+        ))}
+      </div>
+      <div class="tb-actions gsap-fade-up">
+        <a href={`${base}textbook/`} class="btn btn-primary">Open the textbook</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section-head {
+    max-width: 40rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .section-eyebrow {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-accent);
+    margin-bottom: 0.625rem;
+  }
+
+  .section-head h2 {
+    margin: 0 0 0.75rem;
+  }
+
+  .section-head h2 em {
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  .section-head p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .section--alt {
+    background: var(--color-surface-alt);
+  }
+
+  :global([data-theme="dark"]) .section--alt {
+    background: #0D1526;
+  }
+
+  /* ── Homework grid ── */
+  .hw-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 0.875rem;
+  }
+
+  .hw-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1.125rem 1.25rem 1rem;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hw-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 26, 46, 0.08);
+  }
+
+  :global([data-theme="dark"]) .hw-card {
+    background: #162033;
+    border-color: #2D3F59;
+  }
+
+  :global([data-theme="dark"]) .hw-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .hw-card__top {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .hw-card__num {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  .hw-card__due {
+    margin-left: auto;
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+  }
+
+  .hw-card__title {
+    font-size: 1rem;
+    margin: 0 0 0.4rem;
+    line-height: 1.35;
+  }
+
+  .hw-card__desc {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+    margin: 0 0 0.875rem;
+    flex: 1;
+  }
+
+  .hw-card__foot {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .hw-card__phase {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    background: var(--color-surface-alt);
+    border-radius: 2rem;
+    padding: 0.15rem 0.55rem;
+  }
+
+  :global([data-theme="dark"]) .hw-card__phase {
+    background: #1B2D4A;
+  }
+
+  .hw-card__tool {
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    border-radius: 2rem;
+    padding: 0.15rem 0.55rem;
+  }
+
+  /* ── Tools ── */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.875rem;
+  }
+
+  .tool-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 1.375rem;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tool-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--tool-color, var(--color-accent));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .tool-card:hover {
+    border-color: var(--tool-color, var(--color-accent));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 26, 46, 0.08);
+  }
+
+  .tool-card:hover::before { opacity: 1; }
+
+  :global([data-theme="dark"]) .tool-card {
+    background: #162033;
+    border-color: #2D3F59;
+  }
+
+  .tool-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.625rem;
+  }
+
+  .tool-card__dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--tool-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool-color) 18%, transparent);
+  }
+
+  .tool-card__name {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.9375rem;
+  }
+
+  .tool-card__tag {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    color: var(--color-text-muted);
+  }
+
+  .tool-card__desc {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+    margin: 0 0 1rem;
+    flex: 1;
+  }
+
+  .tool-card__cta {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .tool-card--all {
+    justify-content: center;
+    border-style: dashed;
+  }
+
+  /* ── Textbook strip ── */
+  .tb-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tb-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.8rem 0.45rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--color-text);
+    background: #fff;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    max-width: 100%;
+  }
+
+  .tb-chip:hover {
+    border-color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.03);
+  }
+
+  :global([data-theme="dark"]) .tb-chip {
+    background: #162033;
+    border-color: #2D3F59;
+  }
+
+  .tb-chip__num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 6px;
+    background: rgba(232, 119, 34, 0.1);
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .tb-chip__title {
+    font-size: 0.78rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 16rem;
+  }
+
+  .tb-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+</style>

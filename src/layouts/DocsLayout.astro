@@ -1,0 +1,414 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface SidebarModule {
+  id: string;
+  label: string;
+  icon: string;
+  href: string;
+}
+
+interface Props {
+  title: string;
+  description?: string;
+  sidebarLabel?: string;
+  sidebarModules?: SidebarModule[];
+  activeModule: string;
+  toc?: { id: string; label: string }[];
+}
+
+const base = import.meta.env.BASE_URL;
+
+const defaultModules: SidebarModule[] = [
+  { id: 'home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4', href: `${base}docs/getting-started/` },
+  { id: 'hardware', label: 'Hardware', icon: 'M9 3v2m6-2v2M9 19v2m6-2v2M3 9h2m-2 6h2m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z', href: `${base}docs/getting-started/hardware/` },
+  { id: 'abaqus', label: 'SIMULIA Abaqus', icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5', href: `${base}docs/getting-started/abaqus/` },
+  { id: 'ides', label: 'IDEs', icon: 'M16 18l6-6-6-6M8 6l-6 6 6 6M14 4l-4 16', href: `${base}docs/getting-started/ides/` },
+  { id: 'python', label: 'Python', icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-6h2v6zm4 0h-2v-6h2v6zm-3-8a1.5 1.5 0 110-3 1.5 1.5 0 010 3z', href: `${base}docs/getting-started/python/` },
+  { id: 'github', label: 'GitHub', icon: 'M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22', href: `${base}docs/getting-started/github/` },
+  { id: 'cli', label: 'Command Line (CLI)', icon: 'M4 17l6-6-6-6M12 19h8', href: `${base}docs/getting-started/cli/` },
+];
+
+const { title, description, activeModule, toc = [], sidebarLabel = 'Getting Started', sidebarModules = defaultModules } = Astro.props;
+const modules = sidebarModules;
+---
+
+<BaseLayout title={title} description={description}>
+  <div class="docs-shell">
+    <!-- Left sidebar: submodule nav -->
+    <aside class="docs-sidebar" id="docs-sidebar">
+      <div class="docs-sidebar__search">
+        <svg class="docs-sidebar__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input
+          type="text"
+          class="docs-sidebar__search-input"
+          id="sidebar-search-input"
+          placeholder="Search docs..."
+          readonly
+        />
+        <kbd class="docs-sidebar__search-kbd">⌘K</kbd>
+      </div>
+      <div class="docs-sidebar__section">
+        <div class="docs-sidebar__label">{sidebarLabel}</div>
+        <nav class="docs-sidebar__nav" aria-label={`${sidebarLabel} modules`}>
+          {modules.map(mod => (
+            <a
+              href={mod.href}
+              class:list={['docs-sidebar__link', { active: activeModule === mod.id }]}
+            >
+              {mod.icon.startsWith('text:') ? (
+                <span class="docs-sidebar__badge">{mod.icon.slice(5)}</span>
+              ) : (
+                <svg class="docs-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d={mod.icon} /></svg>
+              )}
+              <span>{mod.label}</span>
+            </a>
+          ))}
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Center: main content -->
+    <main class="docs-content">
+      <slot />
+    </main>
+
+    <!-- Right: page TOC -->
+    {toc.length > 0 && (
+      <aside class="docs-toc" id="docs-toc">
+        <div class="docs-toc__header">
+          <span>On this page</span>
+          <div class="docs-toc__progress">
+            <div class="docs-toc__progress-fill" id="toc-progress"></div>
+          </div>
+        </div>
+        <nav class="docs-toc__nav" aria-label="Table of contents">
+          {toc.map(item => (
+            <a href={`#${item.id}`} class="docs-toc__link" data-toc-link={item.id}>
+              <span class="docs-toc__marker"></span>
+              <span>{item.label}</span>
+            </a>
+          ))}
+        </nav>
+      </aside>
+    )}
+  </div>
+</BaseLayout>
+
+<script>
+  function initDocsToc() {
+    const links = document.querySelectorAll('[data-toc-link]');
+    const sections = document.querySelectorAll('[data-section]');
+    const progressBar = document.getElementById('toc-progress');
+    if (!links.length) return;
+
+    if (sections.length) {
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('data-section') || entry.target.id;
+            links.forEach(l => l.classList.toggle('active', l.getAttribute('data-toc-link') === id));
+          }
+        }
+      }, { rootMargin: '-15% 0px -65% 0px', threshold: 0 });
+      sections.forEach(s => observer.observe(s));
+    }
+
+    // Progress
+    function updateProgress() {
+      const content = document.querySelector('.docs-content');
+      if (!content || !progressBar) return;
+      const rect = content.getBoundingClientRect();
+      const total = content.scrollHeight - window.innerHeight;
+      const scrolled = -rect.top;
+      const pct = Math.max(0, Math.min(100, (scrolled / total) * 100));
+      progressBar.style.width = pct + '%';
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+
+    // Smooth scroll
+    links.forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const id = link.getAttribute('data-toc-link');
+        const target = document.getElementById(id || '');
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  initDocsToc();
+  document.addEventListener('astro:after-swap', initDocsToc);
+</script>
+
+<style>
+  /* ── Shell: 3-column layout ── */
+  .docs-shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 4rem;
+    gap: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .docs-shell {
+      grid-template-columns: 13rem 1fr;
+      padding: 2rem 2rem 5rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .docs-shell {
+      grid-template-columns: 13rem 1fr 13rem;
+    }
+  }
+
+  /* ── Left sidebar ── */
+  .docs-sidebar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .docs-sidebar {
+      display: block;
+      position: sticky;
+      top: 4rem;
+      max-height: calc(100vh - 4.5rem);
+      overflow-y: auto;
+      padding-right: 1rem;
+    }
+  }
+
+  /* ── Sidebar search ── */
+  .docs-sidebar__search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.625rem;
+    margin-bottom: 1rem;
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .docs-sidebar__search:hover {
+    border-color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.04);
+  }
+
+  .docs-sidebar__search-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  .docs-sidebar__search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: none;
+    font-family: var(--font-body);
+    font-size: 0.84rem;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    min-width: 0;
+  }
+
+  .docs-sidebar__search-kbd {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+    padding: 0.0625rem 0.3rem;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  .docs-sidebar__label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    padding: 0 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .docs-sidebar__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .docs-sidebar__link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+    line-height: 1.35;
+  }
+
+  .docs-sidebar__link:hover {
+    color: var(--color-text);
+    background: var(--color-surface-alt);
+  }
+
+  .docs-sidebar__link.active {
+    color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.06);
+    font-weight: 600;
+  }
+
+  .docs-sidebar__icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    opacity: 0.5;
+  }
+
+  .docs-sidebar__badge {
+    font-family: var(--font-mono);
+    font-size: 0.575rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0.2rem 0.3rem;
+    border-radius: 4px;
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    min-width: 1.9rem;
+    text-align: center;
+  }
+
+  .docs-sidebar__link.active .docs-sidebar__badge {
+    background: rgba(232, 119, 34, 0.1);
+    border-color: rgba(232, 119, 34, 0.35);
+    color: var(--color-accent);
+  }
+
+  .docs-sidebar__link.active .docs-sidebar__icon {
+    opacity: 1;
+    color: var(--color-accent);
+  }
+
+  /* ── Right TOC ── */
+  .docs-toc {
+    display: none;
+  }
+
+  @media (min-width: 1200px) {
+    .docs-toc {
+      display: block;
+      position: sticky;
+      top: 4rem;
+      max-height: calc(100vh - 4.5rem);
+      overflow-y: auto;
+      padding-left: 1rem;
+      border-left: 1px solid var(--color-border);
+    }
+  }
+
+  .docs-toc__header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin-bottom: 0.625rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .docs-toc__progress {
+    height: 2px;
+    background: var(--color-border);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .docs-toc__progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-light));
+    border-radius: 1px;
+    transition: width 0.1s ease-out;
+  }
+
+  .docs-toc__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .docs-toc__link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    transition: color 0.2s ease, background 0.2s ease;
+    line-height: 1.4;
+  }
+
+  .docs-toc__marker {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-border);
+    flex-shrink: 0;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .docs-toc__link:hover {
+    color: var(--color-text);
+  }
+
+  .docs-toc__link.active {
+    color: var(--color-accent);
+    font-weight: 600;
+  }
+
+  .docs-toc__link.active .docs-toc__marker {
+    background: var(--color-accent);
+    transform: scale(1.5);
+    box-shadow: 0 0 6px rgba(232, 119, 34, 0.4);
+  }
+
+  /* ── Content area ── */
+  .docs-content {
+    min-width: 0;
+    max-width: 52rem;
+  }
+
+  /* ── Dark mode ── */
+  :global([data-theme="dark"]) .docs-toc__progress {
+    background: #1f2937;
+  }
+
+  :global([data-theme="dark"]) .docs-sidebar__link.active {
+    background: rgba(232, 119, 34, 0.08);
+  }
+</style>

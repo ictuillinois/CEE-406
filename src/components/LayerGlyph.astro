@@ -1,0 +1,43 @@
+---
+// Miniature pavement-section glyph. The highlighted band encodes which part
+// of the structure a homework focuses on (-1 highlights the full section).
+interface Props {
+  focus: number; // 0 AC, 1 base, 2 subbase, 3 subgrade, -1 all
+}
+const { focus } = Astro.props;
+const bands = [0, 1, 2, 3];
+---
+
+<span class="layer-glyph" aria-hidden="true">
+  {bands.map(b => (
+    <span class:list={['layer-glyph__band', `layer-glyph__band--${b}`, { on: focus === -1 || focus === b }]}></span>
+  ))}
+</span>
+
+<style>
+  .layer-glyph {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 1.75rem;
+    flex-shrink: 0;
+  }
+
+  .layer-glyph__band {
+    display: block;
+    border-radius: 1px;
+    transition: opacity 0.2s ease, background 0.2s ease;
+    opacity: 0.28;
+  }
+
+  .layer-glyph__band--0 { height: 5px; background: #3a4150; }
+  .layer-glyph__band--1 { height: 4px; background: #C8A458; }
+  .layer-glyph__band--2 { height: 3px; background: #a8946e; }
+  .layer-glyph__band--3 { height: 2px; background: #6e5c42; }
+
+  .layer-glyph__band.on { opacity: 1; }
+  .layer-glyph__band--0.on { background: var(--color-accent); }
+
+  :global([data-theme="dark"]) .layer-glyph__band--0 { background: #4b5568; }
+  :global([data-theme="dark"]) .layer-glyph__band--0.on { background: var(--color-accent); }
+</style>

@@ -1,0 +1,251 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL;
+
+const live = [
+  {
+    name: 'Stress Explorer',
+    href: `${base}tools/stress-explorer/`,
+    color: '#0ea5e9',
+    hws: ['HW3', 'HW4'],
+    desc: 'One-layer (Boussinesq) response under the center of a circular load: vertical and radial stresses, strains, and deflection versus depth — with live charts and a normalized table you can check hand solutions against.',
+  },
+  {
+    name: 'ESAL Calculator',
+    href: `${base}tools/esal-calculator/`,
+    color: '#10b981',
+    hws: ['HW5', 'HW7'],
+    desc: 'AASHTO load equivalency factors from the design equation (pt, SN, axle type), a mixed-traffic ESAL table, and design-lane traffic with growth, directional, and lane distribution factors.',
+  },
+];
+
+const planned = [
+  { name: 'Resilient Modulus Fitter', hws: ['HW2'], desc: 'Fit k₁, k₂, k₃ of the generalized Mr model to triaxial data and report R².' },
+  { name: 'Transfer-Function Damage', hws: ['HW8'], desc: 'Accumulate AC fatigue and rutting damage from layer strains with AASHTOWare-style transfer functions.' },
+  { name: 'Westergaard Slab Stress', hws: ['HW9'], desc: 'Interior, edge, and corner stresses and deflections for concrete slabs, with curling.' },
+  { name: 'Pavement LCA Worksheet', hws: ['HW10'], desc: 'Life-cycle GHG accounting across materials, construction, use, and rehabilitation stages.' },
+];
+---
+
+<BaseLayout
+  title="Online Tools · CEE 406"
+  description="Interactive pavement design tools for CEE 406 homeworks — layered elastic stress analysis, ESAL calculation, and more."
+>
+  <div class="container tools-page">
+    <header class="tools-header gsap-fade-up">
+      <span class="tools-header__eyebrow">Online tools</span>
+      <h1>The homework toolbox</h1>
+      <p>
+        Every tool here exists because a homework needs it. They run entirely in your
+        browser — nothing to install, nothing to license — and they're built to let you
+        check hand calculations, not skip them.
+      </p>
+    </header>
+
+    <section class="tools-group">
+      <div class="tools-group__label gsap-fade-up">
+        <span class="tools-live-dot"></span>
+        <span>Live now</span>
+        <span class="tools-group__rule"></span>
+      </div>
+      <div class="tools-list stagger-grid">
+        {live.map(t => (
+          <a href={t.href} class="tl-card gsap-stagger" style={`--tool-color: ${t.color}`}>
+            <div class="tl-card__head">
+              <span class="tl-card__name">{t.name}</span>
+              <div class="tl-card__hws">
+                {t.hws.map(h => <span class="tl-card__hw">{h}</span>)}
+              </div>
+            </div>
+            <p class="tl-card__desc">{t.desc}</p>
+            <span class="tl-card__cta">Open tool &rarr;</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <section class="tools-group">
+      <div class="tools-group__label gsap-fade-up">
+        <span>In development</span>
+        <span class="tools-group__rule"></span>
+      </div>
+      <div class="tools-list tools-list--planned stagger-grid">
+        {planned.map(t => (
+          <div class="tl-card tl-card--planned gsap-stagger">
+            <div class="tl-card__head">
+              <span class="tl-card__name">{t.name}</span>
+              <div class="tl-card__hws">
+                {t.hws.map(h => <span class="tl-card__hw">{h}</span>)}
+              </div>
+            </div>
+            <p class="tl-card__desc">{t.desc}</p>
+            <span class="tl-card__soon">Coming this semester</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style>
+  .tools-page {
+    padding-top: 3rem;
+    padding-bottom: 5rem;
+  }
+
+  .tools-header {
+    max-width: 42rem;
+    margin-bottom: 3rem;
+  }
+
+  .tools-header__eyebrow {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-accent);
+    margin-bottom: 0.625rem;
+  }
+
+  .tools-header h1 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(2rem, 4.5vw, 2.75rem);
+  }
+
+  .tools-header p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  .tools-group { margin-bottom: 2.5rem; }
+
+  .tools-group__label {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-text-muted);
+  }
+
+  .tools-live-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+  }
+
+  .tools-group__rule {
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  .tools-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 0.875rem;
+  }
+
+  .tools-list--planned {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .tl-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.375rem 1.5rem;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  a.tl-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--tool-color, var(--color-accent));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  a.tl-card:hover {
+    border-color: var(--tool-color, var(--color-accent));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 26, 46, 0.08);
+  }
+
+  a.tl-card:hover::before { opacity: 1; }
+
+  :global([data-theme="dark"]) .tl-card {
+    background: #162033;
+    border-color: #2D3F59;
+  }
+
+  .tl-card--planned {
+    border-style: dashed;
+    opacity: 0.8;
+  }
+
+  .tl-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.625rem;
+  }
+
+  .tl-card__name {
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 1.0625rem;
+  }
+
+  .tl-card__hws { display: flex; gap: 0.3rem; }
+
+  .tl-card__hw {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.08);
+    border-radius: 4px;
+    padding: 0.12rem 0.4rem;
+  }
+
+  .tl-card__desc {
+    font-size: 0.84rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+    margin: 0 0 1rem;
+    flex: 1;
+  }
+
+  .tl-card__cta {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .tl-card__soon {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+  }
+</style>

@@ -1,0 +1,196 @@
+---
+const base = import.meta.env.BASE_URL;
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="layer-rule" aria-hidden="true">
+    <span class="layer-rule__ac"></span>
+    <span class="layer-rule__base"></span>
+    <span class="layer-rule__subbase"></span>
+    <span class="layer-rule__subgrade"></span>
+  </div>
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-grid">
+        <!-- Brand -->
+        <div class="footer-col footer-col--brand">
+          <a href={base} class="footer-logo">
+            <img src={`${base}favicon.png`} alt="Illinois Block I" width="22" height="22" />
+            <span>CEE 406 · Pavement Design I</span>
+          </a>
+          <p class="footer-desc">
+            Homework assignments, interactive design tools, and the course textbook
+            for Pavement Design I, taught by Prof. Imad L. Al-Qadi at the
+            University of Illinois Urbana-Champaign.
+          </p>
+          <div class="footer-affiliation">
+            <span>Department of</span>
+            <a href="https://cee.illinois.edu" target="_blank" rel="noopener noreferrer">Civil &amp; Environmental Engineering</a>
+          </div>
+        </div>
+
+        <!-- Course -->
+        <div class="footer-col">
+          <h4 class="footer-heading">Course</h4>
+          <nav class="footer-nav" aria-label="Footer course links">
+            <a href={`${base}homeworks/`}>Homeworks</a>
+            <a href={`${base}textbook/`}>Textbook</a>
+            <a href={`${base}tools/`}>Online Tools</a>
+          </nav>
+        </div>
+
+        <!-- University -->
+        <div class="footer-col">
+          <h4 class="footer-heading">University</h4>
+          <nav class="footer-nav" aria-label="Footer university links">
+            <a href="https://ict.illinois.edu" target="_blank" rel="noopener noreferrer">Illinois Center for Transportation</a>
+            <a href="https://cee.illinois.edu" target="_blank" rel="noopener noreferrer">Civil &amp; Environmental Eng.</a>
+            <a href="https://illinois.edu" target="_blank" rel="noopener noreferrer">UIUC</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="footer-bottom">
+      <span class="footer-copy">&copy; {year} University of Illinois at Urbana-Champaign. Course materials are for enrolled students.</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: #0F1A2E;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.8125rem;
+  }
+
+  /* ── Pavement layer rule: the site's signature divider ── */
+  .layer-rule {
+    display: flex;
+    flex-direction: column;
+    height: 7px;
+  }
+
+  .layer-rule span { display: block; width: 100%; }
+  .layer-rule__ac       { height: 2px; background: var(--color-accent); }
+  .layer-rule__base     { height: 2px; background: #C8A458; }
+  .layer-rule__subbase  { height: 2px; background: #8A7248; }
+  .layer-rule__subgrade { height: 1px; background: #574A33; }
+
+  .footer-top {
+    padding: 2.75rem 0 2rem;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 2.5rem;
+  }
+
+  /* ── Brand ── */
+  .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: rgba(255, 255, 255, 0.82);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .footer-logo:hover {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .footer-logo img {
+    border-radius: 3px;
+    object-fit: contain;
+  }
+
+  .footer-desc {
+    color: rgba(255, 255, 255, 0.32);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    margin: 0.75rem 0 0.875rem;
+    max-width: 24rem;
+  }
+
+  .footer-affiliation {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.22);
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+  }
+
+  .footer-affiliation a {
+    color: rgba(255, 255, 255, 0.38);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .footer-affiliation a:hover {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* ── Columns ── */
+  .footer-heading {
+    font-family: var(--font-body);
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.3);
+    margin: 0 0 0.75rem;
+  }
+
+  .footer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  .footer-nav a {
+    color: rgba(255, 255, 255, 0.42);
+    text-decoration: none;
+    font-size: 0.78rem;
+    transition: color 0.15s ease;
+  }
+
+  .footer-nav a:hover {
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  /* ── Bottom ── */
+  .footer-bottom {
+    padding: 1rem 0 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .footer-copy {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 0.6875rem;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Dark mode ── */
+  :global([data-theme="dark"]) .footer {
+    background: #0A1120;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+    }
+
+    .footer-top {
+      padding: 2rem 0 1.5rem;
+    }
+  }
+</style>

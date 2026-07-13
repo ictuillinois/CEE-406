@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout title="Page not found · CEE 406" description="This page does not exist.">
+  <div class="nf">
+    <div class="nf-section" aria-hidden="true">
+      <div class="nf-band nf-band--ac"><span>404</span></div>
+      <div class="nf-band nf-band--base"></div>
+      <div class="nf-band nf-band--subbase"></div>
+      <div class="nf-band nf-band--subgrade"></div>
+    </div>
+    <h1 class="nf-title">Pothole ahead</h1>
+    <p class="nf-desc">
+      This page doesn't exist — the route may have moved during resurfacing.
+    </p>
+    <div class="nf-actions">
+      <a href={base} class="btn btn-primary">Back to home</a>
+      <a href={`${base}homeworks/`} class="btn nf-btn-outline">Browse homeworks</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .nf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 6rem 1.5rem 8rem;
+  }
+
+  .nf-section {
+    width: min(20rem, 80vw);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+    border: 1px solid var(--color-border);
+  }
+
+  .nf-band { width: 100%; }
+
+  .nf-band--ac {
+    height: 4.5rem;
+    background: #20242e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nf-band--ac span {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-accent);
+    letter-spacing: 0.1em;
+  }
+
+  .nf-band--base { height: 2.25rem; background: #8a7452; }
+  .nf-band--subbase { height: 1.5rem; background: #a8946e; }
+  .nf-band--subgrade { height: 1rem; background: #6e5c42; }
+
+  .nf-title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  .nf-desc {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    margin: 0 0 1.75rem;
+  }
+
+  .nf-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nf-btn-outline {
+    border: 1.5px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .nf-btn-outline:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.06);
+  }
+</style>

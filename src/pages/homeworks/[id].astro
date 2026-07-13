@@ -1,0 +1,236 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import LayerGlyph from '../../components/LayerGlyph.astro';
+import { homeworks } from '../../data/homeworks';
+
+export function getStaticPaths() {
+  return homeworks.map(hw => ({ params: { id: hw.id }, props: { hw } }));
+}
+
+const { hw } = Astro.props;
+const base = import.meta.env.BASE_URL;
+
+const sidebarModules = homeworks.map(h => ({
+  id: h.id,
+  label: h.title,
+  icon: `text:HW${h.num}`,
+  href: `${base}homeworks/${h.id}/`,
+}));
+
+const idx = homeworks.findIndex(h => h.id === hw.id);
+const prev = idx > 0 ? homeworks[idx - 1] : null;
+const next = idx < homeworks.length - 1 ? homeworks[idx + 1] : null;
+
+const toc = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'objectives', label: 'What you\'ll learn' },
+  { id: 'problems', label: 'Problem set' },
+  ...(hw.tools.length ? [{ id: 'tools', label: 'Tools' }] : []),
+  { id: 'downloads', label: 'Downloads' },
+  ...(hw.chapters.length ? [{ id: 'reading', label: 'Textbook reading' }] : []),
+];
+
+const kindLabel: Record<string, string> = {
+  assignment: 'Assignment',
+  handout: 'Handout',
+  reference: 'Reference',
+  data: 'Data',
+};
+---
+
+<DocsLayout
+  title={`HW${hw.num} — ${hw.title} · CEE 406`}
+  description={hw.overview}
+  sidebarLabel="Homeworks"
+  sidebarModules={sidebarModules}
+  activeModule={hw.id}
+  toc={toc}
+>
+  <nav class="doc-breadcrumb" aria-label="Breadcrumb">
+    <a href={base}>Home</a>
+    <span class="doc-breadcrumb__sep">/</span>
+    <a href={`${base}homeworks/`}>Homeworks</a>
+    <span class="doc-breadcrumb__sep">/</span>
+    <span class="doc-breadcrumb__current">HW{hw.num}</span>
+  </nav>
+
+  <header class="doc-header" id="overview" data-section>
+    <span class="doc-header__badge">Homework {hw.num} &middot; {hw.phase}</span>
+    <h1 class="doc-header__title">{hw.title}</h1>
+    <p class="doc-header__desc">{hw.overview}</p>
+    <div class="hwd-meta">
+      <LayerGlyph focus={hw.layerFocus} />
+      <span class="hwd-meta__item"><strong>Due:</strong>&nbsp;{hw.due} <span class="hwd-meta__note">(Fall 2024 reference)</span></span>
+      <span class="hwd-meta__item"><strong>{hw.problems.length}</strong>&nbsp;problems</span>
+    </div>
+  </header>
+
+  <hr class="doc-divider" />
+
+  <section class="doc-section" id="objectives" data-section>
+    <h2>What you'll learn</h2>
+    <ul class="doc-list">
+      {hw.objectives.map(o => <li>{o}</li>)}
+    </ul>
+  </section>
+
+  <section class="doc-section" id="problems" data-section data-katex>
+    <h2>Problem set</h2>
+    <p>
+      Download the assignment PDF below for the complete problem statements.
+      Textbook problems refer to Huang, <em>Pavement Analysis and Design</em> (2nd ed.).
+    </p>
+    <div class="doc-table-wrap">
+      <table class="doc-table">
+        <thead>
+          <tr><th style="width:4.5rem;">Part</th><th>Problem</th></tr>
+        </thead>
+        <tbody>
+          {hw.problems.map(p => (
+            <tr>
+              <td><code>{p.label}</code></td>
+              <td set:html={p.desc} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {hw.tools.length > 0 && (
+    <section class="doc-section" id="tools" data-section>
+      <h2>Tools for this homework</h2>
+      <div class="doc-link-cards-grid">
+        {hw.tools.map(t =>
+          t.href ? (
+            <a href={`${base}${t.href}`} class="doc-link-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>
+              <div>
+                <strong>{t.label}</strong>
+                {t.note && <span>{t.note}</span>}
+              </div>
+              <svg class="doc-link-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          ) : t.external ? (
+            <a href={t.external} target="_blank" rel="noopener noreferrer" class="doc-link-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg>
+              <div>
+                <strong>{t.label}</strong>
+                {t.note && <span>{t.note}</span>}
+              </div>
+              <svg class="doc-link-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+          ) : (
+            <div class="doc-link-card hwd-tool--planned">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <div>
+                <strong>{t.label}</strong>
+                {t.note && <span>{t.note}</span>}
+              </div>
+            </div>
+          )
+        )}
+      </div>
+    </section>
+  )}
+
+  <section class="doc-section" id="downloads" data-section>
+    <h2>Downloads</h2>
+    <div class="doc-table-wrap">
+      <table class="doc-table">
+        <thead>
+          <tr><th>File</th><th style="width:7rem;">Type</th><th style="width:6rem;"></th></tr>
+        </thead>
+        <tbody>
+          {hw.downloads.map(d => (
+            <tr>
+              <td>{d.label}</td>
+              <td><span class:list={['hwd-kind', `hwd-kind--${d.kind}`]}>{kindLabel[d.kind]}</span></td>
+              <td><a class="hwd-dl" href={`${base}homeworks/${hw.id}/${d.file}`} target="_blank" rel="noopener">Open ↗</a></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {hw.chapters.length > 0 && (
+    <section class="doc-section" id="reading" data-section>
+      <h2>Textbook reading</h2>
+      <div class="doc-link-cards-grid">
+        {hw.chapters.map(c => (
+          <a href={`${base}textbook/${c.id}/`} class="doc-link-card">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z"/></svg>
+            <div>
+              <strong>{c.label}</strong>
+              <span>Read online or download the chapter PDF</span>
+            </div>
+            <svg class="doc-link-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <nav class="doc-page-nav" aria-label="Homework navigation">
+    {prev && (
+      <a href={`${base}homeworks/${prev.id}/`} class="doc-page-nav__link">
+        <span class="doc-page-nav__dir">&larr; Previous</span>
+        <span class="doc-page-nav__title">HW{prev.num} — {prev.title}</span>
+      </a>
+    )}
+    {next && (
+      <a href={`${base}homeworks/${next.id}/`} class="doc-page-nav__link doc-page-nav__link--next">
+        <span class="doc-page-nav__dir">Next &rarr;</span>
+        <span class="doc-page-nav__title">HW{next.num} — {next.title}</span>
+      </a>
+    )}
+  </nav>
+</DocsLayout>
+
+<style>
+  .hwd-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .hwd-meta__item {
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+
+  .hwd-meta__item strong { color: var(--color-text); font-weight: 600; }
+  .hwd-meta__note { font-size: 0.72rem; opacity: 0.75; }
+
+  .hwd-kind {
+    display: inline-block;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 2rem;
+    padding: 0.15rem 0.55rem;
+  }
+
+  .hwd-kind--assignment { background: rgba(232, 119, 34, 0.1); color: var(--color-accent); }
+  .hwd-kind--handout    { background: rgba(14, 165, 233, 0.1); color: #0ea5e9; }
+  .hwd-kind--reference  { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+  .hwd-kind--data       { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+
+  .hwd-dl {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .hwd-dl:hover { text-decoration: underline; }
+
+  .hwd-tool--planned {
+    opacity: 0.65;
+    cursor: default;
+  }
+</style>

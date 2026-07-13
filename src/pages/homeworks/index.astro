@@ -1,0 +1,237 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LayerGlyph from '../../components/LayerGlyph.astro';
+import { homeworks, phases } from '../../data/homeworks';
+
+const base = import.meta.env.BASE_URL;
+const byPhase = phases
+  .map(phase => ({ phase, items: homeworks.filter(h => h.phase === phase) }))
+  .filter(g => g.items.length > 0);
+---
+
+<BaseLayout
+  title="Homeworks · CEE 406"
+  description="All ten CEE 406 homework assignments with due dates, related textbook chapters, online tools, and downloadable handouts."
+>
+  <div class="container hw-page">
+    <header class="hw-header gsap-fade-up">
+      <span class="hw-header__eyebrow">CEE 406 &middot; Fall 2024 reference schedule</span>
+      <h1>Homeworks</h1>
+      <p>
+        Ten assignments trace the arc of the course: what pavements are, what they're made of,
+        how they carry load, and how they're designed. Every homework links the tools and
+        chapters you need — start at the assignment, and everything else is one click away.
+      </p>
+    </header>
+
+    {byPhase.map(group => (
+      <section class="hw-phase">
+        <div class="hw-phase__label gsap-fade-up">
+          <span class="hw-phase__name">{group.phase}</span>
+          <span class="hw-phase__rule"></span>
+        </div>
+        <div class="hw-rows">
+          {group.items.map(hw => (
+            <a href={`${base}homeworks/${hw.id}/`} class="hw-row gsap-fade-up">
+              <div class="hw-row__id">
+                <LayerGlyph focus={hw.layerFocus} />
+                <span class="hw-row__num">HW{hw.num}</span>
+              </div>
+              <div class="hw-row__body">
+                <h2 class="hw-row__title">{hw.title}</h2>
+                <p class="hw-row__desc">{hw.overview}</p>
+                <div class="hw-row__meta">
+                  <span class="hw-row__due">Due {hw.due}</span>
+                  <span class="hw-row__sep">&middot;</span>
+                  <span>{hw.problems.length} problems</span>
+                  {hw.chapters.length > 0 && (
+                    <>
+                      <span class="hw-row__sep">&middot;</span>
+                      <span>{hw.chapters.map(c => c.label.split(' — ')[0]).join(', ')}</span>
+                    </>
+                  )}
+                  {hw.tools.some(t => t.href) && <span class="hw-row__live">tool online</span>}
+                </div>
+              </div>
+              <svg class="hw-row__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+  .hw-page {
+    padding-top: 3rem;
+    padding-bottom: 5rem;
+  }
+
+  .hw-header {
+    max-width: 42rem;
+    margin-bottom: 3rem;
+  }
+
+  .hw-header__eyebrow {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-accent);
+    margin-bottom: 0.625rem;
+  }
+
+  .hw-header h1 {
+    margin: 0 0 0.75rem;
+    font-size: clamp(2rem, 4.5vw, 2.75rem);
+  }
+
+  .hw-header p {
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ── Phase groups ── */
+  .hw-phase {
+    margin-bottom: 2.25rem;
+  }
+
+  .hw-phase__label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .hw-phase__name {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  .hw-phase__rule {
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+  }
+
+  .hw-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
+  /* ── Rows ── */
+  .hw-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.25rem;
+    padding: 1.125rem 1.375rem;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hw-row:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(15, 26, 46, 0.07);
+  }
+
+  :global([data-theme="dark"]) .hw-row {
+    background: #162033;
+    border-color: #2D3F59;
+  }
+
+  :global([data-theme="dark"]) .hw-row:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .hw-row__id {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding-top: 0.15rem;
+    width: 3rem;
+    flex-shrink: 0;
+  }
+
+  .hw-row__num {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  .hw-row__body { flex: 1; min-width: 0; }
+
+  .hw-row__title {
+    font-size: 1.0625rem;
+    margin: 0 0 0.3rem;
+  }
+
+  .hw-row__desc {
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+    margin: 0 0 0.55rem;
+  }
+
+  .hw-row__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+
+  .hw-row__due { font-weight: 600; color: var(--color-text); }
+  .hw-row__sep { opacity: 0.5; }
+
+  .hw-row__live {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    border-radius: 2rem;
+    padding: 0.12rem 0.5rem;
+  }
+
+  .hw-row__arrow {
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+    margin-top: 0.3rem;
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+
+  .hw-row:hover .hw-row__arrow {
+    transform: translateX(3px);
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 560px) {
+    .hw-row { gap: 0.875rem; padding: 1rem; }
+    .hw-row__id { width: 2.25rem; }
+  }
+</style>

@@ -1,0 +1,152 @@
+---
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import SearchModal from '../components/SearchModal.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const base = import.meta.env.BASE_URL;
+const {
+  title = 'CEE 406 · Pavement Design I',
+  description = 'Course portal for CEE 406 Pavement Design I at the University of Illinois Urbana-Champaign — homeworks, online tools, and textbook.',
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script is:inline>
+      // Prevent flash: set theme before paint
+      (function() {
+        var t = localStorage.getItem('cee406-theme') || 'light';
+        document.documentElement.setAttribute('data-theme', t);
+      })();
+    </script>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href={`${base}favicon.png`} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" crossorigin="anonymous" />
+    <title>{title}</title>
+    <noscript>
+      <style>
+        .gsap-fade-up, .gsap-fade-in, .gsap-stagger { opacity: 1 !important; transform: none !important; }
+      </style>
+    </noscript>
+  </head>
+  <body>
+    <SearchModal />
+    <Nav />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+    <script is:inline src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" crossorigin="anonymous" defer></script>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/contrib/auto-render.min.js" crossorigin="anonymous" defer></script>
+  </body>
+</html>
+
+<script>
+  // ── KaTeX Auto-Render ──
+  function initKaTeX() {
+    if (!document.querySelector('.doc-equation') && !document.querySelector('[data-katex]')) return;
+    if (typeof (window as any).renderMathInElement !== 'function') {
+      // Script not loaded yet — wait and retry
+      setTimeout(initKaTeX, 100);
+      return;
+    }
+    (window as any).renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+      ],
+      ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+      throwOnError: false,
+    });
+  }
+  // Run after DOMContentLoaded to allow defer scripts to load
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(initKaTeX, 50));
+  } else {
+    setTimeout(initKaTeX, 50);
+  }
+  document.addEventListener('astro:after-swap', () => setTimeout(initKaTeX, 50));
+
+  // ── GSAP ScrollTrigger ──
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  function initScrollAnimations() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      document.querySelectorAll<HTMLElement>('.gsap-fade-up, .gsap-fade-in, .gsap-stagger').forEach(el => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
+      return;
+    }
+
+    const ctx = gsap.context(() => {
+      // Fade-up elements on scroll
+      gsap.utils.toArray<HTMLElement>('.gsap-fade-up').forEach(el => {
+        gsap.fromTo(el,
+          { opacity: 0, y: 24 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.7,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 88%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      });
+
+      // Stagger cards on scroll
+      gsap.utils.toArray<HTMLElement>('.card-grid, .stagger-grid').forEach(grid => {
+        const cards = grid.querySelectorAll('.gsap-stagger');
+        if (!cards.length) return;
+        gsap.fromTo(cards,
+          { opacity: 0, y: 16 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.5,
+            stagger: 0.08,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: grid,
+              start: 'top 88%',
+              toggleActions: 'play none none none',
+            },
+          }
+        );
+      });
+    });
+
+    document.addEventListener('astro:before-swap', () => ctx.revert(), { once: true });
+  }
+
+  initScrollAnimations();
+  document.addEventListener('astro:after-swap', initScrollAnimations);
+</script>
+
+<style>
+  main {
+    min-height: 100vh;
+    padding-top: 3.25rem; /* nav height */
+  }
+</style>
