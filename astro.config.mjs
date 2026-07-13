@@ -10,7 +10,7 @@ import tailwindcss from '@tailwindcss/vite';
 const isPublic = process.env.PAGES_PUBLIC === 'true';
 
 export default defineConfig({
-  site: isPublic ? 'https://ictuillinois.github.io' : undefined,
+  site: isPublic ? 'https://ictuillinois.github.io' : 'https://glowing-pancake-8gkkgl1.pages.github.io',
   base: isPublic ? '/CEE-406/' : '/',
   integrations: [react()],
 
