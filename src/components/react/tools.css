@@ -199,6 +199,37 @@
   margin: 0;
 }
 
+/* One-paragraph "what this graph reflects" under each chart */
+.cee-chart__caption {
+  font-size: 0.68rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  padding: 0 0.625rem 0.625rem;
+  margin: 0.125rem 0 0;
+}
+
+.cee-chart__caption strong { color: var(--color-text); font-weight: 600; }
+
+/* Inline schematic diagrams (SVG) */
+.cee-diagram {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+}
+
+[data-theme='dark'] .cee-diagram {
+  background: #162033;
+  border-color: #2d3f59;
+}
+
+.cee-diagram svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 190px;
+}
+
 .cee-chart-grid {
   display: grid;
   grid-template-columns: 1fr;

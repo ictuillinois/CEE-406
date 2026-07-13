@@ -225,19 +225,19 @@ export default function LcaApp() {
 
         <div className="cee-keys">
           <div className="cee-key cee-key--accent">
-            <div className="cee-key__label">TOTAL GHG · {years} YR</div>
+            <div className="cee-key__label">TOTAL GHG · {years} YR<Tip text="Sum of all six life-cycle stages for the functional unit: one lane-mile over the analysis period. Reported in metric tonnes (1 t = 1000 kg CO₂e)." /></div>
             <div className="cee-key__value">{(res.total / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}<small>t CO₂e</small></div>
           </div>
           <div className="cee-key">
-            <div className="cee-key__label">GOVERNING STAGE</div>
+            <div className="cee-key__label">GOVERNING STAGE<Tip text="The stage with the largest share — the answer to the closing question of HW10, together with a mitigation aimed at THIS stage (e.g., smoother pavement → lower vehicle fuel use)." /></div>
             <div className="cee-key__value" style={{ fontSize: '0.95rem' }}>{res.governing.name} · {((res.governing.v / res.total) * 100).toFixed(1)}%</div>
           </div>
           <div className="cee-key">
-            <div className="cee-key__label">REHABILITATIONS</div>
+            <div className="cee-key__label">REHABILITATIONS<Tip text="One mill-and-overlay is scheduled every time the IRI reaches the trigger; roughness then resets to the initial value. Their count multiplies the M&R factor." /></div>
             <div className="cee-key__value">{res.rehabTimes.length}<small>{res.rehabTimes.map(t => `yr ${t.toFixed(1)}`).join(' · ')}</small></div>
           </div>
           <div className="cee-key">
-            <div className="cee-key__label">MATERIAL MASS</div>
+            <div className="cee-key__label">MATERIAL MASS<Tip text="AC plus aggregate for the initial construction, from volume × density (short tons). This mass drives the materials, transport, and construction stages." /></div>
             <div className="cee-key__value">{(res.acTons + res.baseTons).toFixed(0)}<small>tons</small></div>
           </div>
         </div>
@@ -246,10 +246,22 @@ export default function LcaApp() {
           <div className="cee-chart">
             <h3 className="cee-chart__title">IRI timeline &amp; rehab schedule</h3>
             <div ref={iriRef} />
+            <p className="cee-chart__caption">
+              Roughness grows linearly until it hits the dashed trigger; each dotted vertical is a
+              mill-and-overlay that resets IRI to its initial value — the classic <strong>sawtooth</strong>.
+              This chart <em>is</em> the M&amp;R stage: count the teeth, multiply by the rehab factor.
+              Slower deterioration or a higher trigger removes whole rehabs at a time.
+            </p>
           </div>
           <div className="cee-chart">
             <h3 className="cee-chart__title">GHG by life-cycle stage (log scale)</h3>
             <div ref={stageRef} />
+            <p className="cee-chart__caption">
+              <strong>Log scale — every gridline is ×10.</strong> On a linear axis all bars except the use
+              phase would vanish: vehicles burning fuel over {years} years out-emit building the road by
+              more than an order of magnitude. That imbalance, and what it implies for smoothness-focused
+              maintenance, is the takeaway HW10 wants in your comment.
+            </p>
           </div>
         </div>
 

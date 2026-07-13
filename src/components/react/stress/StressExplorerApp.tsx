@@ -314,19 +314,19 @@ export default function StressExplorerApp() {
           <>
             <div className="cee-keys">
               <div className="cee-key cee-key--accent">
-                <div className="cee-key__label">SURFACE DEFLECTION w₀</div>
+                <div className="cee-key__label">SURFACE DEFLECTION w₀<Tip text="Settlement of the surface at the load center — what an FWD sensor under the load plate would read. The single most-checked number in HW3." /></div>
                 <div className="cee-key__value">{fmt(w0, 3)}<small>mm</small></div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">σz AT z = a</div>
+                <div className="cee-key__label">σz AT z = a<Tip text="Vertical stress one contact-radius deep. It depends only on p — not on E or ν — because a homogeneous half-space has no stiffness contrast to redistribute load." /></div>
                 <div className="cee-key__value">{fmt(p * (1 - 1 / Math.pow(2, 1.5)), 1)}<small>kPa</small></div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">σz / p AT z = a</div>
+                <div className="cee-key__label">σz / p AT z = a<Tip text="Dimensionless — 0.646 for every load and every material. If your hand solution doesn't reproduce this, check it before anything else." /></div>
                 <div className="cee-key__value">{fmt(1 - 1 / Math.pow(2, 1.5), 3)}</div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">w₀ FORMULA</div>
+                <div className="cee-key__label">w₀ FORMULA<Tip text="Center deflection of a flexible circular load on a half-space (Huang Eq. 2.8). A rigid plate gives π/4 of this — about 79%." /></div>
                 <div className="cee-key__value" style={{ fontSize: '0.8rem' }}>2(1−ν²)pa/E</div>
               </div>
             </div>
@@ -358,10 +358,22 @@ export default function StressExplorerApp() {
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Stress vs. depth</h3>
                 <div ref={stressRef} />
+                <p className="cee-chart__caption">
+                  Both stresses under the load center, compression positive. <strong>σz</strong> starts
+                  at p on the surface and decays to ~5% of p by z = 4a; <strong>σr</strong> dies off much
+                  faster and can go (slightly) tensile — that difference is what bends the upper layers
+                  of a real pavement. Note stresses are independent of E: only the geometry matters.
+                </p>
               </div>
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Strain vs. depth</h3>
                 <div ref={strainRef} />
+                <p className="cee-chart__caption">
+                  Strains follow the stresses through Hooke's law and scale with 1/E — halve the modulus,
+                  double every strain. <strong>εr</strong> turning negative means horizontal tension: in a
+                  layered pavement that tension concentrates at the bottom of the stiff AC layer and drives
+                  fatigue cracking.
+                </p>
               </div>
             </div>
 
@@ -369,10 +381,22 @@ export default function StressExplorerApp() {
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Pressure bulb — σz / p (normalized, any load)</h3>
                 <div ref={bulbRef} />
+                <p className="cee-chart__caption">
+                  Contours of vertical stress over the whole r–z plane, not just the axis. Because axes are
+                  in multiples of a and stress in multiples of p, <strong>this exact shape holds for every
+                  load</strong> — only the physical scale changes. Where the bulbs of two nearby wheels
+                  overlap, their stresses add: that superposition is why tandem axles load the subgrade
+                  differently than two separated singles (the HW1 axle question, drawn).
+                </p>
               </div>
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Deflection vs. depth</h3>
                 <div ref={deflRef} />
+                <p className="cee-chart__caption">
+                  Downward displacement of each point on the axis. The curve is steepest near the surface —
+                  most of w₀ accumulates within the top few radii, which is why improving the upper layers
+                  pays off more than anything done at depth.
+                </p>
               </div>
             </div>
 

@@ -330,23 +330,23 @@ export default function MrFitterApp() {
 
             <div className="cee-keys">
               <div className="cee-key">
-                <div className="cee-key__label">k₁</div>
+                <div className="cee-key__label">k₁<Tip text="Dimensionless stiffness scale: at θ = pa and zero shear, Mr = k₁·pa. Typical soils: a few hundred to a few thousand." /></div>
                 <div className="cee-key__value">{fit.k1 >= 10 ? fit.k1.toFixed(1) : fit.k1 >= 0.01 ? fit.k1.toFixed(4) : fit.k1.toExponential(3)}</div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">k₂</div>
+                <div className="cee-key__label">k₂<Tip text="Stress-hardening exponent on bulk stress θ — confinement stiffens the soil, so expect k₂ ≥ 0 (strongly positive for granular materials)." /></div>
                 <div className="cee-key__value">{fit.k2.toFixed(4)}</div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">k₃</div>
+                <div className="cee-key__label">k₃<Tip text="Shear-softening exponent on τ_oct — shearing weakens the soil, so expect k₃ ≤ 0 (most negative for fine-grained soils)." /></div>
                 <div className="cee-key__value">{fit.k3.toFixed(4)}</div>
               </div>
               <div className="cee-key cee-key--accent">
-                <div className="cee-key__label">R² (LOG SPACE)</div>
+                <div className="cee-key__label">R² (LOG SPACE)<Tip text="Goodness of fit of the linearized regression — this is the R² Excel LINEST reports, so quote this one when comparing." /></div>
                 <div className="cee-key__value">{fit.r2log.toFixed(4)}</div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">R² (ON Mr)</div>
+                <div className="cee-key__label">R² (ON Mr)<Tip text="R² recomputed on back-transformed Mr values — usually close to the log-space value, but not identical; say which you report." /></div>
                 <div className="cee-key__value">{fit.r2.toFixed(4)}</div>
               </div>
             </div>
@@ -355,10 +355,21 @@ export default function MrFitterApp() {
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Measured vs. predicted Mr</h3>
                 <div ref={parityRef} />
+                <p className="cee-chart__caption">
+                  Every test point, measured against what the fitted model predicts for its stress state
+                  (log axes). A perfect model puts all points on the dashed <strong>1:1 line</strong>;
+                  vertical distance from it is the residual in the table. This is the plot HW2 asks for.
+                </p>
               </div>
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Mr vs. bulk stress θ — fitted model by σ₃</h3>
                 <div ref={curvesRef} />
+                <p className="cee-chart__caption">
+                  The fitted surface sliced at each confining stress: along one curve, rising θ comes with
+                  rising deviator stress, so the shape mixes hardening (k₂) and softening (k₃). Curves
+                  rising with θ ⇒ hardening dominates (granular behavior); falling ⇒ shear softening
+                  dominates (fine-grained behavior).
+                </p>
               </div>
             </div>
 

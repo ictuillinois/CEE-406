@@ -317,17 +317,17 @@ export default function EsalCalculatorApp() {
 
         <div className="cee-flow" role="group" aria-label="Traffic projection breakdown">
           <div className="cee-flow__step">
-            <div className="cee-flow__label">ESALs/DAY · TWO-WAY</div>
+            <div className="cee-flow__label">ESALs/DAY · TWO-WAY<Tip text="Σ EALF × passes over the whole spectrum — the raw daily damage of the traffic stream, both directions, before any distribution factor." /></div>
             <div className="cee-flow__value">{computed.esalPerDay.toFixed(1)}</div>
           </div>
           <div className="cee-flow__op">× D·L = {(dir * lane).toFixed(2)}</div>
           <div className="cee-flow__step">
-            <div className="cee-flow__label">DESIGN LANE / DAY</div>
+            <div className="cee-flow__label">DESIGN LANE / DAY<Tip text="The share of that damage landing in the one lane you design for: D splits by direction, L splits among lanes in that direction." /></div>
             <div className="cee-flow__value">{computed.laneDay.toFixed(1)}</div>
           </div>
           <div className="cee-flow__op">× 365 × G = {computed.G.toFixed(2)}</div>
           <div className="cee-flow__step cee-flow__step--accent">
-            <div className="cee-flow__label">DESIGN ESALs · {years} YR</div>
+            <div className="cee-flow__label">DESIGN ESALs · {years} YR<Tip text="W18 — the design traffic that goes straight into the AASHTO design equation (HW7). G already contains all the years, so no further ×n." /></div>
             <div className="cee-flow__value">{sci(computed.designEsal)}</div>
           </div>
         </div>
@@ -338,8 +338,8 @@ export default function EsalCalculatorApp() {
               <tr>
                 <th>Axle</th>
                 <th>Load (kip)</th>
-                <th>EALF</th>
-                <th>(L/18)⁴<Tip text="The fourth-power rule of thumb — defined for single axles only. Compare it with the exact EALF." /></th>
+                <th>EALF<Tip text="Damage of ONE pass of this axle group expressed in 18-kip single-axle passes — from the AASHTO design equation at your SN and pt, so it matches the printed tables exactly." /></th>
+                <th>(L/18)⁴<Tip text="The fourth-power rule of thumb — defined for single axles only. Compare it with the exact EALF to see how good the approximation is." /></th>
                 <th>Passes/day</th>
                 <th>ESALs/day</th>
                 <th>Share</th>
@@ -377,10 +377,22 @@ export default function EsalCalculatorApp() {
           <div className="cee-chart">
             <h3 className="cee-chart__title">EALF vs. axle load — SN = {SN}, pₜ = {ptv}</h3>
             <div ref={chartRef} />
+            <p className="cee-chart__caption">
+              Each curve is the AASHTO design equation for one axle configuration; the y-axis is
+              logarithmic, so the near-straight lines mean damage grows as a <strong>power</strong> of
+              load. The diamonds are your axle groups. At a given load a tandem damages far less than a
+              single — the load is shared between two closely spaced axles — which is exactly why the
+              curves are separated.
+            </p>
           </div>
           <div className="cee-chart">
             <h3 className="cee-chart__title">Traffic accumulation — r = {(growth * 100).toFixed(1)}%/yr</h3>
             <div ref={cumRef} />
+            <p className="cee-chart__caption">
+              Design-lane ESALs piling up year by year. With growth the curve bends upward — later years
+              contribute more than early ones — and the end point is exactly the design W18 from the flow
+              strip. Set r = 0 and it becomes a straight line: G = n.
+            </p>
           </div>
         </div>
 

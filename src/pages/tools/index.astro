@@ -3,48 +3,92 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const base = import.meta.env.BASE_URL;
 
+// Each card gets a small stroke-drawn motif of what the tool computes; the
+// main path carries class "anim" and redraws on hover.
 const live = [
   {
     name: 'Resilient Modulus Fitter',
     href: `${base}tools/mr-fitter/`,
     color: '#E87722',
     hws: ['HW2'],
+    ref: 'MEPDG k₁–k₂–k₃ · Huang Ch. 7',
     desc: 'Fit k₁, k₂, k₃ of the generalized Mr model to triaxial data — live LINEST-style regression with R², a parity plot, and paste-from-Excel input.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
+      <path class="anim" d="M16 33 Q52 24 108 9"/>
+      <circle cx="32" cy="31" r="2.4" fill="currentColor" stroke="none"/>
+      <circle cx="54" cy="22" r="2.4" fill="currentColor" stroke="none"/>
+      <circle cx="76" cy="19" r="2.4" fill="currentColor" stroke="none"/>
+      <circle cx="98" cy="10" r="2.4" fill="currentColor" stroke="none"/>
+    </svg>`,
   },
   {
     name: 'Stress Explorer',
     href: `${base}tools/stress-explorer/`,
     color: '#0ea5e9',
     hws: ['HW3', 'HW4'],
+    ref: 'Boussinesq · Huang Eqs. 2.1–2.6',
     desc: 'One-layer (Boussinesq) response under a circular load: stress, strain, and deflection profiles, a draggable depth probe, and the classic σz/p pressure bulb.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M46 6 H74" stroke-width="4"/>
+      <path d="M50 10 Q60 22 70 10" opacity="0.85"/>
+      <path d="M44 10 Q60 34 76 10" opacity="0.6"/>
+      <path class="anim" d="M37 10 Q60 48 83 10" opacity="0.4"/>
+    </svg>`,
   },
   {
     name: 'ESAL Calculator',
     href: `${base}tools/esal-calculator/`,
     color: '#10b981',
     hws: ['HW5', 'HW7'],
+    ref: 'AASHTO 1993 · App. D',
     desc: 'Exact AASHTO load equivalency factors, a mixed axle spectrum with presets, and the full design-lane projection — D, L, growth — shown factor by factor.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
+      <path class="anim" d="M16 36 C52 33 84 22 108 7"/>
+      <path d="M42 34 l3.2 3.2 3.2-3.2 -3.2-3.2 Z" fill="currentColor" stroke="none"/>
+      <path d="M72 27 l3.2 3.2 3.2-3.2 -3.2-3.2 Z" fill="currentColor" stroke="none"/>
+      <path d="M94 15 l3.2 3.2 3.2-3.2 -3.2-3.2 Z" fill="currentColor" stroke="none"/>
+    </svg>`,
   },
   {
     name: 'Transfer-Function Damage',
     href: `${base}tools/damage/`,
     color: '#8b5cf6',
     hws: ['HW8'],
+    ref: 'AASHTOWare transfer functions',
     desc: 'Feed WinJULEA strains through the HW8 transfer functions: rutting per layer, Miner’s damage, and bottom-up cracking growing with every repetition.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M14 12 H106" opacity="0.3" stroke-dasharray="3 4" stroke-width="1.5"/>
+      <path class="anim" d="M14 12 C34 12 38 26 60 26 C82 26 86 12 106 12"/>
+      <path d="M25 38 C45 38 50 30 60 30 C70 30 75 38 95 38" opacity="0.45"/>
+    </svg>`,
   },
   {
     name: 'Westergaard Slab Stress',
     href: `${base}tools/westergaard/`,
     color: '#0ea5e9',
     hws: ['HW9'],
+    ref: 'Westergaard · Huang Eqs. 4.11–4.19',
     desc: 'Interior, edge, and corner stresses and deflections for a slab on a Winkler foundation, plus Bradbury curling — with a thickness sensitivity chart.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <rect class="anim" x="22" y="9" width="76" height="26" rx="2"/>
+      <circle cx="60" cy="22" r="4" fill="currentColor" stroke="none" opacity="0.9"/>
+      <circle cx="60" cy="9" r="4" fill="currentColor" stroke="none" opacity="0.6"/>
+      <circle cx="96" cy="33" r="4" fill="currentColor" stroke="none" opacity="0.6"/>
+    </svg>`,
   },
   {
     name: 'Pavement LCA Worksheet',
     href: `${base}tools/lca/`,
     color: '#10b981',
     hws: ['HW10'],
+    ref: 'FHWA LCA framework',
     desc: 'Life-cycle GHG for one lane-mile across all six stages, with the IRI sawtooth driving the rehab schedule and every inventory factor editable.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M14 9 H106" opacity="0.3" stroke-dasharray="3 4" stroke-width="1.5"/>
+      <path class="anim" d="M14 36 L44 9 L44 36 L74 9 L74 36 L104 9"/>
+    </svg>`,
   },
 ];
 ---
@@ -73,6 +117,9 @@ const live = [
       <div class="tools-list stagger-grid">
         {live.map(t => (
           <a href={t.href} class="tl-card gsap-stagger" style={`--tool-color: ${t.color}`}>
+            <div class="tl-card__glyph" aria-hidden="true">
+              <Fragment set:html={t.glyph} />
+            </div>
             <div class="tl-card__head">
               <span class="tl-card__name">{t.name}</span>
               <div class="tl-card__hws">
@@ -80,7 +127,10 @@ const live = [
               </div>
             </div>
             <p class="tl-card__desc">{t.desc}</p>
-            <span class="tl-card__cta">Open tool &rarr;</span>
+            <div class="tl-card__foot">
+              <span class="tl-card__ref">{t.ref}</span>
+              <span class="tl-card__cta">Open tool &rarr;</span>
+            </div>
           </a>
         ))}
       </div>
@@ -229,9 +279,63 @@ const live = [
     flex: 1;
   }
 
+  /* Glyph strip: a stroke-drawn motif of what the tool computes */
+  .tl-card__glyph {
+    color: var(--tool-color, var(--color-accent));
+    background: color-mix(in srgb, var(--tool-color, var(--color-accent)) 7%, transparent);
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    margin-bottom: 0.875rem;
+  }
+
+  .tl-card__glyph :global(svg) {
+    display: block;
+    width: 100%;
+    height: 54px;
+    transition: transform 0.25s ease;
+  }
+
+  a.tl-card:hover .tl-card__glyph :global(svg) {
+    transform: translateY(-1px) scale(1.02);
+  }
+
+  @keyframes tl-draw {
+    from { stroke-dasharray: 320; stroke-dashoffset: 320; }
+    to { stroke-dasharray: 320; stroke-dashoffset: 0; }
+  }
+
+  a.tl-card:hover .tl-card__glyph :global(path.anim),
+  a.tl-card:hover .tl-card__glyph :global(rect.anim) {
+    animation: tl-draw 0.9s ease;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tl-card__glyph :global(svg),
+    a.tl-card:hover .tl-card__glyph :global(path.anim),
+    a.tl-card:hover .tl-card__glyph :global(rect.anim) {
+      transition: none;
+      animation: none;
+    }
+  }
+
+  .tl-card__foot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .tl-card__ref {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
+  }
+
   .tl-card__cta {
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--color-accent);
+    white-space: nowrap;
   }
 </style>

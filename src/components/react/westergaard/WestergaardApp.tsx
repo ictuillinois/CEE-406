@@ -131,7 +131,10 @@ export default function WestergaardApp() {
         }], baseLayout(theme, {
           height: 300,
           margin: { l: 70, r: 60, t: 8, b: 44 },
-          xaxis: { title: { text: 'Bending stress (psi)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          xaxis: {
+            title: { text: 'Bending stress (psi)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid,
+            range: [0, Math.max(MR, res.sigE, res.sigC, res.sigI) * 1.18],
+          },
           yaxis: { gridcolor: 'rgba(0,0,0,0)', autorange: 'reversed' as const },
           showlegend: false,
           shapes: MR > 0 ? [{ type: 'line', x0: MR, x1: MR, yref: 'paper', y0: 0, y1: 1, line: { color: c.fg, width: 1, dash: 'dash' } }] : [],
@@ -260,21 +263,64 @@ export default function WestergaardApp() {
           <>
             <div className="cee-keys">
               <div className="cee-key">
-                <div className="cee-key__label">RADIUS OF REL. STIFFNESS ℓ</div>
+                <div className="cee-key__label">RADIUS OF REL. STIFFNESS ℓ<Tip text="The slab's natural length scale: how far it spreads a load into the foundation. Stiff slab / soft subgrade → large ℓ. Every Westergaard formula and both curling ratios consume it — compute it first." /></div>
                 <div className="cee-key__value">{fmt(res.ell, 2)}<small>in</small></div>
               </div>
               <div className="cee-key cee-key--accent">
-                <div className="cee-key__label">EDGE STRESS (CRITICAL)</div>
+                <div className="cee-key__label">EDGE STRESS (CRITICAL)<Tip text="Highway wheels travel close to the pavement edge, and the edge case gives the highest bending stress of the three — it governs slab thickness design." /></div>
                 <div className="cee-key__value">{fmt(res.sigE, 1)}<small>psi</small></div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">STRESS RATIO σ_EDGE / MR</div>
+                <div className="cee-key__label">STRESS RATIO σ_EDGE / MR<Tip text="Bending stress over the concrete's flexural strength. PCA-style design keeps this well below 1 — at 0.5 and below, fatigue life is essentially unlimited." /></div>
                 <div className="cee-key__value">{MR > 0 ? fmt(res.sigE / MR, 2) : '—'}</div>
               </div>
               <div className="cee-key">
-                <div className="cee-key__label">CORNER DEFLECTION</div>
+                <div className="cee-key__label">CORNER DEFLECTION<Tip text="The largest deflection of the three cases — repeated corner deflections pump water and fines from under the joint, which is how corner support is lost." /></div>
                 <div className="cee-key__value">{fmt(res.defC, 4)}<small>in</small></div>
               </div>
+            </div>
+
+            <div className="cee-diagram" aria-label="Plan view of the slab with the three Westergaard load positions">
+              <svg viewBox="0 0 340 172" role="img">
+                {(() => {
+                  const dark = theme === 'dark';
+                  const ink = dark ? '#F1F5F9' : '#0F1A2E';
+                  const mut = dark ? '#94A3B8' : '#6B7280';
+                  const line = dark ? '#2D3F59' : '#E5E7EB';
+                  const cOr = dark ? '#DC7014' : '#E87722';
+                  const cSk = dark ? '#0C93CF' : '#0EA5E9';
+                  const cGr = dark ? '#0EA372' : '#10B981';
+                  return (
+                    <>
+                      <rect x="20" y="26" width="300" height="120" rx="3" fill="none" stroke={ink} strokeWidth="1.5" />
+                      <text x="24" y="18" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={mut}>PLAN VIEW — one slab (joints at the boundary)</text>
+                      {/* interior */}
+                      <circle cx="170" cy="86" r="10" fill={cGr} opacity="0.9" />
+                      <text x="170" y="110" textAnchor="middle" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={ink}>Interior</text>
+                      <text x="170" y="121" textAnchor="middle" fontFamily="IBM Plex Mono, monospace" fontSize="8" fill={mut}>tension: bottom</text>
+                      {/* edge */}
+                      <circle cx="86" cy="36" r="10" fill={cOr} opacity="0.9" />
+                      <text x="86" y="60" textAnchor="middle" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={ink}>Edge</text>
+                      <text x="86" y="71" textAnchor="middle" fontFamily="IBM Plex Mono, monospace" fontSize="8" fill={mut}>tension: bottom</text>
+                      {/* corner */}
+                      <circle cx="308" cy="134" r="10" fill={cSk} opacity="0.9" />
+                      <text x="288" y="128" textAnchor="end" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={ink}>Corner</text>
+                      <text x="288" y="139" textAnchor="end" fontFamily="IBM Plex Mono, monospace" fontSize="8" fill={mut}>tension: top</text>
+                      {/* ℓ scale bar */}
+                      <line x1="20" y1="158" x2={20 + Math.min(140, res.ell * 2)} y2="158" stroke={line} strokeWidth="2" />
+                      <line x1="20" y1="154" x2="20" y2="162" stroke={mut} strokeWidth="1" />
+                      <line x1={20 + Math.min(140, res.ell * 2)} y1="154" x2={20 + Math.min(140, res.ell * 2)} y2="162" stroke={mut} strokeWidth="1" />
+                      <text x={26 + Math.min(140, res.ell * 2)} y="161" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={mut}>ℓ = {fmt(res.ell, 1)} in</text>
+                    </>
+                  );
+                })()}
+              </svg>
+              <p className="cee-chart__caption" style={{ padding: '0.375rem 0 0' }}>
+                The three Westergaard cases, colored to match the charts below. Each formula assumes the
+                load circle is tangent to the boundary it names. The corner is the odd one out: its maximum
+                stress is on the <strong>top</strong> of the slab, a distance ~2.38ℓ from the corner — which
+                is why corner cracks break downward and why checking bottom tension there is the classic error.
+              </p>
             </div>
 
             <div className="cee-tablewrap">
@@ -332,10 +378,21 @@ export default function WestergaardApp() {
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Load stress vs. slab thickness</h3>
                 <div ref={sensRef} />
+                <p className="cee-chart__caption">
+                  Each curve sweeps h with everything else fixed (diamonds = your current h). Stress falls
+                  roughly as <strong>1/h²</strong> — the leverage of thickness in rigid design. Where a
+                  curve crosses the dashed modulus-of-rupture line is the thickness at which one pass of
+                  this load would crack the slab; design keeps the working point far below it.
+                </p>
               </div>
               <div className="cee-chart">
                 <h3 className="cee-chart__title">Load stress by case — h = {h} in</h3>
                 <div ref={barRef} />
+                <p className="cee-chart__caption">
+                  The same load in the three positions. Edge &gt; corner &gt; interior in bending stress —
+                  the more slab surrounds the load, the more paths the moment has to spread. Deflections
+                  rank the other way (corner largest): stress cracks slabs, deflection pumps joints.
+                </p>
               </div>
             </div>
 
