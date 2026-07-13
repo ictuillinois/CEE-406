@@ -2,6 +2,7 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import LayerGlyph from '../../components/LayerGlyph.astro';
 import { homeworks } from '../../data/homeworks';
+import { hwGuides } from '../../data/hwGuides';
 
 export function getStaticPaths() {
   return homeworks.map(hw => ({ params: { id: hw.id }, props: { hw } }));
@@ -21,10 +22,16 @@ const idx = homeworks.findIndex(h => h.id === hw.id);
 const prev = idx > 0 ? homeworks[idx - 1] : null;
 const next = idx < homeworks.length - 1 ? homeworks[idx + 1] : null;
 
+const guide = hwGuides[hw.id];
+
 const toc = [
   { id: 'overview', label: 'Overview' },
+  ...(guide ? [{ id: 'purpose', label: 'Why this homework' }] : []),
   { id: 'objectives', label: 'What you\'ll learn' },
+  ...(guide?.concepts.length ? [{ id: 'concepts', label: 'Concepts & equations' }] : []),
   { id: 'problems', label: 'Problem set' },
+  ...(guide?.steps.length ? [{ id: 'approach', label: 'How to approach it' }] : []),
+  ...(guide?.pitfalls.length ? [{ id: 'pitfalls', label: 'Common pitfalls' }] : []),
   ...(hw.tools.length ? [{ id: 'tools', label: 'Tools' }] : []),
   { id: 'downloads', label: 'Downloads' },
   ...(hw.chapters.length ? [{ id: 'reading', label: 'Textbook reading' }] : []),
@@ -67,12 +74,48 @@ const kindLabel: Record<string, string> = {
 
   <hr class="doc-divider" />
 
+  {guide && (
+    <section class="doc-section" id="purpose" data-section>
+      <h2>Why this homework</h2>
+      <p>{guide.purpose}</p>
+    </section>
+  )}
+
   <section class="doc-section" id="objectives" data-section>
     <h2>What you'll learn</h2>
     <ul class="doc-list">
       {hw.objectives.map(o => <li>{o}</li>)}
     </ul>
   </section>
+
+  {guide && guide.concepts.length > 0 && (
+    <section class="doc-section" id="concepts" data-section data-katex>
+      <h2>Concepts &amp; equations</h2>
+      <p>
+        Everything below comes from the assigned reading — this is the working set
+        you need at your desk while solving the problems.
+      </p>
+      {guide.concepts.map(c =>
+        c.kind === 'equation' ? (
+          <div class="doc-equation">
+            <div class="doc-equation__title">{c.title}</div>
+            <div class="doc-equation__expr" set:html={c.body} />
+            {c.where && (
+              <div class="doc-equation__where">
+                <span class="doc-equation__label">Where</span>
+                <Fragment set:html={c.where} />
+              </div>
+            )}
+          </div>
+        ) : (
+          <div class="doc-callout doc-callout--info">
+            <span class="doc-callout__icon">💡</span>
+            <p><strong>{c.title}.</strong> <Fragment set:html={c.body} /></p>
+          </div>
+        )
+      )}
+    </section>
+  )}
 
   <section class="doc-section" id="problems" data-section data-katex>
     <h2>Problem set</h2>
@@ -96,6 +139,34 @@ const kindLabel: Record<string, string> = {
       </table>
     </div>
   </section>
+
+  {guide && guide.steps.length > 0 && (
+    <section class="doc-section" id="approach" data-section>
+      <h2>How to approach it</h2>
+      <div class="doc-steps">
+        {guide.steps.map((s, i) => (
+          <div class="doc-step">
+            <span class="doc-step__number">{i + 1}</span>
+            <div class="doc-step__content" set:html={s} />
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {guide && guide.pitfalls.length > 0 && (
+    <section class="doc-section" id="pitfalls" data-section>
+      <h2>Common pitfalls</h2>
+      <div class="doc-callouts">
+        {guide.pitfalls.map(p => (
+          <div class="doc-callout doc-callout--note">
+            <span class="doc-callout__icon">⚠️</span>
+            <p set:html={p} />
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
 
   {hw.tools.length > 0 && (
     <section class="doc-section" id="tools" data-section>

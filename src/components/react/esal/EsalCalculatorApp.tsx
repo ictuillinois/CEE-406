@@ -2,6 +2,7 @@
 // (AASHTO 1993 Guide, Appendix D; Huang 2004, Ch. 6) plus design-lane
 // traffic projection with growth, directional, and lane factors.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Tip from '../Tip';
 import '../tools.css';
 
 type AxleType = 'single' | 'tandem' | 'tridem';
@@ -159,13 +160,15 @@ export default function EsalCalculatorApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="es-sn">
-              SN <span className="cee-field__unit">1–9</span>
+              <span>SN<Tip text="Structural number of the pavement the EALF is evaluated for. If unknown, SN = 5 is the standard assumption — EALFs are only mildly sensitive to it." /></span>
+              <span className="cee-field__unit">1–9</span>
             </label>
             <input id="es-sn" className="cee-input" type="number" min="1" max="9" step="0.5" value={snStr} onChange={e => setSn(e.target.value)} />
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="es-pt">
-              Terminal pₜ <span className="cee-field__unit">PSI</span>
+              <span>Terminal pₜ<Tip text="Serviceability at end of life: 2.5 for major highways, 2.0 for lower-class roads." /></span>
+              <span className="cee-field__unit">PSI</span>
             </label>
             <select id="es-pt" className="cee-select" value={pt} onChange={e => setPt(e.target.value)}>
               <option value="2.0">2.0</option>
@@ -228,17 +231,23 @@ export default function EsalCalculatorApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="es-d">
-              Directional D <span className="cee-field__unit">0–1</span>
+              <span>Directional D<Tip text="Fraction of two-way traffic in the design direction, usually 0.5. Set to 1 if your counts are already one-direction." /></span>
+              <span className="cee-field__unit">0–1</span>
             </label>
             <input id="es-d" className="cee-input" type="number" min="0" max="1" step="0.05" value={dirStr} onChange={e => setDir(e.target.value)} />
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="es-l">
-              Lane L <span className="cee-field__unit">0–1</span>
+              <span>Lane L<Tip text="Fraction of directional trucks in the design lane: 1.0 for 1 lane/direction, 0.8–1.0 for 2, 0.6–0.8 for 3+." /></span>
+              <span className="cee-field__unit">0–1</span>
             </label>
             <input id="es-l" className="cee-input" type="number" min="0" max="1" step="0.05" value={laneStr} onChange={e => setLane(e.target.value)} />
           </div>
         </div>
+
+        {computed.withEalf.some(r => (r.type === 'single' && r.loadNum > 50) || (r.type === 'tandem' && r.loadNum > 90) || (r.type === 'tridem' && r.loadNum > 110)) && (
+          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>An axle load is beyond the range of the AASHTO tables — the equation extrapolates, so treat that EALF with caution.</span></p>
+        )}
 
         <p className="cee-hint">
           EALFs from the AASHTO design equation for flexible pavements
@@ -248,6 +257,19 @@ export default function EsalCalculatorApp() {
       </aside>
 
       <div className="cee-results">
+        <details className="cee-howto">
+          <summary>How to use this tool</summary>
+          <div className="cee-howto__body">
+            <ol>
+              <li><strong>Describe the pavement</strong>: SN and terminal serviceability pₜ set which AASHTO equivalency table you are in (defaults SN = 5, pₜ = 2.5 reproduce Table D.4).</li>
+              <li><strong>Build the axle spectrum</strong>: one row per axle group — load in kip, type, and daily passes. Tandems and tridems are single groups with their own EALF, <em>not</em> multiple singles.</li>
+              <li><strong>Project the traffic</strong>: growth rate and period give the growth factor G; D and L bring two-way traffic down to the design lane. If your counts are already design-lane values, set D = L = 1.</li>
+              <li><strong>Read the results</strong>: the table shows each group's exact EALF (compare with your interpolated table values), and the chart shows where your axles sit on the equivalency curves.</li>
+            </ol>
+            The EALFs come from the AASHTO design equation itself (1993 Guide, Appendix D), so they match the printed tables to the fourth decimal — a stronger check than the (L/18)⁴ rule of thumb.
+          </div>
+        </details>
+
         <div className="cee-keys">
           <div className="cee-key">
             <div className="cee-key__label">ESALs / DAY (YEAR 1)</div>

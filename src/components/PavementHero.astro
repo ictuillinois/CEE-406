@@ -1,6 +1,7 @@
 ---
-// Signature hero: animated pavement cross-section with a rolling wheel load
-// and Boussinesq-style pressure bulbs diffusing through the layers.
+// Signature hero: animated pavement cross-section with a rolling wheel load,
+// a live deflection basin, and Boussinesq-style pressure bulbs diffusing
+// through the layers. Static single frame under prefers-reduced-motion.
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -53,8 +54,23 @@ const base = import.meta.env.BASE_URL;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let W = 0, H = 0, dpr = 1;
-    let speckles: { x: number; y: number; r: number; a: number; band: number }[] = [];
     let rafId = 0;
+    let visible = true;
+    let last = 0;
+    let travel = 0; // wheel travel distance, px
+
+    // Pre-generated texture particles
+    let asphaltGrains: { x: number; y: number; r: number; a: number }[] = [];
+    let stones: { x: number; y: number; r: number; rot: number; sides: number; tone: number }[] = [];
+    let subbaseGrains: { x: number; y: number; r: number; a: number }[] = [];
+    let subgradeDots: { x: number; y: number; r: number; a: number }[] = [];
+
+    // ── Layer geometry: road section anchored to the hero bottom ──
+    const roadDepth = () => Math.min(H * 0.42, 360);
+    const surfY = () => H - roadDepth();
+    const acBot = () => surfY() + roadDepth() * 0.21;
+    const baseBot = () => surfY() + roadDepth() * 0.48;
+    const subbaseBot = () => surfY() + roadDepth() * 0.72;
 
     function resize() {
       const rect = canvas!.getBoundingClientRect();
@@ -64,83 +80,143 @@ const base = import.meta.env.BASE_URL;
       canvas!.width = Math.round(W * dpr);
       canvas!.height = Math.round(H * dpr);
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      makeSpeckles();
+      makeTextures();
     }
 
-    // Layer geometry — road section anchored to the bottom of the hero
-    const roadDepth = () => Math.min(H * 0.42, 360);
-    const surfY = () => H - roadDepth();
-    const acBot = () => surfY() + roadDepth() * 0.21;
-    const baseBot = () => surfY() + roadDepth() * 0.48;
-    const subbaseBot = () => surfY() + roadDepth() * 0.72;
-
-    function makeSpeckles() {
-      speckles = [];
-      const bands = [
-        { top: surfY(), bot: acBot(), n: Math.round(W / 6), rMin: 0.5, rMax: 1.4, band: 0 },
-        { top: acBot(), bot: baseBot(), n: Math.round(W / 3), rMin: 0.8, rMax: 2.6, band: 1 },
-        { top: baseBot(), bot: subbaseBot(), n: Math.round(W / 4), rMin: 0.6, rMax: 2.0, band: 2 },
-      ];
-      for (const b of bands) {
-        for (let i = 0; i < b.n; i++) {
-          speckles.push({
-            x: Math.random() * W,
-            y: b.top + 2 + Math.random() * (b.bot - b.top - 4),
-            r: b.rMin + Math.random() * (b.rMax - b.rMin),
-            a: 0.05 + Math.random() * 0.16,
-            band: b.band,
-          });
-        }
+    function makeTextures() {
+      const sy = surfY();
+      asphaltGrains = [];
+      for (let i = 0; i < W / 3; i++) {
+        asphaltGrains.push({
+          x: Math.random() * W,
+          y: sy + 2 + Math.random() * (acBot() - sy - 4),
+          r: 0.4 + Math.random() * 1.1,
+          a: 0.04 + Math.random() * 0.14,
+        });
+      }
+      stones = [];
+      for (let i = 0; i < W / 9; i++) {
+        stones.push({
+          x: Math.random() * W,
+          y: acBot() + 5 + Math.random() * (baseBot() - acBot() - 10),
+          r: 2.2 + Math.random() * 3.4,
+          rot: Math.random() * Math.PI,
+          sides: 5 + Math.floor(Math.random() * 3),
+          tone: Math.random(),
+        });
+      }
+      subbaseGrains = [];
+      for (let i = 0; i < W / 5; i++) {
+        subbaseGrains.push({
+          x: Math.random() * W,
+          y: baseBot() + 3 + Math.random() * (subbaseBot() - baseBot() - 6),
+          r: 0.7 + Math.random() * 1.6,
+          a: 0.08 + Math.random() * 0.15,
+        });
+      }
+      subgradeDots = [];
+      for (let i = 0; i < W / 14; i++) {
+        subgradeDots.push({
+          x: Math.random() * W,
+          y: subbaseBot() + 4 + Math.random() * (H - subbaseBot() - 8),
+          r: 0.6 + Math.random() * 1.3,
+          a: 0.05 + Math.random() * 0.1,
+        });
       }
     }
 
-    function theme() {
-      return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    const dark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+    /** Deflection basin: exaggerated surface dip centered on the wheel. */
+    function basin(x: number, wx: number, amp: number, width: number): number {
+      const u = (x - wx) / width;
+      return amp * Math.exp(-u * u);
     }
 
-    function drawScene(t: number) {
-      const dark = theme() === 'dark';
+    function drawPolygon(x: number, y: number, r: number, rot: number, sides: number) {
+      ctx!.beginPath();
+      for (let i = 0; i <= sides; i++) {
+        const ang = rot + (i * Math.PI * 2) / sides;
+        const rr = r * (0.8 + 0.2 * Math.sin(i * 2.7 + rot * 5));
+        const px = x + Math.cos(ang) * rr;
+        const py = y + Math.sin(ang) * rr * 0.8;
+        i === 0 ? ctx!.moveTo(px, py) : ctx!.lineTo(px, py);
+      }
+      ctx!.closePath();
+    }
+
+    function drawScene() {
+      const isDark = dark();
       ctx!.clearRect(0, 0, W, H);
 
       const sy = surfY();
+      const R = Math.max(26, Math.min(46, H * 0.055)); // wheel radius
+      const span = W + 6 * R;
+      const wx = reduced ? W * 0.64 : (travel % span) - 3 * R;
+      const AMP = 5;                 // basin amplitude, px
+      const BW = R * 2.4;            // basin half-width parameter
+      const wy = sy + basin(wx, wx, AMP, BW) - R + 1.5;
 
-      // ── Sky (transparent — CSS gradient behind) ──
+      // ── Layers (drawn with the deflected surface) ──
+      const surfAt = (x: number) => sy + basin(x, wx, AMP, BW);
 
-      // ── Layers ──
-      // Asphalt concrete
-      ctx!.fillStyle = dark ? '#171c26' : '#20242e';
-      ctx!.fillRect(0, sy, W, acBot() - sy);
+      // Asphalt concrete band
+      ctx!.beginPath();
+      ctx!.moveTo(0, acBot());
+      ctx!.lineTo(0, surfAt(0));
+      const step = Math.max(6, W / 220);
+      for (let x = 0; x <= W + step; x += step) ctx!.lineTo(x, surfAt(x));
+      ctx!.lineTo(W, acBot());
+      ctx!.closePath();
+      ctx!.fillStyle = isDark ? '#171c26' : '#20242e';
+      ctx!.fill();
+
       // Aggregate base
-      ctx!.fillStyle = dark ? '#4d4130' : '#8a7452';
+      ctx!.fillStyle = isDark ? '#4d4130' : '#8a7452';
       ctx!.fillRect(0, acBot(), W, baseBot() - acBot());
       // Subbase
-      ctx!.fillStyle = dark ? '#3c3527' : '#a8946e';
+      ctx!.fillStyle = isDark ? '#3c3527' : '#a8946e';
       ctx!.fillRect(0, baseBot(), W, subbaseBot() - baseBot());
-      // Subgrade (fades down)
-      const sgGrad = ctx!.createLinearGradient(0, subbaseBot(), 0, H);
-      if (dark) {
-        sgGrad.addColorStop(0, '#2b2620');
-        sgGrad.addColorStop(1, '#10141d');
+      // Subgrade fades into the page background
+      const sg = ctx!.createLinearGradient(0, subbaseBot(), 0, H);
+      if (isDark) {
+        sg.addColorStop(0, '#2b2620');
+        sg.addColorStop(1, '#10141d');
       } else {
-        sgGrad.addColorStop(0, '#6e5c42');
-        sgGrad.addColorStop(1, '#3f3527');
+        sg.addColorStop(0, '#6e5c42');
+        sg.addColorStop(1, '#3f3527');
       }
-      ctx!.fillStyle = sgGrad;
+      ctx!.fillStyle = sg;
       ctx!.fillRect(0, subbaseBot(), W, H - subbaseBot());
 
-      // Speckles (aggregate texture)
-      for (const s of speckles) {
+      // ── Textures ──
+      for (const g of asphaltGrains) {
         ctx!.beginPath();
-        ctx!.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx!.fillStyle =
-          s.band === 0 ? `rgba(255,255,255,${s.a * 0.5})` :
-          s.band === 1 ? `rgba(30,24,14,${s.a + 0.08})` :
-          `rgba(38,31,20,${s.a})`;
+        ctx!.arc(g.x, g.y + basin(g.x, wx, AMP * 0.8, BW), g.r, 0, Math.PI * 2);
+        ctx!.fillStyle = `rgba(255,255,255,${g.a * 0.5})`;
+        ctx!.fill();
+      }
+      for (const s of stones) {
+        drawPolygon(s.x, s.y, s.r, s.rot, s.sides);
+        const t = 22 + s.tone * 26;
+        ctx!.fillStyle = isDark ? `rgba(${t + 30},${t + 22},${t + 8},0.55)` : `rgba(${t + 8},${t - 2},${t - 14},0.35)`;
+        ctx!.fill();
+      }
+      for (const g of subbaseGrains) {
+        ctx!.beginPath();
+        ctx!.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+        ctx!.fillStyle = `rgba(38,31,20,${g.a})`;
+        ctx!.fill();
+      }
+      for (const g of subgradeDots) {
+        ctx!.beginPath();
+        ctx!.arc(g.x, g.y, g.r, 0, Math.PI * 2);
+        ctx!.fillStyle = `rgba(0,0,0,${g.a + 0.05})`;
         ctx!.fill();
       }
 
       // Layer interfaces
-      ctx!.strokeStyle = 'rgba(0,0,0,0.25)';
+      ctx!.strokeStyle = 'rgba(0,0,0,0.28)';
       ctx!.lineWidth = 1;
       for (const y of [acBot(), baseBot(), subbaseBot()]) {
         ctx!.beginPath();
@@ -149,81 +225,100 @@ const base = import.meta.env.BASE_URL;
         ctx!.stroke();
       }
 
-      // Surface line + lane dashes
-      ctx!.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx!.lineWidth = 1.5;
+      // ── Deflected surface line ──
       ctx!.beginPath();
-      ctx!.moveTo(0, sy);
-      ctx!.lineTo(W, sy);
+      ctx!.moveTo(0, surfAt(0));
+      for (let x = 0; x <= W + step; x += step) ctx!.lineTo(x, surfAt(x));
+      ctx!.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx!.lineWidth = 1.5;
       ctx!.stroke();
 
-      // ── Wheel position ──
-      const R = Math.max(26, H * 0.055);
-      const span = W + 6 * R;
-      const speed = W / 14; // px per second
-      const wx = reduced ? W * 0.62 : ((t * speed) % span) - 3 * R;
-      const wy = sy - R;
+      // Undeflected reference (dashed) inside the basin region
+      ctx!.setLineDash([3, 4]);
+      ctx!.beginPath();
+      ctx!.moveTo(wx - BW * 2.2, sy);
+      ctx!.lineTo(wx + BW * 2.2, sy);
+      ctx!.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx!.lineWidth = 1;
+      ctx!.stroke();
+      ctx!.setLineDash([]);
 
-      // ── Pressure bulbs (Boussinesq isobars) under the contact point ──
-      const a = R * 0.62; // contact radius
+      // ── Pressure bulbs (Boussinesq isobars) under the contact ──
+      const t = travel / 60; // slow phase driver
+      const a = R * 0.62;
+      const cy = surfAt(wx) + 1;
       const bulbs = [
-        { k: 0.55, alpha: 0.55, label: '0.9p' },
-        { k: 1.15, alpha: 0.40, label: '0.7p' },
-        { k: 1.9, alpha: 0.30, label: '0.5p' },
-        { k: 2.9, alpha: 0.20, label: '0.3p' },
-        { k: 4.3, alpha: 0.12, label: '0.1p' },
+        { k: 0.55, alpha: 0.6, label: '0.9p' },
+        { k: 1.15, alpha: 0.44, label: '0.7p' },
+        { k: 1.9, alpha: 0.32, label: '0.5p' },
+        { k: 2.9, alpha: 0.22, label: '0.3p' },
+        { k: 4.3, alpha: 0.13, label: '0.1p' },
       ];
-      const pulse = reduced ? 1 : 0.92 + 0.08 * Math.sin(t * 2.2);
 
-      // Contact glow
-      const glow = ctx!.createRadialGradient(wx, sy, 0, wx, sy, a * 6.5);
-      glow.addColorStop(0, 'rgba(232,119,34,0.28)');
+      const glow = ctx!.createRadialGradient(wx, cy, 0, wx, cy, a * 6.5);
+      glow.addColorStop(0, 'rgba(232,119,34,0.30)');
       glow.addColorStop(1, 'rgba(232,119,34,0)');
       ctx!.fillStyle = glow;
-      ctx!.fillRect(wx - a * 7, sy, a * 14, a * 7);
+      ctx!.fillRect(wx - a * 7, cy, a * 14, a * 7);
 
       ctx!.lineWidth = 1.25;
-      for (const b of bulbs) {
+      bulbs.forEach((b, i) => {
+        const pulse = reduced ? 1 : 0.94 + 0.06 * Math.sin(t * 2.0 - i * 0.7);
         const ry = a * b.k * pulse;
         const rx = a * (1 + b.k * 0.78) * pulse;
         ctx!.beginPath();
-        ctx!.ellipse(wx, sy, rx, ry, 0, 0, Math.PI);
+        ctx!.ellipse(wx, cy, rx, ry, 0, 0, Math.PI);
         ctx!.strokeStyle = `rgba(232,119,34,${b.alpha})`;
         ctx!.stroke();
-      }
-      // Isobar labels (only when wheel is well inside the viewport)
-      if (wx > W * 0.12 && wx < W * 0.88) {
+      });
+      if (wx > W * 0.12 && wx < W * 0.86) {
         ctx!.font = '500 9px "IBM Plex Mono", monospace';
-        ctx!.fillStyle = 'rgba(245,155,75,0.75)';
+        ctx!.fillStyle = 'rgba(245,155,75,0.8)';
         ctx!.textAlign = 'left';
-        for (const b of [bulbs[1], bulbs[3]]) {
-          const ry = a * b.k * pulse;
-          const rx = a * (1 + b.k * 0.78) * pulse;
-          ctx!.fillText(b.label, wx + rx * 0.72, sy + ry * 0.78);
+        for (const i of [1, 3]) {
+          const b = bulbs[i];
+          const ry = a * b.k;
+          const rx = a * (1 + b.k * 0.78);
+          ctx!.fillText(b.label, wx + rx * 0.74, cy + ry * 0.76);
         }
       }
 
+      // ── Contact patch highlight ──
+      ctx!.beginPath();
+      ctx!.rect(wx - a, cy - 1.5, a * 2, 3);
+      ctx!.fillStyle = 'rgba(232,119,34,0.75)';
+      ctx!.fill();
+
       // ── Wheel ──
+      const rot = travel / R;
       // Tire
       ctx!.beginPath();
       ctx!.arc(wx, wy, R, 0, Math.PI * 2);
-      ctx!.fillStyle = dark ? '#0c0f16' : '#14161c';
+      ctx!.fillStyle = isDark ? '#0c0f16' : '#14161c';
       ctx!.fill();
       ctx!.lineWidth = 2;
-      ctx!.strokeStyle = 'rgba(255,255,255,0.14)';
+      ctx!.strokeStyle = 'rgba(255,255,255,0.15)';
       ctx!.stroke();
+      // Tread notches
+      ctx!.strokeStyle = 'rgba(255,255,255,0.20)';
+      ctx!.lineWidth = 1.5;
+      for (let i = 0; i < 12; i++) {
+        const ang = rot + (i * Math.PI * 2) / 12;
+        ctx!.beginPath();
+        ctx!.moveTo(wx + Math.cos(ang) * (R - 4), wy + Math.sin(ang) * (R - 4));
+        ctx!.lineTo(wx + Math.cos(ang) * R, wy + Math.sin(ang) * R);
+        ctx!.stroke();
+      }
       // Rim
       ctx!.beginPath();
       ctx!.arc(wx, wy, R * 0.52, 0, Math.PI * 2);
-      ctx!.fillStyle = dark ? '#232a38' : '#2d3442';
+      ctx!.fillStyle = isDark ? '#232a38' : '#2d3442';
       ctx!.fill();
-      ctx!.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx!.strokeStyle = 'rgba(255,255,255,0.24)';
       ctx!.lineWidth = 1.5;
       ctx!.stroke();
-      // Spokes (rotate with travel)
-      const rot = wx / R;
-      ctx!.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx!.lineWidth = 1.5;
+      // Spokes
+      ctx!.strokeStyle = 'rgba(255,255,255,0.26)';
       for (let i = 0; i < 5; i++) {
         const ang = rot + (i * Math.PI * 2) / 5;
         ctx!.beginPath();
@@ -237,54 +332,93 @@ const base = import.meta.env.BASE_URL;
       ctx!.fillStyle = '#E87722';
       ctx!.fill();
 
-      // Load arrow above the wheel
-      ctx!.strokeStyle = 'rgba(232,119,34,0.85)';
-      ctx!.fillStyle = 'rgba(232,119,34,0.85)';
+      // ── Load arrow ──
+      ctx!.strokeStyle = 'rgba(232,119,34,0.9)';
+      ctx!.fillStyle = 'rgba(232,119,34,0.9)';
       ctx!.lineWidth = 2;
-      const ax = wx, ay0 = wy - R - 34, ay1 = wy - R - 8;
+      const ay0 = wy - R - 36, ay1 = wy - R - 10;
       ctx!.beginPath();
-      ctx!.moveTo(ax, ay0);
-      ctx!.lineTo(ax, ay1);
+      ctx!.moveTo(wx, ay0);
+      ctx!.lineTo(wx, ay1);
       ctx!.stroke();
       ctx!.beginPath();
-      ctx!.moveTo(ax, ay1 + 5);
-      ctx!.lineTo(ax - 5, ay1 - 4);
-      ctx!.lineTo(ax + 5, ay1 - 4);
+      ctx!.moveTo(wx, ay1 + 5);
+      ctx!.lineTo(wx - 5, ay1 - 4);
+      ctx!.lineTo(wx + 5, ay1 - 4);
       ctx!.closePath();
       ctx!.fill();
       ctx!.font = '500 10px "IBM Plex Mono", monospace';
       ctx!.textAlign = 'center';
-      ctx!.fillText('P', ax + 10, ay0 + 8);
+      ctx!.fillText('P', wx + 11, ay0 + 9);
+
+      // ── Depth ruler (z/a) on the right ──
+      const rx0 = W - 54;
+      ctx!.strokeStyle = 'rgba(255,255,255,0.22)';
+      ctx!.lineWidth = 1;
+      ctx!.beginPath();
+      ctx!.moveTo(rx0, sy);
+      ctx!.lineTo(rx0, Math.min(sy + 4 * a * 1.6, H - 12));
+      ctx!.stroke();
+      ctx!.font = '500 8.5px "IBM Plex Mono", monospace';
+      ctx!.textAlign = 'left';
+      ctx!.fillStyle = 'rgba(255,255,255,0.35)';
+      for (let i = 0; i <= 4; i++) {
+        const zy = sy + i * a * 1.6;
+        if (zy > H - 12) break;
+        ctx!.beginPath();
+        ctx!.moveTo(rx0 - 3, zy);
+        ctx!.lineTo(rx0 + 3, zy);
+        ctx!.stroke();
+        ctx!.fillText(i === 0 ? 'z=0' : `${i}a`, rx0 + 7, zy + 3);
+      }
 
       // ── Layer labels ──
       ctx!.font = '600 9.5px "IBM Plex Mono", monospace';
       ctx!.textAlign = 'left';
-      const labels: [string, number, string][] = [
-        ['ASPHALT CONCRETE', (sy + acBot()) / 2, 'rgba(255,255,255,0.5)'],
-        ['AGGREGATE BASE', (acBot() + baseBot()) / 2, 'rgba(20,14,6,0.6)'],
-        ['SUBBASE', (baseBot() + subbaseBot()) / 2, 'rgba(20,14,6,0.55)'],
-        ['SUBGRADE', subbaseBot() + (H - subbaseBot()) * 0.35, 'rgba(255,255,255,0.35)'],
+      const labels: [string, number][] = [
+        ['ASPHALT CONCRETE', (sy + acBot()) / 2],
+        ['AGGREGATE BASE', (acBot() + baseBot()) / 2],
+        ['SUBBASE', (baseBot() + subbaseBot()) / 2],
+        ['SUBGRADE', subbaseBot() + (H - subbaseBot()) * 0.4],
       ];
-      for (const [text, y, color] of labels) {
-        ctx!.fillStyle = dark ? 'rgba(255,255,255,0.35)' : color;
+      labels.forEach(([text, y], i) => {
+        ctx!.fillStyle = isDark
+          ? 'rgba(255,255,255,0.38)'
+          : i === 0 ? 'rgba(255,255,255,0.5)' : i === 3 ? 'rgba(255,255,255,0.4)' : 'rgba(20,14,6,0.6)';
         ctx!.fillText(text, 16, y + 3.5);
-      }
+      });
     }
 
     function loop(ms: number) {
-      drawScene(ms / 1000);
+      if (!last) last = ms;
+      const dt = Math.min(50, ms - last);
+      last = ms;
+      if (visible) {
+        travel += (dt / 1000) * (W / 15); // ~15 s to cross
+        drawScene();
+      }
       if (!reduced) rafId = requestAnimationFrame(loop);
     }
 
     resize();
-    window.addEventListener('resize', () => {
-      cancelAnimationFrame(rafId);
-      resize();
-      rafId = requestAnimationFrame(loop);
-    });
-    rafId = requestAnimationFrame(loop);
+    drawScene();
 
-    document.addEventListener('astro:before-swap', () => cancelAnimationFrame(rafId), { once: true });
+    window.addEventListener('resize', () => {
+      resize();
+      drawScene();
+    });
+
+    if (!reduced) {
+      const io = new IntersectionObserver(entries => {
+        visible = entries[0]?.isIntersecting ?? true;
+      });
+      io.observe(canvas);
+      rafId = requestAnimationFrame(loop);
+      document.addEventListener('astro:before-swap', () => {
+        cancelAnimationFrame(rafId);
+        io.disconnect();
+      }, { once: true });
+    }
   }
 
   initPavementCanvas();
@@ -294,10 +428,12 @@ const base = import.meta.env.BASE_URL;
 <style>
   .hero {
     position: relative;
-    min-height: min(88vh, 820px);
+    min-height: min(92vh, 860px);
     display: flex;
     align-items: flex-start;
-    background: linear-gradient(180deg, #0F1A2E 0%, #13223C 55%, #0F1A2E 100%);
+    background:
+      radial-gradient(120% 90% at 85% 0%, #16294a 0%, rgba(19, 34, 60, 0) 55%),
+      linear-gradient(180deg, #0F1A2E 0%, #13223C 60%, #0F1A2E 100%);
     overflow: hidden;
     margin-top: -3.25rem; /* pull under fixed nav */
     padding-top: 3.25rem;
@@ -308,12 +444,22 @@ const base = import.meta.env.BASE_URL;
     inset: 0;
     width: 100%;
     height: 100%;
+    animation: hero-canvas-in 1.2s ease both;
+  }
+
+  @keyframes hero-canvas-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-canvas { animation: none; }
   }
 
   .hero-scrim {
     position: absolute;
     inset: 0;
-    background: linear-gradient(100deg, rgba(15, 26, 46, 0.88) 0%, rgba(15, 26, 46, 0.55) 45%, rgba(15, 26, 46, 0.1) 75%);
+    background: linear-gradient(100deg, rgba(15, 26, 46, 0.88) 0%, rgba(15, 26, 46, 0.55) 45%, rgba(15, 26, 46, 0.08) 75%);
     pointer-events: none;
   }
 
@@ -347,6 +493,7 @@ const base = import.meta.env.BASE_URL;
     font-size: clamp(2.5rem, 6.5vw, 4.5rem);
     margin: 0 0 1rem;
     max-width: 14ch;
+    text-wrap: balance;
   }
 
   .hero-sub {
@@ -361,7 +508,7 @@ const base = import.meta.env.BASE_URL;
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
-    margin-bottom: 2.25rem;
+    margin-bottom: 2rem;
   }
 
   /* ── Stats: HUD chip that can safely overlap the road section ── */
@@ -397,8 +544,8 @@ const base = import.meta.env.BASE_URL;
 
   @media (max-width: 640px) {
     .hero-content {
-      padding-bottom: clamp(14rem, 46vh, 20rem);
+      padding-bottom: clamp(13rem, 44vh, 19rem);
     }
-    .hero-stats { gap: 1.25rem 1.75rem; }
+    .hero-stats { gap: 1.1rem 1.5rem; padding: 0.75rem 1rem; }
   }
 </style>

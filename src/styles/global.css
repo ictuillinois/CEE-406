@@ -94,7 +94,7 @@
   --eq-bg: #f8f9fb;
   --eq-border-accent: #E87722;
 }
-:global([data-theme="dark"]) .doc-equation {
+[data-theme="dark"] .doc-equation {
   --eq-bg: #111827;
   --eq-border-accent: #f59e0b;
 }

@@ -2,6 +2,7 @@
 // of a uniformly loaded flexible circular area. Closed forms from Huang (2004),
 // Eqs. 2.1–2.6. Supports HW3/HW4 hand-calculation checks.
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Tip from '../Tip';
 import '../tools.css';
 
 type Profile = {
@@ -161,14 +162,16 @@ export default function StressExplorerApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="sx-p">
-            Contact pressure p <span className="cee-field__unit">kPa</span>
+            <span>Contact pressure p<Tip text="Uniform pressure on the circular contact area — close to the tire inflation pressure. HW4 uses 720 kPa (~105 psi)." /></span>
+            <span className="cee-field__unit">kPa</span>
           </label>
           <input id="sx-p" className="cee-input" type="number" min="1" step="10" value={pStr} onChange={e => setP(e.target.value)} />
         </div>
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="sx-a">
-            Contact radius a <span className="cee-field__unit">mm</span>
+            <span>Contact radius a<Tip text="Radius of the loaded circle: a = √(P/πp) from wheel load and pressure. HW4 uses 145 mm." /></span>
+            <span className="cee-field__unit">mm</span>
           </label>
           <input id="sx-a" className="cee-input" type="number" min="1" step="5" value={aStr} onChange={e => setA(e.target.value)} />
         </div>
@@ -176,13 +179,15 @@ export default function StressExplorerApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="sx-e">
-              Modulus E <span className="cee-field__unit">MPa</span>
+              <span>Modulus E<Tip text="Elastic modulus of the half-space. Typical subgrades: 20–150 MPa. Stresses don't depend on E — strains and deflection do." /></span>
+              <span className="cee-field__unit">MPa</span>
             </label>
             <input id="sx-e" className="cee-input" type="number" min="1" step="10" value={eStr} onChange={e => setE(e.target.value)} />
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="sx-nu">
-              Poisson ν <span className="cee-field__unit">–</span>
+              <span>Poisson ν<Tip text="0.30–0.35 for granular materials, 0.40–0.45 for fine-grained soils. ν = 0.5 is incompressible (limit)." /></span>
+              <span className="cee-field__unit">–</span>
             </label>
             <input id="sx-nu" className="cee-input" type="number" min="0" max="0.49" step="0.05" value={nuStr} onChange={e => setNu(e.target.value)} />
           </div>
@@ -190,10 +195,15 @@ export default function StressExplorerApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="sx-zr">
-            Profile depth <span className="cee-field__unit">× a</span>
+            <span>Profile depth<Tip text="How deep to plot, in multiples of the contact radius. At z = 4a the vertical stress has dropped below ~5% of p." /></span>
+            <span className="cee-field__unit">× a</span>
           </label>
           <input id="sx-zr" className="cee-input" type="number" min="1" max="10" step="1" value={zRatioStr} onChange={e => setZRatio(e.target.value)} />
         </div>
+
+        {nu >= 0.48 && (
+          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>ν is near the incompressible limit (0.5): the (1−2ν) terms vanish and strains become very small. Use 0.45 or less for realistic soils.</span></p>
+        )}
 
         <p className="cee-hint">
           One-layer elastic half-space, flexible circular load, response on the axis of
@@ -204,8 +214,21 @@ export default function StressExplorerApp() {
       </aside>
 
       <div className="cee-results">
+        <details className="cee-howto">
+          <summary>How to use this tool</summary>
+          <div className="cee-howto__body">
+            <ol>
+              <li><strong>Set the load</strong>: contact pressure <code>p</code> and radius <code>a</code> (from wheel load: a = √(P/πp)).</li>
+              <li><strong>Set the material</strong>: one modulus and Poisson ratio — this is a <em>one-layer</em> (homogeneous half-space) model.</li>
+              <li><strong>Read the profiles</strong>: depth increases downward; compression is positive. Hover any curve for exact values at a depth.</li>
+              <li><strong>Check hand solutions</strong>: the table gives values at the classic z/a ratios used by the HW3 charts, and the key cards give the two results every solution should reproduce: σz/p = 0.646 at z = a, and w₀ = 2(1−ν²)pa/E.</li>
+            </ol>
+            For layered systems this is a bounding case: a stiff top layer will cut the subgrade stress well below the one-layer curve — that reduction is exactly what the HW3 two- and three-layer charts (and WinJULEA in HW4) quantify.
+          </div>
+        </details>
+
         {!valid ? (
-          <p className="cee-note">Enter positive values for p, a, and E to see results.</p>
+          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>Enter positive values for p, a, and E to see results.</span></p>
         ) : (
           <>
             <div className="cee-keys">

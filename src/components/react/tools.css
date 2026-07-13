@@ -328,6 +328,154 @@
   border-color: #ef4444;
 }
 
+/* ── Info tooltips ── */
+.cee-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-muted);
+  cursor: help;
+  outline: none;
+  vertical-align: middle;
+  margin-left: 0.3rem;
+}
+
+.cee-tip svg {
+  width: 0.8rem;
+  height: 0.8rem;
+  opacity: 0.65;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.cee-tip:hover svg,
+.cee-tip:focus-visible svg {
+  opacity: 1;
+  color: var(--color-accent);
+}
+
+.cee-tip__pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(3px);
+  width: max-content;
+  max-width: 15rem;
+  padding: 0.5rem 0.7rem;
+  background: #0f1a2e;
+  color: #e2e8f0;
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 400;
+  line-height: 1.5;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  z-index: 30;
+  pointer-events: none;
+  text-transform: none;
+  letter-spacing: 0;
+  white-space: normal;
+}
+
+.cee-tip:hover .cee-tip__pop,
+.cee-tip:focus-visible .cee-tip__pop {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+[data-theme='dark'] .cee-tip__pop {
+  background: #1b2d4a;
+}
+
+/* ── "How to use" panel ── */
+.cee-howto {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+[data-theme='dark'] .cee-howto {
+  background: #162033;
+  border-color: #2d3f59;
+}
+
+.cee-howto summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.8rem 1.125rem;
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text);
+  list-style: none;
+  user-select: none;
+}
+
+.cee-howto summary::-webkit-details-marker { display: none; }
+
+.cee-howto summary::before {
+  content: '';
+  width: 0.45rem;
+  height: 0.45rem;
+  border-right: 2px solid var(--color-accent);
+  border-bottom: 2px solid var(--color-accent);
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.cee-howto[open] summary::before { transform: rotate(45deg); }
+
+.cee-howto__body {
+  padding: 0 1.125rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+}
+
+.cee-howto__body ol {
+  margin: 0.25rem 0 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.cee-howto__body li { margin-bottom: 0.3rem; }
+.cee-howto__body strong { color: var(--color-text); }
+.cee-howto__body code {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  background: var(--color-surface-alt);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+
+[data-theme='dark'] .cee-howto__body code { background: #0f1a2e; }
+
+/* ── Inline warning ── */
+.cee-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.09);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  margin: 0;
+}
+
+[data-theme='dark'] .cee-warn { color: #fbbf24; }
+
+.cee-warn__icon { flex-shrink: 0; }
+
 /* Note box */
 .cee-note {
   font-size: 0.75rem;
