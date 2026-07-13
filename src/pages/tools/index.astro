@@ -5,26 +5,47 @@ const base = import.meta.env.BASE_URL;
 
 const live = [
   {
+    name: 'Resilient Modulus Fitter',
+    href: `${base}tools/mr-fitter/`,
+    color: '#E87722',
+    hws: ['HW2'],
+    desc: 'Fit k₁, k₂, k₃ of the generalized Mr model to triaxial data — live LINEST-style regression with R², a parity plot, and paste-from-Excel input.',
+  },
+  {
     name: 'Stress Explorer',
     href: `${base}tools/stress-explorer/`,
     color: '#0ea5e9',
     hws: ['HW3', 'HW4'],
-    desc: 'One-layer (Boussinesq) response under the center of a circular load: vertical and radial stresses, strains, and deflection versus depth — with live charts and a normalized table you can check hand solutions against.',
+    desc: 'One-layer (Boussinesq) response under a circular load: stress, strain, and deflection profiles, a draggable depth probe, and the classic σz/p pressure bulb.',
   },
   {
     name: 'ESAL Calculator',
     href: `${base}tools/esal-calculator/`,
     color: '#10b981',
     hws: ['HW5', 'HW7'],
-    desc: 'AASHTO load equivalency factors from the design equation (pt, SN, axle type), a mixed-traffic ESAL table, and design-lane traffic with growth, directional, and lane distribution factors.',
+    desc: 'Exact AASHTO load equivalency factors, a mixed axle spectrum with presets, and the full design-lane projection — D, L, growth — shown factor by factor.',
   },
-];
-
-const planned = [
-  { name: 'Resilient Modulus Fitter', hws: ['HW2'], desc: 'Fit k₁, k₂, k₃ of the generalized Mr model to triaxial data and report R².' },
-  { name: 'Transfer-Function Damage', hws: ['HW8'], desc: 'Accumulate AC fatigue and rutting damage from layer strains with AASHTOWare-style transfer functions.' },
-  { name: 'Westergaard Slab Stress', hws: ['HW9'], desc: 'Interior, edge, and corner stresses and deflections for concrete slabs, with curling.' },
-  { name: 'Pavement LCA Worksheet', hws: ['HW10'], desc: 'Life-cycle GHG accounting across materials, construction, use, and rehabilitation stages.' },
+  {
+    name: 'Transfer-Function Damage',
+    href: `${base}tools/damage/`,
+    color: '#8b5cf6',
+    hws: ['HW8'],
+    desc: 'Feed WinJULEA strains through the HW8 transfer functions: rutting per layer, Miner’s damage, and bottom-up cracking growing with every repetition.',
+  },
+  {
+    name: 'Westergaard Slab Stress',
+    href: `${base}tools/westergaard/`,
+    color: '#0ea5e9',
+    hws: ['HW9'],
+    desc: 'Interior, edge, and corner stresses and deflections for a slab on a Winkler foundation, plus Bradbury curling — with a thickness sensitivity chart.',
+  },
+  {
+    name: 'Pavement LCA Worksheet',
+    href: `${base}tools/lca/`,
+    color: '#10b981',
+    hws: ['HW10'],
+    desc: 'Life-cycle GHG for one lane-mile across all six stages, with the IRI sawtooth driving the rehab schedule and every inventory factor editable.',
+  },
 ];
 ---
 
@@ -65,26 +86,6 @@ const planned = [
       </div>
     </section>
 
-    <section class="tools-group">
-      <div class="tools-group__label gsap-fade-up">
-        <span>In development</span>
-        <span class="tools-group__rule"></span>
-      </div>
-      <div class="tools-list tools-list--planned stagger-grid">
-        {planned.map(t => (
-          <div class="tl-card tl-card--planned gsap-stagger">
-            <div class="tl-card__head">
-              <span class="tl-card__name">{t.name}</span>
-              <div class="tl-card__hws">
-                {t.hws.map(h => <span class="tl-card__hw">{h}</span>)}
-              </div>
-            </div>
-            <p class="tl-card__desc">{t.desc}</p>
-            <span class="tl-card__soon">Coming this semester</span>
-          </div>
-        ))}
-      </div>
-    </section>
   </div>
 </BaseLayout>
 
@@ -157,10 +158,6 @@ const planned = [
     gap: 0.875rem;
   }
 
-  .tools-list--planned {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  }
-
   .tl-card {
     display: flex;
     flex-direction: column;
@@ -196,11 +193,6 @@ const planned = [
   :global([data-theme="dark"]) .tl-card {
     background: #162033;
     border-color: #2D3F59;
-  }
-
-  .tl-card--planned {
-    border-style: dashed;
-    opacity: 0.8;
   }
 
   .tl-card__head {
@@ -241,11 +233,5 @@ const planned = [
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--color-accent);
-  }
-
-  .tl-card__soon {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: var(--color-text-muted);
   }
 </style>

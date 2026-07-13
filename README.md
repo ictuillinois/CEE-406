@@ -23,12 +23,14 @@ Interactive calculators built as React islands:
 
 | Tool | Homeworks | What it does |
 |------|-----------|--------------|
-| **Stress Explorer** | HW3, HW4 | One-layer (Boussinesq) response under a circular load — σz, σr, εz, εr, w vs. depth (Huang Eqs. 2.1–2.6), live charts + normalized table |
-| **ESAL Calculator** | HW5, HW7 | Exact AASHTO flexible EALFs (1993 Guide App. D — matches Table D.4 to the fourth decimal), mixed axle spectrum, growth/directional/lane factors, design ESALs |
+| **Resilient Modulus Fitter** | HW2 | Fits k₁, k₂, k₃ of the generalized (MEPDG) Mr model to triaxial data — LINEST-style log-space regression, R² both ways, parity plot, paste-from-Excel, collinearity warning for single-σ₃ datasets |
+| **Stress Explorer** | HW3, HW4 | One-layer (Boussinesq) response under a circular load — σz, σr, εz, εr, w vs. depth (Huang Eqs. 2.1–2.6), presets, a draggable depth probe synced across all charts, and a normalized σz/p pressure-bulb contour |
+| **ESAL Calculator** | HW5, HW7 | Exact AASHTO flexible EALFs (1993 Guide App. D — matches Table D.4 to the fourth decimal), axle-spectrum presets, factor-by-factor design-lane flow strip, cumulative traffic growth chart |
+| **Transfer-Function Damage** | HW8 | Accumulates AC/base/subgrade rutting and bottom-up fatigue cracking vs. N with the exact transfer functions from the HW8 sheet, from the student's WinJULEA strains |
+| **Westergaard Slab Stress** | HW9 | Interior, edge (circular), and corner stresses & deflections (Huang Eqs. 4.11–4.19) plus Bradbury curling with the analytic coefficient; thickness sensitivity chart against the modulus of rupture |
+| **Pavement LCA Worksheet** | HW10 | Six-stage GHG accounting for one lane-mile with the IRI sawtooth driving the rehab schedule; every HW10 inventory factor editable |
 
-Every tool ships with ⓘ tooltips on each input, a collapsible "How to use this tool" panel, and inline validation warnings (they replace the Google Colab notebooks used in past semesters).
-
-Planned: Resilient Modulus Fitter (HW2), Transfer-Function Damage (HW8), Westergaard Slab Stress (HW9), Pavement LCA Worksheet (HW10).
+Every tool ships with ⓘ tooltips on each input, a collapsible "How to use this tool" panel, inline validation warnings, and a table view; charts share a validated light/dark palette via `src/components/react/chartTheme.ts` (they replace the Google Colab notebooks used in past semesters).
 
 ### Site features
 - Animated cross-section hero: a tandem axle bogie rolls over the layered section — each wheel casts Boussinesq pressure bulbs (their overlap shows stress superposition), the surface deflects in an asymmetric basin with a trailing viscoelastic recovery tail, and layer grains displace elastically as the load passes; z/a depth ruler, blueprint grid, reduced-motion fallback

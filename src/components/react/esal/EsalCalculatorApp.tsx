@@ -3,17 +3,19 @@
 // traffic projection with growth, directional, and lane factors.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
+import { useTheme, chartColors, baseLayout, plotConfig, num } from '../chartTheme';
 import '../tools.css';
 
 type AxleType = 'single' | 'tandem' | 'tridem';
 const AXLE_L2: Record<AxleType, number> = { single: 1, tandem: 2, tridem: 3 };
 const AXLE_LABEL: Record<AxleType, string> = { single: 'Single', tandem: 'Tandem', tridem: 'Tridem' };
+const AXLE_RANGE: Record<AxleType, [number, number]> = { single: [2, 50], tandem: [6, 90], tridem: [10, 110] };
 
 interface AxleRow {
   id: number;
   load: string;   // kip
   type: AxleType;
-  count: string;  // passes per day (design lane)
+  count: string;  // passes per day, two-way
 }
 
 /** AASHTO flexible-pavement load equivalency factor (EALF = Wt18 / Wtx). */
@@ -33,39 +35,50 @@ function ealfFlexible(Lx: number, type: AxleType, SN: number, pt: number): numbe
   return Math.pow(10, -logRatio);
 }
 
-function useTheme(): 'light' | 'dark' {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() =>
-    typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
-  );
-  useEffect(() => {
-    const obs = new MutationObserver(() => {
-      setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
-    });
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => obs.disconnect();
-  }, []);
-  return theme;
-}
-
-const num = (v: string, fb = 0) => {
-  const x = parseFloat(v);
-  return Number.isFinite(x) ? x : fb;
-};
-
 const sci = (x: number) => {
   if (x === 0) return '0';
   if (x >= 1e6) return (x / 1e6).toFixed(2) + ' M';
   return x.toLocaleString('en-US', { maximumFractionDigits: 0 });
 };
 
-let nextId = 4;
+let nextId = 100;
+
+const SPECTRUM_PRESETS: { label: string; tip: string; rows: Omit<AxleRow, 'id'>[] }[] = [
+  {
+    label: 'Interstate mix',
+    tip: 'A heavy mixed stream: steer singles, loaded tandems, and a tridem stream.',
+    rows: [
+      { load: '12', type: 'single', count: '220' },
+      { load: '18', type: 'single', count: '120' },
+      { load: '34', type: 'tandem', count: '80' },
+      { load: '48', type: 'tridem', count: '25' },
+    ],
+  },
+  {
+    label: 'Class 9 semis',
+    tip: 'One hundred 5-axle semis a day: a 12-kip steer axle plus two 34-kip tandems each.',
+    rows: [
+      { load: '12', type: 'single', count: '100' },
+      { load: '34', type: 'tandem', count: '200' },
+    ],
+  },
+  {
+    label: 'Collector road',
+    tip: 'A light stream: mostly single axles near the legal limit.',
+    rows: [
+      { load: '10', type: 'single', count: '60' },
+      { load: '18', type: 'single', count: '25' },
+      { load: '30', type: 'tandem', count: '10' },
+    ],
+  },
+];
 
 export default function EsalCalculatorApp() {
   // Pavement / serviceability
   const [snStr, setSn] = useState('5');
   const [pt, setPt] = useState('2.5');
 
-  // Axle spectrum (per day, design lane)
+  // Axle spectrum (per day, two-way)
   const [rows, setRows] = useState<AxleRow[]>([
     { id: 1, load: '12', type: 'single', count: '220' },
     { id: 2, load: '18', type: 'single', count: '120' },
@@ -81,7 +94,7 @@ export default function EsalCalculatorApp() {
   const SN = Math.min(9, Math.max(1, num(snStr, 5)));
   const ptv = num(pt, 2.5);
   const growth = num(growthStr, 3) / 100;
-  const years = Math.max(1, num(yearsStr, 20));
+  const years = Math.max(1, Math.round(num(yearsStr, 20)));
   const dir = Math.min(1, Math.max(0, num(dirStr, 0.5)));
   const lane = Math.min(1, Math.max(0, num(laneStr, 0.9)));
 
@@ -90,67 +103,91 @@ export default function EsalCalculatorApp() {
       const load = num(r.load);
       const count = num(r.count);
       const ealf = load > 0 ? ealfFlexible(load, r.type, SN, ptv) : 0;
-      return { ...r, loadNum: load, countNum: count, ealf, esalDay: ealf * count };
+      const fourth = r.type === 'single' && load > 0 ? Math.pow(load / 18, 4) : null;
+      return { ...r, loadNum: load, countNum: count, ealf, fourth, esalDay: ealf * count };
     });
-    const esalPerDay = withEalf.reduce((s, r) => s + r.esalDay, 0);
+    const esalPerDay = withEalf.reduce((s, r) => s + r.esalDay, 0); // two-way
+    const laneDay = esalPerDay * dir * lane;                        // design lane, day 1
     const G = growth === 0 ? years : (Math.pow(1 + growth, years) - 1) / growth;
-    const designEsal = esalPerDay * 365 * G * dir * lane;
-    return { withEalf, esalPerDay, G, designEsal };
+    const designEsal = laneDay * 365 * G;
+    // cumulative design-lane ESALs by year
+    const cumYears: number[] = [], cum: number[] = [];
+    let acc = 0;
+    for (let t = 1; t <= years; t++) {
+      acc += laneDay * 365 * Math.pow(1 + growth, t - 1);
+      cumYears.push(t);
+      cum.push(acc);
+    }
+    return { withEalf, esalPerDay, laneDay, G, designEsal, cumYears, cum };
   }, [rows, SN, ptv, growth, years, dir, lane]);
 
-  // Chart
   const theme = useTheme();
   const chartRef = useRef<HTMLDivElement>(null);
+  const cumRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !chartRef.current) return;
+      if (cancelled) return;
 
-      const dark = theme === 'dark';
-      const fg = dark ? '#94A3B8' : '#6B7280';
-      const grid = dark ? '#2D3F59' : '#E5E7EB';
-      const colors: Record<AxleType, string> = { single: '#E87722', tandem: '#0ea5e9', tridem: '#8b5cf6' };
-      const ranges: Record<AxleType, [number, number]> = { single: [2, 50], tandem: [6, 90], tridem: [10, 110] };
+      const c = chartColors(theme);
+      const colors: Record<AxleType, string> = { single: c.orange, tandem: c.sky, tridem: c.violet };
 
-      const traces: any[] = (['single', 'tandem', 'tridem'] as AxleType[]).map(t => {
-        const xs: number[] = [], ys: number[] = [];
-        for (let L = ranges[t][0]; L <= ranges[t][1]; L += 1) {
-          xs.push(L);
-          ys.push(ealfFlexible(L, t, SN, ptv));
-        }
-        return { x: xs, y: ys, name: AXLE_LABEL[t], mode: 'lines', line: { color: colors[t], width: 2.25 } };
-      });
-
-      const markers = computed.withEalf.filter(r => r.loadNum > 0);
-      if (markers.length) {
-        traces.push({
-          x: markers.map(r => r.loadNum),
-          y: markers.map(r => r.ealf),
-          name: 'Your axles',
-          mode: 'markers',
-          marker: { color: markers.map(r => colors[r.type]), size: 9, symbol: 'diamond', line: { color: dark ? '#F1F5F9' : '#0F1A2E', width: 1 } },
+      if (chartRef.current) {
+        const traces: any[] = (['single', 'tandem', 'tridem'] as AxleType[]).map(t => {
+          const xs: number[] = [], ys: number[] = [];
+          for (let L = AXLE_RANGE[t][0]; L <= AXLE_RANGE[t][1]; L += 1) {
+            xs.push(L);
+            ys.push(ealfFlexible(L, t, SN, ptv));
+          }
+          return { x: xs, y: ys, name: AXLE_LABEL[t], mode: 'lines', line: { color: colors[t], width: 2.25 } };
         });
+        const markers = computed.withEalf.filter(r => r.loadNum > 0);
+        if (markers.length) {
+          traces.push({
+            x: markers.map(r => r.loadNum),
+            y: markers.map(r => r.ealf),
+            name: 'Your axles',
+            mode: 'markers',
+            marker: { color: markers.map(r => colors[r.type]), size: 9, symbol: 'diamond', line: { color: c.ink, width: 1 } },
+          });
+        }
+        Plotly.react(chartRef.current, traces, baseLayout(theme, {
+          xaxis: { title: { text: 'Axle load (kip)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid },
+          yaxis: { title: { text: 'EALF (log scale)', font: { size: 11 } }, type: 'log', gridcolor: c.grid, zerolinecolor: c.grid },
+          hovermode: 'closest',
+          shapes: [
+            // the definition point: an 18-kip single axle has EALF = 1
+            { type: 'line', x0: 18, x1: 18, yref: 'paper', y0: 0, y1: 1, line: { color: c.fg, width: 1, dash: 'dot' } },
+          ],
+          annotations: [{
+            x: 18, yref: 'paper', y: 1.02, text: '18 kip · EALF 1', showarrow: false, font: { size: 9.5, color: c.fg },
+          }],
+        }), plotConfig);
       }
 
-      Plotly.react(chartRef.current, traces, {
-        margin: { l: 56, r: 16, t: 8, b: 44 },
-        height: 380,
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        font: { family: 'IBM Plex Mono, monospace', size: 10.5, color: fg },
-        xaxis: { title: { text: 'Axle load (kip)', font: { size: 11 } }, gridcolor: grid, zerolinecolor: grid },
-        yaxis: { title: { text: 'EALF (log scale)', font: { size: 11 } }, type: 'log', gridcolor: grid, zerolinecolor: grid },
-        legend: { orientation: 'h', y: -0.16, font: { size: 10.5 } },
-        hovermode: 'closest',
-      }, { displayModeBar: false, responsive: true });
+      if (cumRef.current) {
+        Plotly.react(cumRef.current, [{
+          x: computed.cumYears, y: computed.cum, name: 'Cumulative ESALs',
+          mode: 'lines', line: { color: c.green, width: 2.5 },
+          fill: 'tozeroy', fillcolor: 'rgba(16,185,129,0.08)',
+          hovertemplate: 'Year %{x}: %{y:,.0f} ESALs<extra></extra>',
+        }], baseLayout(theme, {
+          xaxis: { title: { text: 'Year of design period', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, dtick: Math.max(1, Math.round(years / 10)) },
+          yaxis: { title: { text: 'Cumulative design-lane ESALs', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          showlegend: false,
+          hovermode: 'x unified' as const,
+        }), plotConfig);
+      }
     })();
     return () => { cancelled = true; };
-  }, [SN, ptv, computed, theme]);
+  }, [SN, ptv, computed, theme, years]);
 
   const updateRow = (id: number, patch: Partial<AxleRow>) =>
     setRows(rs => rs.map(r => (r.id === id ? { ...r, ...patch } : r)));
+
+  const maxShare = Math.max(...computed.withEalf.map(r => r.esalDay), 1e-9);
 
   return (
     <div className="cee-tool">
@@ -179,7 +216,15 @@ export default function EsalCalculatorApp() {
         </div>
 
         <div className="cee-field">
-          <span className="cee-field__label">Axle spectrum <span className="cee-field__unit">kip · type · passes/day</span></span>
+          <span className="cee-field__label">Axle spectrum <span className="cee-field__unit">kip · type · passes/day two-way</span></span>
+          <div className="cee-presets">
+            {SPECTRUM_PRESETS.map(pr => (
+              <button
+                key={pr.label} type="button" className="cee-chip" title={pr.tip}
+                onClick={() => setRows(pr.rows.map(r => ({ ...r, id: nextId++ })))}
+              >{pr.label}</button>
+            ))}
+          </div>
           {rows.map(r => (
             <div className="cee-axle-row" key={r.id}>
               <input
@@ -245,7 +290,7 @@ export default function EsalCalculatorApp() {
           </div>
         </div>
 
-        {computed.withEalf.some(r => (r.type === 'single' && r.loadNum > 50) || (r.type === 'tandem' && r.loadNum > 90) || (r.type === 'tridem' && r.loadNum > 110)) && (
+        {computed.withEalf.some(r => r.loadNum > AXLE_RANGE[r.type][1]) && (
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>An axle load is beyond the range of the AASHTO tables — the equation extrapolates, so treat that EALF with caution.</span></p>
         )}
 
@@ -261,27 +306,29 @@ export default function EsalCalculatorApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Describe the pavement</strong>: SN and terminal serviceability pₜ set which AASHTO equivalency table you are in (defaults SN = 5, pₜ = 2.5 reproduce Table D.4).</li>
-              <li><strong>Build the axle spectrum</strong>: one row per axle group — load in kip, type, and daily passes. Tandems and tridems are single groups with their own EALF, <em>not</em> multiple singles.</li>
-              <li><strong>Project the traffic</strong>: growth rate and period give the growth factor G; D and L bring two-way traffic down to the design lane. If your counts are already design-lane values, set D = L = 1.</li>
-              <li><strong>Read the results</strong>: the table shows each group's exact EALF (compare with your interpolated table values), and the chart shows where your axles sit on the equivalency curves.</li>
+              <li><strong>Describe the pavement</strong>: SN and pₜ pick the AASHTO equivalency table (SN = 5, pₜ = 2.5 reproduce Table D.4).</li>
+              <li><strong>Build the axle spectrum</strong>: one row per axle group — a tandem is one group with its own EALF, <em>not</em> two singles. The presets load typical streams.</li>
+              <li><strong>Project the traffic</strong>: D and L bring two-way counts down to the design lane; r and n set the growth factor G. Counts already design-lane? Set D = L = 1.</li>
+              <li><strong>Read the results</strong>: the flow strip shows each factor doing its work, the table gives exact EALFs to compare with your interpolated values, and the growth chart shows the traffic accumulating.</li>
             </ol>
-            The EALFs come from the AASHTO design equation itself (1993 Guide, Appendix D), so they match the printed tables to the fourth decimal — a stronger check than the (L/18)⁴ rule of thumb.
+            EALFs come from the AASHTO design equation itself, so they match the printed tables to the fourth decimal — a stronger check than the (L/18)⁴ rule of thumb.
           </div>
         </details>
 
-        <div className="cee-keys">
-          <div className="cee-key">
-            <div className="cee-key__label">ESALs / DAY (YEAR 1)</div>
-            <div className="cee-key__value">{computed.esalPerDay.toFixed(1)}</div>
+        <div className="cee-flow" role="group" aria-label="Traffic projection breakdown">
+          <div className="cee-flow__step">
+            <div className="cee-flow__label">ESALs/DAY · TWO-WAY</div>
+            <div className="cee-flow__value">{computed.esalPerDay.toFixed(1)}</div>
           </div>
-          <div className="cee-key">
-            <div className="cee-key__label">GROWTH FACTOR G</div>
-            <div className="cee-key__value">{computed.G.toFixed(2)}</div>
+          <div className="cee-flow__op">× D·L = {(dir * lane).toFixed(2)}</div>
+          <div className="cee-flow__step">
+            <div className="cee-flow__label">DESIGN LANE / DAY</div>
+            <div className="cee-flow__value">{computed.laneDay.toFixed(1)}</div>
           </div>
-          <div className="cee-key cee-key--accent">
-            <div className="cee-key__label">DESIGN ESALs ({years} YR)</div>
-            <div className="cee-key__value">{sci(computed.designEsal)}</div>
+          <div className="cee-flow__op">× 365 × G = {computed.G.toFixed(2)}</div>
+          <div className="cee-flow__step cee-flow__step--accent">
+            <div className="cee-flow__label">DESIGN ESALs · {years} YR</div>
+            <div className="cee-flow__value">{sci(computed.designEsal)}</div>
           </div>
         </div>
 
@@ -292,8 +339,10 @@ export default function EsalCalculatorApp() {
                 <th>Axle</th>
                 <th>Load (kip)</th>
                 <th>EALF</th>
+                <th>(L/18)⁴<Tip text="The fourth-power rule of thumb — defined for single axles only. Compare it with the exact EALF." /></th>
                 <th>Passes/day</th>
                 <th>ESALs/day</th>
+                <th>Share</th>
               </tr>
             </thead>
             <tbody>
@@ -302,8 +351,13 @@ export default function EsalCalculatorApp() {
                   <td>{AXLE_LABEL[r.type]}</td>
                   <td>{r.loadNum || '—'}</td>
                   <td>{r.loadNum ? r.ealf.toFixed(4) : '—'}</td>
+                  <td>{r.fourth != null ? r.fourth.toFixed(3) : '—'}</td>
                   <td>{r.countNum || '—'}</td>
                   <td>{r.esalDay ? r.esalDay.toFixed(1) : '—'}</td>
+                  <td className="cee-share-cell">
+                    <span className="cee-share" aria-hidden="true"><span style={{ width: `${(r.esalDay / maxShare) * 100}%` }} /></span>
+                    {computed.esalPerDay > 0 ? `${((r.esalDay / computed.esalPerDay) * 100).toFixed(0)}%` : '—'}
+                  </td>
                 </tr>
               ))}
               <tr>
@@ -311,15 +365,23 @@ export default function EsalCalculatorApp() {
                 <td></td>
                 <td></td>
                 <td></td>
+                <td></td>
                 <td><strong>{computed.esalPerDay.toFixed(1)}</strong></td>
+                <td></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div className="cee-chart">
-          <h3 className="cee-chart__title">EALF vs. axle load — SN = {SN}, pₜ = {ptv}</h3>
-          <div ref={chartRef} />
+        <div className="cee-chart-grid cee-chart-grid--2">
+          <div className="cee-chart">
+            <h3 className="cee-chart__title">EALF vs. axle load — SN = {SN}, pₜ = {ptv}</h3>
+            <div ref={chartRef} />
+          </div>
+          <div className="cee-chart">
+            <h3 className="cee-chart__title">Traffic accumulation — r = {(growth * 100).toFixed(1)}%/yr</h3>
+            <div ref={cumRef} />
+          </div>
         </div>
 
         <p className="cee-note">

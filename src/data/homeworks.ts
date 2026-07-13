@@ -40,7 +40,7 @@ export const homeworks: Homework[] = [
     due: 'Sep 12',
     layerFocus: 0,
     overview:
-      'A tour of the pavement structure itself: what the layers of flexible and rigid pavements do, how the mechanistic-empirical design philosophy works, and how pavements fail — pumping, rutting, and the damage done by different axle configurations and tire pressures.',
+      'What the layers of flexible and rigid pavements do, how mechanistic-empirical design works, and how pavements fail — pumping, rutting, and the damage done by different axles and tire pressures.',
     objectives: [
       'Draw and label flexible and rigid pavement cross-sections with typical thicknesses',
       'Explain the mechanistic and empirical components of M-E design',
@@ -75,7 +75,7 @@ export const homeworks: Homework[] = [
     due: 'Sep 24',
     layerFocus: 3,
     overview:
-      'The pavement is only as good as what it sits on. This homework fits the generalized resilient modulus model to triaxial test data, evaluates subgrade strength with the CBR test, and reviews lime stabilization as a way to improve weak soils.',
+      'Fit the generalized resilient modulus model to triaxial data, evaluate subgrade strength with the CBR test, and review lime stabilization of weak soils.',
     objectives: [
       'Fit the k₁–k₂–k₃ resilient modulus model to repeated-load triaxial data and report R²',
       'Reduce CBR test data, applying the standard correction for concave-up curves',
@@ -89,7 +89,7 @@ export const homeworks: Homework[] = [
     ],
     chapters: [{ id: 'ch07', label: 'Ch. 7 — Material Characterization' }],
     tools: [
-      { label: 'Resilient modulus fitter', note: 'in development — fit k₁, k₂, k₃ online' },
+      { label: 'Resilient Modulus Fitter', href: 'tools/mr-fitter/', note: 'fit k₁, k₂, k₃ and R² online, live' },
     ],
     downloads: [
       { label: 'HW2 assignment', file: 'hw2-assignment.pdf', kind: 'assignment' },
@@ -107,7 +107,7 @@ export const homeworks: Homework[] = [
     due: 'Oct 1',
     layerFocus: 1,
     overview:
-      'Boussinesq theory and Burmister layered theory by hand: stresses, strains, and deflections in one-, two-, and three-layer systems under a circular load, using the classic charts and tables. This is the analytical core of flexible pavement mechanics.',
+      'Stresses, strains, and deflections in one-, two-, and three-layer systems under a circular load, using the classic Boussinesq and Burmister charts and tables.',
     objectives: [
       'Compute stresses and deflections in a homogeneous half-space (one-layer system)',
       'Use two-layer deflection and stress charts to size layers',
@@ -143,7 +143,7 @@ export const homeworks: Homework[] = [
     due: 'Oct 8',
     layerFocus: 1,
     overview:
-      'From charts to software. A four-layer structure under a 720 kPa, 145 mm circular load is analyzed with a layered-elastic program (e.g., WinJULEA): plot vertical and horizontal stresses, strains, and deflection with depth under the wheel center, and interpret the response of each layer.',
+      'Analyze a four-layer structure under a 720 kPa, 145 mm circular load with a layered-elastic program (e.g., WinJULEA), plot the response profiles with depth, and interpret each layer.',
     objectives: [
       'Set up a multilayer elastic analysis with bonded interfaces',
       'Plot σz, εz, σr, εr, and deflection versus depth under the load center',
@@ -173,7 +173,7 @@ export const homeworks: Homework[] = [
     due: 'Oct 22',
     layerFocus: 0,
     overview:
-      'Design traffic in ESALs: load equivalency factors, truck factors, growth, and lane distribution. These problems from Chapter 6 convert mixed traffic streams into the single number that drives thickness design.',
+      'Design traffic in ESALs: load equivalency factors, truck factors, growth, and lane distribution — converting mixed traffic into the single number that drives thickness design.',
     objectives: [
       'Apply AASHTO equivalent axle load factors (EALF) to mixed axle streams',
       'Compute growth factors and design-lane ESALs over a design period',
@@ -200,7 +200,7 @@ export const homeworks: Homework[] = [
     due: 'Oct 29',
     layerFocus: 2,
     overview:
-      'Water is the enemy of pavements. Chapter 8 problems on estimating inflow, sizing the permeable base, and checking filter criteria — with FHWA’s DRIP software as a check on hand calculations.',
+      'Estimate inflow, size the permeable base, and check filter criteria — with FHWA’s DRIP software as a check on hand calculations.',
     objectives: [
       'Estimate design inflow from infiltration and groundwater',
       'Size drainage layers for steady-state flow and time-to-drain',
@@ -225,7 +225,7 @@ export const homeworks: Homework[] = [
     due: 'Nov 5',
     layerFocus: -1,
     overview:
-      'The AASHTO 1993 flexible design procedure end to end: structural number, layer coefficients, drainage coefficients, reliability, and the design nomographs. Chapter 11 problems put the whole procedure to work.',
+      'The AASHTO 1993 flexible design procedure end to end: structural number, layer and drainage coefficients, reliability, and the design nomographs.',
     objectives: [
       'Determine the required structural number SN from the AASHTO design equation or nomograph',
       'Select layer coefficients and solve the layered SN equation for thicknesses',
@@ -255,7 +255,7 @@ export const homeworks: Homework[] = [
     due: 'Nov 12',
     layerFocus: -1,
     overview:
-      'A complete mechanistic design exercise: an IDOT-style full-depth design for a rural four-lane highway, then a WinJULEA sublayered analysis feeding AASHTOWare-style transfer functions to predict bottom-up fatigue cracking and rutting versus load repetitions.',
+      'An IDOT-style mechanistic design for a rural four-lane highway, then a WinJULEA sublayered analysis feeding AASHTOWare transfer functions to predict fatigue cracking and rutting versus load repetitions.',
     objectives: [
       'Perform a flexible mechanistic design for new construction from ADT and subgrade rating',
       'Assign AC sublayer moduli by loading frequency and compute critical strains',
@@ -273,7 +273,7 @@ export const homeworks: Homework[] = [
     ],
     tools: [
       { label: 'WinJULEA', note: 'desktop layered-elastic analysis — provided in class' },
-      { label: 'Transfer-function damage tool', note: 'in development — rutting & fatigue accumulation online' },
+      { label: 'Transfer-Function Damage', href: 'tools/damage/', note: 'rutting & fatigue accumulation from your strains, live' },
     ],
     downloads: [
       { label: 'HW8 assignment', file: 'hw8-assignment.pdf', kind: 'assignment' },
@@ -309,7 +309,7 @@ export const homeworks: Homework[] = [
       { id: 'ch05', label: 'Ch. 5 — KENSLABS Computer Program' },
     ],
     tools: [
-      { label: 'Westergaard stress tool', note: 'in development — slab stresses online' },
+      { label: 'Westergaard Slab Stress', href: 'tools/westergaard/', note: 'interior, edge, corner + curling, live' },
     ],
     downloads: [{ label: 'HW9 assignment', file: 'hw9-assignment.pdf', kind: 'assignment' }],
   },
@@ -321,7 +321,7 @@ export const homeworks: Homework[] = [
     due: 'Dec 11',
     layerFocus: -1,
     overview:
-      'Two capstones: check runway ACR/PCR compatibility for a B747-400 and design a flexible airfield section with FAARFIELD; then run a full pavement life-cycle assessment — materials, construction, use phase, and rehabilitation triggered by roughness — to find the stage that dominates greenhouse-gas emissions.',
+      'Check runway ACR/PCR compatibility for a B747-400 and design an airfield section with FAARFIELD; then run a full pavement life-cycle assessment to find the stage that dominates GHG emissions.',
     objectives: [
       'Interpret ACR/PCR codes and decide where an aircraft can operate',
       'Design an airfield subbase with FAARFIELD and evaluate stabilization trade-offs',
@@ -335,7 +335,7 @@ export const homeworks: Homework[] = [
     chapters: [{ id: 'ch13', label: 'Ch. 13 — Design of Overlays' }],
     tools: [
       { label: 'FAARFIELD', external: 'https://www.faa.gov/airports/engineering/design_software', note: 'FAA airfield pavement design software' },
-      { label: 'LCA worksheet tool', note: 'in development — life-cycle GHG accounting online' },
+      { label: 'Pavement LCA Worksheet', href: 'tools/lca/', note: 'life-cycle GHG accounting online, live' },
     ],
     downloads: [{ label: 'HW10 assignment', file: 'hw10-assignment.pdf', kind: 'assignment' }],
   },
