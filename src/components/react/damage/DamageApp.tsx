@@ -4,7 +4,12 @@
 // Strains come from the student's layered-elastic run (WinJULEA).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
-import { useTheme, chartColors, baseLayout, plotConfig, num, fmt } from '../chartTheme';
+import {
+  useTheme, chartColors, baseLayout, plotConfig, num,
+  axis, gridAxis, hueFor, HUES, type Mode,
+} from '../chartTheme';
+import ChartFigure from '../ui/ChartFigure';
+import KpiStrip, { Kpi } from '../ui/KpiStrip';
 import '../tools.css';
 
 interface SubRow {
@@ -12,6 +17,14 @@ interface SubRow {
   h: string;   // in
   ev: string;  // vertical strain at mid-depth, µε
 }
+
+/** Layers are unordered categories, so they take categorical hues in the
+ *  fixed 1-2-3 order and keep them across every chart here (§B4). */
+const LAYER_HUE = {
+  ac: (t: Mode) => HUES[t].orange,
+  base: (t: Mode) => HUES[t].blue,
+  sg: (t: Mode) => HUES[t].emerald,
+};
 
 let nextId = 100;
 
@@ -116,26 +129,28 @@ export default function DamageApp() {
 
       if (rutRef.current) {
         Plotly.react(rutRef.current, [
+          // The envelope is a neutral, not a seventh hue (§B4).
           { x: res.N, y: res.total, name: 'Total', mode: 'lines', line: { color: c.ink, width: 2.75 } },
-          { x: res.N, y: res.ac, name: 'AC', mode: 'lines', line: { color: c.orange, width: 2 } },
-          { x: res.N, y: res.base, name: 'Base', mode: 'lines', line: { color: c.sky, width: 2 } },
-          { x: res.N, y: res.sg, name: 'Subgrade', mode: 'lines', line: { color: c.green, width: 2 } },
+          { x: res.N, y: res.ac, name: 'AC', mode: 'lines', line: { color: LAYER_HUE.ac(theme), width: 2 } },
+          { x: res.N, y: res.base, name: 'Base', mode: 'lines', line: { color: LAYER_HUE.base(theme), width: 2 } },
+          { x: res.N, y: res.sg, name: 'Subgrade', mode: 'lines', line: { color: LAYER_HUE.sg(theme), width: 2 } },
         ], baseLayout(theme, {
-          xaxis: { title: { text: 'Load repetitions N', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, exponentformat: 'SI' as const },
-          yaxis: { title: { text: 'Rut depth (in)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          xaxis: axis(theme, 'Load repetitions N', { exponentformat: 'SI' as const }),
+          yaxis: gridAxis(theme, 'Rut depth (in)', { rangemode: 'tozero' as const }),
           hovermode: 'x unified' as const,
+          showlegend: false,
         }), plotConfig);
       }
       if (fcRef.current) {
         Plotly.react(fcRef.current, [
           {
             x: res.N, y: res.FC, name: 'FC bottom-up', mode: 'lines',
-            line: { color: c.violet, width: 2.5 },
+            line: { color: hueFor('damage', theme), width: 2.5 },
             hovertemplate: 'N %{x:,} · %{y:.3f}%<extra></extra>',
           },
         ], baseLayout(theme, {
-          xaxis: { title: { text: 'Load repetitions N', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, exponentformat: 'SI' as const },
-          yaxis: { title: { text: 'Bottom-up cracking (% area)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          xaxis: axis(theme, 'Load repetitions N', { exponentformat: 'SI' as const }),
+          yaxis: gridAxis(theme, 'Bottom-up cracking (% area)', { rangemode: 'tozero' as const }),
           showlegend: false,
           hovermode: 'x unified' as const,
         }), plotConfig);
@@ -264,50 +279,67 @@ export default function DamageApp() {
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>Enter positive thicknesses and strains for every layer to see results.</span></p>
         ) : (
           <>
-            <div className="cee-keys">
-              <div className="cee-key cee-key--accent">
-                <div className="cee-key__label">TOTAL RUT AT N = {Nmax.toLocaleString()}<Tip text="Sum of the permanent deformation of every layer — the rut depth a straightedge across the wheelpath would measure at the end of the loading." /></div>
-                <div className="cee-key__value">{res.finals.total.toFixed(3)}<small>in</small></div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">GOVERNING LAYER<Tip text="The layer contributing the most rutting at N_max — the P2c answer. Check the share column below." /></div>
-                <div className="cee-key__value" style={{ fontSize: '0.95rem' }}>{res.governing}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">FATIGUE LIFE N_f<Tip text="Allowable repetitions to bottom-up fatigue failure for your εt and E_AC. One load type here, so Miner's sum collapses to DI = N/N_f." /></div>
-                <div className="cee-key__value">{res.finals.Nf.toExponential(2)}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">DAMAGE DI<Tip text="Miner's damage index — the fraction of fatigue life consumed so far. DI = 1 means the mechanistic failure criterion is reached." /></div>
-                <div className="cee-key__value">{res.finals.DI.toExponential(2)}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">CRACKING FC<Tip text="Bottom-up fatigue cracking as % of lane area, from the AASHTOWare sigmoid on DI — the calibrated bridge from damage to visible distress." /></div>
-                <div className="cee-key__value">{res.finals.FC.toFixed(2)}<small>%</small></div>
-              </div>
-            </div>
+            <KpiStrip>
+              <Kpi
+                accent
+                label={`Total rut at N = ${Nmax.toLocaleString()}`}
+                value={res.finals.total.toFixed(3)}
+                unit="in"
+                tip="Sum of the permanent deformation of every layer — the rut depth a straightedge across the wheelpath would measure at the end of the loading."
+              />
+              <Kpi
+                compact
+                label="Governing layer"
+                value={res.governing}
+                tip="The layer contributing the most rutting at N_max — the P2c answer. Check the share column below."
+              />
+              <Kpi
+                label="Fatigue life N_f"
+                value={res.finals.Nf.toExponential(2)}
+                tip="Allowable repetitions to bottom-up fatigue failure for your εt and E_AC. One load type here, so Miner's sum collapses to DI = N/N_f."
+              />
+              <Kpi
+                label="Damage DI"
+                value={res.finals.DI.toExponential(2)}
+                tip="Miner's damage index — the fraction of fatigue life consumed so far. DI = 1 means the mechanistic failure criterion is reached."
+              />
+              <Kpi
+                label="Cracking FC"
+                value={res.finals.FC.toFixed(2)}
+                unit="%"
+                tip="Bottom-up fatigue cracking as % of lane area, from the AASHTOWare sigmoid on DI — the calibrated bridge from damage to visible distress."
+              />
+            </KpiStrip>
 
             <div className="cee-chart-grid cee-chart-grid--2">
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Rutting vs. repetitions</h3>
-                <div ref={rutRef} />
-                <p className="cee-chart__caption">
-                  Permanent deformation of each layer as loads accumulate. The AC curve is a
-                  <strong> power law</strong> (N^0.479): fast early growth that keeps climbing. The granular
-                  curves rise then <strong>flatten</strong> — the exp(−(10785.6/N)^0.174) form — as base and
-                  subgrade densify and stop contributing. Describing exactly this shape difference is what
-                  P2b asks for.
-                </p>
-              </div>
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Bottom-up cracking vs. repetitions</h3>
-                <div ref={fcRef} />
-                <p className="cee-chart__caption">
-                  The AASHTOWare sigmoid converting Miner's damage into visible cracked area: almost nothing
-                  while DI is small, then accelerating growth. At 90 days you are still on the
-                  <strong> toe of the S-curve</strong> — extend the duration input and watch it steepen.
-                </p>
-              </div>
+              <ChartFigure
+                title="Rutting vs. repetitions"
+                subtitle="Permanent deformation contributed by each layer, and their sum"
+                plotRef={rutRef}
+                legend={[
+                  { label: 'Total', color: chartColors(theme).ink, shape: 'line' },
+                  { label: 'AC', color: LAYER_HUE.ac(theme) },
+                  { label: 'Base', color: LAYER_HUE.base(theme) },
+                  { label: 'Subgrade', color: LAYER_HUE.sg(theme) },
+                ]}
+                takeaway="Asphalt rutting follows a power law and keeps climbing, while base and subgrade rutting flatten as those layers densify."
+              >
+                Permanent deformation of each layer as loads accumulate. The AC curve is a
+                <strong> power law</strong> (N^0.479): fast early growth that keeps climbing. The granular
+                curves rise then <strong>flatten</strong> — the exp(−(10785.6/N)^0.174) form — as base and
+                subgrade densify and stop contributing. Describing exactly this shape difference is what
+                P2b asks for.
+              </ChartFigure>
+              <ChartFigure
+                title="Bottom-up cracking vs. repetitions"
+                subtitle="The AASHTOWare sigmoid mapping Miner's damage onto cracked lane area"
+                plotRef={fcRef}
+                takeaway="Cracking stays near zero while damage is small, then accelerates — at 90 days the pavement is still on the toe of the S-curve."
+              >
+                The AASHTOWare sigmoid converting Miner's damage into visible cracked area: almost nothing
+                while DI is small, then accelerating growth. At 90 days you are still on the
+                <strong> toe of the S-curve</strong> — extend the duration input and watch it steepen.
+              </ChartFigure>
             </div>
 
             <div className="cee-tablewrap">
@@ -321,17 +353,24 @@ export default function DamageApp() {
                   </tr>
                 </thead>
                 <tbody>
-                  {res.parts.map(p => (
-                    <tr key={p.name}>
-                      <td>{p.name}</td>
-                      <td>{p.name.startsWith('AC') ? hHMA.toFixed(1) : p.name === 'Base' ? num(baseH).toFixed(0) : num(sgH).toFixed(0)}</td>
-                      <td>{p.v.toFixed(4)}</td>
-                      <td className="cee-share-cell">
-                        <span className="cee-share" aria-hidden="true"><span style={{ width: `${(p.v / res.finals.total) * 100}%` }} /></span>
-                        {((p.v / res.finals.total) * 100).toFixed(0)}%
-                      </td>
-                    </tr>
-                  ))}
+                  {res.parts.map(p => {
+                    const hue = p.name.startsWith('AC')
+                      ? LAYER_HUE.ac(theme)
+                      : p.name === 'Base' ? LAYER_HUE.base(theme) : LAYER_HUE.sg(theme);
+                    return (
+                      <tr key={p.name}>
+                        <td>{p.name}</td>
+                        <td>{p.name.startsWith('AC') ? hHMA.toFixed(1) : p.name === 'Base' ? num(baseH).toFixed(0) : num(sgH).toFixed(0)}</td>
+                        <td>{p.v.toFixed(4)}</td>
+                        <td className="cee-share-cell">
+                          <span className="cee-share" aria-hidden="true">
+                            <span style={{ width: `${(p.v / res.finals.total) * 100}%`, background: hue }} />
+                          </span>
+                          {((p.v / res.finals.total) * 100).toFixed(0)}%
+                        </td>
+                      </tr>
+                    );
+                  })}
                   <tr>
                     <td><strong>Total</strong></td>
                     <td></td>

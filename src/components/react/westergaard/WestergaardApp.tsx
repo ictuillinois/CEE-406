@@ -5,8 +5,21 @@
 // behind Bradbury's chart. US customary units, as in Huang Ch. 4.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
-import { useTheme, chartColors, baseLayout, plotConfig, num, fmt } from '../chartTheme';
+import {
+  useTheme, chartColors, baseLayout, plotConfig, num, fmt,
+  axis, gridAxis, HUES, type Mode,
+} from '../chartTheme';
+import ChartFigure from '../ui/ChartFigure';
+import KpiStrip, { Kpi } from '../ui/KpiStrip';
 import '../tools.css';
+
+/** The three Westergaard load positions are unordered categories, so they
+ *  take categorical hues 1-2-3 and keep them across both charts (§B4). */
+const CASE_HUE = {
+  edge: (t: Mode) => HUES[t].orange,
+  corner: (t: Mode) => HUES[t].blue,
+  interior: (t: Mode) => HUES[t].emerald,
+};
 
 /** Radius of relative stiffness, in. */
 const ellOf = (E: number, h: number, nu: number, k: number) =>
@@ -102,42 +115,58 @@ export default function WestergaardApp() {
           hs.push(hh); si.push(r.sigI); se.push(r.sigE); sc.push(r.sigC);
         }
         Plotly.react(sensRef.current, [
-          { x: hs, y: se, name: 'Edge', mode: 'lines', line: { color: c.orange, width: 2.5 } },
-          { x: hs, y: sc, name: 'Corner', mode: 'lines', line: { color: c.sky, width: 2.5 } },
-          { x: hs, y: si, name: 'Interior', mode: 'lines', line: { color: c.green, width: 2.5 } },
+          { x: hs, y: se, name: 'Edge', mode: 'lines', line: { color: CASE_HUE.edge(theme), width: 2.5 } },
+          { x: hs, y: sc, name: 'Corner', mode: 'lines', line: { color: CASE_HUE.corner(theme), width: 2.5 } },
+          { x: hs, y: si, name: 'Interior', mode: 'lines', line: { color: CASE_HUE.interior(theme), width: 2.5 } },
           {
             x: [h, h, h], y: [res.sigE, res.sigC, res.sigI], name: 'Current h',
-            mode: 'markers', marker: { color: [c.orange, c.sky, c.green], size: 9, symbol: 'diamond', line: { color: c.ink, width: 1 } },
+            mode: 'markers',
+            marker: {
+              color: [CASE_HUE.edge(theme), CASE_HUE.corner(theme), CASE_HUE.interior(theme)],
+              size: 9, symbol: 'circle', line: { color: c.surface, width: 2 },
+            },
             hoverinfo: 'skip', showlegend: false,
           },
         ], baseLayout(theme, {
-          xaxis: { title: { text: 'Slab thickness h (in)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid },
-          yaxis: { title: { text: 'Load stress (psi)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          xaxis: axis(theme, 'Slab thickness h (in)'),
+          yaxis: gridAxis(theme, 'Load stress (psi)', { rangemode: 'tozero' as const }),
           hovermode: 'x unified' as const,
-          shapes: MR > 0 ? [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: MR, y1: MR, line: { color: c.fg, width: 1, dash: 'dash' } }] : [],
-          annotations: MR > 0 ? [{ xref: 'paper', x: 0.99, y: MR, text: `MR ${MR} psi`, showarrow: false, yshift: 8, font: { size: 9.5, color: c.fg }, xanchor: 'right' as const }] : [],
+          showlegend: false,
+          shapes: MR > 0 ? [{ type: 'line', xref: 'paper', x0: 0, x1: 1, y0: MR, y1: MR, line: { color: c.secondary, width: 1, dash: 'dash' } }] : [],
+          annotations: MR > 0 ? [{ xref: 'paper', x: 0.99, y: MR, text: `MR ${MR} psi`, showarrow: false, yshift: 9, font: { size: 10, color: c.fg }, xanchor: 'right' as const }] : [],
         }), plotConfig);
       }
 
       if (barRef.current) {
+        // §A8.2 target-vs-actual: a ghost bar to the modulus of rupture sits
+        // behind each case, so the chart reads as the fraction of the
+        // concrete's strength that loading consumes.
         const cases = ['Edge', 'Corner', 'Interior'];
         const vals = [res.sigE, res.sigC, res.sigI];
-        Plotly.react(barRef.current, [{
-          x: vals, y: cases, type: 'bar', orientation: 'h',
-          marker: { color: [c.orange, c.sky, c.green] },
-          text: vals.map(v => `${v.toFixed(0)} psi`), textposition: 'outside',
-          textfont: { size: 10.5, color: c.fg }, cliponaxis: false,
-          hovertemplate: '%{y}: %{x:.1f} psi<extra></extra>',
-        }], baseLayout(theme, {
-          height: 300,
-          margin: { l: 70, r: 60, t: 8, b: 44 },
-          xaxis: {
-            title: { text: 'Bending stress (psi)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid,
-            range: [0, Math.max(MR, res.sigE, res.sigC, res.sigI) * 1.18],
+        const hues = [CASE_HUE.edge(theme), CASE_HUE.corner(theme), CASE_HUE.interior(theme)];
+        const xMax = Math.max(MR, ...vals) * 1.15;
+        Plotly.react(barRef.current, [
+          ...(MR > 0 ? [{
+            x: cases.map(() => MR), y: cases, type: 'bar' as const, orientation: 'h' as const,
+            marker: { color: c.ghost, cornerradius: 6 },
+            hoverinfo: 'skip' as const, name: 'Modulus of rupture',
+          }] : []),
+          {
+            x: vals, y: cases, type: 'bar' as const, orientation: 'h' as const,
+            marker: { color: hues, cornerradius: 6 },
+            text: vals.map(v => `${v.toFixed(0)} psi`), textposition: 'outside' as const,
+            textfont: { family: 'IBM Plex Mono, monospace', size: 11.5, color: c.secondary },
+            cliponaxis: false, name: 'Bending stress',
+            hovertemplate: '%{y}: %{x:.1f} psi<extra></extra>',
           },
-          yaxis: { gridcolor: 'rgba(0,0,0,0)', autorange: 'reversed' as const },
+        ], baseLayout(theme, {
+          height: 300,
+          margin: { l: 70, r: 64, t: 8, b: 40 },
+          barmode: 'overlay' as const,
+          bargap: 0.4,
+          xaxis: axis(theme, 'Bending stress (psi)', { range: [0, xMax] }),
+          yaxis: axis(theme, undefined, { autorange: 'reversed' as const }),
           showlegend: false,
-          shapes: MR > 0 ? [{ type: 'line', x0: MR, x1: MR, yref: 'paper', y0: 0, y1: 1, line: { color: c.fg, width: 1, dash: 'dash' } }] : [],
         }), plotConfig);
       }
     })();
@@ -261,35 +290,43 @@ export default function WestergaardApp() {
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>Enter positive E, h, k, P, and a to see results.</span></p>
         ) : (
           <>
-            <div className="cee-keys">
-              <div className="cee-key">
-                <div className="cee-key__label">RADIUS OF REL. STIFFNESS ℓ<Tip text="The slab's natural length scale: how far it spreads a load into the foundation. Stiff slab / soft subgrade → large ℓ. Every Westergaard formula and both curling ratios consume it — compute it first." /></div>
-                <div className="cee-key__value">{fmt(res.ell, 2)}<small>in</small></div>
-              </div>
-              <div className="cee-key cee-key--accent">
-                <div className="cee-key__label">EDGE STRESS (CRITICAL)<Tip text="Highway wheels travel close to the pavement edge, and the edge case gives the highest bending stress of the three — it governs slab thickness design." /></div>
-                <div className="cee-key__value">{fmt(res.sigE, 1)}<small>psi</small></div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">STRESS RATIO σ_EDGE / MR<Tip text="Bending stress over the concrete's flexural strength. PCA-style design keeps this well below 1 — at 0.5 and below, fatigue life is essentially unlimited." /></div>
-                <div className="cee-key__value">{MR > 0 ? fmt(res.sigE / MR, 2) : '—'}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">CORNER DEFLECTION<Tip text="The largest deflection of the three cases — repeated corner deflections pump water and fines from under the joint, which is how corner support is lost." /></div>
-                <div className="cee-key__value">{fmt(res.defC, 4)}<small>in</small></div>
-              </div>
-            </div>
+            <KpiStrip>
+              <Kpi
+                label="Radius of rel. stiffness ℓ"
+                value={fmt(res.ell, 2)}
+                unit="in"
+                tip="The slab's natural length scale: how far it spreads a load into the foundation. Stiff slab / soft subgrade → large ℓ. Every Westergaard formula and both curling ratios consume it — compute it first."
+              />
+              <Kpi
+                accent
+                label="Edge stress (critical)"
+                value={fmt(res.sigE, 1)}
+                unit="psi"
+                tip="Highway wheels travel close to the pavement edge, and the edge case gives the highest bending stress of the three — it governs slab thickness design."
+              />
+              <Kpi
+                label="Stress ratio σ_edge / MR"
+                value={MR > 0 ? fmt(res.sigE / MR, 2) : '—'}
+                tip="Bending stress over the concrete's flexural strength. PCA-style design keeps this well below 1 — at 0.5 and below, fatigue life is essentially unlimited."
+              />
+              <Kpi
+                label="Corner deflection"
+                value={fmt(res.defC, 4)}
+                unit="in"
+                tip="The largest deflection of the three cases — repeated corner deflections pump water and fines from under the joint, which is how corner support is lost."
+              />
+            </KpiStrip>
 
             <div className="cee-diagram" aria-label="Plan view of the slab with the three Westergaard load positions">
               <svg viewBox="0 0 340 172" role="img">
                 {(() => {
-                  const dark = theme === 'dark';
-                  const ink = dark ? '#F1F5F9' : '#0F1A2E';
-                  const mut = dark ? '#94A3B8' : '#6B7280';
-                  const line = dark ? '#2D3F59' : '#E5E7EB';
-                  const cOr = dark ? '#DC7014' : '#E87722';
-                  const cSk = dark ? '#0C93CF' : '#0EA5E9';
-                  const cGr = dark ? '#0EA372' : '#10B981';
+                  const cc = chartColors(theme);
+                  const ink = cc.ink;
+                  const mut = cc.fg;
+                  const line = cc.hairline;
+                  const cOr = CASE_HUE.edge(theme);
+                  const cSk = CASE_HUE.corner(theme);
+                  const cGr = CASE_HUE.interior(theme);
                   return (
                     <>
                       <rect x="20" y="26" width="300" height="120" rx="3" fill="none" stroke={ink} strokeWidth="1.5" />
@@ -375,25 +412,38 @@ export default function WestergaardApp() {
             )}
 
             <div className="cee-chart-grid cee-chart-grid--2">
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Load stress vs. slab thickness</h3>
-                <div ref={sensRef} />
-                <p className="cee-chart__caption">
-                  Each curve sweeps h with everything else fixed (diamonds = your current h). Stress falls
-                  roughly as <strong>1/h²</strong> — the leverage of thickness in rigid design. Where a
-                  curve crosses the dashed modulus-of-rupture line is the thickness at which one pass of
-                  this load would crack the slab; design keeps the working point far below it.
-                </p>
-              </div>
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Load stress by case — h = {h} in</h3>
-                <div ref={barRef} />
-                <p className="cee-chart__caption">
-                  The same load in the three positions. Edge &gt; corner &gt; interior in bending stress —
-                  the more slab surrounds the load, the more paths the moment has to spread. Deflections
-                  rank the other way (corner largest): stress cracks slabs, deflection pumps joints.
-                </p>
-              </div>
+              <ChartFigure
+                title="Load stress vs. slab thickness"
+                subtitle="Each case swept over h with every other input fixed; dots mark your current h"
+                plotRef={sensRef}
+                legend={[
+                  { label: 'Edge', color: CASE_HUE.edge(theme) },
+                  { label: 'Corner', color: CASE_HUE.corner(theme) },
+                  { label: 'Interior', color: CASE_HUE.interior(theme) },
+                  ...(MR > 0 ? [{ label: 'Modulus of rupture', color: chartColors(theme).secondary, shape: 'dash' as const }] : []),
+                ]}
+                takeaway="Bending stress falls roughly as one over thickness squared, so a half-inch of slab buys more capacity than any other single change."
+              >
+                Each curve sweeps h with everything else fixed (dots = your current h). Stress falls
+                roughly as <strong>1/h²</strong> — the leverage of thickness in rigid design. Where a
+                curve crosses the dashed modulus-of-rupture line is the thickness at which one pass of
+                this load would crack the slab; design keeps the working point far below it.
+              </ChartFigure>
+              <ChartFigure
+                title={`Load stress by case — h = ${h} in`}
+                subtitle="Coloured bar is the bending stress; the pale bar behind it is the modulus of rupture"
+                plotRef={barRef}
+                legend={[
+                  { label: 'Bending stress', color: CASE_HUE.edge(theme) },
+                  ...(MR > 0 ? [{ label: 'Modulus of rupture', color: chartColors(theme).ghost }] : []),
+                ]}
+                takeaway="Edge loading produces the highest bending stress of the three positions, which is why it governs slab thickness design."
+              >
+                The same load in the three positions, each read against the concrete's strength. Edge &gt;
+                corner &gt; interior in bending stress — the more slab surrounds the load, the more paths
+                the moment has to spread. Deflections rank the other way (corner largest):
+                <strong> stress cracks slabs, deflection pumps joints.</strong>
+              </ChartFigure>
             </div>
 
             <p className="cee-note">

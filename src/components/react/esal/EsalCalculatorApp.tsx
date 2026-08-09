@@ -3,13 +3,24 @@
 // traffic projection with growth, directional, and lane factors.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
-import { useTheme, chartColors, baseLayout, plotConfig, num } from '../chartTheme';
+import {
+  useTheme, chartColors, baseLayout, plotConfig, num,
+  axis, gridAxis, hueFor, areaFill, HUES, type Mode,
+} from '../chartTheme';
+import ChartFigure from '../ui/ChartFigure';
 import '../tools.css';
 
 type AxleType = 'single' | 'tandem' | 'tridem';
 const AXLE_L2: Record<AxleType, number> = { single: 1, tandem: 2, tridem: 3 };
 const AXLE_LABEL: Record<AxleType, string> = { single: 'Single', tandem: 'Tandem', tridem: 'Tridem' };
 const AXLE_RANGE: Record<AxleType, [number, number]> = { single: [2, 50], tandem: [6, 90], tridem: [10, 110] };
+
+/** Axle configurations are unordered categories: hues 1-2-3, fixed (§B4). */
+const AXLE_HUE = (t: Mode): Record<AxleType, string> => ({
+  single: HUES[t].orange,
+  tandem: HUES[t].blue,
+  tridem: HUES[t].emerald,
+});
 
 interface AxleRow {
   id: number;
@@ -132,7 +143,7 @@ export default function EsalCalculatorApp() {
       if (cancelled) return;
 
       const c = chartColors(theme);
-      const colors: Record<AxleType, string> = { single: c.orange, tandem: c.sky, tridem: c.violet };
+      const colors = AXLE_HUE(theme);
 
       if (chartRef.current) {
         const traces: any[] = (['single', 'tandem', 'tridem'] as AxleType[]).map(t => {
@@ -150,32 +161,36 @@ export default function EsalCalculatorApp() {
             y: markers.map(r => r.ealf),
             name: 'Your axles',
             mode: 'markers',
-            marker: { color: markers.map(r => colors[r.type]), size: 9, symbol: 'diamond', line: { color: c.ink, width: 1 } },
+            marker: { color: markers.map(r => colors[r.type]), size: 9, symbol: 'circle', line: { color: c.surface, width: 2 } },
           });
         }
+        // EALF spans four decades, so the log axis is load-bearing here — and
+        // this is a line chart, where §A12's zero-baseline rule does not apply.
         Plotly.react(chartRef.current, traces, baseLayout(theme, {
-          xaxis: { title: { text: 'Axle load (kip)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid },
-          yaxis: { title: { text: 'EALF (log scale)', font: { size: 11 } }, type: 'log', gridcolor: c.grid, zerolinecolor: c.grid },
+          xaxis: axis(theme, 'Axle load (kip)'),
+          yaxis: gridAxis(theme, 'EALF (log scale)', { type: 'log' }),
           hovermode: 'closest',
+          showlegend: false,
           shapes: [
             // the definition point: an 18-kip single axle has EALF = 1
-            { type: 'line', x0: 18, x1: 18, yref: 'paper', y0: 0, y1: 1, line: { color: c.fg, width: 1, dash: 'dot' } },
+            { type: 'line', x0: 18, x1: 18, yref: 'paper', y0: 0, y1: 1, line: { color: c.secondary, width: 1, dash: 'dot' } },
           ],
           annotations: [{
-            x: 18, yref: 'paper', y: 1.02, text: '18 kip · EALF 1', showarrow: false, font: { size: 9.5, color: c.fg },
+            x: 18, yref: 'paper', y: 1.02, text: '18 kip · EALF 1', showarrow: false, font: { size: 10, color: c.fg },
           }],
         }), plotConfig);
       }
 
       if (cumRef.current) {
+        const trafficHue = hueFor('traffic', theme);
         Plotly.react(cumRef.current, [{
           x: computed.cumYears, y: computed.cum, name: 'Cumulative ESALs',
-          mode: 'lines', line: { color: c.green, width: 2.5 },
-          fill: 'tozeroy', fillcolor: 'rgba(16,185,129,0.08)',
+          mode: 'lines', line: { color: trafficHue, width: 2.5 },
+          fill: 'tozeroy', ...areaFill(trafficHue),
           hovertemplate: 'Year %{x}: %{y:,.0f} ESALs<extra></extra>',
         }], baseLayout(theme, {
-          xaxis: { title: { text: 'Year of design period', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, dtick: Math.max(1, Math.round(years / 10)) },
-          yaxis: { title: { text: 'Cumulative design-lane ESALs', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          xaxis: axis(theme, 'Year of design period', { dtick: Math.max(1, Math.round(years / 10)) }),
+          yaxis: gridAxis(theme, 'Cumulative design-lane ESALs', { rangemode: 'tozero' as const }),
           showlegend: false,
           hovermode: 'x unified' as const,
         }), plotConfig);
@@ -374,26 +389,33 @@ export default function EsalCalculatorApp() {
         </div>
 
         <div className="cee-chart-grid cee-chart-grid--2">
-          <div className="cee-chart">
-            <h3 className="cee-chart__title">EALF vs. axle load — SN = {SN}, pₜ = {ptv}</h3>
-            <div ref={chartRef} />
-            <p className="cee-chart__caption">
-              Each curve is the AASHTO design equation for one axle configuration; the y-axis is
-              logarithmic, so the near-straight lines mean damage grows as a <strong>power</strong> of
-              load. The diamonds are your axle groups. At a given load a tandem damages far less than a
-              single — the load is shared between two closely spaced axles — which is exactly why the
-              curves are separated.
-            </p>
-          </div>
-          <div className="cee-chart">
-            <h3 className="cee-chart__title">Traffic accumulation — r = {(growth * 100).toFixed(1)}%/yr</h3>
-            <div ref={cumRef} />
-            <p className="cee-chart__caption">
-              Design-lane ESALs piling up year by year. With growth the curve bends upward — later years
-              contribute more than early ones — and the end point is exactly the design W18 from the flow
-              strip. Set r = 0 and it becomes a straight line: G = n.
-            </p>
-          </div>
+          <ChartFigure
+            title={`EALF vs. axle load — SN = ${SN}, pₜ = ${ptv}`}
+            subtitle="AASHTO load equivalency on a log axis; dots are your axle groups"
+            plotRef={chartRef}
+            legend={[
+              { label: 'Single', color: AXLE_HUE(theme).single },
+              { label: 'Tandem', color: AXLE_HUE(theme).tandem },
+              { label: 'Tridem', color: AXLE_HUE(theme).tridem },
+            ]}
+            takeaway="Damage grows as roughly the fourth power of axle load, and at equal load a tandem does far less damage than a single axle."
+          >
+            Each curve is the AASHTO design equation for one axle configuration; the y-axis is
+            logarithmic, so the near-straight lines mean damage grows as a <strong>power</strong> of
+            load. The dots are your axle groups. At a given load a tandem damages far less than a
+            single — the load is shared between two closely spaced axles — which is exactly why the
+            curves are separated.
+          </ChartFigure>
+          <ChartFigure
+            title={`Traffic accumulation — r = ${(growth * 100).toFixed(1)}%/yr`}
+            subtitle="Design-lane ESALs accumulated year by year over the design period"
+            plotRef={cumRef}
+            takeaway="With traffic growth the accumulation curve bends upward, so the later years of the design period contribute more ESALs than the early ones."
+          >
+            Design-lane ESALs piling up year by year. With growth the curve bends upward — later years
+            contribute more than early ones — and the end point is exactly the design W18 from the flow
+            strip. Set r = 0 and it becomes a straight line: G = n.
+          </ChartFigure>
         </div>
 
         <p className="cee-note">

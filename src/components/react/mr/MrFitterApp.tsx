@@ -4,7 +4,12 @@
 // Supports HW2. Triaxial conventions: θ = σd + 3σ3, τoct = √2·σd/3.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
-import { useTheme, chartColors, baseLayout, plotConfig, num } from '../chartTheme';
+import {
+  useTheme, chartColors, baseLayout, plotConfig, num,
+  axis, gridAxis, HUE_ORDER, HUES,
+} from '../chartTheme';
+import ChartFigure from '../ui/ChartFigure';
+import KpiStrip, { Kpi } from '../ui/KpiStrip';
 import '../tools.css';
 
 type Units = 'kPa' | 'psi';
@@ -138,6 +143,12 @@ export default function MrFitterApp() {
   }, [points, pa]);
 
   const theme = useTheme();
+  /** Distinct confining stresses, ascending — one series per group, and the
+   *  legend must list them in this same fixed order (§B4). */
+  const sigma3Groups = useMemo(
+    () => [...new Set(points.map(p => p.s3))].sort((a, b) => a - b),
+    [points]
+  );
   const parityRef = useRef<HTMLDivElement>(null);
   const curvesRef = useRef<HTMLDivElement>(null);
 
@@ -148,7 +159,8 @@ export default function MrFitterApp() {
       const Plotly = (await import('plotly.js-dist-min')).default;
       if (cancelled) return;
       const c = chartColors(theme);
-      const seriesColors = [c.orange, c.sky, c.green, c.violet];
+      // Confining-stress groups are unordered series: fixed hue order (§B4).
+      const seriesColors = HUE_ORDER.map(h => HUES[theme][h]);
 
       if (parityRef.current) {
         const lo = Math.min(...fit.withPred.map(p => Math.min(p.mr, p.pred))) * 0.85;
@@ -156,18 +168,19 @@ export default function MrFitterApp() {
         Plotly.react(parityRef.current, [
           {
             x: [lo, hi], y: [lo, hi], name: '1:1 line', mode: 'lines',
-            line: { color: c.fg, width: 1, dash: 'dot' }, hoverinfo: 'skip',
+            line: { color: c.secondary, width: 1, dash: 'dot' }, hoverinfo: 'skip',
           },
           {
             x: fit.withPred.map(p => p.mr), y: fit.withPred.map(p => p.pred),
             name: 'Test points', mode: 'markers',
-            marker: { color: c.orange, size: 8.5, line: { color: c.ink, width: 1 } },
+            marker: { color: HUES[theme].orange, size: 8.5, line: { color: c.surface, width: 2 } },
             hovertemplate: `measured %{x:,.0f} · predicted %{y:,.0f} ${units}<extra></extra>`,
           },
         ], baseLayout(theme, {
-          xaxis: { title: { text: `Measured Mr (${units})`, font: { size: 11 } }, type: 'log', gridcolor: c.grid, zerolinecolor: c.grid },
-          yaxis: { title: { text: `Predicted Mr (${units})`, font: { size: 11 } }, type: 'log', gridcolor: c.grid, zerolinecolor: c.grid },
+          xaxis: axis(theme, `Measured Mr (${units})`, { type: 'log' }),
+          yaxis: gridAxis(theme, `Predicted Mr (${units})`, { type: 'log' }),
           hovermode: 'closest',
+          showlegend: false,
         }), plotConfig);
       }
 
@@ -192,14 +205,15 @@ export default function MrFitterApp() {
           traces.push({
             x: pts.map(p => p.theta), y: pts.map(p => p.mr),
             name: `σ₃ = ${s3} ${units}`, mode: 'markers', legendgroup: `g${gi}`,
-            marker: { color, size: 8.5, line: { color: c.ink, width: 1 } },
+            marker: { color, size: 8.5, line: { color: c.surface, width: 2 } },
             hovertemplate: `θ %{x:.1f} · Mr %{y:,.0f} ${units}<extra>σ₃ = ${s3}</extra>`,
           });
         });
         Plotly.react(curvesRef.current, traces, baseLayout(theme, {
-          xaxis: { title: { text: `Bulk stress θ (${units})`, font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid },
-          yaxis: { title: { text: `Mr (${units})`, font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          xaxis: axis(theme, `Bulk stress θ (${units})`),
+          yaxis: gridAxis(theme, `Mr (${units})`, { rangemode: 'tozero' as const }),
           hovermode: 'closest',
+          showlegend: false,
         }), plotConfig);
       }
     })();
@@ -328,49 +342,69 @@ export default function MrFitterApp() {
               </span></p>
             )}
 
-            <div className="cee-keys">
-              <div className="cee-key">
-                <div className="cee-key__label">k₁<Tip text="Dimensionless stiffness scale: at θ = pa and zero shear, Mr = k₁·pa. Typical soils: a few hundred to a few thousand." /></div>
-                <div className="cee-key__value">{fit.k1 >= 10 ? fit.k1.toFixed(1) : fit.k1 >= 0.01 ? fit.k1.toFixed(4) : fit.k1.toExponential(3)}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">k₂<Tip text="Stress-hardening exponent on bulk stress θ — confinement stiffens the soil, so expect k₂ ≥ 0 (strongly positive for granular materials)." /></div>
-                <div className="cee-key__value">{fit.k2.toFixed(4)}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">k₃<Tip text="Shear-softening exponent on τ_oct — shearing weakens the soil, so expect k₃ ≤ 0 (most negative for fine-grained soils)." /></div>
-                <div className="cee-key__value">{fit.k3.toFixed(4)}</div>
-              </div>
-              <div className="cee-key cee-key--accent">
-                <div className="cee-key__label">R² (LOG SPACE)<Tip text="Goodness of fit of the linearized regression — this is the R² Excel LINEST reports, so quote this one when comparing." /></div>
-                <div className="cee-key__value">{fit.r2log.toFixed(4)}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">R² (ON Mr)<Tip text="R² recomputed on back-transformed Mr values — usually close to the log-space value, but not identical; say which you report." /></div>
-                <div className="cee-key__value">{fit.r2.toFixed(4)}</div>
-              </div>
-            </div>
+            <KpiStrip>
+              <Kpi
+                label="k₁"
+                value={fit.k1 >= 10 ? fit.k1.toFixed(1) : fit.k1 >= 0.01 ? fit.k1.toFixed(4) : fit.k1.toExponential(3)}
+                tip="Dimensionless stiffness scale: at θ = pa and zero shear, Mr = k₁·pa. Typical soils: a few hundred to a few thousand."
+              />
+              <Kpi
+                label="k₂"
+                value={fit.k2.toFixed(4)}
+                tip="Stress-hardening exponent on bulk stress θ — confinement stiffens the soil, so expect k₂ ≥ 0 (strongly positive for granular materials)."
+              />
+              <Kpi
+                label="k₃"
+                value={fit.k3.toFixed(4)}
+                tip="Shear-softening exponent on τ_oct — shearing weakens the soil, so expect k₃ ≤ 0 (most negative for fine-grained soils)."
+              />
+              <Kpi
+                accent
+                label="R² (log space)"
+                value={fit.r2log.toFixed(4)}
+                tip="Goodness of fit of the linearized regression — this is the R² Excel LINEST reports, so quote this one when comparing."
+              />
+              <Kpi
+                label="R² (on Mr)"
+                value={fit.r2.toFixed(4)}
+                tip="R² recomputed on back-transformed Mr values — usually close to the log-space value, but not identical; say which you report."
+              />
+            </KpiStrip>
 
             <div className="cee-chart-grid cee-chart-grid--2">
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Measured vs. predicted Mr</h3>
-                <div ref={parityRef} />
-                <p className="cee-chart__caption">
-                  Every test point, measured against what the fitted model predicts for its stress state
-                  (log axes). A perfect model puts all points on the dashed <strong>1:1 line</strong>;
-                  vertical distance from it is the residual in the table. This is the plot HW2 asks for.
-                </p>
-              </div>
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Mr vs. bulk stress θ — fitted model by σ₃</h3>
-                <div ref={curvesRef} />
-                <p className="cee-chart__caption">
-                  The fitted surface sliced at each confining stress: along one curve, rising θ comes with
-                  rising deviator stress, so the shape mixes hardening (k₂) and softening (k₃). Curves
-                  rising with θ ⇒ hardening dominates (granular behavior); falling ⇒ shear softening
-                  dominates (fine-grained behavior).
-                </p>
-              </div>
+              <ChartFigure
+                title="Measured vs. predicted Mr"
+                subtitle="Each test point against the fitted model, log axes"
+                plotRef={parityRef}
+                legend={[
+                  { label: 'Test points', color: HUES[theme].orange },
+                  { label: '1:1 line', color: chartColors(theme).secondary, shape: 'dash' },
+                ]}
+                takeaway={`The fit reproduces the measured moduli with an R² of ${fit.r2log.toFixed(3)} in log space; scatter about the 1:1 line is the residual.`}
+              >
+                Every test point, measured against what the fitted model predicts for its stress state
+                (log axes). A perfect model puts all points on the dashed <strong>1:1 line</strong>;
+                vertical distance from it is the residual in the table. This is the plot HW2 asks for.
+              </ChartFigure>
+              <ChartFigure
+                title="Mr vs. bulk stress θ — fitted model by σ₃"
+                subtitle="The fitted surface sliced at each confining stress in the data set"
+                plotRef={curvesRef}
+                legend={sigma3Groups.map((s3, gi) => ({
+                  label: `σ₃ = ${s3} ${units}`,
+                  color: HUES[theme][HUE_ORDER[gi % HUE_ORDER.length]],
+                }))}
+                takeaway={
+                  fit.k2 + fit.k3 >= 0
+                    ? 'Modulus rises with bulk stress, so stress hardening dominates — granular behaviour.'
+                    : 'Modulus falls as bulk stress rises, so shear softening dominates — fine-grained behaviour.'
+                }
+              >
+                The fitted surface sliced at each confining stress: along one curve, rising θ comes with
+                rising deviator stress, so the shape mixes hardening (k₂) and softening (k₃). Curves
+                rising with θ ⇒ hardening dominates (granular behavior); falling ⇒ shear softening
+                dominates (fine-grained behavior).
+              </ChartFigure>
             </div>
 
             <div className="cee-tablewrap">

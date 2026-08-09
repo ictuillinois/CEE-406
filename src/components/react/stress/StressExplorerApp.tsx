@@ -4,7 +4,12 @@
 // over the loaded area. Supports HW3/HW4 hand-calculation checks.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
-import { useTheme, chartColors, baseLayout, plotConfig, num, fmt } from '../chartTheme';
+import {
+  useTheme, chartColors, baseLayout, plotConfig, num, fmt,
+  axis, gridAxis, hueFor, rampScale, withAlpha,
+} from '../chartTheme';
+import ChartFigure from '../ui/ChartFigure';
+import KpiStrip, { Kpi } from '../ui/KpiStrip';
 import '../tools.css';
 
 type Profile = {
@@ -130,73 +135,70 @@ export default function StressExplorerApp() {
       if (cancelled) return;
 
       const c = chartColors(theme);
-      const dark = theme === 'dark';
       const zProbeMm = probeClamped * a;
       const probeLine = {
         type: 'line' as const, xref: 'paper' as const, x0: 0, x1: 1,
         y0: zProbeMm, y1: zProbeMm,
-        line: { color: c.violet, width: 1.5, dash: 'dot' as const },
+        line: { color: c.secondary, width: 1, dash: 'dot' as const },
       };
+      // Depth profiles: gridlines run along the depth axis only (§B8.1).
       const layout = (xTitle: string, extra: Record<string, unknown> = {}) =>
         baseLayout(theme, {
-          xaxis: { title: { text: xTitle, font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.fg },
-          yaxis: {
-            title: { text: 'Depth z (mm)', font: { size: 11 } },
-            autorange: 'reversed' as const, gridcolor: c.grid, zerolinecolor: c.grid,
-          },
+          xaxis: axis(theme, xTitle),
+          yaxis: gridAxis(theme, 'Depth z (mm)', { autorange: 'reversed' as const }),
           hovermode: 'y unified' as const,
+          showlegend: false,
           shapes: [probeLine],
           ...extra,
         });
 
       if (stressRef.current) {
         Plotly.react(stressRef.current, [
-          { x: prof.sigZ, y: prof.z, name: 'σz', mode: 'lines', line: { color: c.orange, width: 2.5 } },
-          { x: prof.sigR, y: prof.z, name: 'σr = σt', mode: 'lines', line: { color: c.sky, width: 2.5 } },
+          { x: prof.sigZ, y: prof.z, name: 'σz', mode: 'lines', line: { color: hueFor('stress', theme), width: 2.5, shape: 'spline' as const } },
+          { x: prof.sigR, y: prof.z, name: 'σr = σt', mode: 'lines', line: { color: hueFor('strain', theme), width: 2.5, shape: 'spline' as const } },
         ], layout('Stress (kPa)'), plotConfig);
       }
       if (strainRef.current) {
         Plotly.react(strainRef.current, [
-          { x: prof.epsZ, y: prof.z, name: 'εz', mode: 'lines', line: { color: c.orange, width: 2.5 } },
-          { x: prof.epsR, y: prof.z, name: 'εr', mode: 'lines', line: { color: c.sky, width: 2.5 } },
+          { x: prof.epsZ, y: prof.z, name: 'εz', mode: 'lines', line: { color: hueFor('stress', theme), width: 2.5, shape: 'spline' as const } },
+          { x: prof.epsR, y: prof.z, name: 'εr', mode: 'lines', line: { color: hueFor('strain', theme), width: 2.5, shape: 'spline' as const } },
         ], layout('Strain (µε) — compression positive'), plotConfig);
       }
       if (deflRef.current) {
+        const wHue = hueFor('deflection', theme);
         Plotly.react(deflRef.current, [
-          { x: prof.w, y: prof.z, name: 'w', mode: 'lines', line: { color: c.green, width: 2.5 }, fill: 'tozerox', fillcolor: 'rgba(16,185,129,0.06)' },
+          {
+            x: prof.w, y: prof.z, name: 'w', mode: 'lines',
+            line: { color: wHue, width: 2.5, shape: 'spline' as const },
+            fill: 'tozerox', fillcolor: withAlpha(wHue, 0.12),
+          },
         ], layout('Deflection w (mm)', {
-          xaxis: { title: { text: 'Deflection w (mm)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
-          showlegend: false,
+          xaxis: axis(theme, 'Deflection w (mm)', { rangemode: 'tozero' as const }),
         }), plotConfig);
       }
       if (bulbRef.current) {
         if (!bulbCache) bulbCache = computeBulb();
-        // Sequential single-hue ramp (magnitude): light → dark in light mode,
-        // dark → light on the dark surface.
-        const scale = dark
-          ? [[0, 'rgba(220,112,20,0)'], [0.15, '#7C2D12'], [0.45, '#C2410C'], [0.75, '#EA7317'], [1, '#FDBA74']]
-          : [[0, 'rgba(232,119,34,0)'], [0.15, '#FED7AA'], [0.45, '#FB923C'], [0.75, '#EA580C'], [1, '#7C2D12']];
+        // Sequential single-hue ramp; rampScale handles the dark-mode end
+        // reversal (§A4.2). The scale legend is the <RampBar>, so Plotly's
+        // colorbar is suppressed (§B6 deviation 2).
         Plotly.react(bulbRef.current, [
           {
             type: 'contour', x: bulbCache.x, y: bulbCache.y, z: bulbCache.z,
-            colorscale: scale, zmin: 0, zmax: 1,
+            colorscale: rampScale('orange', theme), zmin: 0, zmax: 1,
             contours: { start: 0.1, end: 0.9, size: 0.1, coloring: 'fill', showlines: true },
-            line: { color: dark ? 'rgba(255,255,255,0.25)' : 'rgba(15,26,46,0.25)', width: 0.5 },
-            colorbar: {
-              title: { text: 'σz / p', font: { size: 10 } }, thickness: 10, len: 0.85,
-              tickfont: { size: 9, color: c.fg }, outlinewidth: 0,
-            },
+            line: { color: withAlpha(theme === 'dark' ? '#FFFFFF' : '#0F1A2E', 0.18), width: 0.5 },
+            showscale: false,
             hovertemplate: 'r/a %{x:.2f} · z/a %{y:.2f}<br>σz/p = %{z:.2f}<extra></extra>',
           },
         ], baseLayout(theme, {
-          margin: { l: 58, r: 8, t: 18, b: 44 },
-          xaxis: { title: { text: 'Offset r / a', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, range: [-3, 3] },
-          yaxis: { title: { text: 'Depth z / a', font: { size: 11 } }, autorange: 'reversed' as const, gridcolor: c.grid, zerolinecolor: c.grid },
+          margin: { l: 56, r: 12, t: 18, b: 40 },
+          xaxis: axis(theme, 'Offset r / a', { range: [-3, 3] }),
+          yaxis: axis(theme, 'Depth z / a', { autorange: 'reversed' as const }),
           shapes: [
             // the loaded area, drawn as a bar sitting on the surface
             { type: 'rect', x0: -1, x1: 1, y0: 0, y1: -0.14, fillcolor: c.ink, line: { width: 0 } },
             // depth probe
-            { type: 'line', x0: -3, x1: 3, y0: probeClamped, y1: probeClamped, line: { color: c.violet, width: 1.5, dash: 'dot' } },
+            { type: 'line', x0: -3, x1: 3, y0: probeClamped, y1: probeClamped, line: { color: c.secondary, width: 1, dash: 'dot' } },
           ],
           annotations: [{
             x: 0, y: -0.3, text: 'p', showarrow: false, font: { size: 11, color: c.ink },
@@ -312,24 +314,32 @@ export default function StressExplorerApp() {
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>Enter positive values for p, a, and E to see results.</span></p>
         ) : (
           <>
-            <div className="cee-keys">
-              <div className="cee-key cee-key--accent">
-                <div className="cee-key__label">SURFACE DEFLECTION w₀<Tip text="Settlement of the surface at the load center — what an FWD sensor under the load plate would read. The single most-checked number in HW3." /></div>
-                <div className="cee-key__value">{fmt(w0, 3)}<small>mm</small></div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">σz AT z = a<Tip text="Vertical stress one contact-radius deep. It depends only on p — not on E or ν — because a homogeneous half-space has no stiffness contrast to redistribute load." /></div>
-                <div className="cee-key__value">{fmt(p * (1 - 1 / Math.pow(2, 1.5)), 1)}<small>kPa</small></div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">σz / p AT z = a<Tip text="Dimensionless — 0.646 for every load and every material. If your hand solution doesn't reproduce this, check it before anything else." /></div>
-                <div className="cee-key__value">{fmt(1 - 1 / Math.pow(2, 1.5), 3)}</div>
-              </div>
-              <div className="cee-key">
-                <div className="cee-key__label">w₀ FORMULA<Tip text="Center deflection of a flexible circular load on a half-space (Huang Eq. 2.8). A rigid plate gives π/4 of this — about 79%." /></div>
-                <div className="cee-key__value" style={{ fontSize: '0.8rem' }}>2(1−ν²)pa/E</div>
-              </div>
-            </div>
+            <KpiStrip>
+              <Kpi
+                accent
+                label="Surface deflection w₀"
+                value={fmt(w0, 3)}
+                unit="mm"
+                tip="Settlement of the surface at the load center — what an FWD sensor under the load plate would read. The single most-checked number in HW3."
+              />
+              <Kpi
+                label="σz at z = a"
+                value={fmt(p * (1 - 1 / Math.pow(2, 1.5)), 1)}
+                unit="kPa"
+                tip="Vertical stress one contact-radius deep. It depends only on p — not on E or ν — because a homogeneous half-space has no stiffness contrast to redistribute load."
+              />
+              <Kpi
+                label="σz / p at z = a"
+                value={fmt(1 - 1 / Math.pow(2, 1.5), 3)}
+                tip="Dimensionless — 0.646 for every load and every material. If your hand solution doesn't reproduce this, check it before anything else."
+              />
+              <Kpi
+                compact
+                label="w₀ formula"
+                value="2(1−ν²)pa/E"
+                tip="Center deflection of a flexible circular load on a half-space (Huang Eq. 2.8). A rigid plate gives π/4 of this — about 79%."
+              />
+            </KpiStrip>
 
             <div className="cee-probe">
               <div className="cee-probe__head">
@@ -355,49 +365,62 @@ export default function StressExplorerApp() {
             </div>
 
             <div className="cee-chart-grid cee-chart-grid--2">
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Stress vs. depth</h3>
-                <div ref={stressRef} />
-                <p className="cee-chart__caption">
-                  Both stresses under the load center, compression positive. <strong>σz</strong> starts
-                  at p on the surface and decays to ~5% of p by z = 4a; <strong>σr</strong> dies off much
-                  faster and can go (slightly) tensile — that difference is what bends the upper layers
-                  of a real pavement. Note stresses are independent of E: only the geometry matters.
-                </p>
-              </div>
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Strain vs. depth</h3>
-                <div ref={strainRef} />
-                <p className="cee-chart__caption">
-                  Strains follow the stresses through Hooke's law and scale with 1/E — halve the modulus,
-                  double every strain. <strong>εr</strong> turning negative means horizontal tension: in a
-                  layered pavement that tension concentrates at the bottom of the stiff AC layer and drives
-                  fatigue cracking.
-                </p>
-              </div>
+              <ChartFigure
+                title="Stress vs. depth"
+                subtitle="Vertical and radial stress on the load axis, compression positive"
+                plotRef={stressRef}
+                legend={[
+                  { label: 'σz', color: hueFor('stress', theme) },
+                  { label: 'σr = σt', color: hueFor('strain', theme) },
+                ]}
+                takeaway="Vertical stress decays to roughly 5% of the contact pressure by four contact radii, while radial stress dies off far faster and turns slightly tensile."
+              >
+                Both stresses under the load center, compression positive. <strong>σz</strong> starts
+                at p on the surface and decays to ~5% of p by z = 4a; <strong>σr</strong> dies off much
+                faster and can go (slightly) tensile — that difference is what bends the upper layers
+                of a real pavement. Note stresses are independent of E: only the geometry matters.
+              </ChartFigure>
+              <ChartFigure
+                title="Strain vs. depth"
+                subtitle="Hooke's law applied to the stresses at left — everything scales with 1/E"
+                plotRef={strainRef}
+                legend={[
+                  { label: 'εz', color: hueFor('stress', theme) },
+                  { label: 'εr', color: hueFor('strain', theme) },
+                ]}
+                takeaway="Radial strain turns negative near the surface, meaning horizontal tension — the mechanism that cracks the bottom of an asphalt layer."
+              >
+                Strains follow the stresses through Hooke's law and scale with 1/E — halve the modulus,
+                double every strain. <strong>εr</strong> turning negative means horizontal tension: in a
+                layered pavement that tension concentrates at the bottom of the stiff AC layer and drives
+                fatigue cracking.
+              </ChartFigure>
             </div>
 
             <div className="cee-chart-grid cee-chart-grid--2">
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Pressure bulb — σz / p (normalized, any load)</h3>
-                <div ref={bulbRef} />
-                <p className="cee-chart__caption">
-                  Contours of vertical stress over the whole r–z plane, not just the axis. Because axes are
-                  in multiples of a and stress in multiples of p, <strong>this exact shape holds for every
-                  load</strong> — only the physical scale changes. Where the bulbs of two nearby wheels
-                  overlap, their stresses add: that superposition is why tandem axles load the subgrade
-                  differently than two separated singles (the HW1 axle question, drawn).
-                </p>
-              </div>
-              <div className="cee-chart">
-                <h3 className="cee-chart__title">Deflection vs. depth</h3>
-                <div ref={deflRef} />
-                <p className="cee-chart__caption">
-                  Downward displacement of each point on the axis. The curve is steepest near the surface —
-                  most of w₀ accumulates within the top few radii, which is why improving the upper layers
-                  pays off more than anything done at depth.
-                </p>
-              </div>
+              <ChartFigure
+                title="Pressure bulb — σz / p"
+                subtitle="Normalized contours over the r–z plane; the same shape for every load"
+                plotRef={bulbRef}
+                ramp={{ name: 'orange', theme, caption: 'σz / p', lowLabel: '0', highLabel: '1' }}
+                takeaway="Vertical stress spreads into a bulb roughly two contact radii wide, so the bulbs of closely spaced wheels overlap and their stresses add."
+              >
+                Contours of vertical stress over the whole r–z plane, not just the axis. Because axes are
+                in multiples of a and stress in multiples of p, <strong>this exact shape holds for every
+                load</strong> — only the physical scale changes. Where the bulbs of two nearby wheels
+                overlap, their stresses add: that superposition is why tandem axles load the subgrade
+                differently than two separated singles (the HW1 axle question, drawn).
+              </ChartFigure>
+              <ChartFigure
+                title="Deflection vs. depth"
+                subtitle="Downward displacement of each point on the load axis"
+                plotRef={deflRef}
+                takeaway="Most of the surface deflection accumulates in the top few contact radii, so stiffening the upper layers pays off more than anything done at depth."
+              >
+                Downward displacement of each point on the axis. The curve is steepest near the surface —
+                most of w₀ accumulates within the top few radii, which is why improving the upper layers
+                pays off more than anything done at depth.
+              </ChartFigure>
             </div>
 
             <div className="cee-tablewrap">

@@ -5,7 +5,14 @@
 // "assume any missing information" variations are one keystroke away.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
-import { useTheme, chartColors, baseLayout, plotConfig, num } from '../chartTheme';
+import {
+  useTheme, chartColors, baseLayout, plotConfig, num,
+  axis, gridAxis, hueFor, HUE_ORDER, HUES,
+} from '../chartTheme';
+import ChartFigure from '../ui/ChartFigure';
+import Card from '../ui/Card';
+import KpiStrip, { Kpi } from '../ui/KpiStrip';
+import ShareRows from '../ui/ShareRows';
 import '../tools.css';
 
 const kgFmt = (x: number) =>
@@ -85,7 +92,18 @@ export default function LcaApp() {
 
   const theme = useTheme();
   const iriRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+
+  // Six stages exceed the 6-hue categorical set only if a series is added, so
+  // they take hues 1-6 in the fixed order and keep them (§B4). Order is the
+  // life-cycle order, never sorted by value.
+  const stageSegments = useMemo(
+    () => res.stages.map((s, i) => ({
+      label: s.name,
+      value: s.v,
+      color: HUES[theme][HUE_ORDER[i % HUE_ORDER.length]],
+    })),
+    [res.stages, theme]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -98,50 +116,34 @@ export default function LcaApp() {
         Plotly.react(iriRef.current, [
           {
             x: res.iriT, y: res.iriV, name: 'IRI', mode: 'lines',
-            line: { color: c.sky, width: 2.5 },
+            line: { color: hueFor('damage', theme), width: 2.5 },
             hovertemplate: 'year %{x:.1f} · IRI %{y:.0f} in/mi<extra></extra>',
           },
         ], baseLayout(theme, {
-          xaxis: { title: { text: 'Year', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, range: [0, years] },
-          yaxis: { title: { text: 'IRI (in/mi)', font: { size: 11 } }, gridcolor: c.grid, zerolinecolor: c.grid, rangemode: 'tozero' as const },
+          xaxis: axis(theme, 'Year', { range: [0, years] }),
+          yaxis: gridAxis(theme, 'IRI (in/mi)', { rangemode: 'tozero' as const }),
           showlegend: false,
           hovermode: 'closest',
           shapes: [
-            { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: trig, y1: trig, line: { color: c.fg, width: 1, dash: 'dash' } },
+            { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: trig, y1: trig, line: { color: c.secondary, width: 1, dash: 'dash' } },
             ...res.rehabTimes.map(t => ({
               type: 'line' as const, x0: t, x1: t, yref: 'paper' as const, y0: 0, y1: 1,
-              line: { color: c.orange, width: 1.5, dash: 'dot' as const },
+              line: { color: c.secondary, width: 1, dash: 'dot' as const },
             })),
           ],
           annotations: [
-            { xref: 'paper', x: 0.01, y: trig, text: `rehab trigger ${trig}`, showarrow: false, yshift: 9, font: { size: 9.5, color: c.fg }, xanchor: 'left' as const },
+            { xref: 'paper', x: 0.01, y: trig, text: `rehab trigger ${trig}`, showarrow: false, yshift: 9, font: { size: 10, color: c.fg }, xanchor: 'left' as const },
             ...res.rehabTimes.map(t => ({
               x: t, yref: 'paper' as const, y: 1.03, text: `yr ${t.toFixed(1)}`, showarrow: false,
-              font: { size: 9, color: c.orange },
+              font: { size: 10, color: c.fg },
             })),
           ],
         }), plotConfig);
       }
 
-      if (stageRef.current) {
-        const names = res.stages.map(s => s.name);
-        const vals = res.stages.map(s => Math.max(s.v, 0.1));
-        Plotly.react(stageRef.current, [{
-          x: vals, y: names, type: 'bar', orientation: 'h',
-          marker: { color: c.orange },
-          text: res.stages.map(s => `${kgFmt(s.v)} kg`), textposition: 'outside',
-          textfont: { size: 10, color: c.fg }, cliponaxis: false,
-          hovertemplate: '%{y}: %{text}<extra></extra>',
-        }], baseLayout(theme, {
-          margin: { l: 92, r: 80, t: 8, b: 44 },
-          xaxis: {
-            title: { text: 'GHG (kg CO₂e) — log scale', font: { size: 11 } },
-            type: 'log', gridcolor: c.grid, zerolinecolor: c.grid,
-          },
-          yaxis: { gridcolor: 'rgba(0,0,0,0)', autorange: 'reversed' as const },
-          showlegend: false,
-        }), plotConfig);
-      }
+      // The stage breakdown is the §A8.10 composition bar, rendered as HTML —
+      // it replaced a log-scale bar chart, which cannot satisfy §A12's "bars
+      // start at zero, always" because a log axis has no zero.
     })();
     return () => { cancelled = true; };
   }, [res, theme, years, trig]);
@@ -223,46 +225,61 @@ export default function LcaApp() {
           </div>
         </details>
 
-        <div className="cee-keys">
-          <div className="cee-key cee-key--accent">
-            <div className="cee-key__label">TOTAL GHG · {years} YR<Tip text="Sum of all six life-cycle stages for the functional unit: one lane-mile over the analysis period. Reported in metric tonnes (1 t = 1000 kg CO₂e)." /></div>
-            <div className="cee-key__value">{(res.total / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}<small>t CO₂e</small></div>
-          </div>
-          <div className="cee-key">
-            <div className="cee-key__label">GOVERNING STAGE<Tip text="The stage with the largest share — the answer to the closing question of HW10, together with a mitigation aimed at THIS stage (e.g., smoother pavement → lower vehicle fuel use)." /></div>
-            <div className="cee-key__value" style={{ fontSize: '0.95rem' }}>{res.governing.name} · {((res.governing.v / res.total) * 100).toFixed(1)}%</div>
-          </div>
-          <div className="cee-key">
-            <div className="cee-key__label">REHABILITATIONS<Tip text="One mill-and-overlay is scheduled every time the IRI reaches the trigger; roughness then resets to the initial value. Their count multiplies the M&R factor." /></div>
-            <div className="cee-key__value">{res.rehabTimes.length}<small>{res.rehabTimes.map(t => `yr ${t.toFixed(1)}`).join(' · ')}</small></div>
-          </div>
-          <div className="cee-key">
-            <div className="cee-key__label">MATERIAL MASS<Tip text="AC plus aggregate for the initial construction, from volume × density (short tons). This mass drives the materials, transport, and construction stages." /></div>
-            <div className="cee-key__value">{(res.acTons + res.baseTons).toFixed(0)}<small>tons</small></div>
-          </div>
-        </div>
+        <KpiStrip>
+          <Kpi
+            accent
+            label={`Total GHG · ${years} yr`}
+            value={(res.total / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            unit="t CO₂e"
+            tip="Sum of all six life-cycle stages for the functional unit: one lane-mile over the analysis period. Reported in metric tonnes (1 t = 1000 kg CO₂e)."
+          />
+          <Kpi
+            compact
+            label="Governing stage"
+            value={`${res.governing.name} · ${((res.governing.v / res.total) * 100).toFixed(1)}%`}
+            tip="The stage with the largest share — the answer to the closing question of HW10, together with a mitigation aimed at THIS stage (e.g., smoother pavement → lower vehicle fuel use)."
+          />
+          <Kpi
+            label="Rehabilitations"
+            value={res.rehabTimes.length}
+            unit={res.rehabTimes.map(t => `yr ${t.toFixed(1)}`).join(' · ')}
+            tip="One mill-and-overlay is scheduled every time the IRI reaches the trigger; roughness then resets to the initial value. Their count multiplies the M&R factor."
+          />
+          <Kpi
+            label="Material mass"
+            value={(res.acTons + res.baseTons).toFixed(0)}
+            unit="tons"
+            tip="AC plus aggregate for the initial construction, from volume × density (short tons). This mass drives the materials, transport, and construction stages."
+          />
+        </KpiStrip>
 
         <div className="cee-chart-grid cee-chart-grid--2">
-          <div className="cee-chart">
-            <h3 className="cee-chart__title">IRI timeline &amp; rehab schedule</h3>
-            <div ref={iriRef} />
-            <p className="cee-chart__caption">
-              Roughness grows linearly until it hits the dashed trigger; each dotted vertical is a
-              mill-and-overlay that resets IRI to its initial value — the classic <strong>sawtooth</strong>.
-              This chart <em>is</em> the M&amp;R stage: count the teeth, multiply by the rehab factor.
-              Slower deterioration or a higher trigger removes whole rehabs at a time.
-            </p>
-          </div>
-          <div className="cee-chart">
-            <h3 className="cee-chart__title">GHG by life-cycle stage (log scale)</h3>
-            <div ref={stageRef} />
-            <p className="cee-chart__caption">
-              <strong>Log scale — every gridline is ×10.</strong> On a linear axis all bars except the use
-              phase would vanish: vehicles burning fuel over {years} years out-emit building the road by
-              more than an order of magnitude. That imbalance, and what it implies for smoothness-focused
-              maintenance, is the takeaway HW10 wants in your comment.
-            </p>
-          </div>
+          <ChartFigure
+            title="IRI timeline &amp; rehab schedule"
+            subtitle="Roughness against the rehabilitation trigger over the analysis period"
+            plotRef={iriRef}
+            takeaway={`Roughness reaches the trigger ${res.rehabTimes.length} time${res.rehabTimes.length === 1 ? '' : 's'} in ${years} years, and each mill-and-overlay resets it to the initial value.`}
+          >
+            Roughness grows linearly until it hits the dashed trigger; each vertical marker is a
+            mill-and-overlay that resets IRI to its initial value — the classic <strong>sawtooth</strong>.
+            This chart <em>is</em> the M&amp;R stage: count the teeth, multiply by the rehab factor.
+            Slower deterioration or a higher trigger removes whole rehabs at a time.
+          </ChartFigure>
+
+          <Card
+            title="GHG by life-cycle stage"
+            subtitle="Each stage as a share of the cradle-to-grave total"
+          >
+            <figure className="cee-figure">
+              <ShareRows rows={stageSegments} theme={theme} format={v => `${kgFmt(v)} kg`} />
+              <figcaption className="cee-figcaption">
+                The <strong>use phase</strong> is {((res.governing.v / res.total) * 100).toFixed(0)}% of the
+                total on these defaults: vehicles burning fuel over {years} years out-emit building the road
+                by more than an order of magnitude. That imbalance, and what it implies for
+                smoothness-focused maintenance, is the takeaway HW10 wants in your comment.
+              </figcaption>
+            </figure>
+          </Card>
         </div>
 
         <div className="cee-tablewrap">
@@ -276,13 +293,15 @@ export default function LcaApp() {
               </tr>
             </thead>
             <tbody>
-              {res.stages.map(s => (
+              {res.stages.map((s, i) => (
                 <tr key={s.name}>
                   <td>{s.name}</td>
-                  <td style={{ textAlign: 'left', fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{s.note}</td>
+                  <td style={{ textAlign: 'left', fontSize: '0.75rem', color: 'var(--cee-muted)' }}>{s.note}</td>
                   <td>{s.v.toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>
                   <td className="cee-share-cell">
-                    <span className="cee-share" aria-hidden="true"><span style={{ width: `${(s.v / res.total) * 100}%` }} /></span>
+                    <span className="cee-share" aria-hidden="true">
+                      <span style={{ width: `${(s.v / res.total) * 100}%`, background: stageSegments[i].color }} />
+                    </span>
                     {((s.v / res.total) * 100).toFixed(1)}%
                   </td>
                 </tr>

@@ -648,16 +648,28 @@ Applying §A8.18 to the charts we have and the ones we are adding:
 | Stress/strain/deflection vs. depth | line, heavy grid, 10.5 px | **8.5** gradient area + line, depth on y, ≤ 4 gridlines, HTML legend |
 | Pressure bulb σz/p | Plotly contour + colorbar | **8.11**-styled contour, orange ramp, `<RampBar>` legend with Low/High |
 | Rutting / cracking vs. N | multi-line | **8.5**, total in `text/primary`, layers in the semantic hues |
-| LCA stage totals | horizontal Plotly bar | **8.10** detached composition bar with inline % chips + **8.16** table |
-| Westergaard case comparison | horizontal Plotly bar | **8.7** horizontal range bars (interior/edge/corner are named stages with long labels) |
+| LCA stage totals | horizontal Plotly bar (log scale) | **8.8** row geometry with share-of-total semantics + **8.16** table. The log-scale bar broke §A12's "bars start at zero"; §8.10's composition bar was tried and rejected — it requires the % printed *inside* every segment, which is impossible when one stage is 88 % and the rest are 3–4 %. Rows keep the number in its own column, so they stay readable at any skew |
+| Westergaard case comparison | horizontal Plotly bar | **8.2** target-vs-actual layered bars — the modulus of rupture is the ghost/target bar, each case stress the actual, so the chart reads as "how much of the concrete's strength this loading consumes" |
 | ESAL axle spectrum | bar | **8.1** paired bars (axles vs. ESAL contribution) |
 | Mr parity plot | scatter | scatter + 1:1 reference line, 8 px dots, brand hue |
-| Damage layer shares | `.cee-share` inline bars | **8.8** hatched progress |
+| Damage layer shares | `.cee-share` inline bars | **8.16** table with an inline micro-bar on the share column — *not* 8.8, whose rows are independent percentages; layer shares sum to 100 % |
 | *New:* AASHTO sensitivity (SN vs. R, vs. ESAL) | — | **8.2** target-vs-actual layered bars |
 | *New:* drainage time-to-drain | — | **8.5** with a marker line at 95 % drainage |
 | *New:* seasonal k / Mr by month | — | **8.11** rounded-cell heatmap |
 
 **Never** a pie for LCA stages or ESAL composition (§A12).
+
+### B8.1 Depth profiles — reading of the gridline rule
+
+Half this toolbox plots a response against **depth**, with `z` on a reversed y-axis and the
+quantity on x. §A7's "horizontal gridlines only" was written for time series, where y carries the
+value; taken literally it is ambiguous here.
+
+The binding reading: **gridlines run horizontally, along the depth axis, and never on the value
+axis.** Two reasons — it keeps the letter of §A7, and it serves what these charts are actually for,
+which is comparing σz, εz and w *at the same depth*. Precision comes from the depth probe and the
+table, not from counting gridlines, which is the same argument §A7 uses to drop the y-axis when a
+KPI already states the magnitude.
 
 ## B9. Accessibility carry-overs
 

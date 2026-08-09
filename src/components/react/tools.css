@@ -505,11 +505,14 @@
   margin: 0.5rem 0 0;
 }
 
+/* No min-width: segment width is the encoding, so flooring it would distort
+   the one comparison this chart exists to support. Parts too small to draw
+   are folded into "Other" by the component instead. */
 .cee-compbar__seg {
   position: relative;
   height: 28px;
   border-radius: 8px;
-  min-width: 2.25rem;
+  flex-basis: 0;
   display: flex;
   align-items: center;
   padding-left: 0.4rem;
@@ -527,6 +530,19 @@
 }
 
 /* ───────── Progress bar with hatched remainder (§A8.8) ───────── */
+.cee-shares {
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.cee-progress__note {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--cee-muted);
+}
+
 .cee-progress__head {
   display: flex;
   justify-content: space-between;

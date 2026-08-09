@@ -262,10 +262,8 @@ export function withAlpha(hex: string, alpha: number): string {
  * Base layout.
  *
  * Legends belong below the plot as 8px round dots (§A7), which Plotly cannot
- * draw — it renders line-series keys as segments. Charts therefore render
- * <Legend> as HTML and pass `showlegend: false`. Until every tool has moved
- * over, the Plotly legend stays on by default, positioned and coloured as
- * close to the standard as the library allows.
+ * draw — it renders line-series keys as segments. Charts render <Legend> as
+ * HTML instead, so Plotly's own legend is off by default (§B6 deviation 1).
  */
 export function baseLayout(theme: Mode, overrides: Record<string, unknown> = {}) {
   const t = TOKENS[theme];
@@ -275,11 +273,7 @@ export function baseLayout(theme: Mode, overrides: Record<string, unknown> = {})
     paper_bgcolor: 'rgba(0,0,0,0)',
     plot_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'IBM Plex Sans, system-ui, sans-serif', size: 11.5, color: t.secondary },
-    legend: {
-      orientation: 'h' as const,
-      y: -0.2,
-      font: { family: 'IBM Plex Sans, system-ui, sans-serif', size: 13, color: t.secondary },
-    },
+    showlegend: false,
     hoverlabel: hoverLabel(theme),
     ...overrides,
   };
