@@ -1,8 +1,69 @@
-/* Shared styling for CEE 406 online tools (React islands) */
+/* Shared styling for CEE 406 online tools (React islands).
+ *
+ * Implements docs/chart-standards.md. §A is the visual language, §B binds it
+ * to the CEE 406 navy/orange identity. Section references below point there.
+ *
+ * Plain CSS: no :global() — dark mode is written as [data-theme='dark'] .foo.
+ */
+
+/* ────────────────────────────── Tokens (§B1) ──────────────────────────────
+ * Mirrors TOKENS in chartTheme.ts. Dark mode keeps the UIUC navy ladder but
+ * obeys the standard's structure: sunken darker than the card, elevation as
+ * lightness rather than shadow, primary text never pure white.
+ */
+:root {
+  --cee-page: #f8f9fb;
+  --cee-surface: #ffffff;
+  --cee-sunken: #f2f4f5;
+  --cee-hover: #f5f6f7;
+  --cee-hairline: #ecedef;
+  --cee-control: #d1d5db;
+  --cee-grid: #f0f1f3;
+  --cee-ink: #1a1a2e;
+  --cee-secondary: #5b6670;
+  --cee-muted: #98a2ac;
+  --cee-ghost: #edeff1;
+
+  --cee-brand: #e87722;
+  --cee-brand-wash: #fdf0e6;
+  --cee-brand-deep: #c2500f;
+
+  --cee-positive: #12b76a;
+  --cee-negative: #e5484d;
+  --cee-warning: #f59e0b;
+
+  --cee-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --cee-shadow-lift: 0 8px 24px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
+
+  --cee-radius-card: 16px;
+  --cee-radius-inner: 12px;
+  --cee-radius-control: 10px;
+}
+
+[data-theme='dark'] {
+  --cee-page: #0f1a2e;
+  --cee-surface: #162033;
+  --cee-sunken: #101b2f;
+  --cee-hover: #1b2740;
+  --cee-hairline: rgba(255, 255, 255, 0.07);
+  --cee-control: #2d3f59;
+  --cee-grid: rgba(255, 255, 255, 0.06);
+  --cee-ink: #f1f5f9;
+  --cee-secondary: #9ba4ac;
+  --cee-muted: #7c8ca5;
+  --cee-ghost: rgba(255, 255, 255, 0.07);
+
+  --cee-brand: #f0913f;
+  --cee-brand-wash: rgba(240, 145, 63, 0.14);
+  --cee-brand-deep: #f6b37b;
+
+  --cee-shadow: none;
+  --cee-shadow-lift: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
 
 .cee-tool {
   display: grid;
-  gap: 1.25rem;
+  gap: 1.5rem;
   grid-template-columns: 1fr;
 }
 
@@ -13,32 +74,90 @@
   }
 }
 
+/* ─────────────────────────── Card (§A6.1) ─────────────────────────── */
+.cee-card,
+.cee-chart,
+.cee-panel,
+.cee-tablewrap,
+.cee-howto,
+.cee-diagram,
+.cee-probe {
+  background: var(--cee-surface);
+  border: 1px solid var(--cee-hairline);
+  border-radius: var(--cee-radius-card);
+  box-shadow: var(--cee-shadow);
+  min-width: 0;
+}
+
+.cee-card--sunken {
+  background: var(--cee-sunken);
+  border-radius: var(--cee-radius-inner);
+  box-shadow: none;
+}
+
+.cee-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.375rem 0;
+}
+
+.cee-card--divided .cee-card__head {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--cee-hairline);
+}
+
+.cee-card__heading { min-width: 0; }
+
+/* title-card: 17/24, 600, -0.01em, sentence case (§A2.2/§A2.3) */
+.cee-card__title {
+  font-family: var(--font-heading);
+  font-size: 1.0625rem;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cee-ink);
+  margin: 0;
+}
+
+/* subtitle: 13/20, 400, secondary — carries the encoding explanation */
+.cee-card__subtitle {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--cee-secondary);
+  margin: 0.25rem 0 0;
+}
+
+.cee-card__affordance {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cee-card__body { padding: 1rem 1.375rem 1.25rem; }
+
 /* ── Input panel ── */
 .cee-panel {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
   padding: 1.25rem 1.375rem 1.375rem;
   position: sticky;
   top: 4.25rem;
-}
-
-[data-theme='dark'] .cee-panel {
-  background: #162033;
-  border-color: #2d3f59;
 }
 
 @media (max-width: 959px) {
   .cee-panel { position: static; }
 }
 
+/* eyebrow: 11/14, 600, +0.06em, uppercase (§A2.2) */
 .cee-panel__title {
-  font-family: var(--font-heading);
-  font-size: 0.8125rem;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-muted);
+  letter-spacing: 0.06em;
+  color: var(--cee-muted);
   margin: 0 0 1rem;
   display: flex;
   align-items: center;
@@ -49,40 +168,45 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--color-border);
+  background: var(--cee-hairline);
 }
 
-.cee-field {
-  margin-bottom: 0.875rem;
-}
+.cee-field { margin-bottom: 0.875rem; }
 
+/* label: 13/18, 500 (§A2.2) */
 .cee-field__label {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 0.3rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--cee-ink);
+  margin-bottom: 0.35rem;
 }
 
+/* stat chip on sunken (§A6.3) */
 .cee-field__unit {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.6875rem;
   font-weight: 400;
-  color: var(--color-text-muted);
+  color: var(--cee-secondary);
+  background: var(--cee-sunken);
+  border-radius: 5px;
+  padding: 0.1rem 0.35rem;
 }
 
 .cee-input,
 .cee-select {
   width: 100%;
-  padding: 0.45rem 0.625rem;
+  padding: 0.5rem 0.7rem;
   font-family: var(--font-mono);
   font-size: 0.84rem;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 7px;
+  font-variant-numeric: tabular-nums;
+  color: var(--cee-ink);
+  background: var(--cee-surface);
+  border: 1px solid var(--cee-control);
+  border-radius: var(--cee-radius-control);
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
   box-sizing: border-box;
@@ -90,32 +214,41 @@
 
 [data-theme='dark'] .cee-input,
 [data-theme='dark'] .cee-select {
-  background: #0f1a2e;
-  border-color: #2d3f59;
-  color: #f1f5f9;
+  background: var(--cee-sunken);
+}
+
+/* focus ring: 2px brand outline, 2px surface offset (§A11) */
+.cee-input:focus-visible,
+.cee-select:focus-visible,
+.cee-textarea:focus-visible,
+.cee-chip:focus-visible,
+.cee-btn:focus-visible,
+.cee-slider:focus-visible {
+  outline: 2px solid var(--cee-brand);
+  outline-offset: 2px;
 }
 
 .cee-input:focus,
 .cee-select:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.12);
+  border-color: var(--cee-brand);
 }
 
-.cee-input--invalid {
-  border-color: #ef4444;
-}
+.cee-input--invalid { border-color: var(--cee-negative); }
 
+/* Paired fields. `align-items: end` keeps the two inputs on one line even when
+   one label wraps to two lines and the other does not. */
 .cee-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.625rem;
+  align-items: end;
 }
 
 .cee-hint {
-  font-size: 0.68rem;
-  line-height: 1.5;
-  color: var(--color-text-muted);
-  margin: 0.75rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--cee-secondary);
+  margin: 0.875rem 0 0;
 }
 
 .cee-hint code {
@@ -127,101 +260,144 @@
 .cee-results {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
   min-width: 0;
 }
 
-/* Key values strip */
+/* ───────────────────────── KPI strip (§A6.2) ─────────────────────────
+ * One card, N equal columns separated by 1px vertical hairlines.
+ * .cee-keys / .cee-key are retained as aliases of the same treatment.
+ */
+.cee-kpis,
 .cee-keys {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.625rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  background: var(--cee-surface);
+  border: 1px solid var(--cee-hairline);
+  border-radius: var(--cee-radius-card);
+  box-shadow: var(--cee-shadow);
+  overflow: hidden;
 }
 
+.cee-kpi,
 .cee-key {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 0.875rem 1rem;
-}
-
-[data-theme='dark'] .cee-key {
-  background: #162033;
-  border-color: #2d3f59;
-}
-
-/* No text-transform here: labels may contain Greek symbols (σ → Σ breaks them).
-   Write Latin label text already uppercased in the components. */
-.cee-key__label {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-muted);
-  margin-bottom: 0.25rem;
-}
-
-.cee-key__value {
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: var(--color-text);
-  line-height: 1.2;
-}
-
-.cee-key__value small {
-  font-size: 0.65rem;
-  color: var(--color-text-muted);
-  margin-left: 0.25rem;
-}
-
-.cee-key--accent .cee-key__value { color: var(--color-accent); }
-
-/* Chart cards */
-.cee-chart {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 0.75rem 0.75rem 0.25rem;
+  padding: 1.125rem 1.25rem 1.25rem;
+  border-left: 1px solid var(--cee-hairline);
   min-width: 0;
 }
 
-[data-theme='dark'] .cee-chart {
-  background: #162033;
-  border-color: #2d3f59;
+.cee-kpi:first-child,
+.cee-key:first-child { border-left: none; }
+
+/* label: 14, secondary, sentence case. Never text-transform — a σ would
+   become a Σ (§B2). */
+.cee-kpi__label,
+.cee-key__label {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cee-secondary);
+  margin-bottom: 0.4rem;
 }
+
+/* display-kpi: 40/44, 700, -0.03em, tabular (§A2.2) */
+.cee-kpi__value,
+.cee-key__value {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--cee-ink);
+  overflow-wrap: anywhere;
+}
+
+.cee-kpi__value--compact {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.cee-kpi__unit,
+.cee-key__value small {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--cee-muted);
+  margin-left: 0.3rem;
+}
+
+.cee-kpi--accent .cee-kpi__value,
+.cee-key--accent .cee-key__value { color: var(--cee-brand); }
+
+/* delta: arrow + semantic % + grey context phrase (§A6.2) */
+.cee-kpi__delta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+}
+
+.cee-kpi__delta--up { color: var(--cee-positive); }
+.cee-kpi__delta--down { color: var(--cee-negative); }
+.cee-kpi__context { color: var(--cee-muted); }
+
+/* ────────────────────── Chart figure (§A7, §A11) ────────────────────── */
+.cee-figure { margin: 0; }
+
+.cee-figure__plot { min-width: 0; }
+
+/* Legacy chart card: header inside the card body */
+.cee-chart { padding: 1.125rem 1.125rem 0.5rem; }
 
 .cee-chart__title {
   font-family: var(--font-heading);
-  font-size: 0.78rem;
+  font-size: 1.0625rem;
+  line-height: 1.4;
   font-weight: 600;
-  color: var(--color-text);
-  padding: 0.375rem 0.625rem 0;
-  margin: 0;
+  letter-spacing: -0.01em;
+  color: var(--cee-ink);
+  margin: 0 0 0.75rem;
+  padding: 0;
 }
 
-/* One-paragraph "what this graph reflects" under each chart */
-.cee-chart__caption {
-  font-size: 0.68rem;
-  line-height: 1.55;
-  color: var(--color-text-muted);
-  padding: 0 0.625rem 0.625rem;
-  margin: 0.125rem 0 0;
+.cee-chart__caption,
+.cee-figcaption {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--cee-secondary);
+  padding: 0;
+  margin: 0.75rem 0 0.875rem;
+  text-align: left;
 }
 
-.cee-chart__caption strong { color: var(--color-text); font-weight: 600; }
+.cee-chart__caption strong,
+.cee-figcaption strong { color: var(--cee-ink); font-weight: 600; }
+
+.cee-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* Inline schematic diagrams (SVG) */
-.cee-diagram {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-}
-
-[data-theme='dark'] .cee-diagram {
-  background: #162033;
-  border-color: #2d3f59;
-}
+.cee-diagram { padding: 1rem 1.25rem; }
 
 .cee-diagram svg {
   display: block;
@@ -233,103 +409,254 @@
 .cee-chart-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 @media (min-width: 1100px) {
   .cee-chart-grid--2 { grid-template-columns: 1fr 1fr; }
 }
 
-/* Table */
-.cee-tablewrap {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  overflow-x: auto;
+/* ─────────────────────────── Legend (§A7) ───────────────────────────
+ * Below the plot. 8px round dots, 13px muted labels, 20-24px gaps.
+ */
+.cee-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.375rem;
+  list-style: none;
+  margin: 0.875rem 0 0;
+  padding: 0;
 }
 
-[data-theme='dark'] .cee-tablewrap {
-  background: #162033;
-  border-color: #2d3f59;
+.cee-legend--center { justify-content: center; }
+.cee-legend--left { justify-content: flex-start; }
+
+.cee-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
+
+.cee-legend__mark {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cee-legend__mark--line {
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.cee-legend__mark--dash {
+  width: 14px;
+  height: 0;
+  background: none !important;
+  border-radius: 0;
+  border-top: 2px dashed currentColor;
+  border-top-color: inherit;
+}
+
+.cee-legend__label {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--cee-secondary);
+}
+
+/* ────────────────── Continuous scale legend (§A8.11) ────────────────── */
+.cee-rampbar { margin-top: 0.875rem; }
+
+.cee-rampbar__caption {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--cee-muted);
+  margin-bottom: 0.35rem;
+}
+
+.cee-rampbar__row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.cee-rampbar__track {
+  display: block;
+  width: min(220px, 100%);
+  height: 6px;
+  border-radius: 999px;
+}
+
+.cee-rampbar__end {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--cee-muted);
+}
+
+/* ───────── Multi-segment composition bar (§A8.10) ─────────
+ * Replaces a pie: detached rounded segments, each its own hue with a
+ * left→right fade, each carrying an inline % chip.
+ */
+.cee-compbar {
+  display: flex;
+  gap: 8px;
+  margin: 0.5rem 0 0;
+}
+
+.cee-compbar__seg {
+  position: relative;
+  height: 28px;
+  border-radius: 8px;
+  min-width: 2.25rem;
+  display: flex;
+  align-items: center;
+  padding-left: 0.4rem;
+  overflow: hidden;
+}
+
+.cee-compbar__chip {
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 0.08rem 0.3rem;
+  background: var(--cee-surface);
+  white-space: nowrap;
+}
+
+/* ───────── Progress bar with hatched remainder (§A8.8) ───────── */
+.cee-progress__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.cee-progress__label {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--cee-ink);
+}
+
+.cee-progress__value {
+  font-family: var(--font-heading);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--cee-ink);
+}
+
+.cee-progress__track {
+  height: 13px;
+  border-radius: 999px;
+  overflow: hidden;
+  /* remainder is a hatched tint of the same hue, not grey */
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 3px,
+    color-mix(in srgb, var(--cee-progress-hue, var(--cee-brand)) 20%, transparent) 3px 4.5px
+  );
+  background-color: color-mix(in srgb, var(--cee-progress-hue, var(--cee-brand)) 12%, transparent);
+}
+
+.cee-progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cee-progress-hue, var(--cee-brand));
+}
+
+.cee-progress + .cee-progress { margin-top: 1.25rem; }
+
+/* ─────────────────────────── Table (§A6.5) ─────────────────────────── */
+.cee-tablewrap { overflow-x: auto; }
 
 .cee-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
 }
 
 .cee-table th {
   text-align: right;
-  padding: 0.55rem 0.875rem;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
+  padding: 0.7rem 1rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  border-bottom: 1px solid var(--color-border);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--cee-muted);
+  background: var(--cee-sunken);
+  border-bottom: 1px solid var(--cee-hairline);
   white-space: nowrap;
 }
 
 .cee-table th:first-child { text-align: left; }
 
 .cee-table td {
-  padding: 0.45rem 0.875rem;
+  padding: 0.8rem 1rem;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
   text-align: right;
-  color: var(--color-text);
-  border-bottom: 1px solid var(--color-border);
+  color: var(--cee-ink);
+  border-bottom: 1px solid var(--cee-hairline);
   white-space: nowrap;
 }
 
-.cee-table td:first-child { text-align: left; }
+.cee-table td:first-child {
+  text-align: left;
+  font-family: var(--font-body);
+}
+
 .cee-table tbody tr:last-child td { border-bottom: none; }
+.cee-table tbody tr:hover { background: var(--cee-hover); }
 
-.cee-table tbody tr:hover { background: rgba(232, 119, 34, 0.03); }
-[data-theme='dark'] .cee-table tbody tr:hover { background: rgba(255, 255, 255, 0.02); }
-
-/* Buttons */
+/* ────────────────────────── Buttons (§A6.4) ────────────────────────── */
 .cee-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.875rem;
+  padding: 0.6rem 1rem;
   font-family: var(--font-body);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  border-radius: 7px;
+  border-radius: var(--cee-radius-control);
   border: none;
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .cee-btn--primary {
-  background: var(--color-accent);
+  background: var(--cee-brand);
   color: #fff;
 }
 
-.cee-btn--primary:hover { background: var(--color-accent-light); }
+[data-theme='dark'] .cee-btn--primary { color: #0f1a2e; }
+
+.cee-btn--primary:hover { background: var(--cee-brand-deep); }
 
 .cee-btn--ghost {
-  background: transparent;
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+  background: var(--cee-surface);
+  color: var(--cee-secondary);
+  border: 1px solid var(--cee-control);
 }
 
 .cee-btn--ghost:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  background: var(--cee-hover);
+  color: var(--cee-ink);
 }
 
 .cee-btn--sm {
-  padding: 0.25rem 0.55rem;
-  font-size: 0.72rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.78rem;
 }
 
-/* Axle table editor (ESAL tool) */
+/* Row editors (ESAL axles, damage sublayers) */
 .cee-axle-row {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 2rem;
@@ -338,42 +665,36 @@
   align-items: center;
 }
 
-.cee-axle-row--2 {
-  grid-template-columns: 1fr 1fr 2rem;
-}
-
-/* wider third column for small decimals (strain values) */
-.cee-axle-row--data {
-  grid-template-columns: 1fr 0.8fr 1.5fr 2rem;
-}
+.cee-axle-row--2 { grid-template-columns: 1fr 1fr 2rem; }
+.cee-axle-row--data { grid-template-columns: 1fr 0.8fr 1.5fr 2rem; }
 
 .cee-axle-remove {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 8px;
   background: none;
-  color: var(--color-text-muted);
+  color: var(--cee-muted);
   cursor: pointer;
   font-size: 0.9rem;
   line-height: 1;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .cee-axle-remove:hover {
-  color: #ef4444;
-  border-color: #ef4444;
+  color: var(--cee-negative);
+  background: var(--cee-hover);
 }
 
-/* ── Info tooltips ── */
+/* ────────────────────── Info tooltips (§A6.7) ────────────────────── */
 .cee-tip {
   position: relative;
   display: inline-flex;
   align-items: center;
-  color: var(--color-text-muted);
+  color: var(--cee-muted);
   cursor: help;
   outline: none;
   vertical-align: middle;
@@ -390,34 +711,39 @@
 .cee-tip:hover svg,
 .cee-tip:focus-visible svg {
   opacity: 1;
-  color: var(--color-accent);
+  color: var(--cee-brand);
 }
 
 .cee-tip__pop {
   position: absolute;
   bottom: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(3px);
+  transform: translateX(-50%) translateY(4px);
   width: max-content;
   max-width: 15rem;
-  padding: 0.5rem 0.7rem;
-  background: #0f1a2e;
-  color: #e2e8f0;
+  padding: 0.7rem 0.8rem;
+  background: var(--cee-surface);
+  color: var(--cee-ink);
   font-family: var(--font-body);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 400;
-  line-height: 1.5;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  line-height: 1.55;
+  border-radius: var(--cee-radius-inner);
+  border: 1px solid var(--cee-hairline);
+  box-shadow: var(--cee-shadow-lift);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  transition: opacity 0.1s ease, transform 0.1s ease, visibility 0.1s ease;
   z-index: 30;
   pointer-events: none;
   text-transform: none;
   letter-spacing: 0;
   white-space: normal;
+}
+
+[data-theme='dark'] .cee-tip__pop {
+  background: #1e2a40;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .cee-tip:hover .cee-tip__pop,
@@ -427,33 +753,20 @@
   transform: translateX(-50%) translateY(0);
 }
 
-[data-theme='dark'] .cee-tip__pop {
-  background: #1b2d4a;
-}
-
 /* ── "How to use" panel ── */
-.cee-howto {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-[data-theme='dark'] .cee-howto {
-  background: #162033;
-  border-color: #2d3f59;
-}
+.cee-howto { overflow: hidden; }
 
 .cee-howto summary {
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.8rem 1.125rem;
+  padding: 1rem 1.375rem;
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 0.8125rem;
+  font-size: 1.0625rem;
   font-weight: 600;
-  color: var(--color-text);
+  letter-spacing: -0.01em;
+  color: var(--cee-ink);
   list-style: none;
   user-select: none;
 }
@@ -464,8 +777,8 @@
   content: '';
   width: 0.45rem;
   height: 0.45rem;
-  border-right: 2px solid var(--color-accent);
-  border-bottom: 2px solid var(--color-accent);
+  border-right: 2px solid var(--cee-brand);
+  border-bottom: 2px solid var(--cee-brand);
   transform: rotate(-45deg);
   transition: transform 0.2s ease;
   flex-shrink: 0;
@@ -474,10 +787,11 @@
 .cee-howto[open] summary::before { transform: rotate(45deg); }
 
 .cee-howto__body {
-  padding: 0 1.125rem 1rem;
-  font-size: 0.8125rem;
-  line-height: 1.65;
-  color: var(--color-text-muted);
+  padding: 0 1.375rem 1.25rem;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--cee-secondary);
 }
 
 .cee-howto__body ol {
@@ -485,136 +799,125 @@
   padding-left: 1.25rem;
 }
 
-.cee-howto__body li { margin-bottom: 0.3rem; }
-.cee-howto__body strong { color: var(--color-text); }
+.cee-howto__body li { margin-bottom: 0.35rem; }
+.cee-howto__body strong { color: var(--cee-ink); }
 .cee-howto__body code {
   font-family: var(--font-mono);
   font-size: 0.95em;
-  background: var(--color-surface-alt);
+  background: var(--cee-sunken);
   border-radius: 4px;
   padding: 0.05rem 0.3rem;
 }
 
-[data-theme='dark'] .cee-howto__body code { background: #0f1a2e; }
-
-/* ── Inline warning ── */
+/* ───────────────────────── Banner (§A6.8) ─────────────────────────
+ * Semantic tint background, no border, 12px radius, leading icon.
+ */
 .cee-warn {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  line-height: 1.55;
+  gap: 0.6rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.6;
   color: #92400e;
-  background: rgba(245, 158, 11, 0.09);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: 8px;
-  padding: 0.55rem 0.75rem;
+  background: #fef3e2;
+  border: none;
+  border-radius: var(--cee-radius-inner);
+  padding: 0.8rem 1rem;
   margin: 0;
 }
 
-[data-theme='dark'] .cee-warn { color: #fbbf24; }
+[data-theme='dark'] .cee-warn {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
+}
 
+.cee-warn strong { font-weight: 600; }
 .cee-warn__icon { flex-shrink: 0; }
 
-/* ── Preset chips ── */
+/* ───────────────────── Chips & pills (§A6.3) ───────────────────── */
 .cee-presets {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: 0.4rem;
   margin-bottom: 0.875rem;
 }
 
 .cee-chip {
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-family: var(--font-body);
+  font-size: 0.78rem;
   font-weight: 500;
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  color: var(--cee-secondary);
+  background: var(--cee-surface);
+  border: 1px solid var(--cee-control);
   border-radius: 999px;
-  padding: 0.28rem 0.65rem;
+  padding: 0.4rem 0.8rem;
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .cee-chip:hover {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
+  color: var(--cee-ink);
+  background: var(--cee-hover);
 }
 
 .cee-chip--active {
-  color: var(--color-accent);
-  border-color: var(--color-accent);
-  background: rgba(232, 119, 34, 0.08);
+  color: var(--cee-brand);
+  border-color: var(--cee-brand);
+  background: var(--cee-brand-wash);
 }
 
-[data-theme='dark'] .cee-chip {
-  background: #0f1a2e;
-  border-color: #2d3f59;
-}
-
-[data-theme='dark'] .cee-chip:hover,
-[data-theme='dark'] .cee-chip--active {
-  border-color: var(--color-accent);
-  color: var(--color-accent);
-}
+[data-theme='dark'] .cee-chip { background: var(--cee-sunken); }
 
 /* ── Depth probe / interactive readout strip ── */
-.cee-probe {
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 12px;
-  padding: 0.75rem 1rem 0.875rem;
-}
-
-[data-theme='dark'] .cee-probe {
-  background: #162033;
-  border-color: #2d3f59;
-}
+.cee-probe { padding: 1.125rem 1.375rem 1.25rem; }
 
 .cee-probe__head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 0.75rem;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
 }
 
 .cee-probe__title {
   font-family: var(--font-heading);
-  font-size: 0.78rem;
+  font-size: 1.0625rem;
   font-weight: 600;
-  color: var(--color-text);
+  letter-spacing: -0.01em;
+  color: var(--cee-ink);
 }
 
 .cee-probe__loc {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: #8b5cf6;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cee-secondary);
 }
 
 .cee-probe__vals {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem 1.1rem;
-  margin-top: 0.5rem;
+  gap: 0.4rem 1.25rem;
+  margin-top: 0.75rem;
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cee-secondary);
 }
 
 .cee-probe__vals strong {
-  color: var(--color-text);
+  color: var(--cee-ink);
   font-weight: 600;
 }
 
 .cee-slider {
   width: 100%;
-  accent-color: #8b5cf6;
+  accent-color: var(--cee-brand);
   cursor: pointer;
 }
 
-/* ── Traffic flow strip (ESAL) ── */
+/* ── Traffic flow strip (ESAL) — no §A analogue; stat-chip tokens ── */
 .cee-flow {
   display: flex;
   flex-wrap: wrap;
@@ -624,137 +927,146 @@
 
 .cee-flow__step {
   flex: 1 1 9rem;
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
+  background: var(--cee-sunken);
+  border: none;
+  border-radius: var(--cee-radius-inner);
   padding: 0.875rem 1rem;
 }
 
-[data-theme='dark'] .cee-flow__step {
-  background: #162033;
-  border-color: #2d3f59;
-}
-
-.cee-flow__step--accent .cee-flow__value { color: var(--color-accent); }
+.cee-flow__step--accent .cee-flow__value { color: var(--cee-brand); }
 
 .cee-flow__label {
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--color-text-muted);
-  margin-bottom: 0.25rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--cee-secondary);
+  margin-bottom: 0.3rem;
   white-space: nowrap;
 }
 
 .cee-flow__value {
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: var(--color-text);
+  font-family: var(--font-heading);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--cee-ink);
 }
 
 .cee-flow__op {
   align-self: center;
   font-family: var(--font-mono);
-  font-size: 0.66rem;
-  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  color: var(--cee-muted);
   white-space: nowrap;
 }
 
-/* ── Inline share bar (table cells) ── */
-.cee-share-cell { min-width: 6.5rem; }
+/* ── Inline share bar in table cells (§A8.16 micro-bar) ── */
+.cee-share-cell { min-width: 7rem; }
 
 .cee-share {
   display: inline-block;
   vertical-align: middle;
   width: 3.25rem;
-  height: 0.45rem;
-  margin-right: 0.5rem;
-  border-radius: 3px;
-  background: var(--color-surface-alt);
+  height: 8px;
+  margin-right: 0.55rem;
+  border-radius: 999px;
+  background: var(--cee-ghost);
   overflow: hidden;
 }
-
-[data-theme='dark'] .cee-share { background: #0f1a2e; }
 
 .cee-share span {
   display: block;
   height: 100%;
-  border-radius: 3px;
-  background: var(--color-accent);
+  border-radius: 999px;
+  background: var(--cee-brand);
 }
 
-/* ── Segmented control ── */
+/* ─────────────────── Segmented control (§A1.3) ───────────────────
+ * Grey track; active is a surface pill with a hairline and a soft shadow.
+ */
 .cee-seg {
   display: inline-flex;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  overflow: hidden;
+  gap: 2px;
+  background: var(--cee-sunken);
+  border: none;
+  border-radius: var(--cee-radius-control);
+  padding: 3px;
   margin-bottom: 0.875rem;
 }
 
 .cee-seg button {
-  border: none;
+  border: 1px solid transparent;
   background: transparent;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--color-text-muted);
-  padding: 0.35rem 0.7rem;
+  color: var(--cee-secondary);
+  padding: 0.35rem 0.8rem;
+  border-radius: 7px;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
-.cee-seg button + button { border-left: 1px solid var(--color-border); }
-
 .cee-seg button.is-active {
-  background: var(--color-accent);
-  color: #fff;
+  background: var(--cee-surface);
+  border-color: var(--cee-hairline);
+  color: var(--cee-ink);
+  box-shadow: var(--cee-shadow);
 }
-
-[data-theme='dark'] .cee-seg { border-color: #2d3f59; }
-[data-theme='dark'] .cee-seg button + button { border-left-color: #2d3f59; }
 
 /* ── Paste textarea ── */
 .cee-textarea {
   width: 100%;
   min-height: 5.5rem;
-  padding: 0.5rem 0.625rem;
+  padding: 0.6rem 0.7rem;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  line-height: 1.5;
-  color: var(--color-text);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 7px;
+  font-size: 0.75rem;
+  line-height: 1.55;
+  color: var(--cee-ink);
+  background: var(--cee-surface);
+  border: 1px solid var(--cee-control);
+  border-radius: var(--cee-radius-control);
   outline: none;
   resize: vertical;
   box-sizing: border-box;
 }
 
-[data-theme='dark'] .cee-textarea {
-  background: #0f1a2e;
-  border-color: #2d3f59;
-  color: #f1f5f9;
-}
+[data-theme='dark'] .cee-textarea { background: var(--cee-sunken); }
 
-.cee-textarea:focus {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(232, 119, 34, 0.12);
-}
+.cee-textarea:focus { border-color: var(--cee-brand); }
 
-/* Note box */
+/* Note box — engineering references (Huang equations, AASHTO clauses) */
 .cee-note {
-  font-size: 0.75rem;
-  line-height: 1.6;
-  color: var(--color-text-muted);
-  background: var(--color-surface-alt);
-  border-left: 3px solid var(--color-accent);
-  border-radius: 0 8px 8px 0;
-  padding: 0.625rem 0.875rem;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--cee-secondary);
+  background: var(--cee-sunken);
+  border-left: 3px solid var(--cee-brand);
+  border-radius: 0 var(--cee-radius-inner) var(--cee-radius-inner) 0;
+  padding: 0.8rem 1rem;
   margin: 0;
 }
 
-[data-theme='dark'] .cee-note {
-  background: #0f1a2e;
+/* ─────────────────────────── Motion (§A10) ───────────────────────────
+ * Entrance is a container-level fade-and-rise, once on mount (§B6 dev. 3).
+ */
+@keyframes cee-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cee-animate-in {
+  animation: cee-rise 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cee-animate-in { animation: none; }
+  .cee-tip__pop,
+  .cee-btn,
+  .cee-chip,
+  .cee-input,
+  .cee-select { transition: none; }
 }
