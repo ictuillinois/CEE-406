@@ -235,13 +235,25 @@
 
 .cee-input--invalid { border-color: var(--cee-negative); }
 
-/* Paired fields. `align-items: end` keeps the two inputs on one line even when
-   one label wraps to two lines and the other does not. */
+/* Paired fields. When one label wraps to two lines and the other does not,
+   the labels stay top-aligned and the inputs stay bottom-aligned, so the row
+   reads as one line of controls rather than a ragged pair. */
 .cee-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.625rem;
-  align-items: end;
+  align-items: stretch;
+}
+
+.cee-row .cee-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.875rem;
+}
+
+.cee-row .cee-field__label {
+  flex: 1 0 auto;
+  align-items: flex-start;
 }
 
 .cee-hint {

@@ -238,6 +238,7 @@ export const homeworks: Homework[] = [
     ],
     chapters: [{ id: 'ch11', label: 'Ch. 11 — Flexible Pavement Design' }],
     tools: [
+      { label: 'AASHTO Design Studio', href: 'tools/aashto/', note: 'solve the 1993 flexible equation for SN, W₁₈, or reliability — and split SN into layers, live' },
       { label: 'ESAL Calculator', href: 'tools/esal-calculator/', note: 'design traffic input for the nomographs' },
     ],
     downloads: [
@@ -309,6 +310,7 @@ export const homeworks: Homework[] = [
       { id: 'ch05', label: 'Ch. 5 — KENSLABS Computer Program' },
     ],
     tools: [
+      { label: 'AASHTO Design Studio', href: 'tools/aashto/', note: 'rigid design equation + effective k — covers Problems 12-6, 12-7, 12-8, live' },
       { label: 'Westergaard Slab Stress', href: 'tools/westergaard/', note: 'interior, edge, corner + curling, live' },
     ],
     downloads: [{ label: 'HW9 assignment', file: 'hw9-assignment.pdf', kind: 'assignment' }],
