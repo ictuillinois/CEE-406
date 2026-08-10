@@ -125,6 +125,7 @@ export const homeworks: Homework[] = [
       { id: 'appendix-b', label: 'App. B — Theory of Elastic Layer Systems' },
     ],
     tools: [
+      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'two- and three-layer systems solved exactly — covers Problems 2-3 and 2-5, live' },
       { label: 'Stress Explorer', href: 'tools/stress-explorer/', note: 'one-layer Boussinesq response, live' },
     ],
     downloads: [
@@ -161,6 +162,7 @@ export const homeworks: Homework[] = [
       { id: 'appendix-c', label: 'App. C — KENPAVE Software' },
     ],
     tools: [
+      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'the four-layer depth profile without leaving the browser — check your WinJULEA run against it, live' },
       { label: 'Stress Explorer', href: 'tools/stress-explorer/', note: 'compare the one-layer solution against your multilayer run' },
       { label: 'WinJULEA', note: 'desktop layered-elastic analysis — provided in class' },
     ],

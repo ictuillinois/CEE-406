@@ -695,6 +695,8 @@
 
 .cee-axle-row--2 { grid-template-columns: 1fr 1fr 2rem; }
 .cee-axle-row--data { grid-template-columns: 1fr 0.8fr 1.5fr 2rem; }
+/* Layer editor: the modulus column holds six-digit values, so it gets the room. */
+.cee-axle-row--layer { grid-template-columns: 0.85fr 1.5fr 0.85fr 1.75rem; }
 
 .cee-axle-remove {
   display: inline-flex;
