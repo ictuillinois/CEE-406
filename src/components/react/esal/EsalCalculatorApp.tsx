@@ -8,6 +8,9 @@ import {
   axis, gridAxis, hueFor, areaFill, HUES, type Mode,
 } from '../chartTheme';
 import ChartFigure from '../ui/ChartFigure';
+import Card from '../ui/Card';
+import KpiStrip, { Kpi } from '../ui/KpiStrip';
+import { truckFactor, firstYearEsal, type LoadGroup } from './truckFactor';
 import '../tools.css';
 
 type AxleType = 'single' | 'tandem' | 'tridem';
@@ -88,6 +91,12 @@ export default function EsalCalculatorApp() {
   // Pavement / serviceability
   const [snStr, setSn] = useState('5');
   const [pt, setPt] = useState('2.5');
+  // W-4 loadometer reduction (Huang Problems 6-7, 6-9)
+  const [w4On, setW4On] = useState(false);
+  const [cntSingle, setCntSingle] = useState('');
+  const [cntTandem, setCntTandem] = useState('');
+  const [cntTridem, setCntTridem] = useState('');
+  const [vehCounted, setVehCounted] = useState('');
 
   // Axle spectrum (per day, two-way)
   const [rows, setRows] = useState<AxleRow[]>([
@@ -131,6 +140,27 @@ export default function EsalCalculatorApp() {
     }
     return { withEalf, esalPerDay, laneDay, G, designEsal, cumYears, cum };
   }, [rows, SN, ptv, growth, years, dir, lane]);
+
+  /**
+   * W-4 reduction. The axle rows double as the load groups: in this mode the
+   * count column is "axles weighed", which is then scaled up to the axles
+   * counted at the station before the equivalency factors are applied.
+   */
+  const w4 = useMemo(() => {
+    if (!w4On) return null;
+    const groups: LoadGroup[] = rows
+      .map(r => ({ load: num(r.load, 0), type: r.type, weighed: num(r.count, 0) }))
+      .filter(g => g.load > 0 && g.weighed > 0);
+    const vehicles = num(vehCounted, 0);
+    if (!groups.length || vehicles <= 0) return null;
+    const counted: Partial<Record<AxleType, number>> = {};
+    if (num(cntSingle, 0) > 0) counted.single = num(cntSingle, 0);
+    if (num(cntTandem, 0) > 0) counted.tandem = num(cntTandem, 0);
+    if (num(cntTridem, 0) > 0) counted.tridem = num(cntTridem, 0);
+    const res = truckFactor(groups, { counted, vehicles },
+      (load, type) => ealfFlexible(load, type, SN, ptv));
+    return { ...res, vehicles };
+  }, [w4On, rows, cntSingle, cntTandem, cntTridem, vehCounted, SN, ptv]);
 
   const theme = useTheme();
   const chartRef = useRef<HTMLDivElement>(null);
@@ -314,6 +344,58 @@ export default function EsalCalculatorApp() {
           (1993 Guide, App. D; Huang Ch. 6). If your axle counts are already
           design-lane, one-direction values, set D and L to 1.
         </p>
+
+        <h2 className="cee-panel__title" style={{ marginTop: '1rem' }}>W-4 truck factor</h2>
+        <label className="cee-field__label">
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" checked={w4On} onChange={e => setW4On(e.target.checked)} />
+            Reduce a loadometer table
+          </span>
+        </label>
+        {w4On && (
+          <>
+            <p className="cee-hint" style={{ marginTop: '0.5rem' }}>
+              In this mode the <strong>count</strong> column above means <em>axles weighed</em>, not
+              passes per day. Enter the station totals below and the weighed sample is scaled up.
+            </p>
+            <div className="cee-row">
+              <div className="cee-field">
+                <label className="cee-field__label" htmlFor="es-cs">
+                  <span>Single axles counted<Tip text="Total single axles counted at the station, from the W-4 table. Leave blank to use the weighed total unscaled." /></span>
+                  <span className="cee-field__unit">–</span>
+                </label>
+                <input id="es-cs" className="cee-input" type="number" min="0" step="100" value={cntSingle}
+                  onChange={e => setCntSingle(e.target.value)} />
+              </div>
+              <div className="cee-field">
+                <label className="cee-field__label" htmlFor="es-ct">
+                  <span>Tandem axles counted<Tip text="Total tandem axles counted at the station." /></span>
+                  <span className="cee-field__unit">–</span>
+                </label>
+                <input id="es-ct" className="cee-input" type="number" min="0" step="100" value={cntTandem}
+                  onChange={e => setCntTandem(e.target.value)} />
+              </div>
+            </div>
+            <div className="cee-row">
+              <div className="cee-field">
+                <label className="cee-field__label" htmlFor="es-cr">
+                  <span>Tridem axles counted<Tip text="Total tridem axles counted at the station." /></span>
+                  <span className="cee-field__unit">–</span>
+                </label>
+                <input id="es-cr" className="cee-input" type="number" min="0" step="100" value={cntTridem}
+                  onChange={e => setCntTridem(e.target.value)} />
+              </div>
+              <div className="cee-field">
+                <label className="cee-field__label" htmlFor="es-vc">
+                  <span>Vehicles counted<Tip text="Number of trucks counted — the denominator of the truck factor. For Huang Problem 6-9 this is the tractor semitrailer total." /></span>
+                  <span className="cee-field__unit">–</span>
+                </label>
+                <input id="es-vc" className="cee-input" type="number" min="0" step="100" value={vehCounted}
+                  onChange={e => setVehCounted(e.target.value)} />
+              </div>
+            </div>
+          </>
+        )}
       </aside>
 
       <div className="cee-results">
@@ -329,6 +411,66 @@ export default function EsalCalculatorApp() {
             EALFs come from the AASHTO design equation itself, so they match the printed tables to the fourth decimal — a stronger check than the (L/18)⁴ rule of thumb.
           </div>
         </details>
+
+        {w4 && (
+          <Card
+            title="Truck factor from the W-4 table"
+            subtitle="Weighed axles scaled to the counted total, then converted to ESALs per truck"
+          >
+            <KpiStrip>
+              <Kpi accent label="Truck factor" value={w4.factor.toFixed(3)}
+                tip="ESALs per truck: the total damage of the scaled axle population divided by the vehicles counted. This is what Huang Problem 6-9 asks for." />
+              <Kpi label="Total ESALs" value={sci(w4.totalEsal)}
+                tip="Sum over every load group of scaled axles times that group's equivalency factor." />
+              <Kpi label="Vehicles counted" value={sci(w4.vehicles)}
+                tip="The denominator — trucks counted at the station over the recording period." />
+              <Kpi label="First-year design lane" value={sci(firstYearEsal(w4.vehicles, w4.factor, dir, lane))}
+                tip="Trucks × truck factor × D × L × 365. Problem 6-7 asks for this over two directions and all lanes, so set D = L = 1 there." />
+            </KpiStrip>
+
+            <div className="cee-tablewrap" style={{ marginTop: '1rem' }}>
+              <table className="cee-table">
+                <thead>
+                  <tr>
+                    <th>Load (kip)</th>
+                    <th>Type</th>
+                    <th>Weighed</th>
+                    <th>Scale</th>
+                    <th>Scaled axles</th>
+                    <th>EALF</th>
+                    <th>ESALs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {w4.rows.map((r, i) => (
+                    <tr key={i}>
+                      <td>{r.load}</td>
+                      <td>{AXLE_LABEL[r.type]}</td>
+                      <td>{sci(r.weighed)}</td>
+                      <td>{r.scale.toFixed(2)}</td>
+                      <td>{sci(r.scaled)}</td>
+                      <td>{r.ealf.toFixed(4)}</td>
+                      <td>{r.esal.toFixed(1)}</td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td><strong>Total</strong></td>
+                    <td colSpan={5}></td>
+                    <td><strong>{w4.totalEsal.toFixed(1)}</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <p className="cee-note" style={{ marginTop: '1rem' }}>
+              A loadometer station weighs only a sample of the axles it counts, so the weighed
+              distribution is scaled by (axles counted ÷ axles weighed) for each axle type before the
+              equivalency factors are applied. Dividing by the vehicles counted gives ESALs per truck.
+              Note the scale factors differ between singles and tandems — applying one blended factor
+              is the usual mistake.
+            </p>
+          </Card>
+        )}
 
         <div className="cee-flow" role="group" aria-label="Traffic projection breakdown">
           <div className="cee-flow__step">
