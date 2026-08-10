@@ -213,6 +213,7 @@ export const homeworks: Homework[] = [
     ],
     chapters: [{ id: 'ch08', label: 'Ch. 8 — Drainage Design' }],
     tools: [
+      { label: 'Drainage Designer', href: 'tools/drainage/', note: 'inflow, layer capacity, pipe sizing, filter criteria — live' },
       { label: 'DRIP', external: 'https://www.fhwa.dot.gov/pavement/software.cfm', note: 'FHWA Drainage Requirements In Pavements' },
     ],
     downloads: [{ label: 'HW6 assignment', file: 'hw6-assignment.pdf', kind: 'assignment' }],
