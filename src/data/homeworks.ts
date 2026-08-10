@@ -314,6 +314,7 @@ export const homeworks: Homework[] = [
       { id: 'ch05', label: 'Ch. 5 — KENSLABS Computer Program' },
     ],
     tools: [
+      { label: 'PCA Rigid Thickness', href: 'tools/pca/', note: 'fatigue + erosion damage summation — covers Problems 12-3 and 12-4, live' },
       { label: 'AASHTO Design Studio', href: 'tools/aashto/', note: 'rigid design equation + effective k — covers Problems 12-6, 12-7, 12-8, live' },
       { label: 'Westergaard Slab Stress', href: 'tools/westergaard/', note: 'interior, edge, corner + curling, live' },
     ],
