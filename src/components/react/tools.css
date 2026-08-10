@@ -10,8 +10,13 @@
  * Mirrors TOKENS in chartTheme.ts. Dark mode keeps the UIUC navy ladder but
  * obeys the standard's structure: sunken darker than the card, elevation as
  * lightness rather than shadow, primary text never pure white.
+ *
+ * Declared on the tool scope, never on :root — the integration contract in
+ * docs/dashboard-visual-language.md §0.1. Every cee-* component renders
+ * inside .cee-tool, so they all inherit through the cascade, and nothing
+ * outside a tool surface can collide with these names.
  */
-:root {
+.cee-tool {
   --cee-page: #f8f9fb;
   --cee-surface: #ffffff;
   --cee-sunken: #f2f4f5;
@@ -40,7 +45,7 @@
   --cee-radius-control: 10px;
 }
 
-[data-theme='dark'] {
+[data-theme='dark'] .cee-tool {
   --cee-page: #0f1a2e;
   --cee-surface: #162033;
   --cee-sunken: #101b2f;
@@ -65,6 +70,7 @@
   display: grid;
   gap: 1.5rem;
   grid-template-columns: 1fr;
+  color: var(--cee-ink);
 }
 
 @media (min-width: 960px) {
