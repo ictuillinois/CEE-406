@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import CbrApp from '../../../components/react/cbr/CbrApp';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout
+  title="CBR Reduction · CEE 406 Tools"
+  description="Reduce a piston penetration test to a California Bearing Ratio, with the AASHTO T 193 origin correction for a concave-up stress-penetration curve."
+>
+  <div class="container tool-page">
+    <nav class="doc-breadcrumb" aria-label="Breadcrumb">
+      <a href={base}>Home</a>
+      <span class="doc-breadcrumb__sep">/</span>
+      <a href={`${base}tools/`}>Tools</a>
+      <span class="doc-breadcrumb__sep">/</span>
+      <span class="doc-breadcrumb__current">CBR Reduction</span>
+    </nav>
+
+    <header class="tool-head">
+      <div>
+        <h1 class="tool-head__title">CBR Reduction</h1>
+        <p class="tool-head__desc">
+          Reduce a piston penetration test to a CBR for
+          <a href={`${base}homeworks/hw2/`}>HW2</a> — including the origin correction
+          that a concave-up curve needs, which is the step the test most often turns on.
+        </p>
+      </div>
+      <div class="tool-head__hws">
+        <a href={`${base}homeworks/hw2/`} class="tool-hw-chip">HW2</a>
+      </div>
+    </header>
+
+    <CbrApp client:only="react" />
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-page {
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+  }
+
+  .tool-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+
+  .tool-head__title {
+    font-size: clamp(1.625rem, 3.5vw, 2.25rem);
+    margin: 0 0 0.5rem;
+  }
+
+  .tool-head__desc {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+    max-width: 44rem;
+    margin: 0;
+  }
+
+  .tool-head__desc a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tool-head__hws { display: flex; gap: 0.4rem; }
+
+  .tool-hw-chip {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.08);
+    border: 1px solid rgba(232, 119, 34, 0.2);
+    border-radius: 6px;
+    padding: 0.3rem 0.55rem;
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+
+  .tool-hw-chip:hover { background: rgba(232, 119, 34, 0.15); }
+</style>

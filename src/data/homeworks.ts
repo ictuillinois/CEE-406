@@ -90,6 +90,7 @@ export const homeworks: Homework[] = [
     chapters: [{ id: 'ch07', label: 'Ch. 7 — Material Characterization' }],
     tools: [
       { label: 'Resilient Modulus Fitter', href: 'tools/mr-fitter/', note: 'fit k₁, k₂, k₃ and R² online, live' },
+      { label: 'CBR Reduction', href: 'tools/cbr/', note: 'penetration curve → CBR with the origin correction, live' },
     ],
     downloads: [
       { label: 'HW2 assignment', file: 'hw2-assignment.pdf', kind: 'assignment' },
@@ -337,6 +338,7 @@ export const homeworks: Homework[] = [
     ],
     chapters: [{ id: 'ch13', label: 'Ch. 13 — Design of Overlays' }],
     tools: [
+      { label: 'ACR/PCR Compatibility', href: 'tools/acr/', note: 'runway rating codes → where the aircraft may operate, live' },
       { label: 'FAARFIELD', external: 'https://www.faa.gov/airports/engineering/design_software', note: 'FAA airfield pavement design software' },
       { label: 'Pavement LCA Worksheet', href: 'tools/lca/', note: 'life-cycle GHG accounting online, live' },
     ],
