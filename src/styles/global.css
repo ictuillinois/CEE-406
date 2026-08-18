@@ -728,6 +728,19 @@
 
   --max-width: 1280px;
   --transition: 0.2s ease;
+
+  /* ── Phase palette ──────────────────────────────────────────────────────
+     The five course phases render as identical grey chips today, which wastes
+     the one piece of structure a student most needs at a glance: where in the
+     semester they are. These hues are the categorical set from
+     docs/chart-standards.md §B4, so the course chrome and the tool charts
+     speak one colour language. Illini orange is kept for Design — the phase
+     everything else has been building toward. */
+  --phase-fundamentals: #F5B62E;
+  --phase-materials:    #14B489;
+  --phase-analysis:     #3B9BF0;
+  --phase-loads:        #8B5CF6;
+  --phase-design:       #E87722;
 }
 
 /* ── Dark Mode ── */
@@ -740,6 +753,16 @@
   --color-text-muted: #94A3B8;
   --color-border: #2D3F59;
   --color-mesh: rgba(232, 119, 34, 0.05);
+}
+
+/* Dark-mode phase hues: +8-12% lightness, -8-12% saturation, per §A4.2 —
+   saturated mid-tones vibrate against the navy ground. */
+[data-theme="dark"] {
+  --phase-fundamentals: #F7C64F;
+  --phase-materials:    #2FC79C;
+  --phase-analysis:     #5AAEF5;
+  --phase-loads:        #A78BFA;
+  --phase-design:       #F0913F;
 }
 
 [data-theme="dark"] body {
@@ -999,3 +1022,13 @@ img {
     transform: none;
   }
 }
+
+
+/* ── Phase helper ──────────────────────────────────────────────────────────
+   Any element carrying data-phase picks up that phase's hue as --phase, so a
+   card, a chip, or a rail can all tint from one attribute. */
+[data-phase="Fundamentals"]     { --phase: var(--phase-fundamentals); }
+[data-phase="Materials"]        { --phase: var(--phase-materials); }
+[data-phase="Analysis"]         { --phase: var(--phase-analysis); }
+[data-phase="Loads & Drainage"] { --phase: var(--phase-loads); }
+[data-phase="Design"]           { --phase: var(--phase-design); }

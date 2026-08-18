@@ -132,6 +132,7 @@ const base = import.meta.env.BASE_URL;
   }
 
   .tb-grid {
+    align-items: stretch;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 0.75rem;
@@ -140,19 +141,56 @@ const base = import.meta.env.BASE_URL;
   .tb-card {
     display: flex;
     gap: 1rem;
+    /* Stretch every card to its row so a short description does not leave a
+       ragged shelf of white space beneath it. */
+    height: 100%;
     padding: 1.125rem 1.25rem;
     background: #fff;
     border: 1px solid var(--color-border);
     border-radius: 10px;
     text-decoration: none;
     color: inherit;
+    position: relative;
+    overflow: hidden;
     transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
+
+  /* A hairline of accent along the top edge, drawn in from the left on hover.
+     The chapter number already carries the colour, so this only needs to
+     confirm the hover rather than announce it. */
+  .tb-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    height: 2px;
+    width: 100%;
+    background: var(--color-accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tb-card:hover::after { transform: scaleX(1); }
 
   .tb-card:hover {
     border-color: var(--color-accent);
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(15, 26, 46, 0.08);
+  }
+
+  .tb-card:hover .tb-card__num {
+    background: var(--color-accent);
+    color: #fff;
+    transform: scale(1.05);
+  }
+
+  .tb-card--appendix::after { background: var(--color-text-muted); }
+
+  .tb-card--appendix:hover { border-color: var(--color-text-muted); }
+
+  .tb-card--appendix:hover .tb-card__num {
+    background: var(--color-text-muted);
+    color: #fff;
   }
 
   :global([data-theme="dark"]) .tb-card {
@@ -178,6 +216,8 @@ const base = import.meta.env.BASE_URL;
     font-size: 1rem;
     font-weight: 600;
     flex-shrink: 0;
+    align-self: flex-start;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
 
   .tb-card--appendix .tb-card__num {
@@ -218,5 +258,14 @@ const base = import.meta.env.BASE_URL;
     background: rgba(232, 119, 34, 0.08);
     border-radius: 4px;
     padding: 0.1rem 0.4rem;
+  }
+</style>
+
+<style>
+  @media (prefers-reduced-motion: reduce) {
+    .tb-card, .tb-card::after, .tb-card__num { transition: none; }
+    .tb-card:hover { transform: none; }
+    .tb-card:hover::after { transform: scaleX(1); }
+    .tb-card:hover .tb-card__num { transform: none; }
   }
 </style>

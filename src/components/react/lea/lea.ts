@@ -51,7 +51,11 @@ function solve(A: number[][], b: number[]): number[] | null {
       for (let c = col; c <= n; c++) M[r][c] -= f * M[col][c];
     }
   }
-  return M.map((row, i) => row[n] / row[i][i] ?? 0).map((_, i) => M[i][n] / M[i][i]);
+  // Note: an earlier form of this line ran a first .map() using row[i][i],
+  // which indexes into a number and yields undefined. Its result was
+  // immediately discarded by the second .map(), so the solver was correct —
+  // but the same mistake, copied elsewhere, silently broke a fitter. Removed.
+  return M.map((_, i) => M[i][n] / M[i][i]);
 }
 
 /**

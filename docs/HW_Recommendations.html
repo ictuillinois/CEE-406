@@ -1,0 +1,2312 @@
+<title>HW Recommendations · CEE 406 Pavement Design I</title>
+
+<style>
+  /* ─────────────────────────── Tokens ───────────────────────────
+     Bound to the CEE 406 identity in CLAUDE.md: UIUC navy #0F1A2E,
+     Illini orange #E87722. Light is the base palette; dark is a
+     re-derivation on the navy ladder, never an inversion. */
+  :root {
+    --paper:      #F5F6F8;
+    --surface:    #FFFFFF;
+    --sunken:     #EFF1F4;
+    --ink:        #111826;
+    --ink-soft:   #334052;
+    --muted:      #5A6675;
+    --faint:      #8A94A3;
+    --hairline:   #E2E6EC;
+    --rule:       #CFD5DE;
+    --accent:     #E87722;
+    --accent-ink: #B4560E;
+    --accent-wash:#FCEFE3;
+    --navy:       #0F1A2E;
+    --asphalt:    #3D4859;
+    --high:       #C4362F;
+    --high-wash:  #FBEAE8;
+    --med:        #B07207;
+    --med-wash:   #FBF1DF;
+    --low:        #0F7A57;
+    --low-wash:   #E4F4EE;
+    --new:        #6D45C9;
+    --new-wash:   #F0EBFB;
+
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", "Cascadia Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+    --measure: 68ch;
+    --pad: clamp(1.15rem, 4vw, 2.5rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #0F1A2E;
+      --surface:    #162033;
+      --sunken:     #101B2F;
+      --ink:        #EDF1F6;
+      --ink-soft:   #C7D0DC;
+      --muted:      #9BA7B7;
+      --faint:      #77869B;
+      --hairline:   rgba(255,255,255,0.09);
+      --rule:       rgba(255,255,255,0.16);
+      --accent:     #F0913F;
+      --accent-ink: #F6B37B;
+      --accent-wash:rgba(240,145,63,0.14);
+      --navy:       #0B1424;
+      --asphalt:    #8595AB;
+      --high:       #F2867E;
+      --high-wash:  rgba(242,134,126,0.14);
+      --med:        #EBB65A;
+      --med-wash:   rgba(235,182,90,0.14);
+      --low:        #4FC79E;
+      --low-wash:   rgba(79,199,158,0.14);
+      --new:        #AC8FF0;
+      --new-wash:   rgba(172,143,240,0.15);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #0F1A2E;
+    --surface:    #162033;
+    --sunken:     #101B2F;
+    --ink:        #EDF1F6;
+    --ink-soft:   #C7D0DC;
+    --muted:      #9BA7B7;
+    --faint:      #77869B;
+    --hairline:   rgba(255,255,255,0.09);
+    --rule:       rgba(255,255,255,0.16);
+    --accent:     #F0913F;
+    --accent-ink: #F6B37B;
+    --accent-wash:rgba(240,145,63,0.14);
+    --navy:       #0B1424;
+    --asphalt:    #8595AB;
+    --high:       #F2867E;
+    --high-wash:  rgba(242,134,126,0.14);
+    --med:        #EBB65A;
+    --med-wash:   rgba(235,182,90,0.14);
+    --low:        #4FC79E;
+    --low-wash:   rgba(79,199,158,0.14);
+    --new:        #AC8FF0;
+    --new-wash:   rgba(172,143,240,0.15);
+  }
+
+  /* ─────────────────────────── Base ─────────────────────────── */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: 0 var(--pad) 6rem;
+  }
+
+  p, li { color: var(--ink-soft); }
+  p { max-width: var(--measure); }
+
+  h1, h2, h3, h4 { color: var(--ink); text-wrap: balance; margin: 0; }
+
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    letter-spacing: -0.02em;
+    font-weight: 680;
+    line-height: 1.15;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+    font-weight: 660;
+  }
+
+  h4 {
+    font-size: 0.95rem;
+    font-weight: 640;
+    letter-spacing: -0.005em;
+  }
+
+  a { color: var(--accent-ink); text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  code, .mono { font-family: var(--mono); font-variant-ligatures: none; }
+
+  code {
+    font-size: 0.86em;
+    background: var(--sunken);
+    padding: 0.08em 0.36em;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  .lede {
+    font-size: 1.075rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 62ch;
+  }
+
+  /* ───────────────────────── Masthead ───────────────────────── */
+  .masthead {
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+  }
+
+  /* Slim sticky index. The document is long and read out of order — most
+     readers want §03 and §08 and nothing else. */
+  .toc {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--surface);
+    border-bottom: 1px solid var(--hairline);
+    margin-bottom: 3.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .toc__inner {
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: 0.55rem var(--pad);
+    display: flex;
+    gap: 1.35rem;
+    white-space: nowrap;
+  }
+
+  .toc a {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.15rem 0;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .toc a b { color: var(--accent); font-weight: 600; margin-right: 0.4rem; }
+
+  .toc a:hover { color: var(--ink); border-bottom-color: var(--accent); }
+
+  .masthead__inner {
+    max-width: 78rem;
+    margin: 0 auto;
+    padding: clamp(2.25rem, 5vw, 3.5rem) var(--pad) clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  .masthead h1 {
+    font-size: clamp(2rem, 5.2vw, 3.35rem);
+    line-height: 1.03;
+    letter-spacing: -0.035em;
+    font-weight: 700;
+    margin: 0.55rem 0 1rem;
+    max-width: 22ch;
+  }
+
+  .masthead__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin-top: 1.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--hairline);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+  }
+
+  .masthead__meta b { color: var(--muted); font-weight: 500; }
+
+  /* Cross-section motif: the strata of a flexible pavement, used as the
+     masthead rule and again on every homework heading. */
+  .strata { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+  .strata i {
+    display: block;
+    border-radius: 1px;
+    background: var(--rule);
+    opacity: 0.55;
+  }
+  .strata i:nth-child(1) { height: 5px; }
+  .strata i:nth-child(2) { height: 3px; }
+  .strata i:nth-child(3) { height: 2px; }
+  .strata i:nth-child(4) { height: 8px; opacity: 0.3; }
+  .strata i.on { background: var(--accent); opacity: 1; }
+
+  .masthead__mark {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 1.5rem;
+  }
+
+  .masthead__mark .strata { width: 3.5rem; flex: none; }
+
+  .masthead__mark span {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    color: var(--faint);
+  }
+
+  /* ───────────────────────── Sections ───────────────────────── */
+  section { margin-bottom: 4.5rem; scroll-margin-top: 4.25rem; }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1.75rem;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .sec-head__n {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    flex: none;
+  }
+
+  /* ────────────────────────── Callout ───────────────────────── */
+  /* Boxed prose hugs the same measure as the text inside it — a wide box
+     around a narrow column reads as a layout accident. */
+  .callout {
+    max-width: 55rem;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-top: 3px solid var(--accent);
+    padding: 1.35rem 1.5rem;
+    margin: 1.75rem 0;
+    border-radius: 0 0 6px 6px;
+  }
+
+  .callout p { margin: 0; max-width: none; }
+  .callout p + p { margin-top: 0.75rem; }
+
+  .callout--quiet { border-top-color: var(--rule); }
+
+  /* ─────────────────────────── Tables ───────────────────────── */
+  .tablewrap {
+    overflow-x: auto;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    background: var(--surface);
+    margin: 1.5rem 0;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 44rem;
+    font-size: 0.875rem;
+  }
+
+  thead th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--sunken);
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--hairline);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 0.7rem 0.9rem;
+    border-bottom: 1px solid var(--hairline);
+    vertical-align: top;
+    color: var(--ink-soft);
+  }
+
+  tbody tr:last-child td { border-bottom: 0; }
+  td .mono { font-size: 0.82rem; color: var(--ink); }
+  .num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* ──────────────────────────── Tags ────────────────────────── */
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.18rem 0.45rem;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .tag--high { color: var(--high); background: var(--high-wash); }
+  .tag--med  { color: var(--med);  background: var(--med-wash); }
+  .tag--low  { color: var(--low);  background: var(--low-wash); }
+  .tag--new  { color: var(--new);  background: var(--new-wash); }
+
+  .tool {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--ink);
+    background: var(--sunken);
+    border: 1px solid var(--hairline);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .tool--new { border-color: var(--new); color: var(--new); background: var(--new-wash); }
+
+  /* ───────────────────── Principles grid ────────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.75rem 0;
+  }
+
+  .grid > div { background: var(--surface); padding: 1.3rem 1.4rem; }
+
+  /* Four items want a 2x2, not a 3-wide row with a hole in it. */
+  .grid--2 { grid-template-columns: repeat(auto-fit, minmax(24rem, 1fr)); }
+  .grid h4 { margin-bottom: 0.4rem; }
+  .grid p { margin: 0; font-size: 0.9rem; max-width: none; }
+
+  .grid__key {
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  /* ──────────────────────── Homework ────────────────────────── */
+  .hw {
+    max-width: 55rem;
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    border-radius: 8px;
+    padding: 0;
+    margin-bottom: 1.6rem;
+    overflow: hidden;
+  }
+
+  .hw__head {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1.4rem;
+    align-items: start;
+    padding: 1.5rem var(--pad) 1.25rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .hw__glyph { padding-top: 0.4rem; }
+
+  .hw__id {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--faint);
+    margin-top: 0.55rem;
+    display: block;
+  }
+
+  .hw__title { font-size: clamp(1.15rem, 2.4vw, 1.5rem); letter-spacing: -0.02em; }
+
+  .hw__sub {
+    margin: 0.45rem 0 0;
+    font-size: 0.95rem;
+    color: var(--muted);
+  }
+
+  .hw__rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.9rem;
+    align-items: center;
+  }
+
+  .hw__body { padding: 1.5rem var(--pad) 1.75rem; }
+
+  .hw__body > h4 {
+    font-family: var(--mono);
+    font-size: 0.67rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 1.6rem 0 0.7rem;
+  }
+
+  .hw__body > h4:first-child { margin-top: 0; }
+
+  .parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.85rem; }
+
+  .parts > li {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 0.9rem;
+    align-items: baseline;
+  }
+
+  .parts b {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+
+  .parts span { color: var(--ink-soft); font-size: 0.94rem; }
+  .parts em { color: var(--ink); font-style: italic; }
+
+  .immune {
+    background: var(--sunken);
+    border-left: 2px solid var(--accent);
+    padding: 0.85rem 1.1rem;
+    margin-top: 1.5rem;
+    border-radius: 0 5px 5px 0;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+
+  .immune strong { color: var(--ink); }
+
+  /* ──────────────────────── Utilities ───────────────────────── */
+  ul.plain { padding-left: 1.15rem; margin: 1rem 0; }
+  ul.plain li { margin-bottom: 0.5rem; max-width: var(--measure); }
+
+  ol.steps { padding-left: 1.3rem; margin: 1rem 0; }
+  ol.steps li { margin-bottom: 0.6rem; max-width: var(--measure); }
+
+  #homeworks > p, #homeworks > details { max-width: 55rem; }
+
+  details {
+    max-width: 55rem;
+    border: 1px solid var(--hairline);
+    border-radius: 6px;
+    background: var(--surface);
+    padding: 0.9rem 1.15rem;
+    margin: 1rem 0;
+  }
+
+  summary {
+    cursor: pointer;
+    font-weight: 620;
+    font-size: 0.93rem;
+    color: var(--ink);
+  }
+
+  details[open] summary { margin-bottom: 0.8rem; }
+
+  .fine {
+    font-size: 0.83rem;
+    color: var(--muted);
+    max-width: 74ch;
+  }
+
+  hr.soft {
+    border: 0;
+    border-top: 1px solid var(--hairline);
+    margin: 2.5rem 0;
+  }
+
+  @media (max-width: 46rem) {
+    .hw__head { grid-template-columns: 1fr; gap: 0.6rem; }
+    .hw__glyph { max-width: 4.5rem; }
+    .parts > li { grid-template-columns: 2.2rem 1fr; gap: 0.6rem; }
+  }
+
+  @media print {
+    .hw, .grid > div, .tablewrap, details { break-inside: avoid; }
+  }
+</style>
+
+<header class="masthead">
+  <div class="masthead__inner">
+    <span class="eyebrow">CEE 406 · Pavement Design I · curriculum proposal</span>
+    <h1>Homework that survives the answers being free</h1>
+    <p class="lede">
+      A chapter-by-chapter redesign of all ten homeworks, built on the premise that the tools
+      in this repository are not a convenience for students — they are the instrument that makes
+      genuinely analytical assessment possible. <strong>§04 attacks the proposal against a model
+      that can upload data and rewrite the tools, and reports where it wins.</strong>
+    </p>
+    <div class="masthead__meta">
+      <span><b>Basis</b> Huang, <i>Pavement Analysis and Design</i>, 2nd ed. — Ch. 1–13, App. A–G</span>
+      <span><b>Toolbox</b> 14 live tools + a dataset generator · 134 tests against the book</span>
+      <span><b>Status</b> recommendation — no homework content has been changed</span>
+    </div>
+    <div class="masthead__mark">
+      <div class="strata"><i></i><i></i><i></i><i></i></div>
+      <span>flexible section — surface, base, subbase, subgrade</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Contents">
+  <div class="toc__inner">
+    <a href="#audit"><b>01</b> The exposure audit</a>
+    <a href="#principles"><b>02</b> Ten devices</a>
+    <a href="#homeworks"><b>03</b> The ten homeworks</a>
+    <a href="#threat"><b>04</b> Red-team &amp; threat model</a>
+    <a href="#exemplar"><b>05</b> One written out in full</a>
+    <a href="#coverage"><b>06</b> Chapter coverage</a>
+    <a href="#instruments"><b>07</b> Teaching the instruments</a>
+    <a href="#ai"><b>08</b> AI policy</a>
+    <a href="#tools"><b>09</b> Tools</a>
+    <a href="#rollout"><b>10</b> Rollout &amp; cost</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ═══════════════════════════ 1. THE PROBLEM ═══════════════════════════ -->
+<section id="audit">
+  <div class="sec-head">
+    <span class="sec-head__n">01</span>
+    <h2>What a frontier model does to the current problem set</h2>
+  </div>
+
+  <p>
+    I ran the existing ten homeworks against the question every instructor is now asking: <em>could a
+    student produce a passing submission without understanding anything?</em> The honest answer for
+    most of them is yes, and the reason is structural rather than a failure of design. Eight of the
+    ten homeworks are built primarily on end-of-chapter problems from Huang. Those problems are
+    published, their solutions circulate, and their setups are short enough to paste into a chat
+    window in full. A model does not need to have memorised Problem 12-7 to solve it; it needs only
+    to be handed the two sentences that state it.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>HW</th><th>Current basis</th><th>Exposure</th><th>Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">HW1</td>
+          <td>Seven definitional questions (Q1–Q7)</td>
+          <td><span class="tag tag--high">Total</span></td>
+          <td>Q2, Q3 and Q4 are Huang's own end-of-chapter questions almost verbatim — <span class="mono">1.4</span>, <span class="mono">1.5</span>/<span class="mono">1.6</span>, and <span class="mono">1.10</span>/<span class="mono">1.11</span> respectively. The rest are answered well by a general-purpose model in one prompt, with no data and no judgment involved.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW2</td>
+          <td>Problem 7.2, an M<sub>r</sub> fit, a lime essay, a CBR reduction</td>
+          <td><span class="tag tag--high">High</span></td>
+          <td>The lime synthesis is a pure essay prompt. The M<sub>r</sub> dataset is <em>published in this repository</em> as <code>hw2-part1-data.xlsx</code> — it can be uploaded and regressed in a single turn.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW3</td>
+          <td>Problems 2-1, 2-2, 2-3, 2-5</td>
+          <td><span class="tag tag--high">High</span></td>
+          <td>Textbook problems with circulating solutions. The chart-reading skill the assignment intends to build is invisible in the submitted answer.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW4</td>
+          <td>Problems 2-6, 2-7 + a defined 4-layer run</td>
+          <td><span class="tag tag--med">Mixed</span></td>
+          <td>The layered run needs software, which helps. "Interpret at least four observations" is an essay prompt attached to numbers the model can regenerate.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW5</td>
+          <td>Problems 6.2, 6.3, 6.6, 6.7, 6.9</td>
+          <td><span class="tag tag--high">High</span></td>
+          <td>Arithmetic on tabulated factors. Exactly the shape of task current models are most reliable at.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW6</td>
+          <td>Problems 8.6, 8.8, 8.10</td>
+          <td><span class="tag tag--high">High</span></td>
+          <td>Same. DRIP is offered as a check, not required as evidence.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW7</td>
+          <td>Problems 11-9, 11-10, 11-12</td>
+          <td><span class="tag tag--high">High</span></td>
+          <td>The 1993 equation is closed-form and widely reproduced; a model solves it directly without the nomograph.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW8</td>
+          <td>Bespoke IDOT design + WinJULEA + transfer functions</td>
+          <td><span class="tag tag--low">Low</span></td>
+          <td><strong>The strongest homework in the course.</strong> A scenario that exists nowhere else, software output that must be produced, and a damage accumulation that depends on the student's own strains.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW9</td>
+          <td>Problems 12-3, 12-4, 12-6, 12-7, 12-8</td>
+          <td><span class="tag tag--high">High</span></td>
+          <td>Five textbook problems.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW10</td>
+          <td>Bespoke ACR/PCR + FAARFIELD + LCA</td>
+          <td><span class="tag tag--low">Low</span></td>
+          <td>Also strong: a specific aircraft against specific runway codes, and an LCA whose answer depends on assumptions the student has to state.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>
+      <strong>The course already contains its own answer.</strong> The two homeworks that resist a
+      language model — HW8 and HW10 — are precisely the two that were written from scratch around a
+      specific scenario and required real software. Nothing below is a new philosophy. It is the
+      generalisation of what is already the best work in this problem set, extended over the other
+      eight, with the repository's tools doing the job WinJULEA and FAARFIELD do in HW8 and HW10.
+    </p>
+  </div>
+
+  <p>
+    One clarification is worth making early, because it changes what "AI-immune" should mean. The
+    goal is <em>not</em> a homework a student cannot get help with. That target is both unreachable
+    and undesirable — a student who uses a model to understand why the deflection basin's outer
+    sensors see only the subgrade has learned something, and we should want that. The goal is a
+    homework whose <strong>deliverable cannot be produced without the understanding</strong>. Help is
+    fine. Substitution is not. Every device below is chosen to widen the gap between the two.
+  </p>
+</section>
+
+<!-- ═══════════════════════════ 2. PRINCIPLES ═══════════════════════════ -->
+<section id="principles">
+  <div class="sec-head">
+    <span class="sec-head__n">02</span>
+    <h2>Ten devices that make the difference</h2>
+  </div>
+
+  <p>
+    These are the mechanisms the redesigned homeworks are assembled from. Most homeworks use three
+    or four. They are listed here so the assignments below can refer to them by name rather than
+    re-explaining the logic ten times.
+  </p>
+
+  <div class="grid">
+    <div>
+      <span class="grid__key">D1 — Per-student data</span>
+      <h4>The dataset is generated from the student's UIN</h4>
+      <p>A model cannot solve a problem whose numbers it has never seen and cannot obtain. This single change neutralises the solution-manual problem entirely, and it costs one deterministic generator script.</p>
+    </div>
+    <div>
+      <span class="grid__key">D2 — Prediction first</span>
+      <h4>Write the answer you expect before you run the tool</h4>
+      <p>The graded artifact is the <em>gap</em> between prediction and result, and the diagnosis of that gap. A model can produce either half; it cannot produce a student's specific wrong intuition and the correction of it.</p>
+    </div>
+    <div>
+      <span class="grid__key">D3 — Designed disagreement</span>
+      <h4>Two legitimate methods, two different answers</h4>
+      <p>Huang is full of these and says so out loud. The deliverable is the reconciliation and the choice, not the numbers. This is the device with the highest teaching value per unit of grading effort.</p>
+    </div>
+    <div>
+      <span class="grid__key">D4 — Inverse framing</span>
+      <h4>Not "compute X" but "find the input that makes X happen"</h4>
+      <p>Searching a parameter space requires iterating a solver. A model that cannot run the tool cannot do the search, and a model that hallucinates the answer is caught by the tool immediately.</p>
+    </div>
+    <div>
+      <span class="grid__key">D5 — Process evidence</span>
+      <h4>Seeds, iteration counts, screenshots, exported tables</h4>
+      <p>Tool state is cheap for a student who did the work and impossible to fabricate convincingly. The Monte Carlo seed in the reliability tool exists for exactly this reason.</p>
+    </div>
+    <div>
+      <span class="grid__key">D6 — Break the model</span>
+      <h4>Find where the theory stops being true</h4>
+      <p>"Find an input set where Boussinesq and the layered solution differ by more than 50%, and state the rule you inferred." Requires understanding the assumption, not the formula.</p>
+    </div>
+    <div>
+      <span class="grid__key">D7 — Consequence chaining</span>
+      <h4>This week's output is next week's input</h4>
+      <p>A design decision in HW5 becomes traffic in HW7 and damage in HW8. Errors propagate and must be caught. It also mirrors how real design actually fails.</p>
+    </div>
+    <div>
+      <span class="grid__key">D8 — The red-team part</span>
+      <h4>Get an AI to answer, then prove it wrong with the tool</h4>
+      <p>Credit for catching the error. This converts AI from contraband into an object of study, and teaches verification as a reflex. Details in §08.</p>
+    </div>
+    <div>
+      <span class="grid__key">D9 — Micro-defense</span>
+      <h4>Three minutes of screen recording on one figure</h4>
+      <p>Cheap to produce, fast to grade, and close to unfakeable. Reserve it for the one figure in each homework that carries the reasoning.</p>
+    </div>
+    <div>
+      <span class="grid__key">D10 — Significant-figure honesty</span>
+      <h4>State how many digits your answer deserves</h4>
+      <p>Almost every model output is falsely precise. Asking for a defended precision, given the input variability, forces engagement with what the number actually means.</p>
+    </div>
+  </div>
+
+  <div class="callout callout--quiet">
+    <p>
+      <strong>On D2, the one to adopt first if only one is adopted.</strong> Prediction-first costs
+      nothing to implement — it is a sentence added to each part — and it changes the epistemics of
+      the whole assignment. A student who writes "I expect the tensile strain to fall as the asphalt
+      gets thicker" and then finds a maximum at 3 inches has had the experience the course exists to
+      deliver. That experience is not transferable, not searchable, and not promptable.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 3. THE HOMEWORKS ═══════════════════════════ -->
+<section id="homeworks">
+  <div class="sec-head">
+    <span class="sec-head__n">03</span>
+    <h2>The ten homeworks, redesigned</h2>
+  </div>
+
+  <p>
+    The sequence keeps the existing ten slots, the existing due dates, and the existing phase
+    structure, so this is adoptable without renegotiating the syllabus. Two changes to
+    <em>coverage</em> are proposed: Chapter 10 (Reliability), which currently has no homework at all,
+    becomes a substantial part of HW7; and Chapter 13 (Overlays), currently listed against HW10 but
+    not actually assessed, becomes the spine of a new capstone HW10. Airfield ACR/PCR moves to HW5,
+    where it belongs — it is a loading-compatibility problem.
+  </p>
+
+  <!-- ───────────── HW1 ───────────── -->
+  <article class="hw" id="hw1">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i class="on"></i><i></i><i></i><i></i></div>
+        <span class="hw__id">HW 01</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Forensic diagnosis of a pavement you can walk to</h3>
+        <p class="hw__sub">
+          Replaces seven definitional questions with a field investigation. The student reads a real
+          section, infers what is underneath it from what has failed on top, and commits to a
+          diagnosis they will be held to for the rest of the semester.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 1 · 9.1</span>
+          <span class="tool">Distress Identification Manual</span>
+          <span class="tool">LayerGlyph reference</span>
+          <span class="tag tag--new">D1 D2 D7 D9</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Each student is assigned a 100 ft section of pavement in Champaign–Urbana by UIN. Photograph and log every distress present, classifying type, severity, and extent against the LTPP manual. <em>Minimum five distinct distresses; a section with fewer is itself a finding.</em> <span class="fine">(Students who cannot reach the assigned section — remote, mobility, or a January section under snow — survey any pavement they can reach and submit its location with the photographs; the assignment needs a real section, not a specific one.)</span></span></li>
+        <li><b>P2</b><span>Classify the section as flexible, rigid, or composite, <em>from the surface evidence alone</em>. State what you observed that decided it and what observation would have overturned it.</span></li>
+        <li><b>P3</b><span>Separate your distresses into load-associated and environment-associated. For each, name the mechanism from Ch. 1 and Ch. 9 and say which layer it implicates.</span></li>
+        <li><b>P4</b><span>Draw the cross-section you believe is under your 100 ft, with thicknesses. This is a defended guess, not a lookup — justify each layer from the distresses and from what the road carries.</span></li>
+        <li><b>P5</b><span><em>Prediction, sealed:</em> sketch the deflection basin you expect this section to produce under a 9,000 lb FWD drop, and name the sensor that would confirm your diagnosis. <strong>This is submitted with HW1 and timestamped</strong> — it is only evidence because it exists before you know the answer. You will be handed it back in HW10.</span></li>
+      </ul>
+      <div class="immune">
+        <strong>Why this resists substitution.</strong> The photographs are unique, geotagged, and
+        dated. The inference chain runs from evidence the model cannot see to a conclusion it cannot
+        check. And P5 plants a prediction that gets scored eight weeks later against the student's own
+        backcalculation — the single strongest continuity device in the redesign.
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW2 ───────────── -->
+  <article class="hw" id="hw2">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i></i><i></i><i></i><i class="on"></i></div>
+        <span class="hw__id">HW 02</span>
+      </div>
+      <div>
+        <h3 class="hw__title">The fit that lies: material characterisation as an act of judgment</h3>
+        <p class="hw__sub">
+          Keeps the resilient-modulus and CBR work, but moves the grade from "did you get k₁, k₂, k₃"
+          to "should anyone trust the model you just fitted, and what does it cost in asphalt if
+          they shouldn't?"
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 7 · App. D</span>
+          <span class="tool">mr-fitter</span>
+          <span class="tool">cbr</span>
+          <span class="tool">aashto</span>
+          <span class="tag tag--new">D1 D3 D8 D10</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Per-student triaxial dataset (30 points, realistic scatter, <em>two injected outliers</em>). Fit the generalised k₁–k₂–k₃ model in the M<sub>r</sub> Fitter. Report the parameters, R², and the parity plot.</span></li>
+        <li><b>P2</b><span>Identify the outliers from the <em>residual structure</em>, not from R². Refit without them. Decide whether their removal is defensible and say what physical event could have produced them. A student who removes points because it raises R² has failed this part even with a better R².</span></li>
+        <li><b>P3</b><span><em>Model competition.</em> Refit the same data with the simpler two-parameter k₁θ<sup>k₂</sup> form. R² will favour the three-parameter model — it always does. <strong>Report both R² values and the stress state at which the two models diverge most, in psi and in percent.</strong> Then argue which you would hand a designer, on grounds other than fit — and say whether the divergence you just measured is large enough to matter at the stresses your pavement will actually see.</span></li>
+        <li><b>P4</b><span>Use both models to predict M<sub>r</sub> at a bulk stress <strong>double the largest you tested</strong>. <strong>Report the two numbers and the percentage between them.</strong> The two fitted the same data and now disagree; explain what that gap is made of, and whether either is admissible evidence.</span></li>
+        <li><b>P5</b><span>Per-student CBR penetration data with a concave-up toe. Reduce it in the CBR tool with and without the origin correction. Convert both to M<sub>r</sub>, run both through the AASHTO Design Studio, and report <em>the difference in inches of asphalt that the origin correction is worth</em>.</span></li>
+        <li><b>P6</b><span>Select a PG binder for your assigned climate (App. D). State the pavement temperatures you designed for and what you would change for a 20-year-later climate.</span></li>
+      </ul>
+      <div class="immune">
+        <strong>The pedagogical centre is P5.</strong> A tangent construction in a lab standard becomes
+        a quantity of asphalt. Students routinely treat data reduction as bookkeeping; this makes the
+        consequence structural and visible, and it requires three tools in sequence with the student's
+        own numbers moving between them.
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW3 ───────────── -->
+  <article class="hw" id="hw3">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i></i><i class="on"></i><i></i><i></i></div>
+        <span class="hw__id">HW 03</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Where the stress actually goes</h3>
+        <p class="hw__sub">
+          One hand solution survives, because a student who has never read a Boussinesq chart does not
+          know what the solver is doing. Everything else becomes a search through the parameter space
+          for results that contradict intuition.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 2 · 3.4 · App. B</span>
+          <span class="tool">stress-explorer</span>
+          <span class="tool">lea</span>
+          <span class="tag tag--new">D2 D4 D6</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>By hand, from the printed charts: stresses, strain and deflection under a per-student two-circle load (Huang Ex. 2.1 pattern). Then the same case in the Stress Explorer. Reconcile the two, and attribute the residual difference to chart-reading error versus anything else.</span></li>
+        <li><b>P2</b><span><em>The critical thickness hunt.</em> For your assigned modulus set, sweep the asphalt thickness in the LEA tool and find the thickness at which tensile strain at the bottom of the asphalt is <strong>maximum</strong>. Predict first (D2). Then explain, mechanically, why a thinner asphalt layer can crack less than a thicker one — and why that stops being true above the critical thickness.</span></li>
+        <li><b>P3</b><span>Single wheel versus dual wheels at equal total load and contact pressure. Find the asphalt thickness at which the dual-wheel case stops being more critical for ε<sub>t</sub>. State which tyre configuration you would specify on a thin pavement and why the answer flips on a thick one.</span></li>
+        <li><b>P4</b><span><em>Break the model (D6).</em> Holding your assigned geometry fixed, sweep the modulus ratio E₁/E₂ and <strong>report the two values at which the one-layer Boussinesq solution crosses 5% and 50% disagreement with the layered solution</strong>. Huang states the rule qualitatively in §2.1; your job is the number. Then say whether your own assigned structure sits inside or outside it, and by how much.</span></li>
+      </ul>
+      <div class="immune">
+        P2 is drawn from Huang §3.4.1, where the critical thickness is reported as a finding rather
+        than derived. A student must locate it numerically for <em>their</em> parameters. A model asked
+        the same question will usually assert that thicker asphalt always reduces tensile strain —
+        which is wrong, and which the tool disproves in thirty seconds. That makes P2 a natural
+        red-team part (D8).
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW4 ───────────── -->
+  <article class="hw" id="hw4">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i></i><i class="on"></i><i></i><i></i></div>
+        <span class="hw__id">HW 04</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Which response governs, and does your ranking survive?</h3>
+        <p class="hw__sub">
+          The four-layer analysis stays. What changes is that the critical locations are no longer
+          given — the student has to find them — and that any sensitivity ranking must be tested for
+          whether it generalises.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 2 · 3 · App. C</span>
+          <span class="tool">lea</span>
+          <span class="tool">stress-explorer</span>
+          <span class="tool">WinJULEA</span>
+          <span class="tag tag--new">D2 D4 D5 D9</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Per-student four-layer structure. Depth profiles of σ<sub>z</sub>, ε<sub>z</sub>, σ<sub>r</sub>, ε<sub>r</sub> and deflection, produced in <em>both</em> the LEA tool and WinJULEA. Where they disagree, diagnose it — interface bonding, unit handling, or integration tolerance — and say which you trust.</span></li>
+        <li><b>P2</b><span><em>Locate the critical points yourself.</em> Do not assume the maximum tensile strain is under a tyre. Search the (r, z) plane for a dual-wheel load and report where it actually occurs, with a contour supporting the claim.</span></li>
+        <li><b>P3</b><span><em>Sensitivity tournament.</em> Rank E₁, E₂, E₃, h₁, h₂ by their influence on ε<sub>t</sub> and separately on ε<sub>c</sub>, using ±30% one-at-a-time perturbations. The two rankings differ; explain the mechanics.</span></li>
+        <li><b>P4</b><span><em>Then break your own ranking.</em> Repeat P3 at a very different base thickness. Huang §3.4 warns that conclusions from a sensitivity study are valid only for the parameter set they were run at. Did your ranking survive? Report honestly.</span></li>
+        <li><b>P5</b><span><em>Design inversion (D4).</em> For a target ε<sub>t</sub>, map the (h₁, E₁) combinations that achieve it. Choose one point on that iso-strain curve and defend it on cost, constructability and rutting grounds — not on strain, since every point on the curve is equal in strain.</span></li>
+      </ul>
+      <div class="immune">
+        P4 is the part that separates a student who ran a procedure from one who understands what a
+        sensitivity study is worth. It is also, in my view, the single most transferable idea in the
+        whole course — and it cannot be answered without two full sets of runs.
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW5 ───────────── -->
+  <article class="hw" id="hw5">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i class="on"></i><i></i><i></i><i></i></div>
+        <span class="hw__id">HW 05</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Traffic: the number every other number rests on</h3>
+        <p class="hw__sub">
+          Keeps one hand calculation for the W-4 scaling logic, then turns the rest into an
+          investigation of how much the design traffic can be trusted — and adds the airfield
+          compatibility problem, which is a loading question and was orphaned in HW10.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 6 · 6.2</span>
+          <span class="tool">esal-calculator</span>
+          <span class="tool">lea</span>
+          <span class="tool">acr</span>
+          <span class="tag tag--new">D1 D3 D7 D10</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Per-student W-4 loadometer table. Compute the truck factor with the ESAL Calculator, <em>and by hand for one load group</em>, showing the scale-up from weighed axles to counted axles explicitly.</span></li>
+        <li><b>P2</b><span><em>Test the fourth-power rule.</em> Using the tool, check whether EALF ∝ (L/18)<sup>4</sup> holds across the load range and across axle types. Report where it holds, where it breaks, and what changing p<sub>t</sub> does to the exponent.</span></li>
+        <li><b>P3</b><span><em>Designed disagreement (D3).</em> Compute the ESWL of your assigned dual wheel by all four of Huang's criteria in the ESWL Comparator — Boyd and Foster, equal vertical stress, equal deflection, equal tensile strain (§6.2). <strong>Report your own four numbers and the spread between them</strong> — the book's example spans 32%; yours will not be the same. Then sweep the pavement thickness and <strong>report the thickness at which your spread is widest</strong>. Which criterion would you use for a thin pavement, a thick pavement, and an airfield? Defend each by naming the failure mode it is actually watching, and say what your own widest-spread thickness implies about where the choice matters most.</span></li>
+        <li><b>P4</b><span>Which is worse for design traffic: a 20% error in truck <em>count</em>, or a 20% error in truck <em>weight</em>? Answer with the tool, then explain the answer with the exponent. Then state how many significant figures your design ESAL deserves (D10).</span></li>
+        <li><b>P5</b><span>ACR/PCR compatibility for an assigned aircraft against three assigned runway codes. For any runway where operation is refused, state exactly which of the five code fields refused it and what the airport would have to do about it.</span></li>
+      </ul>
+      <div class="immune">
+        The ESWL part is the best untapped material in Chapter 6. Three criteria, three answers, all
+        legitimate, and Huang explicitly warns that transposing between methods produces erroneous
+        results. There is no correct number to retrieve — only a defended selection. <strong>P4's
+        design ESAL is carried forward into HW7 and HW8 (D7).</strong>
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW6 ───────────── -->
+  <article class="hw" id="hw6">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i></i><i></i><i class="on"></i><i></i></div>
+        <span class="hw__id">HW 06</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Drainage, and the structural credit nobody connects to it</h3>
+        <p class="hw__sub">
+          The drainage design stays. What is added is the link students almost never make: the
+          drainage coefficient <span class="mono">m</span> is a structural quantity, and a decision
+          about permeability is a decision about thickness.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 8 · 11.3</span>
+          <span class="tool">drainage</span>
+          <span class="tool">aashto</span>
+          <span class="tool">DRIP</span>
+          <span class="tag tag--new">D1 D3 D7</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Per-student site: climate, subgrade, geometry, gradations. Full inflow estimate and drainage-layer design in the Drainage Designer, cross-checked against DRIP. Report both; where they differ, say why.</span></li>
+        <li><b>P2</b><span><em>Three inflows, one design (D3).</em> Estimate design inflow by Ridgeway, by Cedergren, and from groundwater. They disagree, sometimes by a factor of several. Choose a design inflow and defend it — including what you are protecting against by choosing the larger one.</span></li>
+        <li><b>P3</b><span>Design the layer to reach AASHTO "good" drainage (2 hours to 50%) and separately "fair" (1 day). Report the permeability–thickness combinations each requires.</span></li>
+        <li><b>P4</b><span><em>The structural consequence.</em> Take the m₂ that each drainage quality earns, feed both into the AASHTO Design Studio at your HW5 traffic, and report the difference in required thickness. Then answer: is the faster drainage layer worth building?</span></li>
+        <li><b>P5</b><span>Check filter criteria on your assigned gradations. Where they fail, propose a fix — graded filter or geotextile — and name the specific failure mode you are preventing.</span></li>
+      </ul>
+      <div class="immune">
+        P4 makes drainage structural rather than a separate topic that happens to live in Chapter 8.
+        It also requires the student's own HW5 traffic, so the numbers are not transferable between
+        students.
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW7 ───────────── -->
+  <article class="hw" id="hw7">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <span class="hw__id">HW 07</span>
+      </div>
+      <div>
+        <h3 class="hw__title">AASHTO 1993, its reliability, and its limits</h3>
+        <p class="hw__sub">
+          The largest single change in the proposal. Chapter 10 currently has no homework anywhere in
+          the course; here it becomes half of HW7, because reliability is not an advanced topic — it
+          is the reason the design equation has a z<sub>R</sub>s₀ term at all.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 11 · <strong>Ch. 10</strong></span>
+          <span class="tool">aashto</span>
+          <span class="tool">esal-calculator</span>
+          <span class="tool tool--new">reliability — new</span>
+          <span class="tag tag--new">D3 D4 D5 D10</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Solve for the required SN at your own HW5 design traffic. Then produce <em>three</em> different layer combinations that all satisfy that SN and the minimum-thickness rules, and choose one on cost and constructability grounds. The SN split is not unique and students should learn that from doing it, not from being told.</span></li>
+        <li><b>P2</b><span>Sweep reliability from 50% to 99.9%. Plot SN against R and report the inches of asphalt per decade of reliability. Where is the knee, and what does its position depend on? Then locate your assigned functional class in Huang Table 11.16 and say whether the recommended band sits before or after that knee — and what that implies about the band.</span></li>
+        <li><b>P3</b><span><em>Reliability from the inside (Reliability tool).</em> Give every input its coefficient of variation from Huang Tables 10.9–10.11. Compute the design's actual reliability by variance propagation. Then rank the inputs by their share of the total variance and answer the question that ranking exists to answer: <strong>would you spend the next $50,000 on more asphalt, tighter construction control, or a better traffic count?</strong></span></li>
+        <li><b>P4</b><span>Run the same design through Taylor's expansion, Rosenblueth's point estimates, and Monte Carlo. Report all three with your seed (D5). Where they disagree, say which you would defend and why the disagreement exists.</span></li>
+        <li><b>P5</b><span><em>The extrapolation audit.</em> Huang §11.3 states the conditions the AASHTO equations were calibrated under: <strong>1,114,000 axle load applications</strong> at one site near Ottawa, Illinois, between October 1958 and November 1960; a temperate climate averaging 34 in of precipitation; 28 in of frost penetration; and <strong>poorly drained A-6 and A-7-6 subgrades at CBR 2 to 4</strong>. Your design is twenty years and several million ESAL, on your own assigned subgrade and climate. Name the three extrapolations you are making. <strong>Quantify the most dangerous one against your own design</strong> — re-run your HW7 P3 reliability with that input moved to the edge of the Road Test's range and report how many points of reliability you lose. Then say what one measurement would close it, and roughly what that measurement costs.</span></li>
+      </ul>
+      <div class="immune">
+        <strong>P3 is the question a practising engineer actually faces</strong> and it has no
+        retrievable answer — it depends entirely on which of the student's own inputs dominates their
+        own variance. It is also the clearest possible demonstration that reliability is not a safety
+        factor bolted on at the end but a statement about which of your inputs you know least well.
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW8 ───────────── -->
+  <article class="hw" id="hw8">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <span class="hw__id">HW 08</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Mechanistic-empirical design, and how much of it to believe</h3>
+        <p class="hw__sub">
+          The existing homework is already the strongest in the course and its structure is kept
+          intact. Three parts are added, all aimed at the same target: the predicted life is a number
+          with an uncertainty, and students should leave knowing roughly how large it is.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 3 · 11 · App. F</span>
+          <span class="tool">damage</span>
+          <span class="tool">lea</span>
+          <span class="tool">WinJULEA</span>
+          <span class="tool tool--new">reliability</span>
+          <span class="tag tag--new">D2 D3 D7 D10</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Unchanged: IDOT-style flexible mechanistic design for the assigned county and traffic.</span></li>
+        <li><b>P2</b><span><em>Sublayering convergence.</em> How many asphalt sublayers are needed before ε<sub>t</sub> stops moving? Find the point of diminishing return and report the cost of over-refining as well as under-refining.</span></li>
+        <li><b>P3</b><span>Transfer functions in the Damage tool from your own strains. Then: <strong>which distress governs — and does the answer change between summer moduli and spring-thaw moduli?</strong> Run both seasons.</span></li>
+        <li><b>P4</b><span><em>Calibration humility.</em> The transfer-function coefficients are national defaults. Perturb the fatigue exponents and the rutting coefficients across their published range and report the resulting spread in predicted life. Then state how many significant figures your predicted life deserves (D10).</span></li>
+        <li><b>P5</b><span>Compare your mechanistic thickness against the AASHTO thickness you produced in HW7 for the same traffic and subgrade. They will not match. Reconcile them, and say which you would submit for construction.</span></li>
+      </ul>
+      <div class="immune">
+        P4 usually produces order-of-magnitude spreads in predicted life. Students find this
+        genuinely unsettling, which is the point: it is the difference between believing a design
+        method and understanding one. P5 closes the D7 chain that started with HW5's traffic.
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW9 ───────────── -->
+  <article class="hw" id="hw9">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i class="on"></i><i></i><i></i><i></i></div>
+        <span class="hw__id">HW 09</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Rigid pavements: three ways to be wrong about a slab</h3>
+        <p class="hw__sub">
+          Five textbook problems become one slab that has to survive the day, the night, two design
+          methods that disagree about what will kill it, and two published formulas that disagree
+          about how hard the wheel is even pressing.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 4 · 5 · 12</span>
+          <span class="tool">westergaard</span>
+          <span class="tool">pca</span>
+          <span class="tool">aashto</span>
+          <span class="tag tag--new">D1 D2 D3 D9</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span><em>Calibrate, then compute.</em> Load the tool's Huang Ex. 4.2–4.4 preset and confirm it returns the printed ℓ = 42.97 in and σ<sub>interior</sub> = 143.7 psi before you trust it with anything (§07). Then your own per-student slab: interior, edge and corner stresses and deflections, with <em>one</em> case worked by hand to show the radius of relative stiffness is understood.</span></li>
+        <li><b>P2</b><span><em>Which edge answer do you build to? (D3)</em> The tool reports edge stress for both a circular and a semicircular contact — 330.0 against 279.4 psi on the book's slab, an 18% spread. Explain the mechanical reason the semicircle is larger, decide which you would carry into a thickness design, and say what it would cost you to be wrong in each direction. Do the same for the two corner formulations, which differ by 2% in stress but 11% in deflection — and answer why a formulation can agree on one and not the other.</span></li>
+        <li><b>P3</b><span><em>Find the critical hour.</em> Superpose curling and load stresses for a daytime positive gradient and a night-time negative gradient. Which combination of load position and time of day governs? Predict before computing (D2) — most students predict wrongly, and the reason they predict wrongly is worth a paragraph.</span></li>
+        <li><b>P4</b><span><em>PCA against AASHTO (D3).</em> Design the slab both ways. In the PCA method, report whether fatigue or erosion governs <em>for your axle spectrum</em> — it is not the same answer for everyone in the room, so compare with two classmates and account for the difference from your three spectra. Then answer: what is erosion accounting for that the AASHTO equation structurally cannot see?</span></li>
+        <li><b>P5</b><span>Choose a joint spacing and defend it against three distinct failure modes — curling stress, joint opening and steel demand, and faulting. The Joints tool computes all three, and will show you that <em>friction stress never governs</em> (Huang gets 19.5 psi against a tensile strength near 200), so the real fight is between curling, which wants short slabs, and everything a joint costs. Say which you let win. Then note that the dowel bearing stress feeding your faulting number depends on which of Huang's <strong>three</strong> load-reach conventions you adopted, and defend that choice too.</span></li>
+        <li><b>P6</b><span>Huang §5.3.1 and §5.3.3 print KENSLABS and ILLI-SLAB results beside the Westergaard closed form for the same slabs. Read those comparisons and name two things the closed form structurally cannot represent. Say whether either would change <em>your</em> design, and by roughly how much. <em>(No finite-element tool is needed — and none exists in the toolbox yet; see §09.)</em></span></li>
+      </ul>
+      <div class="immune">
+        P3 is the best counterintuitive result in the rigid half of the course: at night the slab
+        curls upward and the corner becomes critical, which is the opposite of the daytime case most
+        students carry in their heads. It is also a strong candidate for the three-minute
+        micro-defense (D9). P2 exists because the toolbox previously hid it — see the audit in §09.
+      </div>
+    </div>
+  </article>
+
+  <!-- ───────────── HW10 ───────────── -->
+  <article class="hw" id="hw10">
+    <div class="hw__head">
+      <div class="hw__glyph">
+        <div class="strata"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+        <span class="hw__id">HW 10</span>
+      </div>
+      <div>
+        <h3 class="hw__title">Rehabilitation: reading a pavement that already exists</h3>
+        <p class="hw__sub">
+          The capstone. Chapter 13 currently appears on the syllabus but is never assessed; here it
+          becomes the whole assignment, and the life-cycle assessment stops being an accounting
+          exercise because it is run on rehabilitation strategies the student designed themselves.
+        </p>
+        <div class="hw__rail">
+          <span class="tag tag--low">Ch. 9.4 · 13 · App. E</span>
+          <span class="tool tool--new">backcalc — new</span>
+          <span class="tool">aashto</span>
+          <span class="tool">lca</span>
+          <span class="tool tool--new">reliability</span>
+          <span class="tag tag--new">D1 D2 D3 D5 D7 D9</span>
+        </div>
+      </div>
+    </div>
+    <div class="hw__body">
+      <h4>Parts</h4>
+      <ul class="parts">
+        <li><b>P1</b><span>Per-student FWD survey: ten stations along one project, each with a full basin. Backcalculate layer moduli at every station in the Backcalculation Studio. Report the seed you started from as well as the moduli you ended at (D5).</span></li>
+        <li><b>P2</b><span><em>Delineate uniform sections.</em> From the station-to-station variability, divide the project into design sections and justify the boundaries. <strong>Report the coefficient of variation of your backcalculated subgrade modulus within each section you propose, and across the project as a whole.</strong> Then argue uniform-section against point-by-point design (§13.5.1) using those two numbers — if sectioning did not reduce the variability, it bought you nothing.</span></li>
+        <li><b>P3</b><span><em>The central disagreement (D3).</em> Estimate SN<sub>eff</sub> three ways — condition survey with Table 13.7 coefficients, NDT via Eqs. 13.22–13.26, and remaining life from fatigue damage. They will not agree. Huang's instruction is explicit: <em>"The designers should use all three methods whenever possible and select the best estimate through their own judgment. There is no substitute for experience and judgment."</em> That sentence is the assignment.</span></li>
+        <li><b>P4</b><span>Design the overlay for each of your three SN<sub>eff</sub> values. Report all three thicknesses, choose one, and state what you would tell a review board that challenged the choice.</span></li>
+        <li><b>P5</b><span><em>Which moduli did the data actually determine?</em> Load the tool's <span class="mono">Thin surface</span> preset first — a basin generated from a known 200/18/8 ksi structure with 1.5% instrument noise. Fit it. The subgrade returns within 1%, the basin matches to about 1.5% RMS, and <strong>the surface modulus comes back near half its true value</strong>. Now do the same for your own sections: identify any layer the basin cannot see, report those moduli as ranges rather than values, and say what one additional measurement would most reduce your uncertainty.</span></li>
+        <li><b>P6</b><span>Run the LCA on <em>your</em> strategies: mill-and-overlay at your thickness, full reconstruction, and do-nothing-until-failure. Report GHG per lane-mile over 20 years and identify the dominant stage. Then answer whether the lowest-carbon option is the one you chose in P4, and if not, what would have to change for it to be.</span></li>
+        <li><b>P7</b><span><em>Close the loop.</em> Retrieve your HW1 P5 sealed prediction of a deflection basin. Compare it against what you now know. Score yourself.</span></li>
+      </ul>
+      <div class="immune">
+        <strong>This is the assignment the whole redesign is built toward.</strong> It is
+        unfakeable — ten unique basins, an iterative inversion, three disagreeing estimates and a
+        defended choice — and it is also the closest thing in the course to what a pavement engineer
+        actually does on a Tuesday. P7 makes the semester a closed loop rather than ten disconnected
+        weeks.
+      </div>
+    </div>
+  </article>
+
+  <details>
+    <summary>If the semester can absorb twelve homeworks instead of ten</summary>
+    <p class="fine">
+      HW7 is doing a lot of work above. In a twelve-slot semester I would split it: AASHTO design
+      and layer selection stay in HW7, and reliability, variability and the extrapolation audit become
+      a standalone HW8 built entirely on the Reliability tool and Ch. 10. I would also split HW10,
+      putting backcalculation and section delineation in one week and overlay design plus LCA in the
+      next — P1 through P7 as written is genuinely two weeks of work. The ten-slot version above is
+      the compressed form, and the compression falls on those two.
+    </p>
+  </details>
+</section>
+
+<!-- ═══════════════════ 4. THREAT MODEL AND RED-TEAM ═══════════════════ -->
+<section id="threat">
+  <div class="sec-head">
+    <span class="sec-head__n">04</span>
+    <h2>Red-teaming the proposal against itself</h2>
+  </div>
+
+  <p>
+    A document that claims a homework is AI-resistant should be made to prove it. This section
+    attacks the redesign in §03 the way a capable student with a capable model would, states what
+    survives and what does not, and revises the claim to match. Three findings are uncomfortable,
+    so they come first.
+  </p>
+
+  <h3 style="margin-top:2rem">The threat model</h3>
+
+  <p>
+    "Can AI do it?" is not one question. It is three, and the redesign performs very differently
+    against each.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Level</th><th>What the student does</th><th>Cost to them</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="tag tag--low">T1</span> Paste</td>
+          <td>Types the question into a chat. No data, no files, no tools.</td>
+          <td>Seconds.</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag--med">T2</span> Upload</td>
+          <td>Uploads their own CSV bundle and asks a model with a code interpreter to solve it.</td>
+          <td>A minute.</td>
+        </tr>
+        <tr>
+          <td><span class="tag tag--high">T3</span> Reimplement</td>
+          <td>Uploads the data <em>and</em> has the model rebuild the tool's equations from the citations, then runs the whole analysis.</td>
+          <td>An afternoon, once — then reusable all semester.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:2rem">Three uncomfortable findings</h3>
+
+  <div class="callout">
+    <p>
+      <strong>1. The tools are not a moat.</strong> Every tool cites the equations it implements —
+      "Huang Eqs. 4.41–4.45" — because §07 argues a student should be able to verify them. That same
+      citation is a complete specification for a model. The compiled JavaScript also ships to any
+      browser that opens the page. <strong>"You need the tool" stops nobody at T3</strong>, and the
+      honest response is not to hide the equations; it is to stop counting them as a barrier.
+    </p>
+    <p>
+      <strong>2. Per-student data defeats sharing, not computation.</strong> Device D1 makes the
+      solution manual worthless and makes copying a classmate detectable in seconds. It does
+      <em>nothing</em> against a student who uploads their own file. That is still a large win — it
+      removes the cheapest path entirely — but a narrower one than "AI-resistant" implies.
+    </p>
+    <p>
+      <strong>3. About a fifth of the parts, as first drafted, were bookwork in disguise.</strong>
+      Every sub-part phrased "explain why", "name the mechanism", or "state the rule" is answerable
+      from Huang alone, at T1, in a single prompt. Those are precisely the parts a model does
+      <em>best</em>. Eight have been rewritten in §03 to require a quantity only that student holds;
+      the audit below lists what remains.
+    </p>
+  </div>
+
+  <h3 style="margin-top:2rem">The red-team log</h3>
+
+  <p>
+    I attempted representative parts as the attacker at each level. What follows is what actually
+    happened, including where the attack succeeded.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Part attempted</th><th>Level</th><th>Result</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>HW2 P1 — fit k₁, k₂, k₃ to the triaxial set</td>
+          <td class="mono">T2</td>
+          <td><span class="tag tag--high">Solved</span> The regression is four lines of code. Upload the CSV, ask for a log-space least-squares fit, get the parameters and R².</td>
+        </tr>
+        <tr>
+          <td>HW2 P2 — find the two injected outliers</td>
+          <td class="mono">T2</td>
+          <td><span class="tag tag--high">Solved</span> Residual analysis finds them reliably. The <em>judgment</em> about whether removal is defensible was generic prose — hence the rewrite.</td>
+        </tr>
+        <tr>
+          <td>HW9 P1 — Westergaard stresses for a per-student slab</td>
+          <td class="mono">T3</td>
+          <td><span class="tag tag--high">Solved</span> Eqs. 4.10–4.19 are closed form. A model reproduces the tool's numbers exactly, because the tool <em>is</em> only those equations.</td>
+        </tr>
+        <tr>
+          <td>HW10 P1 — backcalculate ten deflection basins</td>
+          <td class="mono">T3</td>
+          <td><span class="tag tag--med">Partly</span> The forward model is a Hankel-transform integration and the inversion is Levenberg–Marquardt. Both are writable, but making them stable is real work — this is the one computational part where T3 costs an afternoon rather than a minute.</td>
+        </tr>
+        <tr>
+          <td>HW3 P2 — find the critical asphalt thickness</td>
+          <td class="mono">T1</td>
+          <td><span class="tag tag--low">Failed</span> Asked cold, the common answer is that thicker asphalt always lowers tensile strain. That is wrong, and wrong in exactly the direction the part is testing. At T2 it is solved.</td>
+        </tr>
+        <tr>
+          <td>HW1 P1 — photograph and log a 100 ft section</td>
+          <td class="mono">T3</td>
+          <td><span class="tag tag--low">Failed</span> No amount of compute produces geotagged photographs of an assigned street. The strongest part in the course uses no tool at all.</td>
+        </tr>
+        <tr>
+          <td>HW7 P5 — the extrapolation audit <em>(as first drafted)</em></td>
+          <td class="mono">T1</td>
+          <td><span class="tag tag--high">Solved</span> I had quoted the Road Test conditions in the prompt and then asked for three extrapolations from them. That is reading comprehension. <strong>Rewritten</strong> to require re-running their own reliability at the edge of the calibration range.</td>
+        </tr>
+        <tr>
+          <td>HW9 P3 — the critical hour</td>
+          <td class="mono">T1</td>
+          <td><span class="tag tag--med">Partly</span> A model gets the night-time corner answer from the book. What it cannot supply is the student's own <em>wrong</em> prediction from part (a) — which is what the part is graded on.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:2rem">What survives T3</h3>
+
+  <p>Four things, and it is worth noticing how few of them involve a computer.</p>
+
+  <div class="grid grid--2">
+    <div>
+      <span class="grid__key">Anchor 1</span>
+      <h4>Physical evidence</h4>
+      <p>
+        HW1's photographs of an assigned section, geotagged and dated. A model cannot manufacture
+        them and a classmate's are of a different street. The most robust part of the redesign.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Anchor 2</span>
+      <h4>Time-ordered artifacts</h4>
+      <p>
+        A prediction is evidence only if it was recorded <em>before</em> the answer existed. That is
+        submission mechanics, not wording: the sealed sketch must be collected and timestamped with
+        HW1 and handed back in HW10. Otherwise it is one more paragraph to generate.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Anchor 3</span>
+      <h4>Live defense</h4>
+      <p>
+        Three minutes of screen recording on one figure (device D9). Cheap to produce, fast to mark,
+        and the only part of a take-home that tests whether the person who submitted it can still
+        explain it. One per homework is enough.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Anchor 4</span>
+      <h4>The exam</h4>
+      <p>
+        Unassisted and invigilated — and the reason the homework can afford to relax about numbers
+        at all. Nothing in this proposal works without it, and §08's weighting assumes it stays.
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:2rem">The audit, homework by homework</h3>
+
+  <p>
+    Honest ratings against T3, the strongest attacker. "Exposed" does not mean a part is bad; it
+    means it is not carrying the integrity load and should not be weighted as though it were.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>HW</th><th>At T3</th><th>What actually stops the attack</th><th>Residual exposure</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono">HW1</td><td><span class="tag tag--low">Strong</span></td>
+          <td>Photographs of an assigned section; a sealed prediction collected at submission.</td>
+          <td>P2 and P3 are generic mechanism-naming, and are only anchored because they must cite the student's own logged distresses.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW2</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>Per-student data; the CBR-correction chain runs through three tools carrying the student's own numbers.</td>
+          <td>Computation fully solved at T2. The value now sits in P3 and P4, rewritten to demand a measured divergence rather than an essay.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW3</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>P1 requires a hand solution off the printed charts; P2 turns on the prediction gap.</td>
+          <td>The sweeps are trivial at T3. P1 is the load-bearing part and should be marked as such.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW4</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>Two independent solvers must be reconciled; P4 requires admitting a ranking failed to generalise.</td>
+          <td>A model will happily produce both solver outputs. P4's honesty requirement is the part worth grading.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW5</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>Per-student W-4 table; the ESWL spread is the student's own, swept for its widest point.</td>
+          <td>All four criteria are closed form. The defense is the deliverable — anchored now, but still prose.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW6</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>Per-student gradations, roughly half of which fail a filter criterion; the m₂ consequence runs into HW5 traffic.</td>
+          <td>Inflow arithmetic is trivial at T2.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW7</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>P3's variance ranking depends entirely on the student's own coefficients of variation; the seeded Monte Carlo is re-runnable by the grader.</td>
+          <td>Was <span class="tag tag--high">weak</span> at P5 before the rewrite. "Where would you spend $50,000" is anchored but remains judgment.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW8</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>P4's calibration spread; P5 reconciles against the student's own HW7 answer.</td>
+          <td>Chains to HW7, so an error propagates — a feature for learning, a nuisance for grading.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW9</td><td><span class="tag tag--med">Moderate</span></td>
+          <td>Which PCA criterion governs varies by spectrum, so P4 now requires reconciling against two classmates.</td>
+          <td>P6 (what the closed form cannot represent) is still bookwork. Keep it for the concept; do not weight it.</td>
+        </tr>
+        <tr>
+          <td class="mono">HW10</td><td><span class="tag tag--low">Strong</span></td>
+          <td>Ten unique basins; an inversion that is real work even for a model; a three-way disagreement with no correct answer; and the HW1 prediction returning to be scored.</td>
+          <td>P6's LCA is inventory arithmetic. The capstone's integrity rests on P3, P5 and P7.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p>
+      <strong>The revised claim.</strong> This redesign does not make homework impossible to do with
+      a language model, and no take-home artifact can. What it does is narrower, and worth stating
+      exactly:
+    </p>
+    <p>
+      It <strong>eliminates the free paths</strong> — the published solution, the classmate's file,
+      the answer that exists before the question is asked. It <strong>raises the cost of the
+      remaining path</strong> from seconds to an afternoon of genuine set-up, and makes that path
+      demand enough understanding to steer that a student who walks it has learned something on the
+      way. And it <strong>concentrates the ungameable evidence</strong> into four cheap places — a
+      photograph, a timestamped prediction, three minutes of talking, and an exam — so the grade
+      rests on those rather than on trusting the rest.
+    </p>
+    <p>
+      A student determined to avoid learning can still pass the homework. They will not pass the
+      exam, and they will find the three minutes very long.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 4. EXEMPLAR ═══════════════════════════ -->
+<section id="exemplar">
+  <div class="sec-head">
+    <span class="sec-head__n">05</span>
+    <h2>One of them written out in full</h2>
+  </div>
+
+  <p>
+    Everything in §03 is a specification, not an assignment. The gap between the two is where this
+    kind of redesign usually dies — "defend your choice" is easy to write and hard to grade. So here
+    is a single part, <strong>HW3 P2</strong>, exactly as it would reach a student, followed by the
+    rubric a TA would mark it with. If this part is gradeable in ten minutes, the other forty are too.
+  </p>
+
+  <div class="callout">
+    <p class="mono" style="font-size:0.78rem; color:var(--accent-ink); letter-spacing:0.06em; margin-bottom:0.9rem">
+      HW3 · PART 2 · THE CRITICAL THICKNESS · 20 POINTS
+    </p>
+    <p>
+      Open <code>assignments.csv</code> from your dataset bundle and read your four-layer structure.
+      Throughout this part, hold the base, subbase, and subgrade exactly as issued and vary
+      <strong>only the asphalt thickness h₁</strong>.
+    </p>
+    <p>
+      <strong>(a) Predict, before you compute anything.</strong> In two or three sentences, say what
+      you expect the tensile strain at the bottom of the asphalt layer to do as h₁ increases from
+      1 in to 12 in. Draw the shape you expect by hand. <em>Write this down first and do not revise
+      it later</em> — part (d) is graded against it, and a prediction you got wrong is worth exactly
+      as much as one you got right.
+    </p>
+    <p>
+      <strong>(b) Compute.</strong> Using the Layered Elastic Analysis tool, evaluate ε<sub>t</sub>
+      at the bottom of the asphalt for h₁ = 1, 2, 3, 4, 5, 6, 8, 10, 12 in. Tabulate, and plot
+      ε<sub>t</sub> against h₁. Refine your spacing near any turning point until you can state the
+      critical thickness to ±0.25 in.
+    </p>
+    <p>
+      <strong>(c) Report the critical thickness</strong> for your structure, and the strain there.
+      State your modulus ratio E₁/E₂ alongside it.
+    </p>
+    <p>
+      <strong>(d) Explain the mechanism</strong> — not the curve, the mechanics. Why does adding
+      asphalt <em>increase</em> tensile strain below the critical thickness? Your answer must
+      identify what is carrying the load in each régime and what changes between them. Then state
+      plainly where your part (a) prediction was wrong and what assumption produced the error.
+    </p>
+    <p>
+      <strong>(e) The design question.</strong> A colleague proposes a 2.5 in overlay on a section
+      currently at 2 in of asphalt. Using your curve, tell them what happens to fatigue life, and
+      whether you would build it. If your answer is "it depends", say on what.
+    </p>
+    <p>
+      <strong>(f) Red team.</strong> Ask any AI system: <em>"In a three-layer flexible pavement,
+      does increasing the asphalt thickness always reduce the tensile strain at the bottom of the
+      asphalt layer?"</em> Paste the response verbatim. Then say whether it is correct for
+      <em>your</em> structure, and cite the specific rows of your own table that settle it. Full
+      credit whether the system was right or wrong; the credit is for the verification.
+    </p>
+    <p class="fine" style="margin-top:1rem">
+      <strong>Deliverables.</strong> The table, the plot, the hand-drawn prediction from (a)
+      (photograph is fine), and at most one page of prose covering (c) through (f). Every number
+      gets a one-line statement of how you checked it.
+    </p>
+  </div>
+
+  <h3 style="margin-top:2.5rem">The rubric that goes with it</h3>
+
+  <p>
+    Four bands, applied to each of the four graded dimensions. The point of writing them out is that
+    <strong>the top band is not reachable by producing correct numbers</strong> — which is the entire
+    argument of this proposal expressed as a grading instrument.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Dimension</th><th>4 — exemplary</th><th>3 — competent</th><th>2 — developing</th><th>1 — absent</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Numbers</strong><br><span class="fine">(b), (c)</span></td>
+          <td>Critical thickness located to ±0.25 in with refined spacing; table complete and consistent with the issued structure.</td>
+          <td>Correct trend and a critical thickness within ±1 in; table complete.</td>
+          <td>Table present but coarse or partly inconsistent; turning point not resolved.</td>
+          <td>Numbers missing, or not from the issued structure.</td>
+        </tr>
+        <tr>
+          <td><strong>Mechanism</strong><br><span class="fine">(d)</span></td>
+          <td>Identifies what carries the load in each régime and what changes at the transition; connects the critical thickness to the modulus ratio.</td>
+          <td>Correct mechanical account of one régime, and names the transition.</td>
+          <td>Describes the curve's shape in words without a mechanical cause.</td>
+          <td>Restates that a maximum exists.</td>
+        </tr>
+        <tr>
+          <td><strong>Prediction gap</strong><br><span class="fine">(a) vs (d)</span></td>
+          <td>Prediction recorded before computing, and the diagnosis names the specific assumption that failed.</td>
+          <td>Prediction recorded, and the discrepancy is acknowledged and broadly explained.</td>
+          <td>Prediction recorded but the gap is glossed over or the prediction is suspiciously correct.</td>
+          <td>No prediction, or one clearly written afterwards.</td>
+        </tr>
+        <tr>
+          <td><strong>Judgment</strong><br><span class="fine">(e), (f)</span></td>
+          <td>Commits to a recommendation, names the condition that would reverse it, and verifies the AI response against specific rows of their own data.</td>
+          <td>Commits to a recommendation with a reason; verification is present but general.</td>
+          <td>Lists considerations without choosing; verification asserted, not evidenced.</td>
+          <td>No recommendation; AI response pasted without checking.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout--quiet">
+    <p>
+      <strong>Note the grading asymmetry in the prediction row.</strong> A student who predicted
+      monotonic decrease, found a maximum at 3 in, and correctly diagnosed that they had been
+      thinking of the asphalt as a beam rather than as part of a layered system earns a 4. A student
+      whose prediction matches the answer exactly, with no account of why it might not have, earns a
+      3 at best — because the most likely explanation is that they computed first and wrote the
+      prediction afterwards. Tell them this in advance. It is the whole mechanism.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 4. COVERAGE ═══════════════════════════ -->
+<section id="coverage">
+  <div class="sec-head">
+    <span class="sec-head__n">06</span>
+    <h2>Chapter coverage, before and after</h2>
+  </div>
+
+  <p>
+    Three chapters and two appendices carry real content that the current problem set never reaches.
+    The redesign closes all of them without adding a homework.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Chapter</th><th>Now</th><th>Proposed</th><th>What changes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">Ch. 1 Introduction</td><td>HW1</td><td>HW1</td><td>Definitions become field diagnosis.</td></tr>
+        <tr><td class="mono">Ch. 2 Flexible stresses</td><td>HW3, HW4</td><td>HW3, HW4</td><td>Chart problems become parameter searches.</td></tr>
+        <tr><td class="mono">Ch. 3 KENLAYER</td><td>HW4, HW8</td><td>HW3, HW4, HW8</td><td>§3.4 sensitivity analysis becomes an assignment rather than a reading.</td></tr>
+        <tr><td class="mono">Ch. 4 Rigid stresses</td><td>HW9</td><td>HW9</td><td>Curling and loading are superposed and time-resolved, and both published edge and corner formulations are compared rather than one being chosen silently.</td></tr>
+        <tr><td class="mono">Ch. 5 KENSLABS</td><td>HW9 (nominal)</td><td>HW9 P5</td><td>Becomes an explicit closed-form-versus-FE comparison.</td></tr>
+        <tr><td class="mono">Ch. 6 Traffic</td><td>HW5</td><td>HW5</td><td>§6.2 ESWL criteria added — currently unassessed.</td></tr>
+        <tr><td class="mono">Ch. 7 Materials</td><td>HW2</td><td>HW2</td><td>Model selection and extrapolation added.</td></tr>
+        <tr><td class="mono">Ch. 8 Drainage</td><td>HW6</td><td>HW6</td><td>Linked to structural design through m.</td></tr>
+        <tr><td class="mono">Ch. 9 Performance</td><td>HW1 (distress only)</td><td>HW1, <strong>HW10</strong></td><td><strong>§9.4 NDT and backcalculation added</strong> — currently absent.</td></tr>
+        <tr><td class="mono">Ch. 10 Reliability</td><td><span class="tag tag--high">none</span></td><td><strong>HW7 P2–P4</strong></td><td><strong>Entirely new coverage.</strong> New tool built.</td></tr>
+        <tr><td class="mono">Ch. 11 Flexible design</td><td>HW7, HW8</td><td>HW7, HW8</td><td>AASHTO and mechanistic results reconciled against each other.</td></tr>
+        <tr><td class="mono">Ch. 12 Rigid design</td><td>HW9</td><td>HW9</td><td>PCA and AASHTO compared rather than run separately.</td></tr>
+        <tr><td class="mono">Ch. 13 Overlays</td><td><span class="tag tag--high">listed, not assessed</span></td><td><strong>HW10 P1–P5</strong></td><td><strong>Becomes the capstone.</strong> New tool built.</td></tr>
+        <tr><td class="mono">App. A Viscoelasticity</td><td><span class="tag tag--high">none</span></td><td>HW8 (partial)</td><td>Reached through temperature- and rate-dependent moduli. A dedicated tool is proposed in §09.</td></tr>
+        <tr><td class="mono">App. D Superpave</td><td>HW2 handout</td><td>HW2 P6</td><td>Becomes a graded binder selection.</td></tr>
+        <tr><td class="mono">App. E PMS</td><td><span class="tag tag--high">none</span></td><td>HW10 P2</td><td>Section delineation is network-level thinking in miniature.</td></tr>
+        <tr><td class="mono">App. F 2002 Guide</td><td>HW8 (nominal)</td><td>HW8 P4</td><td>Calibration and its uncertainty made explicit.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════ 6. TEACHING THE INSTRUMENTS ═══════════════════ -->
+<section id="instruments">
+  <div class="sec-head">
+    <span class="sec-head__n">07</span>
+    <h2>Teaching the instruments, not just assigning them</h2>
+  </div>
+
+  <p>
+    The redesign leans hard on the toolbox, which creates a failure mode worth naming before it
+    happens: <strong>a tool that produces an answer a student cannot sanity-check is worse than no
+    tool at all.</strong> It replaces "I don't know how to do this" — a productive state — with
+    "the computer said 4.7" — a terminal one. The same is true of a language model, which is why
+    this section and the next are really one argument.
+  </p>
+
+  <p>
+    Tool literacy is not picked up by osmosis. It has to be taught as explicitly as the mechanics
+    are, and it has three parts.
+  </p>
+
+  <h3 style="margin-top:2rem">1. The calibration ritual</h3>
+
+  <p>
+    An engineer never trusts an instrument they have not calibrated. Students do this instinctively
+    in a materials lab and almost never with software. So make it the first move with every tool,
+    every time:
+  </p>
+
+  <div class="callout">
+    <p>
+      <strong>Before you use a tool on your own data, reproduce a number you already know with it.</strong>
+      Every tool in the toolbox cites the equations it implements, and several now ship the book's
+      own worked examples as one-click presets — Westergaard loads Examples 4.1, 4.2–4.4 and 4.5;
+      the backcalculation studio loads Example 13.11; the reliability explorer opens on Examples
+      10.11–10.13. Run the preset. Confirm you get Huang's printed answer. <em>Then</em> load your
+      data.
+    </p>
+    <p class="fine" style="margin-top:0.75rem">
+      Graded as one line per homework: <span class="mono">"Calibrated the PCA erosion route against
+      Huang Example 12.1 — got 86.4% erosion damage for the 36-kip tandem against the book's
+      86.5%."</span> Cheap to write, cheap to mark, and it catches unit errors, misread inputs, and
+      the occasional genuine tool bug before they contaminate an entire assignment.
+    </p>
+  </div>
+
+  <p>
+    There is a second-order benefit. The FWD Backcalculation Studio's Example 13.11 preset does not
+    quite reproduce the book: the tool's built-in temperature factor is an interpolation, Huang
+    reads 0.92 off Figure 13.18, and SN<sub>eff</sub> comes out 3.14 instead of 2.88 — a 9%
+    difference on a design quantity. <strong>The calibration ritual surfaces that immediately</strong>,
+    and the student learns the most important lesson available about engineering software: the
+    number it hands you is only as good as the chart somebody approximated to build it.
+  </p>
+
+  <h3 style="margin-top:2rem">2. Three questions for any tool output</h3>
+
+  <p>
+    Attached to every numeric answer, in every homework, until they become reflex. They are the
+    same three questions that make an AI response safe to use, which is not a coincidence.
+  </p>
+
+  <div class="grid">
+    <div>
+      <span class="grid__key">Question 1</span>
+      <h4>What does this tool assume that my problem violates?</h4>
+      <p>
+        Layered-elastic analysis assumes static loading, full continuity, and linear elasticity.
+        Your asphalt is viscoelastic, your base is stress-dependent, and your truck is moving.
+        Naming the violated assumption is not pedantry — it tells you the <em>direction</em> of the
+        error.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Question 2</span>
+      <h4>What would this number be if my worst input were 30% off?</h4>
+      <p>
+        One re-run answers it. If the answer barely moves, stop worrying and move on. If it moves a
+        lot, you have just found what the assignment is actually about, and where to spend your
+        remaining time.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Question 3</span>
+      <h4>Can I get within a factor of two by other means?</h4>
+      <p>
+        A hand calculation, a limiting case, a chart, a dimensional argument, or a second tool. Not
+        to duplicate the answer — to catch the order-of-magnitude error that no amount of internal
+        consistency will reveal.
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:2rem">3. A progression, not a toolbox dumped on week one</h3>
+
+  <p>
+    Twelve tools handed over at once is an inventory, not a curriculum. The homework sequence in
+    §03 already implies a progression in what students are asked to <em>do</em> with a tool; it is
+    worth making that progression explicit, because it is the spine of the redesign.
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Stage</th><th>Homeworks</th><th>What the student does</th><th>The competency</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Read</strong></td>
+          <td class="mono">HW1–HW2</td>
+          <td>The tool computes something whose answer is knowable another way. Fit the data, reduce the curve, check against a hand result.</td>
+          <td>Trusting an instrument you have calibrated — and noticing when the calibration fails.</td>
+        </tr>
+        <tr>
+          <td><strong>Drive</strong></td>
+          <td class="mono">HW3–HW6</td>
+          <td>The student poses the question, not the assignment. Sweep a parameter, hunt a maximum, search an iso-strain curve, size a layer to a target.</td>
+          <td>Turning a design question into a computable one — the step most students never practise.</td>
+        </tr>
+        <tr>
+          <td><strong>Doubt</strong></td>
+          <td class="mono">HW7–HW9</td>
+          <td>Quantify how much the answer is worth. Propagate variance, perturb the calibration coefficients, check whether a sensitivity ranking survives a different parameter set.</td>
+          <td>Attaching an uncertainty to a number, and knowing which input owns it.</td>
+        </tr>
+        <tr>
+          <td><strong>Choose</strong></td>
+          <td class="mono">HW10</td>
+          <td>Two legitimate tools disagree. Pick one, defend it to a reviewer, and report what the data could not determine.</td>
+          <td>Engineering judgment under genuine ambiguity — the thing the whole course is for.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout--quiet">
+    <p>
+      <strong>The stages are cumulative and the last one is the point.</strong> A student who reaches
+      HW10 having only ever operated tools will produce three SN<sub>eff</sub> values and ask which
+      is correct. A student who has been driven through <em>drive</em> and <em>doubt</em> will
+      produce three values, say which they trust and why, name what would change their mind, and
+      flag the moduli the basin never determined. Those two submissions contain the same numbers.
+      Only one of them is engineering.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ 5. AI POLICY ═══════════════════════════ -->
+<section id="ai">
+  <div class="sec-head">
+    <span class="sec-head__n">08</span>
+    <h2>Being AI-friendly on purpose</h2>
+  </div>
+
+  <p>
+    Everything above is about making the deliverable inseparable from the understanding. That is the
+    defensive half. The other half matters more, and it is the reason to do this now rather than in
+    three years: students in this course will spend their careers working alongside these systems,
+    and almost nobody is teaching them how to do it responsibly. A pavement course is an unusually
+    good place to learn, because pavement engineering has cheap ground truth — a solver that will
+    tell you within seconds whether the confident paragraph you were just handed is true.
+  </p>
+
+  <h3 style="margin-top:2rem">The stance, stated to students in week one</h3>
+
+  <div class="callout">
+    <p>
+      <strong>You may use any AI system, for anything, at any point in this course.</strong> You must
+      disclose it, and you are fully responsible for every number you submit. An error you did not
+      catch is your error. In this course we will treat these systems the way we treat any other
+      instrument: powerful, fast, occasionally wrong in ways that look exactly like being right, and
+      therefore requiring calibration against something you trust.
+    </p>
+  </div>
+
+  <h3 style="margin-top:2rem">What these systems are genuinely good at here — and should be used for</h3>
+  <ul class="plain">
+    <li><strong>Explaining a step you are stuck on.</strong> "Why does the radius of relative stiffness have a fourth root in it?" is a question a model answers well, and asking it is strictly better than not asking anyone.</li>
+    <li><strong>Being a demanding critic of your own reasoning.</strong> Paste your justification for a design choice and ask it to argue the opposite. This is the highest-value use in the whole course and almost nobody does it.</li>
+    <li><strong>Writing the code around the engineering.</strong> Post-processing tool exports, plotting, unit conversion, building the per-station table. The engineering judgment is yours; the scripting does not have to be.</li>
+    <li><strong>Generating test cases.</strong> "Give me an input set where these two methods should agree, so I can check my tool is set up correctly."</li>
+    <li><strong>Translating vocabulary.</strong> Between AASHTO, mechanistic-empirical, and ICAO terminology, which describe overlapping ideas in incompatible words.</li>
+  </ul>
+
+  <h3 style="margin-top:2rem">Where they fail, specifically, in this subject</h3>
+  <p>
+    Worth demonstrating live in lecture rather than asserting. Every one of these is checkable in
+    the toolbox in under a minute, which is exactly the point.
+  </p>
+  <ul class="plain">
+    <li><strong>Iterative numerical work.</strong> Backcalculating a modulus set from a basin, or solving Eq. 13.25 for E<sub>p</sub>, requires iteration. Models produce a plausible-looking answer in one pass and it is usually wrong.</li>
+    <li><strong>Chart reading.</strong> Any value that comes off a Bradbury, Peattie or PCA chart is being guessed at.</li>
+    <li><strong>Counterintuitive results.</strong> Ask whether a thicker asphalt layer always reduces tensile strain at its bottom. The common answer is yes. It is wrong, and HW3 P2 makes the student prove it.</li>
+    <li><strong>Committing to a judgment.</strong> Asked which of three SN<sub>eff</sub> estimates to use, models list considerations rather than choosing. Engineering requires choosing.</li>
+    <li><strong>Knowing what varies.</strong> They will give you a design life to four significant figures without noting that the input coefficients carry ±40%.</li>
+  </ul>
+
+  <h3 style="margin-top:2rem">The highest use: building the instrument</h3>
+
+  <p>
+    Everything in the list above treats an AI system as something you <em>consult</em>. The most
+    valuable thing a student can do with one is different in kind: <strong>use it to build a tool
+    that did not exist, and then be responsible for whether the tool is right.</strong>
+  </p>
+
+  <p>
+    This is not hypothetical for this course. Every tool in the toolbox is a few hundred lines of
+    arithmetic wrapped around equations printed in Huang. A student who can state the equations can
+    now, with assistance, produce a working instrument in an afternoon — and the moment they do,
+    they discover that the hard part was never the code. It was deciding what the tool should
+    assume, what units it takes, what it should refuse to answer, and how anyone would know it is
+    correct.
+  </p>
+
+  <div class="callout">
+    <p class="mono" style="font-size:0.78rem; color:var(--accent-ink); letter-spacing:0.06em; margin-bottom:0.9rem">
+      OPTIONAL · BUILD A TOOL · REPLACES ONE HOMEWORK
+    </p>
+    <p>
+      Choose one of the tools §09 lists as still missing — the dynamic modulus master curve, the
+      joint load-transfer calculator, the ESWL comparator, the PSI and roughness tool — or propose
+      your own. Build it, using whatever assistance you like.
+    </p>
+    <p>
+      <strong>What is graded is not the code.</strong> It is: the equations you implemented and
+      where in Huang they come from; the assumptions you had to make that the book left open; at
+      least three test cases checked against printed worked answers, with the results; one case
+      your tool refuses or flags rather than answering wrongly; and a paragraph on what your tool
+      should not be trusted for. Submit the test output, not a claim that it passes.
+    </p>
+    <p class="fine" style="margin-top:1rem">
+      A tool that is honest about a narrow scope beats an ambitious one that silently produces
+      nonsense outside it. Say so in the brief.
+    </p>
+  </div>
+
+  <p>
+    Three things make this worth a homework slot. It is the most <strong>verifiable</strong>
+    deliverable in the course — the tool reproduces Huang's printed answers or it does not, and no
+    amount of confident prose substitutes. It teaches the thing the profession most needs and least
+    teaches: that generating code is now cheap and <em>validating</em> it is the entire job. And a
+    good submission enters the toolbox with the student's name on it, for the next cohort — which
+    is a considerably better motivation than a grade.
+  </p>
+
+  <h3 style="margin-top:2rem">What this does to collaboration</h3>
+
+  <p>
+    Worth saying out loud, because per-student data changes the social dynamics of the course and it
+    changes them for the better. When every student holds different numbers, <strong>copying stops
+    being possible and helping each other starts being the only thing left.</strong> The single
+    transferable asset becomes <em>method</em>: how you found the critical thickness, how you
+    delineated the sections, why you rejected the outlier. That is precisely the thing we want
+    discussed loudly in a study group at 11pm.
+  </p>
+
+  <p>
+    So the collaboration policy should be permissive and explicit: <strong>discuss method freely,
+    submit your own numbers, name your collaborators.</strong> The generator makes the second part
+    self-enforcing — a submission carrying another student's data is detectable by re-running the
+    generator, which takes seconds and requires no suspicion to trigger. That is a far healthier
+    arrangement than one where the rule is "don't work together" and the enforcement is vibes.
+  </p>
+
+  <h3 style="margin-top:2rem">Three mechanisms to put this into practice</h3>
+
+  <div class="grid">
+    <div>
+      <span class="grid__key">Mechanism 1</span>
+      <h4>The AI use log</h4>
+      <p>
+        A required one-page appendix on every homework: what you asked, what it gave you, what you
+        kept, and what you found to be wrong. Graded pass/fail on honesty and specificity, worth about
+        5%. "I did not use AI" is an acceptable entry. Vague entries are not.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Mechanism 2</span>
+      <h4>The red-team part</h4>
+      <p>
+        One part of each homework, explicitly marked: get an AI to answer a specific question, then
+        verify or refute it with the tool. <strong>Full credit requires either a confirmed answer with
+        independent evidence, or a caught error with the evidence that caught it.</strong> Students
+        quickly discover that finding errors is easier than confirming correctness, which is itself
+        the lesson.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Mechanism 3</span>
+      <h4>The verification habit</h4>
+      <p>
+        Every numeric answer in every homework carries a one-line statement of how it was checked —
+        a second method, a limiting case, a dimensional argument, or a sanity range. This is not an
+        AI policy. It is engineering practice, and it happens to make unverified model output
+        obvious.
+      </p>
+    </div>
+  </div>
+
+  <details>
+    <summary>A worked example of a red-team part, as it would appear on HW3</summary>
+    <p class="fine">
+      <strong>P2c (red team, 8 points).</strong> Ask an AI system: <em>"In a three-layer flexible
+      pavement, does increasing the asphalt thickness always reduce the tensile strain at the bottom
+      of the asphalt layer? Answer yes or no and explain."</em> Record the response verbatim. Then use
+      the LEA tool with your assigned moduli to determine whether the response is correct. If it is
+      wrong, produce the thickness sweep that proves it and identify the specific reasoning error. If
+      it is right, produce the sweep that confirms it and explain why the model got a
+      counterintuitive case correct. Full credit either way — the credit is for the verification, not
+      for the model being wrong.
+    </p>
+  </details>
+
+  <h3 style="margin-top:2rem">Assessment weighting that follows from all this</h3>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Component</th><th class="num">Weight</th><th>What it rewards</th></tr></thead>
+      <tbody>
+        <tr><td>Correct numbers</td><td class="num mono">25%</td><td>Still necessary. No longer sufficient, and no longer where the grade lives.</td></tr>
+        <tr><td>Reasoning and judgment</td><td class="num mono">35%</td><td>The defended choice, the reconciliation, the diagnosis of a disagreement.</td></tr>
+        <tr><td>Process evidence</td><td class="num mono">20%</td><td>Predictions made before computing, tool state, seeds, the sensitivity check.</td></tr>
+        <tr><td>Communication</td><td class="num mono">15%</td><td>The figure that carries the argument; the memo a reviewer could act on.</td></tr>
+        <tr><td>AI use log</td><td class="num mono">5%</td><td>Honesty and specificity.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="fine">
+    The exam remains the checkpoint where numbers are produced without assistance. Nothing here
+    reduces that — it is what allows the homework to relax about numbers and grade thinking instead.
+  </p>
+</section>
+
+<!-- ═══════════════════════════ 6. TOOLS ═══════════════════════════ -->
+<section id="tools">
+  <div class="sec-head">
+    <span class="sec-head__n">09</span>
+    <h2>Tools: seven built, two repaired, one proposed</h2>
+  </div>
+
+  <p>
+    Three things the redesign depends on did not exist, and are now built and tested — the two tools
+    against Huang's printed worked answers, the generator against itself. Each ships the book's own
+    examples as presets, so a student can check the instrument before trusting it, which is the habit
+    §07 asks them to build.
+  </p>
+
+  <p>
+    Building them exposed a second problem. Writing §07 meant asserting that every tool can reproduce
+    a printed answer — so I checked, and <strong>five of the fourteen tools had their physics embedded
+    in the React component with no tests at all.</strong> That included the Westergaard tool, which the
+    whole of HW9 rests on. Auditing those is described below; it turned out to matter more than the
+    next new tool would have.
+  </p>
+
+  <div class="grid">
+    <div>
+      <span class="grid__key">Built · /tools/backcalc/</span>
+      <h4>FWD Backcalculation Studio</h4>
+      <p>
+        A measured deflection basin goes in; layer moduli come out. Two independent routes: full
+        layered-elastic inversion by Levenberg–Marquardt on ln E, driven by the same App. B solver the
+        LEA tool uses, and the AASHTO 1993 closed form (Eqs. 13.22–13.26). They disagree, which is the
+        assignment. It also reports <strong>per-layer sensitivity</strong> — how much extra basin error
+        a 20% modulus error causes — so a student can see which moduli the data determined and which
+        are their own seed guess coming back at them. Validated against Huang Example 13.11, which it
+        reproduces exactly (SN<sub>eff</sub> = 2.88) <em>once the student enters the temperature
+        factor from Figure 13.18 rather than accepting the tool's suggestion</em>.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Built · scripts/generate-datasets.mjs</span>
+      <h4>Per-student dataset generator</h4>
+      <p>
+        The linchpin, and the reason it was the top of the roadmap: device <strong>D1</strong>
+        depends on it entirely. One deterministic bundle per student from
+        <code>hash(UIN + salt)</code>, in <strong>nine handouts covering all ten homeworks</strong> —
+        triaxial M<sub>r</sub> data with two injected outliers, a CBR curve with a concave-up toe, a
+        W-4 table, a drainage site with gradations, an IDOT scenario, a rigid slab with its axle
+        spectrum, a ten-station FWD survey with a real section break, and every scalar assignment.
+        Plus an instructor answer key.
+        <strong>The salt is the security model:</strong> this repository is readable by the class,
+        so an unsalted run produces data whose answers any student can re-derive from the source.
+        The CLI refuses to run without one.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Built · /tools/mastercurve/</span>
+      <h4>Dynamic Modulus &amp; Master Curve</h4>
+      <p>
+        The largest untouched body of theory in the book, now reachable. Predicts |E*| by the
+        Asphalt Institute regression (Eq. 7.27) and by Shell/Bonnaure (Eqs. 7.24–7.25) — which
+        <strong>disagree by 62% on Huang's own Example 7.10</strong> — then shifts the isotherms onto
+        one master curve and fits the MEPDG sigmoid. Its real finding: superposition holds, but
+        <strong>only if the shift slope is fitted rather than inherited</strong>. Huang's 0.113
+        average costs about 25% in modulus on this mix, which prefers 0.064. Validated against
+        Examples 2.16 and 7.7–7.10.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Built · /tools/joints/</span>
+      <h4>Joints &amp; Load Transfer</h4>
+      <p>
+        The half of rigid design that is not slab thickness: dowel group action and bearing stress,
+        tie bars, joint opening, and faulting. It makes HW9's joint-spacing defense quantitative —
+        and carries a third designed disagreement. Huang uses <strong>three different conventions
+        for the dowel load reach in three different places</strong>: Friberg's 1.8ℓ in the worked
+        examples, Heinrichs' 1.0ℓ in the note saying the examples are wrong, and 1.0ℓ with 0.45W in
+        the faulting model. Which one you adopt can decide whether the design passes. Validated
+        against Examples 4.8, 4.9, 4.11, 4.12 and 4.13 — including Example 4.12's verdict that the
+        book's own dowel design <em>fails</em> by about 10%.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Built · /tools/eswl/</span>
+      <h4>ESWL Comparator</h4>
+      <p>
+        Four published criteria for converting duals to one wheel, computed together. On Huang's own
+        Example 6.1 they give <strong>5630, 6750, 7340 and 7410 lb</strong> — a 32% spread — and he
+        remarks that the two which nearly agree do so "by coincidence". Two of the four are
+        integrated from the Boussinesq kernel rather than read off a chart. It also shows that stress
+        and deflection peak at <em>different points</em> under the duals, which is the mechanical
+        reason the criteria differ at all. Validated against Examples 6.1, 6.2, 6.3 and 6.5.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Built · /tools/psi/</span>
+      <h4>Serviceability &amp; Skid Resistance</h4>
+      <p>
+        Where the whole empirical tradition comes from. Students fit the PSI equation themselves to
+        Problem 9.2's five sections and get a rut coefficient of <strong>−38.09 against AASHO's
+        −1.38 — 27× larger — with an R² above 0.98</strong>. Both facts are true at once, and sitting
+        with that is the most honest introduction to regression a pavement course can offer. Also
+        computes skid number against speed, which is two independent properties (microtexture and
+        macrotexture) wearing one number. Validated against Eqs. 9.14, 9.15 and Problems 9.2 and 9.4.
+      </p>
+    </div>
+    <div>
+      <span class="grid__key">Built · /tools/reliability/</span>
+      <h4>Reliability &amp; Variability Explorer</h4>
+      <p>
+        Every design input takes a coefficient of variation; the variances propagate through the
+        AASHTO flexible equation to a reliability. Ranks each input's share of the total variance —
+        the chart that decides where money should go. Runs the same question three ways: Taylor's
+        expansion, Rosenblueth's point estimates, and seeded Monte Carlo. Validated against Huang
+        Examples 10.11, 10.12 and 10.13, including the 92.2% reliability the book computes.
+      </p>
+    </div>
+  </div>
+
+  <h3 style="margin-top:2.25rem">The audit, and what it found</h3>
+
+  <p>
+    The good news first: <strong>the physics was right.</strong> Every formula already implemented in
+    the Westergaard and Stress Explorer tools reproduces Huang's printed answers — ℓ = 42.97 in,
+    interior 143.7 psi, corner 190.3 psi, curling 238 and 214 psi, the Boussinesq deflection factor
+    of 0.68. Nothing was computing the wrong thing.
+  </p>
+
+  <p>
+    The problem was what was <em>missing</em>. The Westergaard tool implemented one of the two
+    published edge cases and one of the two published corner solutions, and it was the wrong one of
+    each pair to have alone:
+  </p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Question</th><th>Was implemented</th><th>Was absent</th><th>Consequence</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Edge contact shape</td>
+          <td class="mono">circle — Eq. 4.22<br>279.4 psi</td>
+          <td class="mono">semicircle — Eq. 4.23<br>330.0 psi</td>
+          <td><strong>The governing case was hidden.</strong> A wheel at a slab edge is a semicircle, not a circle — its straight side lies along the edge, so its centroid sits nearer to it. Huang says so explicitly, and it gives an 18% higher stress. Edge loading governs rigid thickness design, so the tool was omitting the number the design turns on.</td>
+        </tr>
+        <tr>
+          <td>Corner formulation</td>
+          <td class="mono">Ioannides — Eq. 4.15<br>190.3 psi</td>
+          <td class="mono">original — Eq. 4.13<br>186.6 psi</td>
+          <td>A designed disagreement (device <strong>D3</strong>) was being silently resolved for the student. Huang prints both and notes they differ by 2% in stress and 11% in deflection. That gap is teaching content; showing one answer throws it away.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    Both are now implemented, and rather than the tool choosing between them it shows a
+    <em>"Two questions the literature answers twice"</em> panel with both answers and the spread
+    between them. The disagreement moved out of the prose in §02 and into the instrument. The tool
+    also gained the dual-tyre equivalent circle (Eq. 4.31 — verified at 7.85 in against Example 4.5),
+    which HW9's dual-tandem problems need, and three presets that load Examples 4.1, 4.2–4.4 and 4.5
+    directly.
+  </p>
+
+  <div class="callout callout--quiet">
+    <p>
+      <strong>Three tools still carry untested physics: damage, LCA, and the M<sub>r</sub> fitter.</strong>
+      This is deliberate rather than unfinished. The first two implement assignment and inventory
+      formulas rather than book equations, so there is no printed answer to pin them to — they would
+      need a different kind of check, probably a worked example written by the instructor. The
+      M<sub>r</sub> fitter is a log-space regression that the dataset generator's tests already
+      exercise indirectly, by regressing generated data back to the k-values that produced it. Worth
+      knowing about; not worth pretending is covered.
+    </p>
+  </div>
+
+  <div class="callout callout--quiet">
+    <p>
+      <strong>The generator's tests are the part worth stealing.</strong> They do not check that it
+      emits numbers; they check that the data is <em>solvable</em>. Every generated triaxial set is
+      regressed back to the k-values that made it, every CBR curve is reduced back to its own CBR,
+      and every FWD basin is backcalculated back to the moduli it came from. A generator that
+      produced plausible-looking but unsolvable data would be worse than no generator at all, and
+      that failure is invisible until forty students are stuck on it at once.
+    </p>
+    <p>
+      A second class of test pins the <em>distribution</em> rather than the validity, because some
+      assignments quietly depend on one. <strong>Roughly half the class must get a filter gradation
+      that fails at least one criterion</strong>, or HW6's "where they fail, propose a fix" is an
+      empty instruction. <strong>Both fatigue and erosion must govern for somebody</strong>, or
+      HW9's "report which governs" has a single class-wide answer available from a neighbour. Every
+      slab must land between σ/MR of 0.2 and 1.35, so no student gets a thickness question that is
+      already answered. These are easy to break by adjusting a range and never notice.
+    </p>
+  </div>
+
+  <div class="callout">
+    <p>
+      <strong>A bug worth putting in a lecture.</strong> The master curve tool's sigmoid fitter used
+      a hand-written 4×4 solver containing the expression <code>row[i][i]</code>. In JavaScript
+      <code>row</code> is an array of numbers, so <code>row[i]</code> is a number and
+      <code>row[i][i]</code> is <code>undefined</code> — every solution came back <code>NaN</code>.
+      The optimiser dutifully rejected every step and returned its own starting guess.
+    </p>
+    <p>
+      Nothing looked wrong. The curves were smooth, the R² was 0.78, the numbers were the right
+      order of magnitude, and I drew a confident conclusion from them — that the Asphalt Institute
+      model violates time–temperature superposition. It does not. With the solver fixed the collapse
+      is R² = 0.997, and the real finding is smaller and more useful: superposition holds, but the
+      handbook's average shift slope is wrong for this mix by enough to matter.
+    </p>
+    <p>
+      <strong>What caught it was fitting data whose answer was already known.</strong> Not inspection,
+      not plausibility, not the chart looking right — a synthetic sigmoid with parameters written
+      down in advance, and an assertion that they came back. That is the calibration ritual of §07,
+      applied to a tool instead of by a student, and it is the single most transferable habit in this
+      entire proposal.
+    </p>
+  </div>
+
+  <h3 style="margin-top:2.25rem">What is left</h3>
+
+  <p>
+    The roadmap is empty: every tool this proposal asked for has been built and pinned to the book.
+    Three things remain open, and none of them is a tool.
+  </p>
+
+  <ul class="plain">
+    <li>
+      <strong>Three tools still carry untested physics — damage, LCA, and the M<sub>r</sub> fitter.</strong>
+      This is a stopping point rather than an omission. The first two implement assignment and
+      inventory formulas rather than book equations, so there is no printed answer to pin them to;
+      closing them properly needs a worked example written by the instructor, not by me. The
+      M<sub>r</sub> fitter is a log-space regression that the dataset generator's tests already
+      exercise indirectly, by regressing generated data back to the k-values that produced it.
+    </li>
+    <li>
+      <strong>The generator needs a semester salt and a roster</strong> before first use. The CLI
+      refuses to run without the salt for the reason given above; it is the whole security model.
+    </li>
+    <li>
+      <strong>None of this is committed or deployed.</strong> The homework data files
+      (<code>homeworks.ts</code>, <code>hwGuides.ts</code>) are deliberately untouched — this
+      document is a recommendation, and rewriting the live syllabus is your call, not mine.
+    </li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ 7. ROLLOUT ═══════════════════════════ -->
+<section id="rollout">
+  <div class="sec-head">
+    <span class="sec-head__n">10</span>
+    <h2>Getting there from here</h2>
+  </div>
+
+  <p>
+    This is a large change and it does not have to be made at once. The order below front-loads the
+    highest ratio of pedagogical gain to instructor effort.
+  </p>
+
+  <ol class="steps">
+    <li><strong><s>Build the dataset generator.</s> Done</strong> — <code>scripts/generate-datasets.mjs</code>. Set a semester salt, point it at a roster CSV, and every homework below becomes per-student for free. Start by generating one bundle for yourself and working HW2 from it.</li>
+    <li><strong>Add prediction-first prompts (D2) to all ten existing homeworks.</strong> One sentence per part. No new content, no new grading infrastructure, and it changes what students do with the assignment immediately. If only one item on this list happens, make it this one.</li>
+    <li><strong>Introduce the AI use log and the verification line.</strong> Also nearly free, and it establishes the course's stance before the first homework is due.</li>
+    <li><strong>Redesign HW1 and HW10 first.</strong> They bracket the semester and carry the sealed-prediction thread. HW1 needs no new tooling at all; HW10 uses the two new tools.</li>
+    <li><strong>Then HW7 and HW3</strong> — the two with the largest gap between current exposure and available tooling.</li>
+    <li><strong>Then the rest,</strong> at roughly one per semester if that is the sustainable pace. The audit table in §01 is the priority order.</li>
+  </ol>
+
+  <h3 style="margin-top:2rem">What this costs, honestly</h3>
+
+  <ul class="plain">
+    <li>
+      <strong>Student workload has to stay flat, and that requires cutting.</strong> This is the
+      risk that sinks redesigns like this one. The parts above are richer than the problems they
+      replace, and richer reads as longer unless something is removed deliberately. Three things
+      make the trade roughly even: <em>fewer parts</em> (HW9 goes from five textbook problems to
+      four graded parts, HW5 from five to five but with three of them tool-driven), <em>no
+      chart-reading busywork</em> where a tool now does it, and <em>a page limit on prose</em> —
+      one page per homework, enforced. If a homework is running past six hours for a competent
+      student, cut a part rather than letting it run. The exemplar in §05 is calibrated at about
+      ninety minutes; use it as the unit of measure.
+    </li>
+    <li>
+      <strong>Grading load goes up.</strong> A defended choice takes longer to grade than a number.
+      Mitigations: rubric bands rather than point-by-point marking, the micro-defense (D9) as a
+      substitute for written justification on one part per homework, and peer review on the parts
+      where students benefit from seeing another approach. Realistically, budget 30–40% more TA time
+      per homework, offset by the fact that per-student data makes plagiarism detection nearly free.
+    </li>
+    <li>
+      <strong>Some students will resent the ambiguity.</strong> Assignments without a single right
+      answer are uncomfortable for students trained on assignments that have one. This is worth
+      naming in week one rather than discovering in week six. Publishing an exemplar — one part, fully
+      worked, showing what a defended choice looks like — resolves most of it.
+    </li>
+    <li>
+      <strong>Tool trust replaces textbook trust.</strong> The failure mode of this redesign is a
+      student who believes the LEA solver the way they used to believe the answer key. The
+      countermeasure is already in the design: HW3 P1 requires a hand solution, HW4 P1 requires two
+      independent solvers to be reconciled, and HW10 P5 requires reporting which numbers the data did
+      not determine. Keep those parts even when the schedule is tight.
+    </li>
+    <li>
+      <strong>Equity of access.</strong> The AI policy assumes every student can reach a capable
+      model. Free tiers are adequate for everything the red-team parts require, and no part of any
+      homework should require a paid subscription. Worth checking each year.
+    </li>
+  </ul>
+
+  <hr class="soft">
+
+  <div class="callout callout--quiet">
+    <p>
+      <strong>One closing argument.</strong> The reason to do this is not that students might cheat.
+      It is that the skill the profession now needs — reading a model's output and knowing whether to
+      believe it — is the same skill this course has always been trying to teach about design
+      methods. Huang says it plainly about backcalculation, about sensitivity studies, and about the
+      three ways of estimating effective structural capacity: there is no substitute for judgment.
+      That was true before any of this. What has changed is that a student can now generate a
+      confident, articulate, wrong answer in four seconds, which makes judgment the only thing left
+      worth grading.
+    </p>
+  </div>
+</section>
+
+<p class="fine" style="margin-top:3rem; padding-top:1.25rem; border-top:1px solid var(--hairline)">
+  Prepared for CEE 406 Pavement Design I, University of Illinois Urbana-Champaign. All chapter,
+  equation, section and page references are to Huang, Y. H. (2004), <i>Pavement Analysis and
+  Design</i>, 2nd ed. No existing homework content has been modified — this document is a
+  recommendation. What <em>has</em> been added to the repository is the tooling the proposal
+  depends on — <code>/tools/backcalc/</code>, <code>/tools/reliability/</code> and
+  <code>scripts/generate-datasets.mjs</code> — together with an audit of the existing tools that
+  extracted the Westergaard and Boussinesq physics out of their React components and pinned it to
+  Huang's printed worked answers. The repository now carries 134 tests against the book.
+</p>
+
+</div>

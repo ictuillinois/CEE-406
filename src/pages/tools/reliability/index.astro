@@ -1,13 +1,13 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import WestergaardApp from '../../../components/react/westergaard/WestergaardApp';
+import ReliabilityApp from '../../../components/react/reliability/ReliabilityApp';
 
 const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout
-  title="Westergaard Slab Stress · CEE 406 Tools"
-  description="Every published Westergaard case for a concrete slab on a Winkler foundation — interior, edge under circular and semicircular contact, and corner by two disagreeing formulas — plus Bradbury curling and the dual-tyre equivalent circle. For CEE 406 HW9."
+  title="Reliability & Variability Explorer · CEE 406 Tools"
+  description="Turn a deterministic AASHTO flexible design into a probabilistic one: propagate the variance of every input, rank what dominates the uncertainty, and compare Taylor, Rosenblueth, and Monte Carlo estimates of reliability."
 >
   <div class="container tool-page">
     <nav class="doc-breadcrumb" aria-label="Breadcrumb">
@@ -15,26 +15,26 @@ const base = import.meta.env.BASE_URL;
       <span class="doc-breadcrumb__sep">/</span>
       <a href={`${base}tools/`}>Tools</a>
       <span class="doc-breadcrumb__sep">/</span>
-      <span class="doc-breadcrumb__current">Westergaard Slab Stress</span>
+      <span class="doc-breadcrumb__current">Reliability &amp; Variability</span>
     </nav>
 
     <header class="tool-head">
       <div>
-        <h1 class="tool-head__title">Westergaard Slab Stress</h1>
+        <h1 class="tool-head__title">Reliability &amp; Variability Explorer</h1>
         <p class="tool-head__desc">
-          Every published Westergaard case for <a href={`${base}homeworks/hw9/`}>HW9</a> — interior,
-          edge under both circular <em>and</em> semicircular contact, and corner by both the original
-          and the Ioannides formulas. The last two pairs disagree, and the tool shows both rather
-          than picking for you. Plus Bradbury curling and the dual-tyre equivalent circle
-          (Huang Ch. 4, Eqs. 4.9–4.31), pinned to the printed answers of Examples 4.1–4.5.
+          Every input to a pavement design is a distribution, not a number. This tool propagates
+          those distributions through the AASHTO flexible equation, reports which input owns the
+          uncertainty, and runs the same question three ways — Taylor's expansion, Rosenblueth's
+          point estimates, and Monte Carlo — so you can see where the assumptions break
+          (<a href={`${base}textbook/ch10/`}>Ch. 10</a>).
         </p>
       </div>
       <div class="tool-head__hws">
-        <a href={`${base}homeworks/hw9/`} class="tool-hw-chip">HW9</a>
+        <span class="tool-hw-chip">Ch. 10</span>
       </div>
     </header>
 
-    <WestergaardApp client:only="react" />
+    <ReliabilityApp client:only="react" />
   </div>
 </BaseLayout>
 

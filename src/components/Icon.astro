@@ -1,0 +1,60 @@
+---
+// A small stroke icon set, drawn on one 24-unit grid at a single weight so the
+// whole site reads as one hand. Icons carry meaning that a bare chip does not:
+// a due date, a chapter count, a downloadable file.
+//
+// They are decorative by default (aria-hidden) because every use sits beside
+// its own text label. Pass `label` only when an icon stands alone.
+interface Props {
+  name:
+    | 'calendar' | 'layers' | 'sliders' | 'file' | 'download'
+    | 'arrow-right' | 'book' | 'external' | 'check' | 'chart';
+  /** Rendered size in px. The stroke stays optically even across sizes. */
+  size?: number;
+  label?: string;
+  class?: string;
+}
+const { name, size = 16, label, class: cls = '' } = Astro.props;
+
+// 24-unit viewBox, 1.75 stroke, round caps and joins.
+const paths: Record<Props['name'], string> = {
+  // Due dates and the schedule
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  // Textbook chapters — the pavement section read as strata
+  layers: '<path d="M3 8h18M3 13h18M3 18h18"/><path d="M3 8v10M21 8v10"/>',
+  // Online tools
+  sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/>',
+  // Problem count
+  file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/>',
+  download: '<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M5 19h14"/>',
+  'arrow-right': '<path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/>',
+  book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 1 6.5 18H19v3H6.5A2.5 2.5 0 0 1 4 20.5z"/>',
+  external: '<path d="M14 4h6v6"/><path d="M20 4 10.5 13.5"/><path d="M18 14v5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"/>',
+  check: '<path d="M4.5 12.5 9.5 17.5 19.5 7"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+};
+---
+
+<svg
+  class={`icon ${cls}`}
+  width={size}
+  height={size}
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.75"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden={label ? undefined : 'true'}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  set:html={paths[name]}
+/>
+
+<style>
+  .icon {
+    display: inline-block;
+    flex: none;
+    vertical-align: -0.16em;
+  }
+</style>

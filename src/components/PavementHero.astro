@@ -5,6 +5,8 @@
 // trailing recovery tail (the viscoelastic signature of asphalt), and grains
 // in every layer displace elastically as the load passes.
 // Static single frame under prefers-reduced-motion.
+import { tools } from '../data/tools';
+
 const base = import.meta.env.BASE_URL;
 ---
 
@@ -34,7 +36,7 @@ const base = import.meta.env.BASE_URL;
       </div>
       <div class="hero-stat">
         <dt>Online tools</dt>
-        <dd>2 live</dd>
+        <dd>{tools.length} live</dd>
       </div>
       <div class="hero-stat">
         <dt>Instructor</dt>

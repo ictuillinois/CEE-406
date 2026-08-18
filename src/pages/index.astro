@@ -2,27 +2,14 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PavementHero from '../components/PavementHero.astro';
 import LayerGlyph from '../components/LayerGlyph.astro';
+import Icon from '../components/Icon.astro';
 import { homeworks } from '../data/homeworks';
 import { chapters, appendices } from '../data/textbook';
+import { tools, toolHref } from '../data/tools';
 
 const base = import.meta.env.BASE_URL;
 
-const liveTools = [
-  {
-    name: 'Stress Explorer',
-    href: `${base}tools/stress-explorer/`,
-    color: '#0ea5e9',
-    tag: 'HW3 · HW4',
-    desc: 'One-layer elastic response under a circular load — stresses, strains, and deflection versus depth, live.',
-  },
-  {
-    name: 'ESAL Calculator',
-    href: `${base}tools/esal-calculator/`,
-    color: '#10b981',
-    tag: 'HW5 · HW7',
-    desc: 'AASHTO load equivalency factors and design-lane ESALs with growth, lane, and directional factors.',
-  },
-];
+
 ---
 
 <BaseLayout
@@ -47,17 +34,20 @@ const liveTools = [
       <ol class="hw-grid stagger-grid" role="list">
         {homeworks.map(hw => (
           <li class="gsap-stagger">
-            <a href={`${base}homeworks/${hw.id}/`} class="hw-card">
+            <a href={`${base}homeworks/${hw.id}/`} class="hw-card" data-phase={hw.phase}>
               <div class="hw-card__top">
                 <LayerGlyph focus={hw.layerFocus} />
                 <span class="hw-card__num">HW{hw.num}</span>
-                <span class="hw-card__due">due {hw.due}</span>
+                <span class="hw-card__due"><Icon name="calendar" size={13} />{hw.due}</span>
               </div>
               <h3 class="hw-card__title">{hw.title}</h3>
-              <p class="hw-card__desc">{hw.overview.slice(0, 110)}&hellip;</p>
+              <p class="hw-card__desc">{hw.overview}</p>
               <div class="hw-card__foot">
                 <span class="hw-card__phase">{hw.phase}</span>
-                {hw.tools.some(t => t.href) && <span class="hw-card__tool">tool online</span>}
+                {hw.tools.some(t => t.href) && (
+                  <span class="hw-card__tool"><Icon name="sliders" size={12} />tool</span>
+                )}
+                <Icon name="arrow-right" size={15} class="hw-card__go" />
               </div>
             </a>
           </li>
@@ -73,29 +63,27 @@ const liveTools = [
         <span class="section-eyebrow">Online tools</span>
         <h2>Solve it in the browser</h2>
         <p>
-          Interactive calculators built for the homeworks — no installation, no license.
-          More tools come online as the semester progresses.
+          {tools.length} interactive calculators built for the homeworks — no installation, no
+          license, nothing to hand in but the thinking. Each one is checked against the worked
+          answers printed in Huang, so you can calibrate it before you trust it.
         </p>
       </div>
 
       <div class="tools-grid stagger-grid">
-        {liveTools.map(tool => (
-          <a href={tool.href} class="tool-card gsap-stagger" style={`--tool-color: ${tool.color}`}>
-            <div class="tool-card__head">
-              <span class="tool-card__dot"></span>
-              <span class="tool-card__name">{tool.name}</span>
-              <span class="tool-card__tag">{tool.tag}</span>
-            </div>
-            <p class="tool-card__desc">{tool.desc}</p>
-            <span class="tool-card__cta">Open tool &rarr;</span>
+        {tools.map(t => (
+          <a href={toolHref(base, t)} class="tool-mini gsap-stagger" style={`--tool-color: ${t.color}`}>
+            <span class="tool-mini__glyph" aria-hidden="true">
+              <Fragment set:html={t.glyph} />
+            </span>
+            <span class="tool-mini__name">{t.name}</span>
+            <span class="tool-mini__hws">{t.hws.join(' · ')}</span>
           </a>
         ))}
-        <a href={`${base}tools/`} class="tool-card tool-card--all gsap-stagger">
-          <span class="tool-card__name">All tools</span>
-          <p class="tool-card__desc">See what's live and what's in development for upcoming homeworks.</p>
-          <span class="tool-card__cta">Browse &rarr;</span>
-        </a>
       </div>
+
+      <a href={`${base}tools/`} class="tools-all gsap-fade-up">
+        Every tool, with what it implements and why &rarr;
+      </a>
     </div>
   </section>
 
@@ -114,14 +102,27 @@ const liveTools = [
 
       <div class="tb-strip gsap-fade-up" role="list">
         {chapters.map(ch => (
-          <a href={`${base}textbook/${ch.id}/`} class="tb-chip" role="listitem" title={ch.title}>
+          <a href={`${base}textbook/${ch.id}/`} class="tb-chip" role="listitem" title={ch.desc}>
             <span class="tb-chip__num">{ch.num}</span>
             <span class="tb-chip__title">{ch.title}</span>
           </a>
         ))}
       </div>
+
+      <div class="tb-sublabel gsap-fade-up"><Icon name="book" size={13} />Appendices</div>
+      <div class="tb-strip tb-strip--appendix gsap-fade-up" role="list">
+        {appendices.map(ap => (
+          <a href={`${base}textbook/${ap.id}/`} class="tb-chip tb-chip--appendix" role="listitem" title={ap.desc}>
+            <span class="tb-chip__num">{ap.num}</span>
+            <span class="tb-chip__title">{ap.title}</span>
+          </a>
+        ))}
+      </div>
+
       <div class="tb-actions gsap-fade-up">
-        <a href={`${base}textbook/`} class="btn btn-primary">Open the textbook</a>
+        <a href={`${base}textbook/`} class="btn btn-primary">
+          Open the textbook<Icon name="arrow-right" size={15} />
+        </a>
       </div>
     </div>
   </section>
@@ -188,14 +189,30 @@ const liveTools = [
     border-radius: 10px;
     text-decoration: none;
     color: inherit;
+    position: relative;
+    overflow: hidden;
     transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .hw-card:hover {
-    border-color: var(--color-accent);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(15, 26, 46, 0.08);
+  /* The phase rule. Always present at low opacity so the grid reads as five
+     coloured groups at a glance; full strength on hover. */
+  .hw-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--phase, var(--color-accent));
+    opacity: 0.4;
+    transition: opacity 0.2s ease;
   }
+
+  .hw-card:hover {
+    border-color: var(--phase, var(--color-accent));
+    transform: translateY(-3px);
+    box-shadow: 0 10px 26px rgba(15, 26, 46, 0.10);
+  }
+
+  .hw-card:hover::before { opacity: 1; }
 
   :global([data-theme="dark"]) .hw-card {
     background: #162033;
@@ -203,8 +220,8 @@ const liveTools = [
   }
 
   :global([data-theme="dark"]) .hw-card:hover {
-    border-color: var(--color-accent);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--phase, var(--color-accent));
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.34);
   }
 
   .hw-card__top {
@@ -217,12 +234,17 @@ const liveTools = [
   .hw-card__num {
     font-family: var(--font-mono);
     font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--color-accent);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--phase, var(--color-accent));
   }
 
   .hw-card__due {
     margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: var(--font-mono);
     font-size: 0.6875rem;
     color: var(--color-text-muted);
   }
@@ -231,137 +253,206 @@ const liveTools = [
     font-size: 1rem;
     margin: 0 0 0.4rem;
     line-height: 1.35;
+    text-wrap: balance;
   }
 
+  /* Clamped rather than cut in JS: `overview.slice(0, 110)` chopped words in
+     half mid-syllable. The browser knows where the line ends; we do not. */
   .hw-card__desc {
     font-size: 0.8125rem;
     line-height: 1.55;
     color: var(--color-text-muted);
     margin: 0 0 0.875rem;
     flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .hw-card__foot {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
   }
 
   .hw-card__phase {
-    font-size: 0.625rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    background: var(--color-surface-alt);
-    border-radius: 2rem;
-    padding: 0.15rem 0.55rem;
-  }
-
-  :global([data-theme="dark"]) .hw-card__phase {
-    background: #1B2D4A;
+    text-transform: uppercase;
+    padding: 0.2rem 0.45rem;
+    border-radius: 5px;
+    color: var(--phase, var(--color-accent));
+    background: color-mix(in srgb, var(--phase, var(--color-accent)) 12%, transparent);
   }
 
   .hw-card__tool {
-    font-size: 0.625rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.08);
-    border-radius: 2rem;
-    padding: 0.15rem 0.55rem;
+    text-transform: uppercase;
+    padding: 0.2rem 0.45rem;
+    border-radius: 5px;
+    color: var(--color-text-muted);
+    background: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
   }
 
-  /* ── Tools ── */
+  /* The affordance slides out on hover — the card is a link, and this is the
+     only thing on it that says so. */
+  /* :global — the arrow is rendered by <Icon>, so it carries no scope hash
+     from this file and a bare class selector would never match it. */
+  :global(.hw-card__go) {
+    margin-left: auto;
+    color: var(--phase, var(--color-accent));
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .hw-card:hover :global(.hw-card__go),
+  .hw-card:focus-visible :global(.hw-card__go) {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tb-chip { transition: none; }
+    .tb-chip:hover { transform: none; box-shadow: none; }
+    .hw-card { transition: none; }
+    .hw-card:hover { transform: none; }
+    :global(.hw-card__go) { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ── Tool miniatures ────────────────────────────────────────────────
+     Small, glyph-forward cards: the landing page shows WHAT each tool does
+     at a glance and leaves the prose to /tools/. The motif is the same SVG
+     the tools page uses, so the two surfaces read as one system. */
   .tools-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 0.875rem;
+    grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+    gap: 0.625rem;
   }
 
-  .tool-card {
+  .tool-mini {
     display: flex;
     flex-direction: column;
-    padding: 1.25rem 1.375rem;
+    gap: 0.1rem;
+    padding: 0.75rem 0.875rem 0.8rem;
     background: #fff;
     border: 1px solid var(--color-border);
     border-radius: 10px;
     text-decoration: none;
     color: inherit;
-    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
     position: relative;
     overflow: hidden;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .tool-card::before {
+  /* The accent bar is always visible here, at low opacity — it is the only
+     colour a miniature carries, so it doubles as the category marker. */
+  .tool-mini::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 2px;
     background: var(--tool-color, var(--color-accent));
-    opacity: 0;
+    opacity: 0.35;
     transition: opacity 0.2s ease;
   }
 
-  .tool-card:hover {
+  .tool-mini:hover {
     border-color: var(--tool-color, var(--color-accent));
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(15, 26, 46, 0.08);
+    box-shadow: 0 8px 20px rgba(15, 26, 46, 0.09);
   }
 
-  .tool-card:hover::before { opacity: 1; }
+  .tool-mini:hover::before { opacity: 1; }
 
-  :global([data-theme="dark"]) .tool-card {
+  :global([data-theme="dark"]) .tool-mini {
     background: #162033;
     border-color: #2D3F59;
   }
 
-  .tool-card__head {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.625rem;
+  :global([data-theme="dark"]) .tool-mini:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
   }
 
-  .tool-card__dot {
-    width: 0.5rem;
-    height: 0.5rem;
-    border-radius: 50%;
-    background: var(--tool-color);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool-color) 18%, transparent);
+  .tool-mini__glyph {
+    display: block;
+    color: var(--tool-color, var(--color-accent));
+    background: color-mix(in srgb, var(--tool-color, var(--color-accent)) 8%, transparent);
+    border-radius: 7px;
+    padding: 0.3rem 0.5rem;
+    margin-bottom: 0.55rem;
   }
 
-  .tool-card__name {
+  .tool-mini__glyph :global(svg) {
+    display: block;
+    width: 100%;
+    height: 38px;
+    transition: transform 0.25s ease;
+  }
+
+  .tool-mini:hover .tool-mini__glyph :global(svg) {
+    transform: translateY(-1px) scale(1.03);
+  }
+
+  @keyframes tool-mini-draw {
+    from { stroke-dasharray: 320; stroke-dashoffset: 320; }
+    to { stroke-dasharray: 320; stroke-dashoffset: 0; }
+  }
+
+  .tool-mini:hover .tool-mini__glyph :global(path.anim),
+  .tool-mini:hover .tool-mini__glyph :global(rect.anim) {
+    animation: tool-mini-draw 0.9s ease;
+  }
+
+  .tool-mini__name {
     font-family: var(--font-heading);
     font-weight: 600;
-    font-size: 0.9375rem;
-  }
-
-  .tool-card__tag {
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    color: var(--color-text-muted);
-  }
-
-  .tool-card__desc {
     font-size: 0.8125rem;
-    line-height: 1.55;
-    color: var(--color-text-muted);
-    margin: 0 0 1rem;
-    flex: 1;
+    line-height: 1.3;
+    text-wrap: balance;
+    /* Two lines reserved so every miniature is the same height and the grid
+       reads as a set rather than a ragged pile. */
+    min-height: 2.6em;
   }
 
-  .tool-card__cta {
+  .tool-mini__hws {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.03em;
+    color: var(--color-text-muted);
+    margin-top: 0.15rem;
+  }
+
+  .tools-all {
+    display: inline-block;
+    margin-top: 1.25rem;
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--color-accent);
+    text-decoration: none;
   }
 
-  .tool-card--all {
-    justify-content: center;
-    border-style: dashed;
+  .tools-all:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tool-mini,
+    .tool-mini__glyph :global(svg),
+    .tool-mini:hover .tool-mini__glyph :global(path.anim),
+    .tool-mini:hover .tool-mini__glyph :global(rect.anim) {
+      transition: none;
+      animation: none;
+    }
+    .tool-mini:hover { transform: none; }
   }
 
   /* ── Textbook strip ── */
@@ -382,13 +473,43 @@ const liveTools = [
     text-decoration: none;
     color: var(--color-text);
     background: #fff;
-    transition: border-color 0.15s ease, background 0.15s ease;
+    transition: border-color 0.15s ease, background 0.15s ease,
+                transform 0.15s ease, box-shadow 0.15s ease;
     max-width: 100%;
   }
 
   .tb-chip:hover {
     border-color: var(--color-accent);
-    background: rgba(232, 119, 34, 0.03);
+    background: rgba(232, 119, 34, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 26, 46, 0.07);
+  }
+
+  .tb-chip:hover .tb-chip__num {
+    background: var(--color-accent);
+    color: #fff;
+  }
+
+  /* Appendices are the same object at lower emphasis — neutral until hovered,
+     so the eye reads thirteen chapters first and seven appendices second. */
+  .tb-strip--appendix { margin-bottom: 1.5rem; }
+
+  .tb-chip--appendix .tb-chip__num {
+    background: color-mix(in srgb, var(--color-text-muted) 14%, transparent);
+    color: var(--color-text-muted);
+  }
+
+  .tb-sublabel {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.25rem 0 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
   }
 
   :global([data-theme="dark"]) .tb-chip {
@@ -407,8 +528,9 @@ const liveTools = [
     color: var(--color-accent);
     font-family: var(--font-mono);
     font-size: 0.7rem;
-    font-weight: 500;
+    font-weight: 600;
     flex-shrink: 0;
+    transition: background 0.15s ease, color 0.15s ease;
   }
 
   .tb-chip__title {

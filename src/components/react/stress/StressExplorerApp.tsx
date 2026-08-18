@@ -10,6 +10,7 @@ import {
 } from '../chartTheme';
 import ChartFigure from '../ui/ChartFigure';
 import KpiStrip, { Kpi } from '../ui/KpiStrip';
+import { axisResponse } from './equations.ts';
 import '../tools.css';
 
 type Profile = {
@@ -21,16 +22,17 @@ type Profile = {
   w: number[];      // deflection, mm
 };
 
-/** Axis-of-symmetry response at depth z (all closed-form). */
+/**
+ * Axis-of-symmetry response at depth z, in the units this app displays:
+ * strains in microstrain, everything else as supplied.
+ *
+ * The physics is in equations.ts, pinned to Huang Example 2.1 by
+ * equations.test.mjs — this is only the unit shim.
+ */
 function responseAt(zi: number, p: number, a: number, E_kPa: number, nu: number) {
-  const R = Math.sqrt(a * a + zi * zi);
-  const zr3 = (zi * zi * zi) / (R * R * R);
-  const sz = p * (1 - zr3);
-  const sr = (p / 2) * (1 + 2 * nu - (2 * (1 + nu) * zi) / R + zr3);
-  const ez = (sz - 2 * nu * sr) / E_kPa;
-  const er = ((1 - nu) * sr - nu * sz) / E_kPa;
-  const w = ((1 + nu) * p * a / E_kPa) * (a / R + ((1 - 2 * nu) * (R - zi)) / a);
-  return { sz, sr, ez: ez * 1e6, er: er * 1e6, w };
+  const r = axisResponse(zi, p, a, E_kPa, nu);
+  if (!r) return { sz: NaN, sr: NaN, ez: NaN, er: NaN, w: NaN };
+  return { sz: r.sigZ, sr: r.sigR, ez: r.epsZ * 1e6, er: r.epsR * 1e6, w: r.w };
 }
 
 function computeProfile(p: number, a: number, E_MPa: number, nu: number, zMaxRatio: number, n = 161): Profile {

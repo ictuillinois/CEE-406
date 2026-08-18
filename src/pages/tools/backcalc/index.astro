@@ -1,13 +1,13 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import WestergaardApp from '../../../components/react/westergaard/WestergaardApp';
+import BackcalcApp from '../../../components/react/backcalc/BackcalcApp';
 
 const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout
-  title="Westergaard Slab Stress · CEE 406 Tools"
-  description="Every published Westergaard case for a concrete slab on a Winkler foundation — interior, edge under circular and semicircular contact, and corner by two disagreeing formulas — plus Bradbury curling and the dual-tyre equivalent circle. For CEE 406 HW9."
+  title="FWD Backcalculation Studio · CEE 406 Tools"
+  description="Backcalculate layer moduli from a measured falling-weight deflection basin, by layered-elastic inversion and by the AASHTO 1993 closed form — with the sensitivity that tells you which moduli the data actually determines."
 >
   <div class="container tool-page">
     <nav class="doc-breadcrumb" aria-label="Breadcrumb">
@@ -15,26 +15,27 @@ const base = import.meta.env.BASE_URL;
       <span class="doc-breadcrumb__sep">/</span>
       <a href={`${base}tools/`}>Tools</a>
       <span class="doc-breadcrumb__sep">/</span>
-      <span class="doc-breadcrumb__current">Westergaard Slab Stress</span>
+      <span class="doc-breadcrumb__current">FWD Backcalculation</span>
     </nav>
 
     <header class="tool-head">
       <div>
-        <h1 class="tool-head__title">Westergaard Slab Stress</h1>
+        <h1 class="tool-head__title">FWD Backcalculation Studio</h1>
         <p class="tool-head__desc">
-          Every published Westergaard case for <a href={`${base}homeworks/hw9/`}>HW9</a> — interior,
-          edge under both circular <em>and</em> semicircular contact, and corner by both the original
-          and the Ioannides formulas. The last two pairs disagree, and the tool shows both rather
-          than picking for you. Plus Bradbury curling and the dual-tyre equivalent circle
-          (Huang Ch. 4, Eqs. 4.9–4.31), pinned to the printed answers of Examples 4.1–4.5.
+          Run the forward problem backwards. A measured deflection basin goes in; layer moduli
+          come out — by full layered-elastic inversion and by the AASHTO 1993 closed form, which
+          will not agree. The tool also reports which of those moduli the basin actually
+          determines and which are your seed guess in disguise
+          (<a href={`${base}textbook/ch09/`}>Ch. 9 §9.4</a>,
+          <a href={`${base}textbook/ch13/`}>Ch. 13 §13.5</a>).
         </p>
       </div>
       <div class="tool-head__hws">
-        <a href={`${base}homeworks/hw9/`} class="tool-hw-chip">HW9</a>
+        <span class="tool-hw-chip">Ch. 9 · 13</span>
       </div>
     </header>
 
-    <WestergaardApp client:only="react" />
+    <BackcalcApp client:only="react" />
   </div>
 </BaseLayout>
 

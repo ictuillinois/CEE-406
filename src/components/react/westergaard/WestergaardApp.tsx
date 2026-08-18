@@ -1,8 +1,12 @@
 // Westergaard Slab Stress — closed-form stresses and deflections for a
-// concrete slab on a liquid (Winkler) foundation: interior, edge (circular
-// load), and corner cases (Huang 2004, Eqs. 4.11–4.19, Ioannides et al.
-// forms), plus Bradbury curling stresses with the analytic coefficient
-// behind Bradbury's chart. US customary units, as in Huang Ch. 4.
+// concrete slab on a liquid (Winkler) foundation. Every published case in
+// Huang (2004) Ch. 4: interior, edge under BOTH circular and semicircular
+// contact, and corner by BOTH the original and the Ioannides formulas — which
+// disagree, and are shown side by side for that reason. Plus Bradbury curling
+// and the dual-tyre equivalent circle. US customary units, as in Huang Ch. 4.
+//
+// The physics lives in equations.ts and is pinned to the printed answers of
+// Examples 4.1-4.5 by equations.test.mjs.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
 import {
@@ -10,7 +14,11 @@ import {
   axis, gridAxis, HUES, type Mode,
 } from '../chartTheme';
 import ChartFigure from '../ui/ChartFigure';
+import Card from '../ui/Card';
 import KpiStrip, { Kpi } from '../ui/KpiStrip';
+import {
+  slabResponses, curlingStresses, dualEquivalentRadius, radiusOfRelativeStiffness,
+} from './equations.ts';
 import '../tools.css';
 
 /** The three Westergaard load positions are unordered categories, so they
@@ -21,42 +29,6 @@ const CASE_HUE = {
   interior: (t: Mode) => HUES[t].emerald,
 };
 
-/** Radius of relative stiffness, in. */
-const ellOf = (E: number, h: number, nu: number, k: number) =>
-  Math.pow((E * h ** 3) / (12 * (1 - nu * nu) * k), 0.25);
-
-/** Westergaard's equivalent radius b for interior bending stress. */
-const bOf = (a: number, h: number) =>
-  a >= 1.724 * h ? a : Math.sqrt(1.6 * a * a + h * h) - 0.675 * h;
-
-function slabResponses(E: number, h: number, nu: number, k: number, P: number, a: number) {
-  const ell = ellOf(E, h, nu, k);
-  const b = bOf(a, h);
-  const c = 1.772 * a; // corner: side of the equivalent contact per Huang Eq. 4.11
-
-  const sigI = ((3 * (1 + nu) * P) / (2 * Math.PI * h * h)) * (Math.log(ell / b) + 0.6159);
-  const defI = (P / (8 * k * ell * ell)) *
-    (1 + (1 / (2 * Math.PI)) * (Math.log(a / (2 * ell)) - 0.673) * (a / ell) ** 2);
-
-  const sigE = ((3 * (1 + nu) * P) / (Math.PI * (3 + nu) * h * h)) *
-    (Math.log((E * h ** 3) / (100 * k * a ** 4)) + 1.84 - (4 * nu) / 3 + (1 - nu) / 2 + 1.18 * (1 + 2 * nu) * (a / ell));
-  const defE = ((Math.sqrt(2 + 1.2 * nu) * P) / Math.sqrt(E * h ** 3 * k)) *
-    (1 - (0.76 + 0.4 * nu) * (a / ell));
-
-  const sigC = ((3 * P) / (h * h)) * (1 - Math.pow(c / ell, 0.72));
-  const defC = (P / (k * ell * ell)) * (1.205 - 0.69 * (c / ell));
-
-  return { ell, b, c, sigI, defI, sigE, defE, sigC, defC };
-}
-
-/** Bradbury curling coefficient — the analytic form behind Bradbury's chart. */
-function bradburyC(Lratio: number) {
-  const lam = Lratio / Math.sqrt(8);
-  if (lam < 1e-6) return 0;
-  return 1 - (2 * Math.cos(lam) * Math.cosh(lam) * (Math.tan(lam) + Math.tanh(lam))) /
-    (Math.sin(2 * lam) + Math.sinh(2 * lam));
-}
-
 export default function WestergaardApp() {
   const [eStr, setE] = useState('4000000');
   const [hStr, setH] = useState('10');
@@ -65,6 +37,10 @@ export default function WestergaardApp() {
   const [pStr, setP] = useState('10000');
   const [aStr, setA] = useState('6');
   const [mrStr, setMr] = useState('650');
+  // Dual tyres → equivalent circle (Eq. 4.31)
+  const [useDuals, setUseDuals] = useState(false);
+  const [sdStr, setSd] = useState('14');
+  const [qStr, setQ] = useState('88.42');
   // Curling
   const [lxStr, setLx] = useState('180');
   const [lyStr, setLy] = useState('144');
@@ -85,15 +61,24 @@ export default function WestergaardApp() {
 
   const valid = E > 0 && h > 0 && k > 0 && P > 0 && a > 0;
 
-  const res = useMemo(() => (valid ? slabResponses(E, h, nu, k, P, a) : null), [E, h, nu, k, P, a, valid]);
+  // Effective contact radius: either entered directly, or derived from a set
+  // of duals via Huang Eq. 4.31. For a rigid slab the equivalent circle spans
+  // the gap between the tyres, so it is always larger than a single imprint.
+  const aEff = useMemo(() => {
+    if (!useDuals) return a;
+    const q = num(qStr, 0), Pd = P / 2, Sd = num(sdStr, 0);
+    if (!(q > 0 && Sd > 0 && Pd > 0)) return a;
+    return dualEquivalentRadius(Pd, q, Sd);
+  }, [useDuals, a, qStr, sdStr, P]);
+
+  const res = useMemo(
+    () => (valid ? slabResponses(E, h, nu, k, P, aEff) : null),
+    [E, h, nu, k, P, aEff, valid]
+  );
 
   const curl = useMemo(() => {
     if (!res || !(alpha > 0)) return null;
-    const Cx = bradburyC(Lx / res.ell);
-    const Cy = bradburyC(Ly / res.ell);
-    const sigInterior = ((E * alpha * dt) / 2) * ((Cx + nu * Cy) / (1 - nu * nu));
-    const sigEdge = (Cx * E * alpha * dt) / 2;
-    return { Cx, Cy, sigInterior, sigEdge };
+    return curlingStresses(E, nu, res.ell, Lx, Ly, alpha, dt);
   }, [res, E, nu, alpha, dt, Lx, Ly]);
 
   const theme = useTheme();
@@ -111,15 +96,21 @@ export default function WestergaardApp() {
       if (sensRef.current) {
         const hs: number[] = [], si: number[] = [], se: number[] = [], sc: number[] = [];
         for (let hh = 6; hh <= 14.01; hh += 0.25) {
-          const r = slabResponses(E, hh, nu, k, P, a);
-          hs.push(hh); si.push(r.sigI); se.push(r.sigE); sc.push(r.sigC);
+          const r = slabResponses(E, hh, nu, k, P, aEff);
+          if (!r) continue;
+          hs.push(hh);
+          si.push(r.interior.stress);
+          se.push(r.edge.semicircle.stress);   // the governing edge case
+          sc.push(r.corner.ioannides.stress);
         }
         Plotly.react(sensRef.current, [
-          { x: hs, y: se, name: 'Edge', mode: 'lines', line: { color: CASE_HUE.edge(theme), width: 2.5 } },
+          { x: hs, y: se, name: 'Edge (semicircle)', mode: 'lines', line: { color: CASE_HUE.edge(theme), width: 2.5 } },
           { x: hs, y: sc, name: 'Corner', mode: 'lines', line: { color: CASE_HUE.corner(theme), width: 2.5 } },
           { x: hs, y: si, name: 'Interior', mode: 'lines', line: { color: CASE_HUE.interior(theme), width: 2.5 } },
           {
-            x: [h, h, h], y: [res.sigE, res.sigC, res.sigI], name: 'Current h',
+            x: [h, h, h],
+            y: [res.edge.semicircle.stress, res.corner.ioannides.stress, res.interior.stress],
+            name: 'Current h',
             mode: 'markers',
             marker: {
               color: [CASE_HUE.edge(theme), CASE_HUE.corner(theme), CASE_HUE.interior(theme)],
@@ -141,9 +132,23 @@ export default function WestergaardApp() {
         // §A8.2 target-vs-actual: a ghost bar to the modulus of rupture sits
         // behind each case, so the chart reads as the fraction of the
         // concrete's strength that loading consumes.
-        const cases = ['Edge', 'Corner', 'Interior'];
-        const vals = [res.sigE, res.sigC, res.sigI];
-        const hues = [CASE_HUE.edge(theme), CASE_HUE.corner(theme), CASE_HUE.interior(theme)];
+        // Every published case, so the two disagreements are visible rather
+        // than resolved for the student behind the scenes.
+        const cases = [
+          'Edge · semicircle', 'Edge · circle',
+          'Corner · Ioannides', 'Corner · original',
+          'Interior',
+        ];
+        const vals = [
+          res.edge.semicircle.stress, res.edge.circle.stress,
+          res.corner.ioannides.stress, res.corner.original.stress,
+          res.interior.stress,
+        ];
+        const hues = [
+          CASE_HUE.edge(theme), CASE_HUE.edge(theme),
+          CASE_HUE.corner(theme), CASE_HUE.corner(theme),
+          CASE_HUE.interior(theme),
+        ];
         const xMax = Math.max(MR, ...vals) * 1.15;
         Plotly.react(barRef.current, [
           ...(MR > 0 ? [{
@@ -160,8 +165,8 @@ export default function WestergaardApp() {
             hovertemplate: '%{y}: %{x:.1f} psi<extra></extra>',
           },
         ], baseLayout(theme, {
-          height: 300,
-          margin: { l: 70, r: 64, t: 8, b: 40 },
+          height: 340,
+          margin: { l: 128, r: 64, t: 8, b: 40 },
           barmode: 'overlay' as const,
           bargap: 0.4,
           xaxis: axis(theme, 'Bending stress (psi)', { range: [0, xMax] }),
@@ -171,12 +176,33 @@ export default function WestergaardApp() {
       }
     })();
     return () => { cancelled = true; };
-  }, [res, theme, E, nu, k, P, a, h, MR]);
+  }, [res, theme, E, nu, k, P, aEff, h, MR]);
 
   return (
     <div className="cee-tool">
       <aside className="cee-panel">
         <h2 className="cee-panel__title">Inputs</h2>
+
+        <div className="cee-presets">
+          <button type="button" className="cee-chip"
+            title="Huang Examples 4.2-4.4, pp. 155-158: k=100 pci, h=10 in, a=6 in, P=10,000 lb. Should give interior 143.7, edge 279.4 (circle) / 330.0 (semicircle), corner 186.6 (original) / 190.3 (Ioannides) psi."
+            onClick={() => {
+              setE('4000000'); setH('10'); setNu('0.15'); setK('100');
+              setP('10000'); setA('6'); setUseDuals(false);
+            }}>Huang Ex. 4.2–4.4</button>
+          <button type="button" className="cee-chip"
+            title="Huang Example 4.5, p. 159: the same 10,000 lb carried on duals at 14 in spacing, 88.42 psi contact pressure. The equivalent circle is 7.85 in, and every stress falls."
+            onClick={() => {
+              setE('4000000'); setH('10'); setNu('0.15'); setK('100');
+              setP('10000'); setUseDuals(true); setSd('14'); setQ('88.42');
+            }}>Huang Ex. 4.5 (duals)</button>
+          <button type="button" className="cee-chip"
+            title="Huang Example 4.1, p. 151: a 25 ft x 12 ft x 8 in slab on k=200 pci with a 20 F differential. Curling should give about 238 psi interior and 214 psi at the edge."
+            onClick={() => {
+              setE('4000000'); setH('8'); setNu('0.15'); setK('200');
+              setLx('300'); setLy('144'); setAlpha('5e-6'); setDt('20');
+            }}>Huang Ex. 4.1 (curling)</button>
+        </div>
 
         <div className="cee-row">
           <div className="cee-field">
@@ -227,6 +253,41 @@ export default function WestergaardApp() {
           </label>
           <input id="wg-mr" className="cee-input" type="number" min="0" step="25" value={mrStr} onChange={e => setMr(e.target.value)} />
         </div>
+
+        <label className="cee-field__label" style={{ marginTop: '0.25rem' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input type="checkbox" checked={useDuals} onChange={e => setUseDuals(e.target.checked)} />
+            Load is on dual tyres
+            <Tip text="For a rigid slab the equivalent circle covers both tyre imprints AND the gap between them, because the slab spreads load across the gap (Huang Eq. 4.31). Using the tyre contact area alone would overstate every stress." />
+          </span>
+        </label>
+
+        {useDuals && (
+          <div className="cee-row">
+            <div className="cee-field">
+              <label className="cee-field__label" htmlFor="wg-sd">
+                <span>Dual spacing S<sub>d</sub></span>
+                <span className="cee-field__unit">in</span>
+              </label>
+              <input id="wg-sd" className="cee-input" type="number" min="1" step="0.5" value={sdStr}
+                onChange={e => setSd(e.target.value)} />
+            </div>
+            <div className="cee-field">
+              <label className="cee-field__label" htmlFor="wg-q">
+                <span>Contact pressure q</span>
+                <span className="cee-field__unit">psi</span>
+              </label>
+              <input id="wg-q" className="cee-input" type="number" min="1" step="1" value={qStr}
+                onChange={e => setQ(e.target.value)} />
+            </div>
+          </div>
+        )}
+
+        {useDuals && (
+          <p className="cee-hint">
+            Equivalent circle radius a = {fmt(aEff, 2)} in (Eq. 4.31), against {fmt(a, 2)} in entered above.
+          </p>
+        )}
 
         <h2 className="cee-panel__title" style={{ marginTop: '1.25rem' }}>Curling</h2>
 
@@ -299,21 +360,27 @@ export default function WestergaardApp() {
               />
               <Kpi
                 accent
-                label="Edge stress (critical)"
-                value={fmt(res.sigE, 1)}
+                label="Governing stress"
+                value={fmt(res.governing.stress, 1)}
                 unit="psi"
-                tip="Highway wheels travel close to the pavement edge, and the edge case gives the highest bending stress of the three — it governs slab thickness design."
+                tip="The largest bending stress across every published case. Edge loading normally governs slab thickness because highway wheels track close to the edge — and the semicircular contact, whose centroid sits nearest the edge, is the worst of them."
               />
               <Kpi
-                label="Stress ratio σ_edge / MR"
-                value={MR > 0 ? fmt(res.sigE / MR, 2) : '—'}
-                tip="Bending stress over the concrete's flexural strength. PCA-style design keeps this well below 1 — at 0.5 and below, fatigue life is essentially unlimited."
+                label="Governing case"
+                compact
+                value={res.governing.case}
+                tip="Which load position and contact shape produced the number to its left."
+              />
+              <Kpi
+                label="Stress ratio σ / MR"
+                value={MR > 0 ? fmt(res.governing.stress / MR, 2) : '—'}
+                tip="Governing bending stress over the concrete's flexural strength. PCA-style design keeps this well below 1 — at 0.5 and below, fatigue life is essentially unlimited."
               />
               <Kpi
                 label="Corner deflection"
-                value={fmt(res.defC, 4)}
+                value={fmt(res.corner.ioannides.deflection, 4)}
                 unit="in"
-                tip="The largest deflection of the three cases — repeated corner deflections pump water and fines from under the joint, which is how corner support is lost."
+                tip="The largest deflection of any case — repeated corner deflections pump water and fines from under the joint, which is how corner support is lost."
               />
             </KpiStrip>
 
@@ -376,30 +443,86 @@ export default function WestergaardApp() {
                   <tr>
                     <td>Interior</td>
                     <td>bottom</td>
-                    <td>{fmt(res.sigI, 1)}</td>
-                    <td>{fmt(res.defI, 4)}</td>
-                    <td>{curl ? fmt(curl.sigInterior, 1) : '—'}</td>
-                    <td>{curl ? fmt(res.sigI + curl.sigInterior, 1) : '—'}</td>
+                    <td>{fmt(res.interior.stress, 1)}</td>
+                    <td>{fmt(res.interior.deflection, 4)}</td>
+                    <td>{curl ? fmt(curl.interiorX, 1) : '—'}</td>
+                    <td>{curl ? fmt(res.interior.stress + curl.interiorX, 1) : '—'}</td>
                   </tr>
                   <tr>
-                    <td>Edge</td>
+                    <td>Edge · semicircle <span className="cee-field__unit">Eq. 4.23</span></td>
                     <td>bottom</td>
-                    <td>{fmt(res.sigE, 1)}</td>
-                    <td>{fmt(res.defE, 4)}</td>
-                    <td>{curl ? fmt(curl.sigEdge, 1) : '—'}</td>
-                    <td>{curl ? fmt(res.sigE + curl.sigEdge, 1) : '—'}</td>
+                    <td><strong>{fmt(res.edge.semicircle.stress, 1)}</strong></td>
+                    <td>{fmt(res.edge.semicircle.deflection, 4)}</td>
+                    <td>{curl ? fmt(curl.edgeX, 1) : '—'}</td>
+                    <td>{curl ? fmt(res.edge.semicircle.stress + curl.edgeX, 1) : '—'}</td>
                   </tr>
                   <tr>
-                    <td>Corner</td>
+                    <td>Edge · circle <span className="cee-field__unit">Eq. 4.22</span></td>
+                    <td>bottom</td>
+                    <td>{fmt(res.edge.circle.stress, 1)}</td>
+                    <td>{fmt(res.edge.circle.deflection, 4)}</td>
+                    <td>{curl ? fmt(curl.edgeX, 1) : '—'}</td>
+                    <td>{curl ? fmt(res.edge.circle.stress + curl.edgeX, 1) : '—'}</td>
+                  </tr>
+                  <tr>
+                    <td>Corner · Ioannides <span className="cee-field__unit">Eq. 4.15</span></td>
                     <td><strong>top</strong></td>
-                    <td>{fmt(res.sigC, 1)}</td>
-                    <td>{fmt(res.defC, 4)}</td>
+                    <td>{fmt(res.corner.ioannides.stress, 1)}</td>
+                    <td>{fmt(res.corner.ioannides.deflection, 4)}</td>
+                    <td>—</td>
+                    <td>—</td>
+                  </tr>
+                  <tr>
+                    <td>Corner · original <span className="cee-field__unit">Eq. 4.13</span></td>
+                    <td><strong>top</strong></td>
+                    <td>{fmt(res.corner.original.stress, 1)}</td>
+                    <td>{fmt(res.corner.original.deflection, 4)}</td>
                     <td>—</td>
                     <td>—</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            <Card title="Two questions the literature answers twice"
+              subtitle="Both pairs are published, both are defensible, and they do not agree">
+              <div className="cee-tablewrap">
+                <table className="cee-table">
+                  <thead>
+                    <tr><th>Question</th><th>Answer A</th><th>Answer B</th><th>Spread</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Edge contact shape</td>
+                      <td>circle — {fmt(res.edge.circle.stress, 1)} psi</td>
+                      <td>semicircle — {fmt(res.edge.semicircle.stress, 1)} psi</td>
+                      <td>{fmt(100 * (res.edge.semicircle.stress / res.edge.circle.stress - 1), 0)}%</td>
+                    </tr>
+                    <tr>
+                      <td>Corner formulation</td>
+                      <td>original — {fmt(res.corner.original.stress, 1)} psi</td>
+                      <td>Ioannides — {fmt(res.corner.ioannides.stress, 1)} psi</td>
+                      <td>{fmt(100 * (res.corner.ioannides.stress / res.corner.original.stress - 1), 0)}%</td>
+                    </tr>
+                    <tr>
+                      <td>Corner deflection</td>
+                      <td>original — {fmt(res.corner.original.deflection, 4)} in</td>
+                      <td>Ioannides — {fmt(res.corner.ioannides.deflection, 4)} in</td>
+                      <td>{fmt(100 * (res.corner.ioannides.deflection / res.corner.original.deflection - 1), 0)}%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="cee-note" style={{ marginTop: '0.75rem' }}>
+                A wheel at a slab edge is closer to a <strong>semicircle</strong> than a circle — its
+                straight side lies along the edge, so its centroid sits nearer to it and the stress
+                comes out higher. That makes the semicircle the realistic and the conservative
+                choice, and it is the one this tool treats as governing. The corner pair is a
+                different kind of disagreement: the original formulas measure to the load centre
+                along the diagonal, the Ioannides forms replace the circle with an equivalent square
+                of side 1.772a. Neither is wrong. <strong>Say which you used.</strong>
+              </p>
+            </Card>
 
             {curl && (
               <p className="cee-note">
@@ -417,8 +540,8 @@ export default function WestergaardApp() {
                 subtitle="Each case swept over h with every other input fixed; dots mark your current h"
                 plotRef={sensRef}
                 legend={[
-                  { label: 'Edge', color: CASE_HUE.edge(theme) },
-                  { label: 'Corner', color: CASE_HUE.corner(theme) },
+                  { label: 'Edge · semicircle', color: CASE_HUE.edge(theme) },
+                  { label: 'Corner · Ioannides', color: CASE_HUE.corner(theme) },
                   { label: 'Interior', color: CASE_HUE.interior(theme) },
                   ...(MR > 0 ? [{ label: 'Modulus of rupture', color: chartColors(theme).secondary, shape: 'dash' as const }] : []),
                 ]}
@@ -447,9 +570,15 @@ export default function WestergaardApp() {
             </div>
 
             <p className="cee-note">
-              Sanity anchor (Huang Ch. 4 examples): E = 4×10⁶ psi, ν = 0.15, h = 10 in, k = 100 pci,
-              P = 10,000 lb, a = 6 in → ℓ ≈ 42.97 in, σ_corner ≈ 190 psi, Δ_corner ≈ 0.0560 in,
-              σ_interior ≈ 144 psi, σ_edge(circle) ≈ 279 psi.
+              <strong>Calibrate before you trust it.</strong> The first preset above loads Huang
+              Examples 4.2–4.4: E = 4×10⁶ psi, ν = 0.15, h = 10 in, k = 100 pci, P = 10,000 lb,
+              a = 6 in. It should return ℓ = 42.97 in, σ<sub>interior</sub> = 143.7 psi,
+              σ<sub>edge</sub> = 279.4 psi (circle) and 330.0 psi (semicircle),
+              σ<sub>corner</sub> = 186.6 psi (original) and 190.3 psi (Ioannides), with
+              Δ<sub>corner</sub> = 0.0502 and 0.0560 in. The other two presets load Example 4.5
+              (duals → a = 7.85 in) and Example 4.1 (curling → about 238 psi interior, 214 psi edge).
+              If any of those disagree with your copy of the book, stop and find out why before
+              using the tool on your own slab.
             </p>
           </>
         )}

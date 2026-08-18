@@ -125,7 +125,11 @@ const {
             opacity: 1,
             y: 0,
             duration: 0.5,
-            stagger: 0.08,
+            // `amount` spreads the TOTAL stagger over a fixed window, where
+            // `each` would multiply it by the card count. With 18 tool
+            // miniatures a per-card 0.08s took nearly two seconds to finish,
+            // so anyone scrolling at a normal pace saw a half-empty grid.
+            stagger: { amount: Math.min(0.45, cards.length * 0.06) },
             ease: 'power2.out',
             scrollTrigger: {
               trigger: grid,
