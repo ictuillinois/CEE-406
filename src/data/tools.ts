@@ -280,6 +280,21 @@ export const tools: Tool[] = [
       <path class="anim" d="M14 36 L44 9 L44 36 L74 9 L74 36 L104 9"/>
     </svg>`,
   },
+  {
+    name: 'Cross-Section Studio',
+    slug: 'cross-section-studio',
+    color: '#14B489',
+    hws: ['Figures', 'Ch. 1'],
+    ref: 'FAA P-401 · P-209 · P-154 · P-501',
+    desc: 'The figure every write-up needs and nobody wants to redraw: a true-to-scale 3-D pavement section, eighteen procedural materials, thirteen airfield and highway templates — and the PNG copied straight to your clipboard, with or without a background.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path class="anim" d="M14 15h70l14-8H28z"/>
+      <path d="M14 15v6h70v-6"/>
+      <path d="M14 21v8h76v-8" opacity="0.7"/>
+      <path d="M14 29v9h82v-9" opacity="0.45"/>
+      <path d="M90 29l10-6M96 38l10-6" opacity="0.3" stroke-width="1.5"/>
+    </svg>`,
+  },
 ];
 
 /** Build a tool's href from the site base. */

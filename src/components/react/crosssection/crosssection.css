@@ -1,0 +1,1149 @@
+/* ============================================================
+   Cross-Section Studio — app styles
+   Prefix: xs-
+
+   Ported from the standalone studio. The layout, the responsive
+   ladder and the touch sizing are unchanged, comments included —
+   they record measurements taken on real devices and are worth
+   more than a rewrite. What changed is the palette: the upstream
+   app is teal on slate, this one takes the CEE 406 tokens so the
+   studio reads as part of the toolbox rather than a transplant.
+
+   Tokens are declared on .xs-app, never on :root — the
+   integration contract in docs/dashboard-visual-language.md §0.1,
+   the same rule tools.css follows for --cee-*.
+   ============================================================ */
+
+/* The studio is a three-column shell, not the 20rem-rail-plus-results
+   grid every other tool uses, so it opts out of .cee-tool's layout while
+   keeping its tokens (the how-to panel and the notes below need them).
+   Two classes beat the one-class media query in tools.css outright. */
+.cee-tool.xs-tool {
+    display: block;
+    grid-template-columns: none;
+}
+
+.cee-tool.xs-tool > * + * { margin-top: 1.25rem; }
+
+.xs-app {
+    --xs-primary: #e87722;
+    --xs-primary-hover: #c2500f;
+    --xs-primary-glow: rgba(232, 119, 34, 0.2);
+    --xs-accent: #1b2d4a;
+    --xs-danger: #e5484d;
+    --xs-mono: var(--font-mono, ui-monospace, 'IBM Plex Mono', Consolas, monospace);
+
+    --xs-bg: #ffffff;
+    --xs-bg-alt: #f8f9fb;
+    --xs-bg-panel: #ffffff;
+    --xs-bg-inset: #f2f4f5;
+    --xs-text: #1a1a2e;
+    --xs-text-secondary: #5b6670;
+    --xs-text-muted: #98a2ac;
+    --xs-border: #ecedef;
+    --xs-border-strong: #d1d5db;
+    --xs-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+
+    --xs-radius-card: 16px;
+    --xs-radius-control: 10px;
+    --xs-radius-inner: 8px;
+
+    width: 100%;
+    color: var(--xs-text);
+}
+
+/* `hidden` has to beat a class. The browser's `[hidden] { display: none }`
+   lives in the UA sheet, so any author rule that sets a display wins over it
+   — and both elements the studio hides at runtime (the custom-resolution
+   pair, the background colour swatch) are `.xs-field { display: flex }`.
+   Upstream they never actually hid. */
+.xs-app [hidden] { display: none !important; }
+
+[data-theme="dark"] .xs-app {
+    --xs-primary: #f0913f;
+    --xs-primary-hover: #f6b37b;
+    --xs-primary-glow: rgba(240, 145, 63, 0.22);
+    --xs-accent: #5aaef5;
+
+    --xs-bg: #101b2f;
+    --xs-bg-alt: #0f1a2e;
+    --xs-bg-panel: #162033;
+    --xs-bg-inset: #1b2740;
+    --xs-text: #f1f5f9;
+    --xs-text-secondary: #9ba4ac;
+    --xs-text-muted: #7c8ca5;
+    --xs-border: rgba(255, 255, 255, 0.08);
+    --xs-border-strong: #2d3f59;
+    --xs-shadow: none;
+}
+
+/* ==================== ICONS ==================== */
+/* One 24-unit grid at 1.75 weight, the same hand as Icon.astro. Sized in em
+   so a glyph tracks the text it sits beside; the exceptions below are the
+   controls whose text is smaller than the glyph needs to be. */
+.xs-app .xs-i {
+    display: inline-block;
+    flex: none;
+    width: 1.05em;
+    height: 1.05em;
+    vertical-align: -0.16em;
+}
+
+/* ==================== STUDIO GRID ==================== */
+.xs-studio {
+    display: grid;
+    grid-template-columns: 268px minmax(0, 1fr) 292px;
+    grid-template-rows: auto minmax(420px, 62vh) auto;
+    grid-template-areas:
+        "toolbar toolbar toolbar"
+        "left    viewport right"
+        "layers  layers   layers";
+    gap: 0.75rem;
+}
+
+/* ==================== TOOLBAR ==================== */
+.xs-toolbar {
+    grid-area: toolbar;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.55rem 0.75rem;
+    background: var(--xs-bg-panel);
+    border: 1px solid var(--xs-border);
+    border-radius: var(--xs-radius-card);
+    box-shadow: var(--xs-shadow);
+}
+
+.xs-toolbar .xs-tool-sep {
+    width: 1px;
+    height: 22px;
+    background: var(--xs-border-strong);
+    margin: 0 0.25rem;
+}
+
+.xs-toolbar .xs-spacer { flex: 1; }
+
+.xs-app .xs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.85rem;
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-control);
+    background: var(--xs-bg);
+    color: var(--xs-text-secondary);
+    font-family: var(--font-body, inherit);
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+    text-decoration: none;
+    letter-spacing: 0;
+    height: auto;
+    box-shadow: none;
+}
+
+.xs-app .xs-btn--icon { padding: 0.42rem 0.6rem; }
+
+.xs-app .xs-btn:hover:not(:disabled) {
+    color: var(--xs-primary);
+    border-color: var(--xs-primary);
+    box-shadow: 0 0 0 3px var(--xs-primary-glow);
+}
+
+.xs-app .xs-btn:active:not(:disabled) { background: var(--xs-bg-inset); }
+
+.xs-app .xs-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.xs-app .xs-btn:focus-visible,
+.xs-app .xs-icon-btn:focus-visible,
+.xs-app .xs-vp-btn:focus-visible,
+.xs-app .xs-mat-tile:focus-visible,
+.xs-app .xs-insert-btn:focus-visible {
+    outline: 2px solid var(--xs-primary);
+    outline-offset: 2px;
+}
+
+.xs-app .xs-btn.xs-btn--primary {
+    background: var(--xs-primary);
+    border-color: var(--xs-primary);
+    color: #fff;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .xs-app .xs-btn.xs-btn--primary { color: #0f1a2e; }
+
+.xs-app .xs-btn.xs-btn--primary:hover:not(:disabled) {
+    background: var(--xs-primary-hover);
+    border-color: var(--xs-primary-hover);
+    color: #fff;
+    box-shadow: 0 4px 14px var(--xs-primary-glow);
+}
+
+[data-theme="dark"] .xs-app .xs-btn.xs-btn--primary:hover:not(:disabled) { color: #0f1a2e; }
+
+.xs-app .xs-btn.xs-btn--danger:hover:not(:disabled) {
+    color: var(--xs-danger);
+    border-color: var(--xs-danger);
+    box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.15);
+}
+
+/* A hi-res encode takes a beat. Every copy affordance shares the state so it
+   is obvious the press landed, whichever one was pressed. */
+.xs-app .is-busy { cursor: progress; opacity: 0.6; }
+
+/* ==================== PANELS ==================== */
+.xs-panel {
+    background: var(--xs-bg-panel);
+    border: 1px solid var(--xs-border);
+    border-radius: var(--xs-radius-card);
+    box-shadow: var(--xs-shadow);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.xs-left  { grid-area: left; }
+.xs-right { grid-area: right; }
+
+.xs-panel details {
+    border-bottom: 1px solid var(--xs-border);
+    margin: 0;
+}
+
+.xs-panel details:last-child { border-bottom: none; }
+
+.xs-panel summary {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.7rem 0.9rem;
+    font-family: var(--font-body, inherit);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--xs-text-muted);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+
+.xs-panel summary::-webkit-details-marker { display: none; }
+
+.xs-panel summary .xs-i:first-child {
+    color: var(--xs-primary);
+    width: 16px;
+    height: 16px;
+}
+
+.xs-panel summary::after {
+    content: '\2039';
+    margin-left: auto;
+    font-size: 1.1rem;
+    color: var(--xs-text-muted);
+    transform: rotate(-90deg);
+    transition: transform 0.2s ease;
+}
+
+.xs-panel details[open] summary::after { transform: rotate(90deg); }
+
+.xs-panel .xs-group { padding: 0.15rem 0.9rem 0.9rem; }
+
+/* Sub-heading inside a group — separates "to the clipboard" from "to a
+   file" without opening a second <details>. */
+.xs-subhead {
+    margin: 0.9rem 0 0.35rem;
+    font-family: var(--font-body, inherit);
+    font-size: 0.66rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--xs-text-muted);
+}
+
+/* ==================== FIELDS ==================== */
+.xs-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin: 0.45rem 0;
+}
+
+/* Not clipped: the label carries the control's help on `title`, and an
+   ellipsis over the words the tooltip is attached to helps nobody. */
+.xs-field > label {
+    flex: 1;
+    min-width: 0;
+    font-family: var(--font-body, inherit);
+    font-size: 0.8rem;
+    color: var(--xs-text-secondary);
+    white-space: nowrap;
+}
+
+/* Only the labels that actually carry help say so. */
+.xs-field > label[title] { cursor: help; }
+
+.xs-field .xs-unit {
+    font-size: 0.68rem;
+    color: var(--xs-text-muted);
+    font-family: var(--xs-mono);
+}
+
+.xs-app input[type="number"].xs-num {
+    width: 82px;
+    padding: 0.32rem 0.45rem;
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-inner);
+    background: var(--xs-bg);
+    color: var(--xs-text);
+    font-family: var(--xs-mono);
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    height: auto;
+}
+
+.xs-app input[type="number"].xs-num:focus {
+    border-color: var(--xs-primary);
+    box-shadow: 0 0 0 3px var(--xs-primary-glow);
+    outline: none;
+}
+
+.xs-app select.xs-select {
+    padding: 0.32rem 1.6rem 0.32rem 0.5rem;
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-inner);
+    background: var(--xs-bg);
+    color: var(--xs-text);
+    font-size: 0.8rem;
+    font-family: var(--font-body, inherit);
+    max-width: 150px;
+    height: auto;
+    cursor: pointer;
+}
+
+.xs-app select.xs-select:focus {
+    border-color: var(--xs-primary);
+    outline: none;
+}
+
+/* 100px, not the upstream 118px: these rows now carry a full-width label
+   whose `title` is the control's documentation, and 118 + the longest label
+   ("Shadow softness") overflowed a 268px rail by a few pixels. */
+.xs-app input[type="range"].xs-range {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--xs-border-strong);
+    cursor: pointer;
+}
+
+.xs-app input[type="range"].xs-range:focus-visible {
+    outline: 2px solid var(--xs-primary);
+    outline-offset: 4px;
+}
+
+.xs-app input[type="range"].xs-range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--xs-primary);
+    border: 2px solid var(--xs-bg);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.xs-app input[type="range"].xs-range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--xs-primary);
+    border: 2px solid var(--xs-bg);
+}
+
+.xs-app input[type="color"].xs-color {
+    width: 34px;
+    height: 26px;
+    padding: 2px;
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-inner);
+    background: var(--xs-bg);
+    cursor: pointer;
+}
+
+.xs-app input[type="text"].xs-text,
+.xs-app textarea.xs-textarea {
+    width: 100%;
+    padding: 0.38rem 0.5rem;
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-inner);
+    background: var(--xs-bg);
+    color: var(--xs-text);
+    font-size: 0.82rem;
+    font-family: var(--font-body, inherit);
+    height: auto;
+}
+
+.xs-app input[type="text"].xs-text:focus,
+.xs-app textarea.xs-textarea:focus {
+    border-color: var(--xs-primary);
+    outline: none;
+}
+
+.xs-app textarea.xs-textarea { resize: vertical; min-height: 54px; }
+
+.xs-field-note {
+    font-size: 0.7rem;
+    color: var(--xs-text-muted);
+    margin: 0.2rem 0 0.4rem;
+    line-height: 1.5;
+}
+
+.xs-field-note strong { color: var(--xs-text-secondary); font-weight: 600; }
+
+.xs-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--xs-text-secondary);
+    cursor: pointer;
+}
+
+.xs-check input { accent-color: var(--xs-primary); }
+
+.xs-mini-btn-row { display: flex; gap: 0.4rem; margin-top: 0.55rem; flex-wrap: wrap; }
+.xs-mini-btn-row .xs-btn { padding: 0.32rem 0.65rem; font-size: 0.75rem; }
+
+/* ==================== VIEWPORT ==================== */
+.xs-viewport {
+    grid-area: viewport;
+    position: relative;
+    border: 1px solid var(--xs-border);
+    border-radius: var(--xs-radius-card);
+    overflow: hidden;
+    box-shadow: var(--xs-shadow);
+    background:
+        repeating-conic-gradient(var(--xs-bg-inset) 0% 25%, var(--xs-bg-alt) 0% 50%)
+        50% / 22px 22px;
+    min-height: 420px;
+}
+
+.xs-viewport canvas { display: block; width: 100%; height: 100%; outline: none; }
+
+/* Copy, on the image. The figure is the product, so the control that takes
+   it lives where the figure is rather than only in a rail. Recessive until
+   the pointer is near — it must not become part of the composition someone
+   is framing. */
+.xs-vp-tools {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: flex;
+    gap: 0.3rem;
+    opacity: 0.55;
+    transition: opacity 0.15s ease;
+}
+
+.xs-viewport:hover .xs-vp-tools,
+.xs-vp-tools:focus-within { opacity: 1; }
+
+.xs-app .xs-vp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.34rem 0.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--xs-radius-inner);
+    background: rgba(15, 23, 42, 0.72);
+    color: #e2e8f0;
+    font-family: var(--font-body, inherit);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.xs-app .xs-vp-btn--icon { padding: 0.34rem 0.45rem; }
+
+.xs-app .xs-vp-btn:hover:not(:disabled) {
+    background: var(--xs-primary);
+    border-color: var(--xs-primary);
+    color: #fff;
+}
+
+.xs-app .xs-vp-btn:disabled { opacity: 0.5; cursor: progress; }
+
+.xs-hud {
+    position: absolute;
+    left: 12px;
+    bottom: 10px;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--xs-radius-inner);
+    background: rgba(15, 23, 42, 0.65);
+    color: #e2e8f0;
+    font-family: var(--xs-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.03em;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+}
+
+.xs-hud-right {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    padding: 0.3rem 0.65rem;
+    border-radius: var(--xs-radius-inner);
+    background: rgba(15, 23, 42, 0.65);
+    color: #94a3b8;
+    font-family: var(--xs-mono);
+    font-size: 0.7rem;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+}
+
+/* ==================== LAYER MANAGER (boring-log strip) ==================== */
+.xs-layers {
+    grid-area: layers;
+    background: var(--xs-bg-panel);
+    border: 1px solid var(--xs-border);
+    border-radius: var(--xs-radius-card);
+    box-shadow: var(--xs-shadow);
+    padding: 0.65rem 0.75rem 0.75rem;
+}
+
+.xs-layers-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+}
+
+.xs-layers-head h3 {
+    margin: 0;
+    font-family: var(--font-body, inherit);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--xs-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.xs-layers-head h3 .xs-i { color: var(--xs-primary); width: 16px; height: 16px; }
+
+.xs-layers-total {
+    font-family: var(--xs-mono);
+    font-size: 0.75rem;
+    color: var(--xs-text-muted);
+}
+
+.xs-layers-head .xs-spacer { flex: 1; }
+
+.xs-layer-rows { display: flex; flex-direction: column; gap: 0.2rem; }
+
+/* Insert-a-layer-here affordance between rows */
+.xs-layer-insert {
+    position: relative;
+    height: 12px;
+    margin: -6px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+    z-index: 1;
+}
+
+.xs-layer-insert:hover,
+.xs-layer-insert:focus-within { opacity: 1; }
+
+.xs-layer-insert::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 50%;
+    height: 2px;
+    margin-top: -1px;
+    background: var(--xs-primary);
+    border-radius: 1px;
+}
+
+.xs-app .xs-insert-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.08rem 0.6rem;
+    border: 1px solid var(--xs-primary);
+    border-radius: 999px;
+    background: var(--xs-bg);
+    color: var(--xs-primary);
+    font-family: var(--font-body, inherit);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 1.5;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.xs-app .xs-insert-btn .xs-i { width: 11px; height: 11px; }
+
+.xs-app .xs-insert-btn:hover {
+    background: var(--xs-primary);
+    color: #fff;
+}
+
+[data-theme="dark"] .xs-app .xs-insert-btn:hover { color: #0f1a2e; }
+
+.xs-layer-row {
+    display: grid;
+    grid-template-columns: 26px 44px minmax(120px, 1.2fr) minmax(150px, 1fr) 110px auto;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-control);
+    background: var(--xs-bg);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+.xs-layer-row:hover { border-color: var(--xs-text-muted); }
+
+.xs-layer-row.is-selected {
+    border-color: var(--xs-primary);
+    box-shadow: 0 0 0 3px var(--xs-primary-glow);
+}
+
+.xs-layer-row.is-hidden { opacity: 0.55; }
+
+.xs-layer-row.is-subgrade { border-style: dashed; }
+
+.xs-layer-move { display: flex; flex-direction: column; gap: 1px; }
+
+.xs-app .xs-layer-move button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+    color: var(--xs-text-muted);
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    box-shadow: none;
+}
+
+.xs-app .xs-layer-move button .xs-i { width: 12px; height: 12px; }
+
+.xs-app .xs-layer-move button:hover:not(:disabled) { color: var(--xs-primary); background: var(--xs-bg-inset); }
+.xs-app .xs-layer-move button:disabled { opacity: 0.25; cursor: default; }
+
+.xs-layer-swatch {
+    width: 44px;
+    height: 30px;
+    border-radius: 5px;
+    border: 1px solid var(--xs-border-strong);
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.xs-layer-name input {
+    width: 100%;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background: transparent;
+    color: var(--xs-text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.2rem 0.35rem;
+    font-family: var(--font-body, inherit);
+    height: auto;
+}
+
+.xs-layer-name input:hover { border-color: var(--xs-border-strong); }
+.xs-layer-name input:focus { border-color: var(--xs-primary); background: var(--xs-bg); outline: none; }
+
+.xs-layer-name .xs-layer-spec {
+    display: block;
+    font-family: var(--xs-mono);
+    font-size: 0.64rem;
+    color: var(--xs-text-muted);
+    padding-left: 0.35rem;
+    letter-spacing: 0.03em;
+}
+
+.xs-layer-thick {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--xs-mono);
+    font-size: 0.72rem;
+    color: var(--xs-text-muted);
+    white-space: nowrap;
+}
+
+.xs-layer-thick .xs-inf { display: inline-flex; color: var(--xs-text-secondary); }
+.xs-layer-thick .xs-i { width: 14px; height: 14px; }
+
+.xs-layer-actions { display: flex; gap: 0.15rem; justify-content: flex-end; }
+
+.xs-app .xs-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 27px;
+    height: 27px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--xs-text-muted);
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+    box-shadow: none;
+}
+
+.xs-app .xs-icon-btn .xs-i { width: 15px; height: 15px; }
+
+.xs-app .xs-icon-btn:hover:not(:disabled) { color: var(--xs-primary); background: var(--xs-bg-inset); }
+.xs-app .xs-icon-btn.xs-icon-btn--danger:hover:not(:disabled) { color: var(--xs-danger); background: rgba(229, 72, 77, 0.1); }
+.xs-app .xs-icon-btn:disabled { opacity: 0.3; cursor: default; }
+.xs-app .xs-icon-btn.is-active { color: var(--xs-primary); }
+
+/* ==================== MATERIAL LIBRARY (right panel) ==================== */
+.xs-mat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+    margin-top: 0.35rem;
+}
+
+.xs-app .xs-mat-tile {
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-inner);
+    background: var(--xs-bg);
+    padding: 0.3rem;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: none;
+    font-weight: 400;
+    font-size: inherit;
+}
+
+.xs-app .xs-mat-tile:hover { border-color: var(--xs-primary); }
+
+.xs-app .xs-mat-tile.is-active {
+    border-color: var(--xs-primary);
+    box-shadow: 0 0 0 3px var(--xs-primary-glow);
+}
+
+.xs-app .xs-mat-tile .xs-mat-thumb {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 5px;
+    background-color: var(--xs-bg-inset);
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--xs-border);
+    margin-bottom: 0.25rem;
+}
+
+.xs-mat-group-label {
+    grid-column: 1 / -1;
+    margin: 0.45rem 0 -0.1rem;
+    font-family: var(--font-body, inherit);
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--xs-text-muted);
+}
+
+.xs-mat-group-label:first-child { margin-top: 0.1rem; }
+
+.xs-app .xs-mat-tile .xs-mat-label {
+    display: block;
+    font-size: 0.62rem;
+    line-height: 1.25;
+    color: var(--xs-text-secondary);
+    font-weight: 500;
+}
+
+.xs-selected-layer-tag {
+    display: inline-block;
+    max-width: calc(100% - 1.8rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.25rem 0.7rem;
+    margin: 0.55rem 0.9rem 0;
+    border-radius: 999px;
+    background: var(--xs-bg-inset);
+    border: 1px solid var(--xs-border-strong);
+    color: var(--xs-primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+/* ==================== TOAST ==================== */
+.xs-toast-wrap {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    pointer-events: none;
+}
+
+.xs-toast {
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--xs-radius-control);
+    background: var(--xs-bg-panel);
+    border: 1px solid var(--xs-primary);
+    color: var(--xs-text);
+    font-size: 0.82rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    animation: xsToastIn 0.25s ease;
+}
+
+@keyframes xsToastIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   CHECKBOXES
+   ------------------------------------------------------------
+   Drawn rather than native so the control carries the same
+   rounded geometry and the same brand hue as the rest of the
+   panel. Sized explicitly: a checkbox with `appearance: none`
+   and no replacement box has no intrinsic size, and measured on
+   desktop that laid every toggle out at 0x0 — live, clickable
+   through its label, and with nothing on screen to say whether
+   it was on or off.
+   ============================================================ */
+.xs-app input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    flex: 0 0 auto;
+    width: 17px;
+    height: 17px;
+    margin: 0;
+    background: var(--xs-bg);
+    border: 1px solid var(--xs-border-strong);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.xs-app input[type="checkbox"]:hover { border-color: var(--xs-primary); }
+.xs-app input[type="checkbox"]:checked {
+    background: var(--xs-primary);
+    border-color: var(--xs-primary);
+}
+
+/* Centred by transform rather than fixed offsets, so the tick stays
+   centred when the touch rules grow the box to 20px. */
+.xs-app input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -50%) rotate(43deg);
+}
+[data-theme="dark"] .xs-app input[type="checkbox"]:checked::after { border-color: #0f1a2e; }
+.xs-app input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--xs-primary);
+    outline-offset: 2px;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET & HANDHELD
+   ------------------------------------------------------------
+   The studio is a three-column shell: controls, viewport,
+   material library, with the layer manager across the bottom.
+   The earlier ladder had two steps, and both of them stacked
+   panels at full width without bounding them. Measured, that
+   produced a 4,837px page on a 390px handset and a 1,997px-tall
+   material panel on an 820px tablet: correct in the sense that
+   nothing overlapped, unusable in the sense that reaching the
+   layer manager meant eleven swipes.
+
+   The ladder below:
+
+     >1180   three columns, unchanged
+     720-1180 rail + viewport, with the wide panels below split
+              into columns instead of stacked into a ribbon
+     <720    single column, viewport directly under the toolbar,
+              panels collapsed and read one at a time
+
+   Widths below 720px are phones and small foldables; the widest
+   phone in portrait is ~430px, so a tablet never lands there.
+   Touch sizing is keyed to (pointer: coarse) instead, since it
+   is a property of the hand, not of the width.
+
+   dvh is stated after vh so a browser without it keeps the vh
+   line, while one with it stops resizing the viewport every
+   time the mobile URL bar hides.
+   ============================================================ */
+
+/* ---------- Tablet: rail + viewport, wide panels below ------ */
+@media (max-width: 1180px) and (min-width: 720px) {
+    .xs-studio {
+        grid-template-columns: clamp(220px, 27vw, 268px) minmax(0, 1fr);
+        grid-template-rows: auto minmax(380px, 56vh) auto auto;
+        grid-template-rows: auto minmax(380px, 56dvh) auto auto;
+        grid-template-areas:
+            "toolbar toolbar"
+            "left    viewport"
+            "right   right"
+            "layers  layers";
+    }
+
+    /* The material panel is a library and an inspector. Full
+       width it has no reason to keep them one above the other,
+       which is what made it 2,000px tall. */
+    .xs-right {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        align-items: start;
+        gap: 0 1rem;
+        max-height: 420px;
+    }
+
+    /* With the full width to spend, the swatch grid stops being
+       three cramped columns and takes as many as will fit. */
+    .xs-mat-grid { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+}
+
+/* ---------- Handheld: viewport first, panels beneath -------- */
+@media (max-width: 719px) {
+    .xs-studio {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(300px, 52vh) auto auto auto;
+        grid-template-rows: auto minmax(300px, 52dvh) auto auto auto;
+        grid-template-areas:
+            "toolbar"
+            "viewport"
+            "left"
+            "right"
+            "layers";
+        gap: 0.5rem;
+    }
+
+    /* Panels are read one at a time here, so they take their
+       natural height rather than becoming scrollers inside the
+       page scroller. studio.ts collapses them on first load so
+       the stack starts short. */
+    .xs-panel {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .xs-mat-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); }
+}
+
+/* ---------- Compact toolbar: one scrolling row -------------- */
+/* At 390px the toolbar wrapped to three rows and pushed the
+   viewport down with it. One sideways-scrolling row holds its
+   height whatever it carries, and stays put while the panels
+   below are scrolled. */
+@media (max-width: 1180px) {
+    .xs-toolbar {
+        position: sticky;
+        top: 3.25rem; /* the site nav is fixed and 3.25rem tall */
+        z-index: 20;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .xs-toolbar::-webkit-scrollbar { display: none; }
+    .xs-toolbar > * { flex: 0 0 auto; }
+    /* A flex spacer in a horizontal scroller has no slack to
+       take: it collapses and contributes only a gap. */
+    .xs-toolbar .xs-spacer { display: none; }
+}
+
+/* ---------- Handheld, landscape ----------------------------- */
+/* A phone on its side is ~390px tall but up to ~930px wide, so
+   width alone would call it a tablet. Height decides, and the
+   layout is restated in full so the rule does not depend on
+   which band it happens to land on top of. */
+@media (max-width: 1180px) and (max-height: 500px) and (orientation: landscape) {
+    .xs-studio {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(200px, 72vh) auto auto auto;
+        grid-template-rows: auto minmax(200px, 72dvh) auto auto auto;
+        grid-template-areas:
+            "toolbar"
+            "viewport"
+            "left"
+            "right"
+            "layers";
+        gap: 0.5rem;
+    }
+    .xs-panel { max-height: none; overflow-y: visible; }
+}
+
+/* ---------- Layer rows on a handheld ------------------------ */
+/* Six columns do not fit in 349px. The previous attempt kept
+   them on one line and dropped the material select, and the
+   remaining five still overflowed their track by ~95px, so the
+   thickness field and the row actions were clipped off the
+   right-hand edge — on the one control that has to be reachable
+   for the app to be of any use.
+
+   Two lines instead of one: identity on top, the two values
+   that get edited underneath, with the grip and the action
+   cluster spanning both. Nothing is dropped. */
+@media (max-width: 719px) {
+    .xs-layer-row {
+        grid-template-columns: 26px 40px minmax(0, 1fr) 96px auto;
+        grid-template-areas:
+            "move swatch name  name  actions"
+            "move swatch mat   thick actions";
+        row-gap: 0.3rem;
+        column-gap: 0.45rem;
+        align-items: center;
+    }
+    .xs-layer-move     { grid-area: move; }
+    .xs-layer-swatch   { grid-area: swatch; }
+    .xs-layer-name     { grid-area: name; }
+    .xs-layer-mat-cell { grid-area: mat; display: block; min-width: 0; }
+    .xs-layer-thick    { grid-area: thick; }
+    .xs-layer-actions  { grid-area: actions; }
+
+    /* Four icon buttons in a row is 160px of a 349px screen. In
+       two-by-two they take 80px and sit level with the two text
+       lines beside them. */
+    .xs-layer-actions {
+        display: grid;
+        grid-template-columns: repeat(2, auto);
+        gap: 0.15rem;
+    }
+
+    .xs-layers-head { flex-wrap: wrap; row-gap: 0.4rem; }
+}
+
+/* ---------- Touch target sizing ----------------------------- */
+/* WCAG 2.2 sets the floor at 24px and its AAA figure at 44px,
+   which is also what both platform guidelines ask for. Toolbar
+   and layer-row controls — hit while holding the device — get
+   44. Fields inside a panel get 40: a rail of forty 44px rows
+   is a very long rail, and those are two-handed controls.
+
+   min-height rather than height, because the button rules
+   further up pin `height: auto` on every .xs-btn. */
+@media (pointer: coarse) {
+    .xs-app .xs-btn { min-height: 44px; }
+    .xs-app .xs-icon-btn { min-width: 40px; min-height: 40px; }
+    .xs-app .xs-vp-btn { min-height: 40px; }
+    .xs-select, .xs-num, .xs-text { min-height: 40px; }
+    .xs-app .xs-layer-move button { min-width: 34px; min-height: 24px; }
+    .xs-panel summary { min-height: 48px; }
+    .xs-layer-name input { min-height: 36px; }
+
+    /* The checkbox is 17px, but the whole label is clickable, so it is the
+       label that has to carry the height. */
+    .xs-check, .xs-app label:has(> input[type="checkbox"]) { min-height: 40px; }
+    .xs-app input[type="checkbox"] { width: 20px; height: 20px; }
+
+    .xs-app .xs-mat-tile { min-height: 72px; }
+
+    /* A range input is as tall as its track, and this track is 4px. The
+       thumb may be 14px but the element you have to hit is 4px of screen,
+       which no thumb can rescue. The input grows to a 40px grab area and
+       hands the painting of the track to the pseudo-element, so the
+       control looks unchanged and is ten times easier to catch.
+
+       Restated at the base rule's own specificity — `.xs-app
+       input[type="range"].xs-range` beats a bare `.xs-range` no matter
+       how far down the file it sits. */
+    .xs-app input[type="range"].xs-range {
+        height: 40px;
+        background: transparent;
+    }
+    .xs-app input[type="range"].xs-range::-webkit-slider-runnable-track {
+        height: 5px;
+        border-radius: 3px;
+        background: var(--xs-border-strong);
+    }
+    .xs-app input[type="range"].xs-range::-moz-range-track {
+        height: 5px;
+        border-radius: 3px;
+        background: var(--xs-border-strong);
+    }
+    .xs-app input[type="range"].xs-range::-webkit-slider-thumb {
+        width: 22px;
+        height: 22px;
+        /* (track 5 - thumb 22) / 2 centres the thumb on the track. */
+        margin-top: -8.5px;
+    }
+    .xs-app input[type="range"].xs-range::-moz-range-thumb { width: 20px; height: 20px; }
+
+    /* Row affordances that only show on hover never show at all
+       on touch, so selection has to carry itself. */
+    .xs-layer-row.is-selected { border-color: var(--xs-primary); }
+
+    .xs-app input[type="color"].xs-color { height: 40px; }
+}
+
+/* ---------- Affordances that were hover-only ---------------- */
+/* `hover: none` is the honest test here: the insert zone between two
+   layer rows sits at opacity 0 until the pointer is over it, and a
+   touchscreen never puts a pointer over anything. The control was not
+   merely awkward on a tablet, it was invisible — you could tap the
+   12px strip and have a layer appear, but only by accident.
+
+   Kept recessive rather than made loud: it is a seam, not a button, and
+   there is one between every pair of layers. The copy cluster over the
+   viewport has the same problem and the same fix. */
+@media (hover: none) {
+    .xs-layer-insert {
+        opacity: .45;
+        height: 28px;
+        margin: -8px 0;
+    }
+    .xs-layer-insert:focus-within { opacity: 1; }
+    .xs-app .xs-insert-btn { min-height: 26px; min-width: 26px; }
+
+    .xs-vp-tools { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .xs-app .xs-btn,
+    .xs-layer-row,
+    .xs-app .xs-mat-tile,
+    .xs-vp-tools,
+    .xs-panel summary::after { transition: none; }
+    .xs-toast { animation: none; }
+}

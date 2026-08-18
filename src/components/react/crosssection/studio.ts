@@ -1,0 +1,1818 @@
+/* ============================================================
+   Cross-Section Studio — procedural pavement section renderer
+   Deterministic, true-to-scale, publication-oriented.
+
+   Ported from the standalone studio at
+   johanncardenas.com/e-labs/cross-section-studio. The substance is
+   unchanged: the same seeded RNG, the same eighteen material
+   definitions, the same true-to-scale box stack. What changed for
+   CEE 406:
+
+     · it runs as a React island, so the whole app is one
+       `initStudio(root)` closure with a disposer, instead of an
+       IIFE that owns the page;
+     · every `document.getElementById` is scoped to the island root,
+       so nothing reaches outside the mount;
+     · Font Awesome markup is replaced by the site's own strokes;
+     · the figure can be put on the clipboard, with or without a
+       background, instead of only being downloaded.
+
+   No React import in this file — the engine is exercisable
+   independently of the UI, the way the equations modules are.
+   ============================================================ */
+
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { iconHtml } from './icons';
+
+/**
+ * Boots the studio inside `root` and returns a disposer.
+ *
+ * The disposer must run on unmount: the render loop, the resize observer and
+ * the document-level shortcut handler all outlive the React tree otherwise,
+ * and a second mount would leave two loops drawing into one canvas.
+ */
+export function initStudio(root: HTMLElement): () => void {
+
+    /* ========================================================
+       0. Deterministic RNG
+       ======================================================== */
+    function xmur3(str: string) {
+        let h = 1779033703 ^ str.length;
+        for (let i = 0; i < str.length; i++) {
+            h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+            h = (h << 13) | (h >>> 19);
+        }
+        return function () {
+            h = Math.imul(h ^ (h >>> 16), 2246822507);
+            h = Math.imul(h ^ (h >>> 13), 3266489909);
+            return (h ^= h >>> 16) >>> 0;
+        };
+    }
+
+    function mulberry32(a: number) {
+        return function () {
+            a |= 0; a = (a + 0x6D2B79F5) | 0;
+            let t = Math.imul(a ^ (a >>> 15), 1 | a);
+            t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+            return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+    }
+
+    function seededRng(key: string) { return mulberry32(xmur3(key)()); }
+
+    /* ========================================================
+       1. Material definitions (FAA + highway presets)
+       One texture tile covers TILE_MM of material and is
+       rendered at TEX_SIZE px — all material dimensions
+       (aggregate radii, cracks, strata) are given in mm.
+       ======================================================== */
+    const TEX_SIZE = 1024;             // texture resolution (px per tile)
+    const TILE_MM = 512;               // physical size of one tile (mm)
+    const PX = TEX_SIZE / TILE_MM;     // px per mm
+
+    interface AggDef { cover: number; rMin: number; rMax: number; colors: string[]; angular: boolean; edge?: number }
+    interface MatDef {
+        name: string; spec: string; base: string;
+        mottle?: { colors: string[]; count: number; alpha: number };
+        aggs?: AggDef[];
+        strata?: { bands: number; alpha: number };
+        voids?: { count: number; rMin: number; rMax: number; alpha: number };
+        speckle?: { count: number; rMin: number; rMax: number; colors: string[]; alpha: number };
+        fissures?: { count: number; color: string; alpha: number; width: number };
+        streaks?: { count: number; color: string; alpha: number };
+        noise: number; rough: number; topRough?: number; heightAgg: number; normal: number;
+    }
+
+    const MATERIALS: Record<string, MatDef> = {
+        p401: {
+            name: 'Asphalt Concrete', spec: 'FAA P-401',
+            base: '#34383d', mottle: { colors: ['#2b2f34', '#3e434a', '#24272b'], count: 36, alpha: 0.08 },
+            aggs: [{ cover: 0.32, rMin: 2, rMax: 5, colors: ['#4a4f57', '#282c30', '#555b64', '#3a3e44'], angular: true }],
+            noise: 13, rough: 0.55, topRough: 0.45, heightAgg: 0.35, normal: 0.8
+        },
+        p209: {
+            name: 'Crushed Aggregate Base', spec: 'FAA P-209',
+            base: '#8a7355', mottle: { colors: ['#7c6647', '#9c8564'], count: 30, alpha: 0.1 },
+            aggs: [{ cover: 0.82, rMin: 12, rMax: 20, colors: ['#b59a76', '#8f7a5c', '#c2ab88', '#7c6647', '#a89070'], angular: true, edge: 0.3 }],
+            noise: 15, rough: 0.95, heightAgg: 1.0, normal: 1.3
+        },
+        p154: {
+            name: 'Granular Subbase', spec: 'FAA P-154',
+            base: '#9b988f', mottle: { colors: ['#8d8a81', '#a8a59c'], count: 34, alpha: 0.1 },
+            aggs: [{ cover: 0.68, rMin: 7, rMax: 25, colors: ['#b8b5ad', '#93908a', '#c4c1b9', '#807d75', '#aca99f'], angular: true, edge: 0.22 }],
+            noise: 20, rough: 0.95, heightAgg: 0.8, normal: 1.15
+        },
+        subgrade: {
+            name: 'Compacted Subgrade', spec: 'In-situ soil',
+            base: '#7b5f41', mottle: { colors: ['#6f5539', '#87694a', '#755a3e'], count: 44, alpha: 0.1 },
+            aggs: [{ cover: 0.2, rMin: 1.5, rMax: 3.5, colors: ['#8a6c4c', '#6a5136', '#93755a'], angular: false }],
+            strata: { bands: 7, alpha: 0.08 },
+            noise: 22, rough: 1.0, heightAgg: 0.25, normal: 0.75
+        },
+        pcc: {
+            name: 'Portland Cement Concrete', spec: 'FAA P-501',
+            base: '#c9cbcd', mottle: { colors: ['#c2c4c6', '#d1d3d5', '#bcbec0'], count: 40, alpha: 0.09 },
+            aggs: [{ cover: 0.1, rMin: 1.5, rMax: 3, colors: ['#b5b7b9', '#d8dadc', '#aaacae'], angular: false }],
+            voids: { count: 240, rMin: 0.8, rMax: 2, alpha: 0.3 },
+            noise: 8, rough: 0.5, heightAgg: 0.12, normal: 0.45
+        },
+        ctb: {
+            name: 'Cement-Treated Base', spec: 'FAA P-304',
+            base: '#a9a08c', mottle: { colors: ['#9c937f', '#b6ad99', '#a29985'], count: 38, alpha: 0.11 },
+            aggs: [{ cover: 0.3, rMin: 2.5, rMax: 6, colors: ['#b7ae9a', '#948b77', '#c0b7a3'], angular: true }],
+            noise: 14, rough: 0.8, heightAgg: 0.45, normal: 0.85
+        },
+        lcb: {
+            name: 'Lean Concrete Base', spec: 'FAA P-306',
+            base: '#bdbfba', mottle: { colors: ['#b1b3ae', '#c8cac5'], count: 30, alpha: 0.1 },
+            aggs: [{ cover: 0.44, rMin: 6, rMax: 14, colors: ['#a9aba6', '#cccec9', '#94968f', '#b8bab5'], angular: false, edge: 0.15 }],
+            voids: { count: 150, rMin: 1, rMax: 3, alpha: 0.35 },
+            noise: 12, rough: 0.75, heightAgg: 0.6, normal: 0.95
+        },
+        oga: {
+            name: 'Open-Graded Aggregate', spec: 'Drainage layer',
+            base: '#2e3236', mottle: { colors: ['#26292d', '#383c41'], count: 20, alpha: 0.12 },
+            aggs: [{ cover: 0.8, rMin: 18, rMax: 30, colors: ['#7f858d', '#6a7077', '#8f959d', '#5d636b'], angular: true, edge: 0.35 }],
+            noise: 9, rough: 1.0, heightAgg: 1.25, normal: 1.5
+        },
+        rca: {
+            name: 'Recycled Concrete Aggregate', spec: 'RCA',
+            base: '#9aa0a3', mottle: { colors: ['#8b9194', '#a7adb0'], count: 26, alpha: 0.1 },
+            aggs: [{ cover: 0.72, rMin: 10, rMax: 22, colors: ['#c3c7c9', '#8b9194', '#aeb4b7', '#7a8083', '#d0d4d6'], angular: true, edge: 0.28 }],
+            noise: 12, rough: 0.9, heightAgg: 0.9, normal: 1.2
+        },
+        ssand: {
+            name: 'Stabilized Sand', spec: 'Fine subbase',
+            base: '#d3c19b', mottle: { colors: ['#c8b690', '#ddcba5'], count: 30, alpha: 0.09 },
+            aggs: [{ cover: 0.13, rMin: 1, rMax: 2.2, colors: ['#c4b28c', '#e0d0ac', '#b9a781'], angular: false }],
+            noise: 15, rough: 0.85, heightAgg: 0.15, normal: 0.5
+        },
+        lts: {
+            name: 'Lime-Treated Soil', spec: 'Modified subgrade',
+            base: '#8d8170', mottle: { colors: ['#817566', '#998d7b'], count: 34, alpha: 0.1 },
+            aggs: [{ cover: 0.18, rMin: 1.5, rMax: 3.5, colors: ['#9a8e7c', '#7f7362'], angular: false }],
+            streaks: { count: 26, color: '#e9e4d8', alpha: 0.18 },
+            noise: 16, rough: 0.9, heightAgg: 0.3, normal: 0.7
+        },
+        sma: {
+            name: 'Stone Matrix Asphalt', spec: 'SMA surface course',
+            base: '#26282c', mottle: { colors: ['#1f2124', '#2e3135'], count: 30, alpha: 0.09 },
+            aggs: [{ cover: 0.52, rMin: 4, rMax: 9, colors: ['#3c4046', '#2e3237', '#484d54', '#33373c'], angular: true, edge: 0.25 }],
+            speckle: { count: 900, rMin: 0.4, rMax: 1.1, colors: ['#8f959c', '#6a7076'], alpha: 0.5 },
+            noise: 11, rough: 0.6, topRough: 0.5, heightAgg: 0.6, normal: 1.0
+        },
+        ogfc: {
+            name: 'Open-Graded Friction Course', spec: 'OGFC / porous asphalt',
+            base: '#1c1e21', mottle: { colors: ['#17191b', '#232629'], count: 24, alpha: 0.1 },
+            aggs: [{ cover: 0.58, rMin: 5, rMax: 10, colors: ['#34383e', '#2a2e33', '#3e434a'], angular: true, edge: 0.3 }],
+            voids: { count: 460, rMin: 1.2, rMax: 3.2, alpha: 0.55 },
+            noise: 10, rough: 0.95, heightAgg: 0.95, normal: 1.4
+        },
+        binder: {
+            name: 'HMA Binder Course', spec: 'Intermediate course',
+            base: '#33363b', mottle: { colors: ['#2a2d31', '#3d4147'], count: 32, alpha: 0.09 },
+            aggs: [{ cover: 0.42, rMin: 3, rMax: 8, colors: ['#4d525a', '#2c3034', '#5a606a', '#3e4349'], angular: true, edge: 0.18 }],
+            noise: 12, rough: 0.6, heightAgg: 0.5, normal: 0.95
+        },
+        atb: {
+            name: 'Asphalt-Treated Base', spec: 'ATB / black base',
+            base: '#3a3c3e', mottle: { colors: ['#313335', '#454749'], count: 30, alpha: 0.1 },
+            aggs: [{ cover: 0.58, rMin: 5, rMax: 12, colors: ['#565a5e', '#43474b', '#66696d', '#4b4f53'], angular: true, edge: 0.24 }],
+            noise: 13, rough: 0.75, heightAgg: 0.75, normal: 1.1
+        },
+        fdr: {
+            name: 'Full-Depth Reclamation', spec: 'FDR / recycled base',
+            base: '#6e6353', mottle: { colors: ['#615748', '#7b6f5e'], count: 34, alpha: 0.11 },
+            aggs: [
+                { cover: 0.3, rMin: 4, rMax: 12, colors: ['#3a3835', '#2f2d2a', '#454340'], angular: true, edge: 0.2 },
+                { cover: 0.28, rMin: 3, rMax: 9, colors: ['#a08b6a', '#8d7a5c', '#b19c7b'], angular: true, edge: 0.18 }
+            ],
+            noise: 16, rough: 0.9, heightAgg: 0.7, normal: 1.05
+        },
+        clay: {
+            name: 'Clay Subgrade', spec: 'High-plasticity soil',
+            base: '#8a5f3f', mottle: { colors: ['#7c5435', '#996b49', '#70492c'], count: 46, alpha: 0.12 },
+            aggs: [{ cover: 0.1, rMin: 1, rMax: 2.5, colors: ['#9c6f4c', '#774f30'], angular: false }],
+            strata: { bands: 5, alpha: 0.07 },
+            fissures: { count: 10, color: '#4a2f1a', alpha: 0.5, width: 1.6 },
+            noise: 18, rough: 1.0, heightAgg: 0.2, normal: 0.8
+        },
+        rock: {
+            name: 'Weathered Bedrock', spec: 'Rock / residual soil',
+            base: '#7a766f', mottle: { colors: ['#6d6963', '#87837c', '#5f5b55'], count: 38, alpha: 0.12 },
+            aggs: [{ cover: 0.16, rMin: 2, rMax: 6, colors: ['#8d8982', '#6a665f', '#94908a'], angular: true }],
+            strata: { bands: 9, alpha: 0.12 },
+            fissures: { count: 14, color: '#3f3c37', alpha: 0.45, width: 1.3 },
+            noise: 14, rough: 0.85, heightAgg: 0.35, normal: 0.9
+        }
+    };
+
+    const MATERIAL_GROUPS = [
+        { label: 'Asphalt', keys: ['p401', 'sma', 'ogfc', 'binder', 'atb'] },
+        { label: 'Concrete', keys: ['pcc', 'lcb', 'ctb'] },
+        { label: 'Base & Subbase', keys: ['p209', 'p154', 'oga', 'rca', 'fdr', 'ssand'] },
+        { label: 'Subgrade & Soil', keys: ['lts', 'subgrade', 'clay', 'rock'] }
+    ];
+
+    /* ========================================================
+       2. Procedural texture factory (seeded, cached)
+       ======================================================== */
+    interface MatTextures {
+        map: THREE.CanvasTexture;
+        normalMap: THREE.CanvasTexture;
+        roughnessMap: THREE.CanvasTexture;
+        thumbUrl: string;
+    }
+    const texCache: Record<string, MatTextures> = {};
+
+    function drawPoly(ctx: CanvasRenderingContext2D, rng: () => number, x: number, y: number, r: number, angular: boolean) {
+        const sides = angular ? 5 + Math.floor(rng() * 3) : 8 + Math.floor(rng() * 3);
+        const irr = angular ? 0.45 : 0.18;
+        const rot = rng() * Math.PI * 2;
+        ctx.beginPath();
+        for (let i = 0; i < sides; i++) {
+            const ang = rot + (i / sides) * Math.PI * 2;
+            const rad = r * (1 - irr * rng());
+            const px = x + Math.cos(ang) * rad;
+            const py = y + Math.sin(ang) * rad;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+    }
+
+    function jitterColor(hex: string, rng: () => number, amt: number) {
+        const n = parseInt(hex.slice(1), 16);
+        let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+        const d = Math.round((rng() - 0.5) * 2 * amt);
+        r = Math.max(0, Math.min(255, r + d));
+        g = Math.max(0, Math.min(255, g + d));
+        b = Math.max(0, Math.min(255, b + d));
+        return `rgb(${r},${g},${b})`;
+    }
+
+    function generateMaterial(key: string): MatTextures {
+        const cached = texCache[key];
+        if (cached) return cached;
+        const def = MATERIALS[key];
+        const rng = seededRng('xs-studio:' + key);
+        const S = TEX_SIZE;
+
+        const dCan = document.createElement('canvas'); dCan.width = dCan.height = S;
+        const hCan = document.createElement('canvas'); hCan.width = hCan.height = S;
+        const d = dCan.getContext('2d') as CanvasRenderingContext2D;
+        const h = hCan.getContext('2d') as CanvasRenderingContext2D;
+
+        // --- base fill
+        d.fillStyle = def.base; d.fillRect(0, 0, S, S);
+        h.fillStyle = 'rgb(128,128,128)'; h.fillRect(0, 0, S, S);
+
+        // --- mottling at two scales (large patches + mid-frequency variation)
+        if (def.mottle) {
+            const passes = [
+                { count: def.mottle.count, rMin: 40, rMax: 150, alpha: def.mottle.alpha, relief: true },
+                { count: Math.round(def.mottle.count * 2.2), rMin: 8, rMax: 34, alpha: def.mottle.alpha * 0.85, relief: false }
+            ];
+            for (const pass of passes) {
+                for (let i = 0; i < pass.count; i++) {
+                    const x = rng() * S, y = rng() * S;
+                    const r = (pass.rMin + rng() * (pass.rMax - pass.rMin)) * PX;
+                    const g = d.createRadialGradient(x, y, 0, x, y, r);
+                    const c = def.mottle.colors[Math.floor(rng() * def.mottle.colors.length)];
+                    g.addColorStop(0, c); g.addColorStop(1, 'rgba(0,0,0,0)');
+                    d.globalAlpha = pass.alpha; d.fillStyle = g;
+                    d.fillRect(x - r, y - r, r * 2, r * 2);
+                    if (pass.relief) {
+                        // gentle large-scale undulation in the height field
+                        const hv2 = 128 + Math.round((rng() - 0.5) * 16);
+                        const hg = h.createRadialGradient(x, y, 0, x, y, r);
+                        hg.addColorStop(0, `rgba(${hv2},${hv2},${hv2},0.5)`);
+                        hg.addColorStop(1, `rgba(${hv2},${hv2},${hv2},0)`);
+                        h.fillStyle = hg;
+                        h.fillRect(x - r, y - r, r * 2, r * 2);
+                    }
+                }
+            }
+            d.globalAlpha = 1;
+        }
+
+        // --- horizontal strata (soils)
+        if (def.strata) {
+            for (let i = 0; i < def.strata.bands; i++) {
+                const y = (i + 0.3 + rng() * 0.4) * (S / def.strata.bands);
+                const bh = (8 + rng() * 22) * PX;
+                d.globalAlpha = def.strata.alpha;
+                d.fillStyle = rng() > 0.5 ? '#000000' : '#ffffff';
+                d.fillRect(0, y, S, bh);
+                h.globalAlpha = 0.1; h.fillStyle = 'rgb(96,96,96)';
+                h.fillRect(0, y, S, bh); h.globalAlpha = 1;
+            }
+            d.globalAlpha = 1;
+        }
+
+        // --- aggregates (drawn with 4-way wrap for seamless tiling)
+        (def.aggs || []).forEach((agg, ai) => {
+            const rMinPx = agg.rMin * PX, rMaxPx = agg.rMax * PX;
+            const rAvg = (rMinPx + rMaxPx) / 2;
+            const count = Math.floor((S * S * agg.cover) / (Math.PI * rAvg * rAvg));
+            for (let i = 0; i < count; i++) {
+                const x = rng() * S, y = rng() * S;
+                const r = rMinPx + rng() * (rMaxPx - rMinPx);
+                const col = jitterColor(agg.colors[Math.floor(rng() * agg.colors.length)], rng, 14);
+                const hv = Math.round(128 + (def.heightAgg || 0.5) * (36 + rng() * 52));
+                const shadeAng = rng() * Math.PI * 2;
+                const sx = Math.cos(shadeAng) * r, sy = Math.sin(shadeAng) * r;
+                // draw the identical polygon at wrapped offsets for seamless tiling
+                const seedsX = [x, x - S, x + S], seedsY = [y, y - S, y + S];
+                for (const ox of seedsX) for (const oy of seedsY) {
+                    if (ox < -r * 2 || ox > S + r * 2 || oy < -r * 2 || oy > S + r * 2) continue;
+                    const pr = seededRng('poly:' + key + ':' + ai + ':' + i);
+                    drawPoly(d, pr, ox, oy, r, agg.angular);
+                    d.fillStyle = col; d.fill();
+                    // directional shading — makes each particle read as a lit 3-D stone
+                    const lg = d.createLinearGradient(ox - sx, oy - sy, ox + sx, oy + sy);
+                    lg.addColorStop(0, 'rgba(255,255,255,0.20)');
+                    lg.addColorStop(0.55, 'rgba(255,255,255,0)');
+                    lg.addColorStop(1, 'rgba(0,0,0,0.24)');
+                    d.fillStyle = lg; d.fill();
+                    if (agg.edge) {
+                        d.strokeStyle = 'rgba(0,0,0,' + agg.edge + ')';
+                        d.lineWidth = Math.max(0.6, r * 0.06);
+                        d.stroke();
+                    }
+                    const hr = seededRng('poly:' + key + ':' + ai + ':' + i);
+                    drawPoly(h, hr, ox, oy, r, agg.angular);
+                    // rounded relief: bright crown falling off toward the matrix plane
+                    const hEdge = Math.round(128 + (hv - 128) * 0.25);
+                    const hg = h.createRadialGradient(ox - r * 0.25, oy - r * 0.25, r * 0.1, ox, oy, r);
+                    hg.addColorStop(0, `rgb(${hv},${hv},${hv})`);
+                    hg.addColorStop(1, `rgb(${hEdge},${hEdge},${hEdge})`);
+                    h.fillStyle = hg; h.fill();
+                }
+            }
+        });
+
+        // --- air voids / pores
+        if (def.voids) {
+            for (let i = 0; i < def.voids.count; i++) {
+                const x = rng() * S, y = rng() * S;
+                const r = (def.voids.rMin + rng() * (def.voids.rMax - def.voids.rMin)) * PX;
+                d.beginPath(); d.arc(x, y, r, 0, Math.PI * 2);
+                d.fillStyle = 'rgba(0,0,0,' + def.voids.alpha + ')'; d.fill();
+                h.beginPath(); h.arc(x, y, r, 0, Math.PI * 2);
+                h.fillStyle = 'rgb(70,70,70)'; h.fill();
+            }
+        }
+
+        // --- fine mineral speckle (SMA mastic, dusted surfaces)
+        if (def.speckle) {
+            const sp = def.speckle;
+            for (let i = 0; i < sp.count; i++) {
+                const x = rng() * S, y = rng() * S;
+                const r = (sp.rMin + rng() * (sp.rMax - sp.rMin)) * PX;
+                d.globalAlpha = sp.alpha * (0.4 + rng() * 0.6);
+                d.fillStyle = sp.colors[Math.floor(rng() * sp.colors.length)];
+                d.beginPath(); d.arc(x, y, r, 0, Math.PI * 2); d.fill();
+            }
+            d.globalAlpha = 1;
+        }
+
+        // --- desiccation cracks / rock fractures (wrapped for tiling)
+        if (def.fissures) {
+            const f = def.fissures;
+            for (let i = 0; i < f.count; i++) {
+                const pts: [number, number][] = [];
+                let cx = rng() * S, cy = rng() * S, ang = rng() * Math.PI * 2;
+                pts.push([cx, cy]);
+                const segs = 5 + Math.floor(rng() * 7);
+                for (let sgi = 0; sgi < segs; sgi++) {
+                    ang += (rng() - 0.5) * 1.1;
+                    const len = (14 + rng() * 34) * PX;
+                    cx += Math.cos(ang) * len; cy += Math.sin(ang) * len;
+                    pts.push([cx, cy]);
+                }
+                const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+                const minX = Math.min(...xs), maxX = Math.max(...xs);
+                const minY = Math.min(...ys), maxY = Math.max(...ys);
+                for (const ox of [0, -S, S]) for (const oy of [0, -S, S]) {
+                    if (maxX + ox < 0 || minX + ox > S || maxY + oy < 0 || minY + oy > S) continue;
+                    const trace = (ctx: CanvasRenderingContext2D, style: string, width: number, alpha: number) => {
+                        ctx.globalAlpha = alpha; ctx.strokeStyle = style;
+                        ctx.lineWidth = width; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                        ctx.beginPath();
+                        ctx.moveTo(pts[0][0] + ox, pts[0][1] + oy);
+                        for (let p = 1; p < pts.length; p++) ctx.lineTo(pts[p][0] + ox, pts[p][1] + oy);
+                        ctx.stroke(); ctx.globalAlpha = 1;
+                    };
+                    trace(d, f.color, f.width * PX, f.alpha);
+                    trace(h, 'rgb(70,70,70)', f.width * PX * 1.4, 0.8);
+                }
+            }
+        }
+
+        // --- cementitious streaks (lime-treated)
+        if (def.streaks) {
+            d.strokeStyle = def.streaks.color;
+            for (let i = 0; i < def.streaks.count; i++) {
+                d.globalAlpha = def.streaks.alpha * (0.5 + rng() * 0.5);
+                d.lineWidth = (0.8 + rng() * 1.6) * PX;
+                const y0 = rng() * S, x0 = rng() * S, len = (30 + rng() * 90) * PX;
+                d.beginPath();
+                d.moveTo(x0, y0);
+                d.quadraticCurveTo(x0 + len / 2, y0 + (rng() - 0.5) * 14 * PX, x0 + len, y0 + (rng() - 0.5) * 8 * PX);
+                d.stroke();
+            }
+            d.globalAlpha = 1;
+        }
+
+        // --- per-pixel fine grain noise (both maps)
+        const noiseAmp = def.noise || 10;
+        const dImg = d.getImageData(0, 0, S, S);
+        const hImg = h.getImageData(0, 0, S, S);
+        const nRng = seededRng('noise:' + key);
+        for (let i = 0; i < dImg.data.length; i += 4) {
+            const n = (nRng() - 0.5) * 2 * noiseAmp;
+            dImg.data[i] += n; dImg.data[i + 1] += n; dImg.data[i + 2] += n;
+            const hn = (nRng() - 0.5) * 2 * (noiseAmp * 0.8);
+            hImg.data[i] += hn; hImg.data[i + 1] += hn; hImg.data[i + 2] += hn;
+        }
+        d.putImageData(dImg, 0, 0);
+        h.putImageData(hImg, 0, 0);
+
+        // --- normal map from height (Sobel)
+        const nCan = document.createElement('canvas'); nCan.width = nCan.height = S;
+        const nCtx = nCan.getContext('2d') as CanvasRenderingContext2D;
+        const nImg = nCtx.createImageData(S, S);
+        const hd = hImg.data;
+        const px = (x: number, y: number) => hd[(((y + S) % S) * S + ((x + S) % S)) * 4];
+        for (let y = 0; y < S; y++) {
+            for (let x = 0; x < S; x++) {
+                const tl = px(x - 1, y - 1), t = px(x, y - 1), tr = px(x + 1, y - 1);
+                const l = px(x - 1, y), r = px(x + 1, y);
+                const bl = px(x - 1, y + 1), b = px(x, y + 1), br = px(x + 1, y + 1);
+                const dx = (tr + 2 * r + br) - (tl + 2 * l + bl);
+                const dy = (bl + 2 * b + br) - (tl + 2 * t + tr);
+                const nx = -dx / 255, ny = -dy / 255, nz = 1;
+                const inv = 1 / Math.sqrt(nx * nx + ny * ny + nz * nz);
+                const o = (y * S + x) * 4;
+                nImg.data[o] = (nx * inv * 0.5 + 0.5) * 255;
+                nImg.data[o + 1] = (ny * inv * 0.5 + 0.5) * 255;
+                nImg.data[o + 2] = (nz * inv * 0.5 + 0.5) * 255;
+                nImg.data[o + 3] = 255;
+            }
+        }
+        nCtx.putImageData(nImg, 0, 0);
+
+        // --- roughness map: subtle variation about the preset value
+        const rCan = document.createElement('canvas'); rCan.width = rCan.height = S;
+        const rCtx = rCan.getContext('2d') as CanvasRenderingContext2D;
+        const rImg = rCtx.createImageData(S, S);
+        for (let i = 0; i < rImg.data.length; i += 4) {
+            const v = Math.max(0, Math.min(255, 255 + (hd[i] - 128) * -0.35 + (hd[i + 1] - 128) * 0.1));
+            rImg.data[i] = v; rImg.data[i + 1] = v; rImg.data[i + 2] = v;
+            rImg.data[i + 3] = 255;
+        }
+        rCtx.putImageData(rImg, 0, 0);
+
+        // --- three.js textures
+        function makeTex(canvasEl: HTMLCanvasElement, srgb: boolean) {
+            const t = new THREE.CanvasTexture(canvasEl);
+            t.wrapS = t.wrapT = THREE.RepeatWrapping;
+            if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+            t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy() || 8);
+            return t;
+        }
+
+        // --- thumbnail
+        const thumb = document.createElement('canvas');
+        thumb.width = 144; thumb.height = 108;
+        (thumb.getContext('2d') as CanvasRenderingContext2D)
+            .drawImage(dCan, 0, 0, S / 2, (S / 2) * 0.75, 0, 0, 144, 108);
+
+        texCache[key] = {
+            map: makeTex(dCan, true),
+            normalMap: makeTex(nCan, false),
+            roughnessMap: makeTex(rCan, false),
+            thumbUrl: thumb.toDataURL('image/png')
+        };
+        return texCache[key];
+    }
+
+    /* ========================================================
+       3. State
+       ======================================================== */
+    interface Layer {
+        id: string; name: string; material: string; thickness: number;
+        visible: boolean; locked: boolean;
+        tint: string | null; brightness: number; roughness: number | null;
+        texScale: number; normalStrength: number | null;
+        subgrade?: boolean;
+    }
+
+    let layerIdCounter = 0;
+    const nextId = () => 'L' + (++layerIdCounter);
+
+    function makeLayer(name: string, material: string, thickness: number, extra?: Partial<Layer>): Layer {
+        return Object.assign({
+            id: nextId(), name, material, thickness,
+            visible: true, locked: false,
+            tint: null, brightness: 1, roughness: null, texScale: 1, normalStrength: null
+        }, extra || {}) as Layer;
+    }
+
+    const DEFAULTS = {
+        section: { width: 1600, length: 1400, recessX: 150, recessZ: 0, subgradeDisplay: 500 },
+        camera: { mode: 'persp', azimuth: 45, elevation: 35.264, fov: 35 },
+        lighting: {
+            preset: 'studio', key: 2.4, ambient: 1.1,
+            azimuth: 38, elevation: 55, shadowOpacity: 0.35, shadowSoftness: 4, groundShadow: true
+        },
+        background: { mode: 'white', color: '#f1f5f9' }
+    };
+
+    const state = {
+        section: { ...DEFAULTS.section },
+        camera: { ...DEFAULTS.camera },
+        lighting: { ...DEFAULTS.lighting },
+        background: { ...DEFAULTS.background },
+        meta: { name: '', author: '', notes: '' },
+        layers: [] as Layer[]   // index 0 = top layer; last entry is always the subgrade
+    };
+
+    function defaultLayers(): Layer[] {
+        return [
+            makeLayer('P-401 Asphalt Concrete', 'p401', 75),
+            makeLayer('P-209 Crushed Aggregate Base', 'p209', 150),
+            makeLayer('P-154 Granular Subbase', 'p154', 510),
+            makeLayer('Subgrade (infinite)', 'subgrade', 0, { subgrade: true })
+        ];
+    }
+
+    interface Template { name: string; group?: string; layers: [string, string, number][] }
+
+    const TEMPLATES: Record<string, Template> = {
+        'faa-flexible': {
+            name: 'FAA Flexible Pavement', group: 'Airfield',
+            layers: [['P-401 Asphalt Concrete', 'p401', 75], ['P-209 Crushed Aggregate Base', 'p209', 150], ['P-154 Granular Subbase', 'p154', 510]]
+        },
+        'faa-rigid': {
+            name: 'FAA Rigid Pavement', group: 'Airfield',
+            layers: [['P-501 Concrete Slab', 'pcc', 350], ['P-306 Lean Concrete Base', 'lcb', 150], ['P-154 Granular Subbase', 'p154', 250]]
+        },
+        'apt-flexible': {
+            name: 'Airport Flexible (Stabilized)', group: 'Airfield',
+            layers: [['P-401 Asphalt Concrete', 'p401', 125], ['P-304 Cement-Treated Base', 'ctb', 200], ['P-209 Crushed Aggregate Base', 'p209', 250], ['P-154 Granular Subbase', 'p154', 300]]
+        },
+        'apt-rigid': {
+            name: 'Airport Rigid Pavement', group: 'Airfield',
+            layers: [['P-501 Concrete Slab', 'pcc', 400], ['P-304 Cement-Treated Base', 'ctb', 150], ['P-154 Granular Subbase', 'p154', 250]]
+        },
+        'hwy-flexible': {
+            name: 'Conventional Flexible Highway', group: 'Highway',
+            layers: [['HMA Surface Course', 'p401', 50], ['HMA Binder Course', 'binder', 75], ['Aggregate Base', 'p209', 200], ['Granular Subbase', 'p154', 300]]
+        },
+        'hwy-interstate': {
+            name: 'Interstate Deep-Strength HMA', group: 'Highway',
+            layers: [['SMA Surface Course', 'sma', 50], ['HMA Binder Course', 'binder', 75], ['Asphalt-Treated Base', 'atb', 150], ['Aggregate Base', 'p209', 150]]
+        },
+        'hwy-perpetual': {
+            name: 'Perpetual Pavement', group: 'Highway',
+            layers: [['SMA Surface Course', 'sma', 40], ['HMA Binder Course', 'binder', 100], ['HMA Base Course', 'p401', 150], ['Rich-Bottom Fatigue Layer', 'p401', 75], ['Aggregate Base', 'p209', 150]]
+        },
+        'hwy-jpcp': {
+            name: 'JPCP Rigid Highway', group: 'Highway',
+            layers: [['JPCP Concrete Slab', 'pcc', 280], ['Cement-Treated Base', 'ctb', 100], ['Granular Subbase', 'p154', 150]]
+        },
+        'hwy-crcp': {
+            name: 'CRCP Rigid Highway', group: 'Highway',
+            layers: [['CRCP Concrete Slab', 'pcc', 330], ['Asphalt-Treated Base', 'atb', 100], ['Granular Subbase', 'p154', 150]]
+        },
+        'composite': {
+            name: 'Composite (HMA over PCC)', group: 'Highway',
+            layers: [['HMA Overlay', 'p401', 100], ['Existing JPCP Slab', 'pcc', 250], ['Aggregate Base', 'p209', 150]]
+        },
+        'hwy-lowvol': {
+            name: 'Low-Volume Road', group: 'Highway',
+            layers: [['HMA Surface', 'p401', 75], ['Aggregate Base', 'p209', 200], ['Lime-Treated Subgrade', 'lts', 300]]
+        },
+        'hwy-porous': {
+            name: 'Permeable Pavement (Reservoir)', group: 'Highway',
+            layers: [['Porous Asphalt (OGFC)', 'ogfc', 100], ['Choke Stone', 'p209', 50], ['Open-Graded Stone Reservoir', 'oga', 300]]
+        },
+        'hwy-fdr': {
+            name: 'FDR Rehabilitation', group: 'Highway',
+            layers: [['HMA Overlay', 'p401', 100], ['Full-Depth Reclamation', 'fdr', 250]]
+        }
+    };
+
+    /* User templates are per-origin; the key carries the site's prefix so
+       everything this site stores sits in one namespace. */
+    const TEMPLATE_KEY = 'cee406-xs-templates';
+
+    function applyTemplate(tpl: Template) {
+        state.layers = tpl.layers.map(l => makeLayer(l[0], l[1], l[2]));
+        state.layers.push(makeLayer('Subgrade (infinite)', 'subgrade', 0, { subgrade: true }));
+        selectedId = state.layers[0].id;
+    }
+
+    /* ========================================================
+       4. Three.js scene
+       ======================================================== */
+    const viewport = root.querySelector('#xs-viewport') as HTMLDivElement;
+    const canvas = root.querySelector('#xs-canvas') as HTMLCanvasElement;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+
+    const scene = new THREE.Scene();
+
+    // Cameras
+    const orthoCam = new THREE.OrthographicCamera(-1, 1, 1, -1, -50, 200);
+    const perspCam = new THREE.PerspectiveCamera(35, 1, 0.01, 500);
+    let activeCam: THREE.Camera = orthoCam;
+    let orthoViewSize = 4;          // world units of vertical half-extent at zoom 1
+
+    const controls = new OrbitControls(activeCam, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.12;
+
+    // Lights
+    const hemi = new THREE.HemisphereLight(0xffffff, 0xb9c0c8, 1.1);
+    scene.add(hemi);
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.4);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.bias = -0.0006;
+    keyLight.shadow.normalBias = 0.01;
+    scene.add(keyLight);
+    scene.add(keyLight.target);
+    const fillLight = new THREE.DirectionalLight(0xffffff, 0.55);
+    scene.add(fillLight);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0);
+    scene.add(rimLight);
+
+    // Shadow-catcher ground
+    const groundMat = new THREE.ShadowMaterial({ opacity: 0.35 });
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Section group
+    let sectionGroup: THREE.Group | null = null;
+    const sceneInfo = { center: new THREE.Vector3(), radius: 2, totalDepth: 0 };
+
+    /* Selected-layer outline (viewport feedback; hidden during export).
+       Deliberately NOT the site's Illini orange: this line is drawn over
+       asphalt, tan aggregate, grey concrete and brown subgrade, and orange
+       vanishes into three of the four. Cyan is the one hue legible on every
+       material in the library, and it never reaches an exported figure. */
+    const selOutline = new THREE.LineSegments(
+        new THREE.BufferGeometry(),
+        new THREE.LineBasicMaterial({ color: 0x22d3d1, transparent: true, opacity: 0.85 })
+    );
+    selOutline.visible = false;
+    selOutline.renderOrder = 2;
+    scene.add(selOutline);
+
+    function updateSelectionOutline() {
+        let found: THREE.Mesh | null = null;
+        if (sectionGroup) {
+            sectionGroup.traverse(o => {
+                if ((o as THREE.Mesh).isMesh && o.userData.layerId === selectedId) found = o as THREE.Mesh;
+            });
+        }
+        const mesh = found as THREE.Mesh | null;
+        if (!mesh) { selOutline.visible = false; return; }
+        selOutline.geometry.dispose();
+        selOutline.geometry = new THREE.EdgesGeometry(mesh.geometry);
+        selOutline.position.copy(mesh.position);
+        selOutline.scale.setScalar(1.004);
+        selOutline.visible = true;
+    }
+
+    function disposeGroup(group: THREE.Object3D) {
+        group.traverse(obj => {
+            const m = obj as THREE.Mesh;
+            if (m.isMesh) {
+                m.geometry.dispose();
+                const mats = Array.isArray(m.material) ? m.material : [m.material];
+                mats.forEach(mat => {
+                    const sm = mat as THREE.MeshStandardMaterial;
+                    (['map', 'normalMap', 'roughnessMap'] as const).forEach(k => { if (sm[k]) sm[k]!.dispose(); });
+                    mat.dispose();
+                });
+            }
+        });
+    }
+
+    function cloneTex(tex: THREE.Texture, rx: number, ry: number) {
+        const t = tex.clone();
+        t.repeat.set(rx, ry);
+        t.needsUpdate = true;
+        return t;
+    }
+
+    function faceMaterial(texs: MatTextures, def: MatDef, layer: Layer, repX: number, repY: number, isTop: boolean) {
+        const rough = layer.roughness != null ? layer.roughness
+            : (isTop && def.topRough != null ? def.topRough : def.rough);
+        const nStr = (layer.normalStrength != null ? layer.normalStrength : def.normal);
+        const tile = TILE_MM * (layer.texScale || 1);
+        const m = new THREE.MeshStandardMaterial({
+            map: cloneTex(texs.map, repX / tile, repY / tile),
+            normalMap: cloneTex(texs.normalMap, repX / tile, repY / tile),
+            roughnessMap: cloneTex(texs.roughnessMap, repX / tile, repY / tile),
+            roughness: rough,
+            metalness: 0
+        });
+        m.normalScale.set(nStr, nStr);
+        const tint = new THREE.Color(layer.tint || '#ffffff');
+        tint.multiplyScalar(layer.brightness != null ? layer.brightness : 1);
+        m.color.copy(tint);
+        return m;
+    }
+
+    function rebuildSection() {
+        if (sectionGroup) { scene.remove(sectionGroup); disposeGroup(sectionGroup); }
+        const group = new THREE.Group();
+        sectionGroup = group;
+
+        const s = state.section;
+        const mm = 0.001;                        // mm -> world (metres)
+        const layers = state.layers;             // 0 = top ... last = subgrade
+        const stack = [...layers].reverse();     // 0 = bottom (subgrade)
+
+        // depth of stack in mm
+        let totalDepth = s.subgradeDisplay;
+        layers.forEach(l => { if (!l.subgrade) totalDepth += l.thickness; });
+        sceneInfo.totalDepth = totalDepth;
+
+        let yCursor = 0; // world y of current layer base
+        const x0 = -s.length * mm / 2;           // fixed back-left anchor
+        const z0 = -s.width * mm / 2;
+
+        stack.forEach((layer, i) => {
+            const t = layer.subgrade ? s.subgradeDisplay : layer.thickness;
+            if (t <= 0) return;
+            const len = Math.max(s.length - i * s.recessX, s.length * 0.15) * mm;
+            const wid = Math.max(s.width - i * s.recessZ, s.width * 0.15) * mm;
+            const hgt = t * mm;
+
+            if (layer.visible) {
+                const def = MATERIALS[layer.material] || MATERIALS.subgrade;
+                const texs = generateMaterial(layer.material in MATERIALS ? layer.material : 'subgrade');
+                const geo = new THREE.BoxGeometry(len, hgt, wid);
+                const lenMM = len / mm, widMM = wid / mm, hgtMM = hgt / mm;
+                const mats = [
+                    faceMaterial(texs, def, layer, widMM, hgtMM, false), // +x
+                    faceMaterial(texs, def, layer, widMM, hgtMM, false), // -x
+                    faceMaterial(texs, def, layer, lenMM, widMM, true),  // +y (top)
+                    faceMaterial(texs, def, layer, lenMM, widMM, false), // -y
+                    faceMaterial(texs, def, layer, lenMM, hgtMM, false), // +z
+                    faceMaterial(texs, def, layer, lenMM, hgtMM, false)  // -z
+                ];
+                const mesh = new THREE.Mesh(geo, mats);
+                mesh.position.set(x0 + len / 2, yCursor + hgt / 2, z0 + wid / 2);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                mesh.userData.layerId = layer.id;
+                group.add(mesh);
+            }
+            yCursor += hgt;
+        });
+
+        scene.add(group);
+
+        // scene info for camera + lights
+        const box = new THREE.Box3().setFromObject(group);
+        if (box.isEmpty()) {
+            sceneInfo.center.set(0, 0.2, 0); sceneInfo.radius = 1;
+        } else {
+            box.getCenter(sceneInfo.center);
+            sceneInfo.radius = box.getSize(new THREE.Vector3()).length() / 2;
+        }
+
+        const g = Math.max(s.length, s.width) * mm * 4;
+        ground.geometry.dispose();
+        ground.geometry = new THREE.PlaneGeometry(g, g);
+        ground.position.y = -0.001;
+
+        updateLightRig();
+        updateHud();
+        updateSelectionOutline();
+    }
+
+    /* ========================================================
+       5. Camera control
+       ======================================================== */
+    function sphericalPos(az: number, el: number, dist: number, target: THREE.Vector3) {
+        const a = THREE.MathUtils.degToRad(az);
+        const e = THREE.MathUtils.degToRad(el);
+        return new THREE.Vector3(
+            target.x + dist * Math.cos(e) * Math.sin(a),
+            target.y + dist * Math.sin(e),
+            target.z + dist * Math.cos(e) * Math.cos(a)
+        );
+    }
+
+    let syncingCam = false;
+
+    function updateOrthoFrustum(aspect: number) {
+        orthoCam.left = -orthoViewSize * aspect;
+        orthoCam.right = orthoViewSize * aspect;
+        orthoCam.top = orthoViewSize;
+        orthoCam.bottom = -orthoViewSize;
+        orthoCam.updateProjectionMatrix();
+    }
+
+    function applyCameraFromState(fit: boolean) {
+        const c = state.camera;
+        const target = sceneInfo.center.clone();
+        const dist = sceneInfo.radius * 3.2;
+
+        if (fit) {
+            orthoViewSize = sceneInfo.radius * 1.15;
+            orthoCam.zoom = 1;
+            perspCam.fov = c.fov;
+        }
+
+        activeCam = c.mode === 'persp' ? perspCam : orthoCam;
+        const aspect = viewport.clientWidth / Math.max(1, viewport.clientHeight);
+        perspCam.aspect = aspect;
+        perspCam.fov = c.fov;
+        perspCam.updateProjectionMatrix();
+        updateOrthoFrustum(aspect);
+
+        const pDist = c.mode === 'persp'
+            ? sceneInfo.radius / Math.tan(THREE.MathUtils.degToRad(c.fov / 2)) * 1.25
+            : dist;
+        syncingCam = true;
+        activeCam.position.copy(sphericalPos(c.azimuth, c.elevation, pDist, target));
+        activeCam.lookAt(target);
+
+        controls.object = activeCam;
+        controls.target.copy(target);
+        controls.update();
+        syncingCam = false;
+    }
+
+    controls.addEventListener('change', () => {
+        if (syncingCam) return;
+        const off = activeCam.position.clone().sub(controls.target);
+        const dist = off.length();
+        const el2 = THREE.MathUtils.radToDeg(Math.asin(Math.max(-1, Math.min(1, off.y / dist))));
+        const az = THREE.MathUtils.radToDeg(Math.atan2(off.x, off.z));
+        state.camera.azimuth = Math.round(az * 10) / 10;
+        state.camera.elevation = Math.round(el2 * 10) / 10;
+        ui.camAz.value = String(state.camera.azimuth);
+        ui.camEl.value = String(state.camera.elevation);
+    });
+
+    /* ========================================================
+       6. Lighting
+       ======================================================== */
+    interface LightPreset {
+        key: number; ambient: number; azimuth: number; elevation: number;
+        shadowOpacity: number; shadowSoftness: number; fill: number; rim: number;
+    }
+    const LIGHT_PRESETS: Record<string, LightPreset> = {
+        studio:     { key: 2.4, ambient: 1.1, azimuth: 38, elevation: 55, shadowOpacity: 0.35, shadowSoftness: 4, fill: 0.55, rim: 0 },
+        daylight:   { key: 3.2, ambient: 1.5, azimuth: 55, elevation: 62, shadowOpacity: 0.45, shadowSoftness: 2, fill: 0.35, rim: 0 },
+        softbox:    { key: 1.2, ambient: 2.0, azimuth: 20, elevation: 65, shadowOpacity: 0.18, shadowSoftness: 9, fill: 0.7, rim: 0 },
+        threepoint: { key: 2.6, ambient: 0.8, azimuth: 45, elevation: 50, shadowOpacity: 0.4, shadowSoftness: 4, fill: 0.9, rim: 1.2 }
+    };
+
+    function updateLightRig() {
+        const L = state.lighting;
+        const target = sceneInfo.center;
+        const dist = Math.max(4, sceneInfo.radius * 4);
+
+        hemi.intensity = L.ambient;
+        keyLight.intensity = L.key;
+        keyLight.position.copy(sphericalPos(L.azimuth, L.elevation, dist, target));
+        keyLight.target.position.copy(target);
+
+        const p = LIGHT_PRESETS[L.preset] || LIGHT_PRESETS.studio;
+        fillLight.intensity = p.fill;
+        fillLight.position.copy(sphericalPos(L.azimuth - 110, 30, dist, target));
+        rimLight.intensity = p.rim;
+        rimLight.position.copy(sphericalPos(L.azimuth + 160, 35, dist, target));
+
+        const ext = Math.max(1, sceneInfo.radius * 1.6);
+        const sc = keyLight.shadow.camera;
+        sc.left = -ext; sc.right = ext; sc.top = ext; sc.bottom = -ext;
+        sc.near = 0.1; sc.far = dist * 3;
+        sc.updateProjectionMatrix();
+        keyLight.shadow.radius = L.shadowSoftness;
+
+        groundMat.opacity = L.shadowOpacity;
+        ground.visible = L.groundShadow;
+    }
+
+    /* ========================================================
+       7. Background
+       ======================================================== */
+    function applyBackground() {
+        const b = state.background;
+        if (b.mode === 'transparent') {
+            scene.background = null;
+        } else if (b.mode === 'color') {
+            scene.background = new THREE.Color(b.color);
+        } else {
+            scene.background = new THREE.Color('#ffffff');
+        }
+        ui.bgColorField.hidden = b.mode !== 'color';
+    }
+
+    /* ========================================================
+       8. Render loop & resize
+       ======================================================== */
+    function resize() {
+        const w = viewport.clientWidth, h = viewport.clientHeight;
+        if (!w || !h) return;
+        renderer.setSize(w, h, false);
+        const aspect = w / h;
+        perspCam.aspect = aspect;
+        perspCam.updateProjectionMatrix();
+        updateOrthoFrustum(aspect);
+    }
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(viewport);
+
+    let rafId = 0;
+    let running = true;
+    function animate() {
+        if (!running) return;
+        rafId = requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, activeCam);
+    }
+
+    /* ========================================================
+       9. Output — export to file, copy to clipboard
+       ======================================================== */
+
+    /** Resolution currently chosen in the Export panel, clamped to what a
+        canvas will actually encode. */
+    function exportDims(): [number, number] {
+        let w: number, h: number;
+        if (ui.expSize.value === 'custom') {
+            w = parseInt(ui.expW.value, 10) || 2400;
+            h = parseInt(ui.expH.value, 10) || 1800;
+        } else {
+            [w, h] = ui.expSize.value.split('x').map(Number);
+        }
+        return [
+            Math.min(8192, Math.max(256, w)),
+            Math.min(8192, Math.max(256, h))
+        ];
+    }
+
+    /**
+     * Renders one frame at `w × h`, hands the canvas to `extract`, then puts
+     * the viewport back exactly as it was.
+     *
+     * `extract` must read the canvas synchronously. `toDataURL` and `toBlob`
+     * both snapshot at call time, which is what makes this safe with
+     * `preserveDrawingBuffer: false`; anything that defers the read to a later
+     * task gets a cleared buffer.
+     */
+    function withHiResFrame<T>(w: number, h: number, alpha: boolean, extract: (c: HTMLCanvasElement) => T): T {
+        const prevBg = scene.background;
+        const prevPR = renderer.getPixelRatio();
+        const prevW = canvas.width / prevPR, prevH = canvas.height / prevPR;
+        const prevSelVis = selOutline.visible;
+        selOutline.visible = false;              // selection highlight never appears in output
+
+        if (alpha) scene.background = null;
+        else if (!scene.background) scene.background = new THREE.Color('#ffffff');
+
+        renderer.setPixelRatio(1);
+        renderer.setSize(w, h, false);
+        const aspect = w / h;
+        perspCam.aspect = aspect; perspCam.updateProjectionMatrix();
+        updateOrthoFrustum(aspect);
+        renderer.render(scene, activeCam);
+
+        try {
+            return extract(renderer.domElement);
+        } finally {
+            scene.background = prevBg;
+            selOutline.visible = prevSelVis;
+            renderer.setPixelRatio(prevPR);
+            renderer.setSize(prevW, prevH, false);
+            resize();
+        }
+    }
+
+    /** File stem from the project title, or a sane default. */
+    function fileStem(fallback: string) {
+        return (state.meta.name || fallback).replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '_') || fallback;
+    }
+
+    function downloadBlob(blob: Blob, name: string) {
+        const a = document.createElement('a');
+        a.download = name;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }
+
+    function exportImage() {
+        const fmt = ui.expFormat.value;                       // png | png-alpha | jpeg
+        const [w, h] = exportDims();
+        const mime = fmt === 'jpeg' ? 'image/jpeg' : 'image/png';
+        const url = withHiResFrame(w, h, fmt === 'png-alpha', c => c.toDataURL(mime, 0.95));
+
+        const a = document.createElement('a');
+        a.download = `${fileStem('cross-section')}_${w}x${h}.${fmt === 'jpeg' ? 'jpg' : 'png'}`;
+        a.href = url;
+        a.click();
+        toast(`Exported ${w} × ${h} ${fmt === 'jpeg' ? 'JPEG' : 'PNG'}`);
+    }
+
+    /* ---------------- Clipboard ----------------
+       The point of the studio is a figure that ends up in a report, and a
+       download puts two steps — find the file, insert it — between the render
+       and the document. `navigator.clipboard.write` removes both.
+
+       The write is issued synchronously inside the click handler and handed a
+       *promise* of the blob rather than the blob itself. That is what Safari's
+       user-activation check requires, and Chrome and Firefox accept the same
+       shape, so one code path serves all three.
+
+       PNG is the only image type the async clipboard reliably carries, so a
+       copy is always a PNG even when the Export format says JPEG. Alpha
+       survives the clipboard on Windows and macOS; a few consumers flatten it,
+       which the how-to says. */
+    const clipboardReady = () =>
+        typeof navigator !== 'undefined' &&
+        !!navigator.clipboard &&
+        typeof navigator.clipboard.write === 'function' &&
+        typeof window.ClipboardItem === 'function' &&
+        window.isSecureContext;
+
+    let copyBusy = false;
+
+    /** Every copy affordance shows the same pending state, so it is obvious
+        that a 3600 × 2700 encode is under way whichever one was pressed. */
+    function setCopyBusy(busy: boolean) {
+        copyBusy = busy;
+        [ui.copy, ui.copyBg, ui.copyAlpha, ui.vpCopy, ui.vpCopyAlpha].forEach(b => {
+            b.disabled = busy;
+            b.classList.toggle('is-busy', busy);
+        });
+    }
+
+    function copyImage(alpha: boolean) {
+        if (copyBusy) return;
+        const [w, h] = exportDims();
+        const name = `${fileStem('cross-section')}_${w}x${h}.png`;
+        const label = alpha ? 'transparent PNG' : 'PNG';
+
+        // Render first: it is synchronous, so the blob promise is already in
+        // flight by the time `clipboard.write` is reached and the click is
+        // still the active user gesture.
+        const blobPromise = new Promise<Blob>((resolve, reject) => {
+            withHiResFrame(w, h, alpha, c => {
+                c.toBlob(b => (b ? resolve(b) : reject(new Error('PNG encoding failed'))), 'image/png');
+            });
+        });
+
+        const saveInstead = (why: string) => blobPromise
+            .then(b => { downloadBlob(b, name); toast(`${why} — saved the ${label} instead`); })
+            .catch(() => toast('Could not produce the image'));
+
+        if (!clipboardReady()) {
+            // No clipboard here (insecure origin, or a browser without the
+            // async clipboard). Don't lose the render.
+            setCopyBusy(true);
+            saveInstead('Clipboard unavailable').finally(() => setCopyBusy(false));
+            return;
+        }
+
+        setCopyBusy(true);
+        navigator.clipboard
+            .write([new ClipboardItem({ 'image/png': blobPromise })])
+            .then(() => toast(`Copied ${w} × ${h} ${label} to the clipboard`))
+            .catch(() => saveInstead('Clipboard refused the image'))
+            .finally(() => setCopyBusy(false));
+    }
+
+    /* ========================================================
+       10. Project save / load
+       ======================================================== */
+    function serializeProject() {
+        return {
+            app: 'cross-section-studio', version: 1,
+            savedAt: new Date().toISOString(),
+            meta: { ...state.meta },
+            section: { ...state.section },
+            camera: { ...state.camera },
+            lighting: { ...state.lighting },
+            background: { ...state.background },
+            layers: state.layers.map(l => ({ ...l }))
+        };
+    }
+
+    function saveProject() {
+        const blob = new Blob([JSON.stringify(serializeProject(), null, 2)], { type: 'application/json' });
+        downloadBlob(blob, fileStem('section') + '.pavement.json');
+        toast('Project saved');
+    }
+
+    function loadProject(data: any) {
+        if (!data || data.app !== 'cross-section-studio' || !Array.isArray(data.layers)) {
+            toast('Not a valid .pavement.json project'); return;
+        }
+        Object.assign(state.section, data.section || {});
+        Object.assign(state.camera, data.camera || {});
+        Object.assign(state.lighting, data.lighting || {});
+        Object.assign(state.background, data.background || {});
+        Object.assign(state.meta, data.meta || {});
+        state.layers = data.layers.map((l: any) => {
+            const nl = makeLayer(l.name || 'Layer', MATERIALS[l.material] ? l.material : 'subgrade', l.thickness || 0, l.subgrade ? { subgrade: true } : {});
+            (['visible', 'locked', 'tint', 'brightness', 'roughness', 'texScale', 'normalStrength'] as const)
+                .forEach(k => { if (l[k] !== undefined) (nl as any)[k] = l[k]; });
+            return nl;
+        });
+        if (!state.layers.some(l => l.subgrade)) {
+            state.layers.push(makeLayer('Subgrade (infinite)', 'subgrade', 0, { subgrade: true }));
+        }
+        selectedId = state.layers[0].id;
+        syncAllInputs();
+        rebuildSection();
+        applyBackground();
+        applyCameraFromState(true);
+        renderLayerRows();
+        renderMaterialEditor();
+        pushHistory();
+        toast('Project loaded');
+    }
+
+    /* ========================================================
+       11. Undo / redo
+       ======================================================== */
+    const history = { stack: [] as string[], index: -1, max: 60 };
+
+    function snapshot() {
+        return JSON.stringify({
+            section: state.section, layers: state.layers,
+            lighting: state.lighting, background: state.background
+        });
+    }
+
+    function pushHistory() {
+        const snap = snapshot();
+        if (history.stack[history.index] === snap) return;
+        history.stack = history.stack.slice(0, history.index + 1);
+        history.stack.push(snap);
+        if (history.stack.length > history.max) history.stack.shift();
+        history.index = history.stack.length - 1;
+        updateUndoButtons();
+    }
+
+    function restore(snap: string) {
+        const d = JSON.parse(snap);
+        Object.assign(state.section, d.section);
+        Object.assign(state.lighting, d.lighting);
+        Object.assign(state.background, d.background);
+        state.layers = d.layers;
+        if (!state.layers.some(l => l.id === selectedId)) selectedId = state.layers[0] && state.layers[0].id;
+        syncAllInputs();
+        rebuildSection();
+        applyBackground();
+        renderLayerRows();
+        renderMaterialEditor();
+    }
+
+    function undo() { if (history.index > 0) { history.index--; restore(history.stack[history.index]); updateUndoButtons(); } }
+    function redo() { if (history.index < history.stack.length - 1) { history.index++; restore(history.stack[history.index]); updateUndoButtons(); } }
+
+    function updateUndoButtons() {
+        ui.undo.disabled = history.index <= 0;
+        ui.redo.disabled = history.index >= history.stack.length - 1;
+    }
+
+    /* ========================================================
+       12. UI
+       ======================================================== */
+    const el = <T extends HTMLElement>(id: string) => root.querySelector('#' + id) as T;
+    const ui = {
+        template: el<HTMLSelectElement>('xs-template'),
+        undo: el<HTMLButtonElement>('xs-undo'), redo: el<HTMLButtonElement>('xs-redo'),
+        open: el<HTMLButtonElement>('xs-open'), save: el<HTMLButtonElement>('xs-save'),
+        fileInput: el<HTMLInputElement>('xs-file-input'),
+        reset: el<HTMLButtonElement>('xs-reset'), export: el<HTMLButtonElement>('xs-export'),
+        copy: el<HTMLButtonElement>('xs-copy'),
+        copyBg: el<HTMLButtonElement>('xs-copy-bg'), copyAlpha: el<HTMLButtonElement>('xs-copy-alpha'),
+        vpCopy: el<HTMLButtonElement>('xs-vp-copy'), vpCopyAlpha: el<HTMLButtonElement>('xs-vp-copy-alpha'),
+        secWidth: el<HTMLInputElement>('xs-sec-width'), secLength: el<HTMLInputElement>('xs-sec-length'),
+        secRecessX: el<HTMLInputElement>('xs-sec-recess-x'), secRecessZ: el<HTMLInputElement>('xs-sec-recess-z'),
+        secSubgrade: el<HTMLInputElement>('xs-sec-subgrade'),
+        camProj: el<HTMLSelectElement>('xs-cam-proj'), camAz: el<HTMLInputElement>('xs-cam-az'),
+        camEl: el<HTMLInputElement>('xs-cam-el'), camFov: el<HTMLInputElement>('xs-cam-fov'),
+        camIso: el<HTMLButtonElement>('xs-cam-iso'), camFront: el<HTMLButtonElement>('xs-cam-front'),
+        camFit: el<HTMLButtonElement>('xs-cam-fit'),
+        lightPreset: el<HTMLSelectElement>('xs-light-preset'), lightKey: el<HTMLInputElement>('xs-light-key'),
+        lightAmb: el<HTMLInputElement>('xs-light-amb'), lightAz: el<HTMLInputElement>('xs-light-az'),
+        lightEl: el<HTMLInputElement>('xs-light-el'),
+        shadowOp: el<HTMLInputElement>('xs-shadow-op'), shadowSoft: el<HTMLInputElement>('xs-shadow-soft'),
+        groundShadow: el<HTMLInputElement>('xs-ground-shadow'),
+        bgMode: el<HTMLSelectElement>('xs-bg-mode'), bgColor: el<HTMLInputElement>('xs-bg-color'),
+        bgColorField: el<HTMLDivElement>('xs-bg-color-field'),
+        expFormat: el<HTMLSelectElement>('xs-exp-format'), expSize: el<HTMLSelectElement>('xs-exp-size'),
+        expCustom: el<HTMLDivElement>('xs-exp-custom'),
+        expW: el<HTMLInputElement>('xs-exp-w'), expH: el<HTMLInputElement>('xs-exp-h'),
+        metaName: el<HTMLInputElement>('xs-meta-name'), metaAuthor: el<HTMLInputElement>('xs-meta-author'),
+        metaNotes: el<HTMLTextAreaElement>('xs-meta-notes'),
+        layerRows: el<HTMLDivElement>('xs-layer-rows'), layersTotal: el<HTMLSpanElement>('xs-layers-total'),
+        addLayer: el<HTMLButtonElement>('xs-add-layer'),
+        matGrid: el<HTMLDivElement>('xs-mat-grid'), selTag: el<HTMLSpanElement>('xs-sel-tag'),
+        matTint: el<HTMLInputElement>('xs-mat-tint'), matTintReset: el<HTMLButtonElement>('xs-mat-tint-reset'),
+        matBright: el<HTMLInputElement>('xs-mat-bright'), matRough: el<HTMLInputElement>('xs-mat-rough'),
+        matScale: el<HTMLInputElement>('xs-mat-scale'), matNormal: el<HTMLInputElement>('xs-mat-normal'),
+        matReset: el<HTMLButtonElement>('xs-mat-reset'),
+        hud: el<HTMLDivElement>('xs-hud'), toastWrap: el<HTMLDivElement>('xs-toast-wrap')
+    };
+
+    let selectedId: string | null = null;
+    const selectedLayer = () => state.layers.find(l => l.id === selectedId) || null;
+
+    /** Layer names are free text and the rows are built with innerHTML.
+        Escaping is the difference between a name and a script tag. */
+    function esc(s: string) {
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function toast(msg: string) {
+        const t = document.createElement('div');
+        t.className = 'xs-toast';
+        t.setAttribute('role', 'status');
+        t.textContent = msg;
+        ui.toastWrap.appendChild(t);
+        setTimeout(() => t.remove(), 2600);
+    }
+
+    function updateHud() {
+        const s = state.section;
+        ui.hud.textContent = `W ${s.width} × L ${s.length} × D ${sceneInfo.totalDepth} mm`;
+        const engDepth = state.layers.reduce((a, l) => a + (l.subgrade ? 0 : l.thickness), 0);
+        ui.layersTotal.textContent = `Σ ${engDepth} mm above subgrade`;
+    }
+
+    function syncAllInputs() {
+        const s = state.section, c = state.camera, L = state.lighting, b = state.background;
+        ui.secWidth.value = String(s.width); ui.secLength.value = String(s.length);
+        ui.secRecessX.value = String(s.recessX); ui.secRecessZ.value = String(s.recessZ);
+        ui.secSubgrade.value = String(s.subgradeDisplay);
+        ui.camProj.value = c.mode; ui.camAz.value = String(c.azimuth);
+        ui.camEl.value = String(c.elevation); ui.camFov.value = String(c.fov);
+        ui.camFov.disabled = c.mode !== 'persp';
+        ui.lightPreset.value = L.preset; ui.lightKey.value = String(L.key); ui.lightAmb.value = String(L.ambient);
+        ui.lightAz.value = String(L.azimuth); ui.lightEl.value = String(L.elevation);
+        ui.shadowOp.value = String(L.shadowOpacity); ui.shadowSoft.value = String(L.shadowSoftness);
+        ui.groundShadow.checked = L.groundShadow;
+        ui.bgMode.value = b.mode; ui.bgColor.value = b.color;
+        ui.bgColorField.hidden = b.mode !== 'color';
+        ui.metaName.value = state.meta.name; ui.metaAuthor.value = state.meta.author; ui.metaNotes.value = state.meta.notes;
+    }
+
+    /* ---------------- Layer manager ---------------- */
+    function materialOptionsHtml(current: string) {
+        return MATERIAL_GROUPS.map(g =>
+            `<optgroup label="${esc(g.label)}">` +
+            g.keys.map(k => `<option value="${k}" ${k === current ? 'selected' : ''}>${esc(MATERIALS[k].name)}</option>`).join('') +
+            '</optgroup>').join('');
+    }
+
+    function renderLayerRows() {
+        ui.layerRows.innerHTML = '';
+        state.layers.forEach((layer, idx) => {
+            if (idx > 0) {
+                const ins = document.createElement('div');
+                ins.className = 'xs-layer-insert';
+                ins.dataset.idx = String(idx);
+                ins.innerHTML = `<button class="xs-insert-btn" type="button" title="Insert a layer here">${iconHtml('plus')}<span>Insert layer</span></button>`;
+                ui.layerRows.appendChild(ins);
+            }
+            const def = MATERIALS[layer.material] || MATERIALS.subgrade;
+            const texs = generateMaterial(layer.material in MATERIALS ? layer.material : 'subgrade');
+            const row = document.createElement('div');
+            row.className = 'xs-layer-row'
+                + (layer.id === selectedId ? ' is-selected' : '')
+                + (!layer.visible ? ' is-hidden' : '')
+                + (layer.subgrade ? ' is-subgrade' : '');
+            row.dataset.id = layer.id;
+
+            const isFirst = idx === 0;
+            const isLastMovable = idx >= state.layers.length - 2; // can't move below subgrade
+            const lockAttr = layer.locked ? 'disabled' : '';
+
+            row.innerHTML = `
+                <div class="xs-layer-move">
+                    <button type="button" title="Move up" aria-label="Move layer up" data-act="up" ${isFirst || layer.subgrade ? 'disabled' : ''}>${iconHtml('chevronUp')}</button>
+                    <button type="button" title="Move down" aria-label="Move layer down" data-act="down" ${isLastMovable || layer.subgrade ? 'disabled' : ''}>${iconHtml('chevronDown')}</button>
+                </div>
+                <div class="xs-layer-swatch" style="background-image:url('${texs.thumbUrl}')"></div>
+                <div class="xs-layer-name">
+                    <input type="text" value="${esc(layer.name)}" aria-label="Layer name" data-act="rename" ${lockAttr}>
+                    <span class="xs-layer-spec">${esc(def.spec)}</span>
+                </div>
+                <div class="xs-layer-mat-cell">
+                    <select class="xs-select" aria-label="Layer material" data-act="material" ${lockAttr} style="max-width:100%">
+                        ${materialOptionsHtml(layer.material)}
+                    </select>
+                </div>
+                <div class="xs-layer-thick">
+                    ${layer.subgrade
+                        ? `<span class="xs-inf" title="Infinite — display thickness set in Section Geometry">${iconHtml('infinity')}</span> <span>${state.section.subgradeDisplay} mm*</span>`
+                        : `<input type="number" class="xs-num" aria-label="Layer thickness in millimetres" data-act="thickness" value="${layer.thickness}" min="5" max="3000" step="5" ${lockAttr}> mm`}
+                </div>
+                <div class="xs-layer-actions">
+                    <button type="button" class="xs-icon-btn ${layer.visible ? 'is-active' : ''}" data-act="visible" title="${layer.visible ? 'Hide layer' : 'Show layer'}" aria-label="${layer.visible ? 'Hide layer' : 'Show layer'}">${iconHtml(layer.visible ? 'eye' : 'eyeOff')}</button>
+                    <button type="button" class="xs-icon-btn ${layer.locked ? 'is-active' : ''}" data-act="lock" title="${layer.locked ? 'Unlock layer' : 'Lock layer'}" aria-label="${layer.locked ? 'Unlock layer' : 'Lock layer'}">${iconHtml(layer.locked ? 'lock' : 'unlock')}</button>
+                    <button type="button" class="xs-icon-btn" data-act="dup" title="Duplicate layer" aria-label="Duplicate layer" ${layer.subgrade ? 'disabled' : ''}>${iconHtml('copy')}</button>
+                    <button type="button" class="xs-icon-btn xs-icon-btn--danger" data-act="del" title="Delete layer" aria-label="Delete layer" ${layer.subgrade || layer.locked ? 'disabled' : ''}>${iconHtml('trash')}</button>
+                </div>`;
+            ui.layerRows.appendChild(row);
+        });
+        updateHud();
+    }
+
+    ui.layerRows.addEventListener('click', e => {
+        const target = e.target as HTMLElement;
+        const insBtn = target.closest('.xs-insert-btn');
+        if (insBtn) {
+            const at = parseInt((insBtn.parentElement as HTMLElement).dataset.idx as string, 10);
+            const nl = makeLayer('New Layer', 'p209', 150);
+            state.layers.splice(at, 0, nl);
+            selectedId = nl.id;
+            rebuildSection(); renderLayerRows(); renderMaterialEditor(); pushHistory();
+            return;
+        }
+        const row = target.closest('.xs-layer-row') as HTMLElement | null;
+        if (!row) return;
+        const layer = state.layers.find(l => l.id === row.dataset.id);
+        if (!layer) return;
+        const btn = target.closest('[data-act]') as HTMLElement | null;
+        const act = btn && btn.dataset.act;
+
+        if (!act || act === 'rename' || act === 'thickness' || act === 'material') {
+            if (selectedId !== layer.id) { selectedId = layer.id; renderLayerRows(); renderMaterialEditor(); }
+            return;
+        }
+
+        const idx = state.layers.indexOf(layer);
+        switch (act) {
+            case 'up':
+                if (idx > 0 && !layer.subgrade) { state.layers.splice(idx, 1); state.layers.splice(idx - 1, 0, layer); }
+                break;
+            case 'down':
+                if (idx < state.layers.length - 2 && !layer.subgrade) { state.layers.splice(idx, 1); state.layers.splice(idx + 1, 0, layer); }
+                break;
+            case 'visible': layer.visible = !layer.visible; break;
+            case 'lock': layer.locked = !layer.locked; break;
+            case 'dup': {
+                if (layer.subgrade || layer.locked) return;
+                const copy = makeLayer(layer.name + ' (copy)', layer.material, layer.thickness);
+                (['tint', 'brightness', 'roughness', 'texScale', 'normalStrength'] as const)
+                    .forEach(k => { (copy as any)[k] = layer[k]; });
+                state.layers.splice(idx + 1, 0, copy);
+                break;
+            }
+            case 'del':
+                if (layer.subgrade || layer.locked) return;
+                state.layers.splice(idx, 1);
+                if (selectedId === layer.id) selectedId = state.layers[0] && state.layers[0].id;
+                break;
+            default: return;
+        }
+        selectedId = act === 'del' ? selectedId : layer.id;
+        rebuildSection();
+        renderLayerRows();
+        renderMaterialEditor();
+        pushHistory();
+    });
+
+    ui.layerRows.addEventListener('change', e => {
+        const target = e.target as HTMLInputElement | HTMLSelectElement;
+        const row = target.closest('.xs-layer-row') as HTMLElement | null;
+        if (!row) return;
+        const layer = state.layers.find(l => l.id === row.dataset.id);
+        if (!layer || layer.locked) return;
+        const act = target.dataset.act;
+        if (act === 'rename') { layer.name = target.value.trim() || layer.name; }
+        else if (act === 'thickness') {
+            const v = parseFloat(target.value);
+            if (v > 0) layer.thickness = v;
+        }
+        else if (act === 'material') {
+            layer.material = target.value;
+            layer.roughness = null; layer.normalStrength = null; // re-adopt preset
+        }
+        else return;
+        selectedId = layer.id;
+        rebuildSection();
+        renderLayerRows();
+        renderMaterialEditor();
+        pushHistory();
+    });
+
+    ui.addLayer.addEventListener('click', () => {
+        const nl = makeLayer('New Layer', 'p209', 150);
+        state.layers.unshift(nl);
+        selectedId = nl.id;
+        rebuildSection(); renderLayerRows(); renderMaterialEditor(); pushHistory();
+    });
+
+    /* ---------------- Viewport click-to-select ---------------- */
+    const raycaster = new THREE.Raycaster();
+    let pointerDownAt: { x: number; y: number } | null = null;
+    canvas.addEventListener('pointerdown', e => {
+        if (e.button === 0) pointerDownAt = { x: e.clientX, y: e.clientY };
+    });
+    canvas.addEventListener('pointerup', e => {
+        if (!pointerDownAt || e.button !== 0) { pointerDownAt = null; return; }
+        const dx = e.clientX - pointerDownAt.x, dy = e.clientY - pointerDownAt.y;
+        pointerDownAt = null;
+        if (dx * dx + dy * dy > 36) return;              // treat as orbit drag, not a click
+        const rect = canvas.getBoundingClientRect();
+        const ndc = new THREE.Vector2(
+            ((e.clientX - rect.left) / rect.width) * 2 - 1,
+            -((e.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        raycaster.setFromCamera(ndc, activeCam as THREE.PerspectiveCamera);
+        const hit = raycaster.intersectObjects(sectionGroup ? sectionGroup.children : [], false)
+            .find(hh => (hh.object as THREE.Mesh).isMesh && hh.object.userData.layerId);
+        if (!hit) return;
+        if (selectedId !== hit.object.userData.layerId) {
+            selectedId = hit.object.userData.layerId;
+            renderLayerRows();
+            renderMaterialEditor();
+        }
+    });
+
+    /* ---------------- Material editor ---------------- */
+    function buildMaterialGrid() {
+        ui.matGrid.innerHTML = '';
+        const pending: [string, HTMLElement][] = [];
+        MATERIAL_GROUPS.forEach(group => {
+            const lab = document.createElement('div');
+            lab.className = 'xs-mat-group-label';
+            lab.textContent = group.label;
+            ui.matGrid.appendChild(lab);
+            group.keys.forEach(key => {
+                const tile = document.createElement('button');
+                tile.type = 'button';
+                tile.className = 'xs-mat-tile';
+                tile.dataset.key = key;
+                tile.innerHTML = `
+                    <span class="xs-mat-thumb"></span>
+                    <span class="xs-mat-label">${esc(MATERIALS[key].name)}</span>`;
+                tile.title = MATERIALS[key].spec;
+                tile.addEventListener('click', () => {
+                    const layer = selectedLayer();
+                    if (!layer || layer.locked) { toast(layer ? 'Layer is locked' : 'Select a layer first'); return; }
+                    layer.material = key;
+                    layer.roughness = null; layer.normalStrength = null;
+                    rebuildSection(); renderLayerRows(); renderMaterialEditor(); pushHistory();
+                });
+                ui.matGrid.appendChild(tile);
+                pending.push([key, tile.querySelector('.xs-mat-thumb') as HTMLElement]);
+            });
+        });
+        // generate thumbnails one per tick so 18 hi-res materials don't block boot
+        (function fillNext() {
+            if (!pending.length || disposed) return;
+            const next = pending.shift() as [string, HTMLElement];
+            next[1].style.backgroundImage = `url('${generateMaterial(next[0]).thumbUrl}')`;
+            setTimeout(fillNext, 0);
+        })();
+    }
+
+    function renderMaterialEditor() {
+        const layer = selectedLayer();
+        updateSelectionOutline();
+        ui.matGrid.querySelectorAll('.xs-mat-tile').forEach(t =>
+            t.classList.toggle('is-active', !!layer && (t as HTMLElement).dataset.key === layer.material));
+        if (!layer) { ui.selTag.textContent = 'No layer selected'; return; }
+        const def = MATERIALS[layer.material] || MATERIALS.subgrade;
+        ui.selTag.textContent = layer.name;
+        ui.matTint.value = layer.tint || '#ffffff';
+        ui.matBright.value = String(layer.brightness != null ? layer.brightness : 1);
+        ui.matRough.value = String(layer.roughness != null ? layer.roughness : def.rough);
+        ui.matScale.value = String(layer.texScale != null ? layer.texScale : 1);
+        ui.matNormal.value = String(layer.normalStrength != null ? layer.normalStrength : def.normal);
+    }
+
+    function onMatPropChange(mutator: (l: Layer) => void) {
+        const layer = selectedLayer();
+        if (!layer) return;
+        if (layer.locked) { toast('Layer is locked'); return; }
+        mutator(layer);
+        rebuildSection();
+        pushHistoryDebounced();
+    }
+
+    ui.matTint.addEventListener('input', () => onMatPropChange(l => { l.tint = ui.matTint.value; }));
+    ui.matTintReset.addEventListener('click', () => onMatPropChange(l => { l.tint = null; ui.matTint.value = '#ffffff'; }));
+    ui.matBright.addEventListener('input', () => onMatPropChange(l => { l.brightness = parseFloat(ui.matBright.value); }));
+    ui.matRough.addEventListener('input', () => onMatPropChange(l => { l.roughness = parseFloat(ui.matRough.value); }));
+    ui.matScale.addEventListener('input', () => onMatPropChange(l => { l.texScale = parseFloat(ui.matScale.value); }));
+    ui.matNormal.addEventListener('input', () => onMatPropChange(l => { l.normalStrength = parseFloat(ui.matNormal.value); }));
+    ui.matReset.addEventListener('click', () => onMatPropChange(l => {
+        l.tint = null; l.brightness = 1; l.roughness = null; l.texScale = 1; l.normalStrength = null;
+        renderMaterialEditor();
+    }));
+
+    let historyTimer: ReturnType<typeof setTimeout> | null = null;
+    function pushHistoryDebounced() {
+        if (historyTimer) clearTimeout(historyTimer);
+        historyTimer = setTimeout(pushHistory, 450);
+    }
+
+    /* ---------------- Section geometry inputs ---------------- */
+    function bindSectionInput(input: HTMLInputElement, key: keyof typeof state.section) {
+        input.addEventListener('change', () => {
+            const v = parseFloat(input.value);
+            if (isNaN(v)) { input.value = String(state.section[key]); return; }
+            state.section[key] = v;
+            rebuildSection();
+            renderLayerRows();
+            pushHistory();
+        });
+    }
+    bindSectionInput(ui.secWidth, 'width');
+    bindSectionInput(ui.secLength, 'length');
+    bindSectionInput(ui.secRecessX, 'recessX');
+    bindSectionInput(ui.secRecessZ, 'recessZ');
+    bindSectionInput(ui.secSubgrade, 'subgradeDisplay');
+
+    /* ---------------- Camera inputs ---------------- */
+    ui.camProj.addEventListener('change', () => {
+        state.camera.mode = ui.camProj.value;
+        ui.camFov.disabled = state.camera.mode !== 'persp';
+        applyCameraFromState(false);
+    });
+    ui.camAz.addEventListener('input', () => { state.camera.azimuth = parseFloat(ui.camAz.value); applyCameraFromState(false); });
+    ui.camEl.addEventListener('input', () => { state.camera.elevation = parseFloat(ui.camEl.value); applyCameraFromState(false); });
+    ui.camFov.addEventListener('input', () => { state.camera.fov = parseFloat(ui.camFov.value); applyCameraFromState(false); });
+    ui.camIso.addEventListener('click', () => {
+        state.camera.azimuth = 45; state.camera.elevation = 35.264; state.camera.mode = ui.camProj.value;
+        ui.camAz.value = '45'; ui.camEl.value = '35.264';
+        applyCameraFromState(true);
+    });
+    ui.camFront.addEventListener('click', () => {
+        state.camera.azimuth = 0; state.camera.elevation = 10;
+        ui.camAz.value = '0'; ui.camEl.value = '10';
+        applyCameraFromState(true);
+    });
+    ui.camFit.addEventListener('click', () => applyCameraFromState(true));
+
+    /* ---------------- Lighting inputs ---------------- */
+    ui.lightPreset.addEventListener('change', () => {
+        const p = LIGHT_PRESETS[ui.lightPreset.value];
+        Object.assign(state.lighting, {
+            preset: ui.lightPreset.value,
+            key: p.key, ambient: p.ambient, azimuth: p.azimuth, elevation: p.elevation,
+            shadowOpacity: p.shadowOpacity, shadowSoftness: p.shadowSoftness
+        });
+        syncAllInputs();
+        updateLightRig();
+        pushHistory();
+    });
+    function bindLightInput(input: HTMLInputElement, key: keyof typeof state.lighting, isCheck?: boolean) {
+        input.addEventListener(isCheck ? 'change' : 'input', () => {
+            (state.lighting as any)[key] = isCheck ? input.checked : parseFloat(input.value);
+            updateLightRig();
+            pushHistoryDebounced();
+        });
+    }
+    bindLightInput(ui.lightKey, 'key');
+    bindLightInput(ui.lightAmb, 'ambient');
+    bindLightInput(ui.lightAz, 'azimuth');
+    bindLightInput(ui.lightEl, 'elevation');
+    bindLightInput(ui.shadowOp, 'shadowOpacity');
+    bindLightInput(ui.shadowSoft, 'shadowSoftness');
+    bindLightInput(ui.groundShadow, 'groundShadow', true);
+
+    /* ---------------- Background ---------------- */
+    ui.bgMode.addEventListener('change', () => { state.background.mode = ui.bgMode.value; applyBackground(); pushHistory(); });
+    ui.bgColor.addEventListener('input', () => { state.background.color = ui.bgColor.value; state.background.mode = 'color'; ui.bgMode.value = 'color'; applyBackground(); pushHistoryDebounced(); });
+
+    /* ---------------- Export & copy ---------------- */
+    ui.expSize.addEventListener('change', () => { ui.expCustom.hidden = ui.expSize.value !== 'custom'; });
+    ui.export.addEventListener('click', exportImage);
+
+    // Toolbar copy follows the Export format: "PNG (transparent)" copies with
+    // alpha, anything else copies over the current background.
+    ui.copy.addEventListener('click', () => {
+        if (ui.expFormat.value === 'jpeg') toast('Clipboard images are always PNG');
+        copyImage(ui.expFormat.value === 'png-alpha');
+    });
+    ui.copyBg.addEventListener('click', () => copyImage(false));
+    ui.vpCopy.addEventListener('click', () => copyImage(false));
+    ui.copyAlpha.addEventListener('click', () => copyImage(true));
+    ui.vpCopyAlpha.addEventListener('click', () => copyImage(true));
+
+    /* ---------------- Meta ---------------- */
+    ui.metaName.addEventListener('change', () => { state.meta.name = ui.metaName.value; });
+    ui.metaAuthor.addEventListener('change', () => { state.meta.author = ui.metaAuthor.value; });
+    ui.metaNotes.addEventListener('change', () => { state.meta.notes = ui.metaNotes.value; });
+
+    /* ---------------- Templates ---------------- */
+    function readUserTemplates(): Record<string, Template> {
+        try { return JSON.parse(localStorage.getItem(TEMPLATE_KEY) || '{}'); }
+        catch { return {}; }
+    }
+
+    function populateTemplates() {
+        ui.template.innerHTML = '<option value="" disabled selected>Templates…</option>';
+        const groups: Record<string, string[]> = {};
+        Object.keys(TEMPLATES).forEach(k => {
+            const g = TEMPLATES[k].group || 'Built-in';
+            (groups[g] = groups[g] || []).push(k);
+        });
+        Object.keys(groups).forEach(gName => {
+            const og = document.createElement('optgroup'); og.label = gName;
+            groups[gName].forEach(k => {
+                const o = document.createElement('option'); o.value = k; o.textContent = TEMPLATES[k].name;
+                og.appendChild(o);
+            });
+            ui.template.appendChild(og);
+        });
+
+        const saved = readUserTemplates();
+        const names = Object.keys(saved);
+        if (names.length) {
+            const gUser = document.createElement('optgroup'); gUser.label = 'My templates';
+            names.forEach(n => {
+                const o = document.createElement('option'); o.value = 'user:' + n; o.textContent = n;
+                gUser.appendChild(o);
+            });
+            ui.template.appendChild(gUser);
+        }
+        const oSave = document.createElement('option');
+        oSave.value = '__save__'; oSave.textContent = 'Save current as template…';
+        ui.template.appendChild(oSave);
+    }
+
+    ui.template.addEventListener('change', () => {
+        const v = ui.template.value;
+        ui.template.selectedIndex = 0;
+        if (!v) return;
+        if (v === '__save__') {
+            const name = prompt('Template name:');
+            if (!name) return;
+            const saved = readUserTemplates();
+            saved[name] = { name, layers: state.layers.filter(l => !l.subgrade).map(l => [l.name, l.material, l.thickness] as [string, string, number]) };
+            try { localStorage.setItem(TEMPLATE_KEY, JSON.stringify(saved)); }
+            catch { toast('Could not save the template'); return; }
+            populateTemplates();
+            toast(`Template "${name}" saved`);
+            return;
+        }
+        let tpl: Template | undefined;
+        if (v.startsWith('user:')) tpl = readUserTemplates()[v.slice(5)];
+        else tpl = TEMPLATES[v];
+        if (!tpl) return;
+        applyTemplate(tpl);
+        rebuildSection();
+        applyCameraFromState(true);
+        renderLayerRows();
+        renderMaterialEditor();
+        pushHistory();
+        toast(tpl.name + ' applied');
+    });
+
+    /* ---------------- Toolbar & shortcuts ---------------- */
+    ui.undo.addEventListener('click', undo);
+    ui.redo.addEventListener('click', redo);
+
+    /* Ctrl/⌘+Z, Ctrl+Y, and Ctrl/⌘+Alt+C to copy. Alt is in the copy shortcut
+       on purpose: plain Ctrl+C has to keep copying selected text, and
+       Ctrl+Shift+C opens the inspector in Chrome. */
+    function onKeydown(e: KeyboardEvent) {
+        const t = e.target as HTMLElement | null;
+        if (t && typeof t.matches === 'function' && t.matches('input, textarea, select')) return;
+        const mod = e.ctrlKey || e.metaKey;
+        if (!mod) return;
+        const k = e.key.toLowerCase();
+        if (e.altKey && k === 'c') { e.preventDefault(); copyImage(ui.expFormat.value === 'png-alpha'); }
+        else if (!e.altKey && !e.shiftKey && k === 'z') { e.preventDefault(); undo(); }
+        else if (!e.altKey && (k === 'y' || (e.shiftKey && k === 'z'))) { e.preventDefault(); redo(); }
+    }
+    document.addEventListener('keydown', onKeydown);
+
+    ui.save.addEventListener('click', saveProject);
+    ui.open.addEventListener('click', () => ui.fileInput.click());
+    ui.fileInput.addEventListener('change', () => {
+        const f = ui.fileInput.files && ui.fileInput.files[0];
+        if (!f) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            try { loadProject(JSON.parse(reader.result as string)); }
+            catch { toast('Could not parse project file'); }
+        };
+        reader.readAsText(f);
+        ui.fileInput.value = '';
+    });
+
+    ui.reset.addEventListener('click', () => {
+        if (!confirm('Reset the section, camera and lighting to defaults?')) return;
+        Object.assign(state.section, DEFAULTS.section);
+        Object.assign(state.camera, DEFAULTS.camera);
+        Object.assign(state.lighting, DEFAULTS.lighting);
+        Object.assign(state.background, DEFAULTS.background);
+        state.layers = defaultLayers();
+        selectedId = state.layers[0].id;
+        syncAllInputs();
+        rebuildSection();
+        applyBackground();
+        applyCameraFromState(true);
+        renderLayerRows();
+        renderMaterialEditor();
+        pushHistory();
+        toast('Reset to defaults');
+    });
+
+    /**
+     * Collapses the control panels on a handheld so the stack starts short.
+     *
+     * Every <details> ships open, which is right on a desktop where the panels
+     * are fixed columns beside the viewport and scroll on their own. Once the
+     * layout stacks they become some 2,000px of page between the viewport and
+     * the layer manager. Section Geometry stays open; the material panels do
+     * not, because the 18-tile library alone measured 1,097px and pushed the
+     * layer manager — the control the app is really driven from — a further
+     * screen and a half down.
+     *
+     * Runs once at boot and is not persisted: a panel opened by hand has to
+     * stay open for the session.
+     */
+    function collapsePanelsOnHandheld() {
+        if (!window.matchMedia || !window.matchMedia('(max-width: 719px)').matches) return;
+
+        root.querySelectorAll<HTMLDetailsElement>('.xs-left details').forEach((d, i) => { if (i > 0) d.open = false; });
+        root.querySelectorAll<HTMLDetailsElement>('.xs-right details').forEach(d => { d.open = false; });
+    }
+
+    /* ========================================================
+       13. Boot
+       ======================================================== */
+    let disposed = false;
+
+    state.layers = defaultLayers();
+    selectedId = state.layers[0].id;
+
+    buildMaterialGrid();
+    syncAllInputs();
+    resize();
+    rebuildSection();
+    applyBackground();
+    applyCameraFromState(true);
+    renderLayerRows();
+    renderMaterialEditor();
+    populateTemplates();
+    pushHistory();
+    collapsePanelsOnHandheld();
+    animate();
+
+    if (!clipboardReady()) {
+        const why = 'This browser will not put an image on the clipboard here — Copy saves a PNG file instead.';
+        [ui.copy, ui.copyBg, ui.copyAlpha, ui.vpCopy, ui.vpCopyAlpha].forEach(b => { b.title = why; });
+    }
+
+    /* ========================================================
+       14. Teardown
+       ======================================================== */
+    return function dispose() {
+        if (disposed) return;
+        disposed = true;
+        running = false;
+        cancelAnimationFrame(rafId);
+        if (historyTimer) clearTimeout(historyTimer);
+        document.removeEventListener('keydown', onKeydown);
+        resizeObserver.disconnect();
+        controls.dispose();
+        if (sectionGroup) { scene.remove(sectionGroup); disposeGroup(sectionGroup); sectionGroup = null; }
+        selOutline.geometry.dispose();
+        (selOutline.material as THREE.Material).dispose();
+        ground.geometry.dispose();
+        groundMat.dispose();
+        Object.keys(texCache).forEach(k => {
+            const t = texCache[k];
+            t.map.dispose(); t.normalMap.dispose(); t.roughnessMap.dispose();
+            delete texCache[k];
+        });
+        renderer.dispose();
+    };
+}
