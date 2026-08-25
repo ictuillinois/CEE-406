@@ -6,8 +6,18 @@
 // in every layer displace elastically as the load passes.
 // Static single frame under prefers-reduced-motion.
 import { tools } from '../data/tools';
+import { homeworks } from '../data/homeworks';
+import { chapters, appendices } from '../data/textbook';
+import { releasedToolCount, releasedHomeworkCount } from '../data/release';
 
 const base = import.meta.env.BASE_URL;
+
+// Every number below is counted, never typed. The hero read "20 live" while
+// two tools were live, because it printed tools.length — the size of the
+// catalogue, not the number a student can open. A masthead that overstates
+// what is behind it is worse than one that says nothing.
+const liveTools = releasedToolCount();
+const liveHw = releasedHomeworkCount();
 ---
 
 <section class="hero" aria-label="Course introduction">
@@ -17,30 +27,30 @@ const base = import.meta.env.BASE_URL;
   <div class="container hero-content">
     <h1 class="hero-title gsap-fade-up">Pavement Design&nbsp;I</h1>
     <p class="hero-sub gsap-fade-up">
-      From wheel load to layer thickness. Work each homework with its online tools,
-      read the textbook chapter behind it, and follow the stress path all the way
-      down to the subgrade.
+      From wheel load to layer thickness. Build the figure, draw the gear, follow the
+      stress path down to the subgrade — then work each homework with the tool that
+      was written for it, as the semester reaches it.
     </p>
     <div class="hero-actions gsap-fade-up">
-      <a href={`${base}homeworks/`} class="btn btn-primary">Browse homeworks</a>
-      <a href={`${base}textbook/`} class="btn btn-outline">Open the textbook</a>
+      <a href={`${base}tools/`} class="btn btn-primary">Open the tools</a>
+      <a href={`${base}homeworks/`} class="btn btn-outline">See the homework sequence</a>
     </div>
     <dl class="hero-stats gsap-fade-up">
       <div class="hero-stat">
+        <dt>Online tools</dt>
+        <dd>{liveTools} live<span class="hero-stat__of"> of {tools.length}</span></dd>
+      </div>
+      <div class="hero-stat">
         <dt>Homeworks</dt>
-        <dd>10</dd>
+        <dd>{liveHw} released<span class="hero-stat__of"> of {homeworks.length}</span></dd>
       </div>
       <div class="hero-stat">
         <dt>Textbook chapters</dt>
-        <dd>13 + 7</dd>
-      </div>
-      <div class="hero-stat">
-        <dt>Online tools</dt>
-        <dd>{tools.length} live</dd>
+        <dd>{chapters.length} + {appendices.length}</dd>
       </div>
       <div class="hero-stat">
         <dt>Instructor</dt>
-        <dd>Prof. Al-Qadi</dd>
+        <dd>Imad L. Al-Qadi</dd>
       </div>
     </dl>
   </div>
@@ -547,6 +557,14 @@ const base = import.meta.env.BASE_URL;
     letter-spacing: 0.07em;
     color: rgba(255, 255, 255, 0.35);
     margin-bottom: 0.15rem;
+  }
+
+  /* "of 20" rides quieter than the live count: the number that matters is
+     what a student can open today. */
+  .hero-stat__of {
+    font-weight: 400;
+    font-size: 0.82em;
+    opacity: 0.62;
   }
 
   .hero-stat dd {
