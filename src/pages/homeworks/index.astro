@@ -3,8 +3,10 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import LayerGlyph from '../../components/LayerGlyph.astro';
 import Icon from '../../components/Icon.astro';
 import { homeworks, phases } from '../../data/homeworks';
+import { homeworkLock, releasedHomeworkCount } from '../../data/release';
 
 const base = import.meta.env.BASE_URL;
+const liveCount = releasedHomeworkCount();
 const byPhase = phases
   .map(phase => ({ phase, items: homeworks.filter(h => h.phase === phase) }))
   .filter(g => g.items.length > 0);
@@ -23,6 +25,11 @@ const byPhase = phases
         how they carry load, and how they're designed. Every homework links the tools and
         chapters you need — start at the assignment, and everything else is one click away.
       </p>
+      <p class="hw-header__release">
+        {liveCount === 0
+          ? 'Assignments are released as the semester reaches them. The full sequence is listed below so you can see what is coming; each one opens on its release date.'
+          : `${liveCount} of ${homeworks.length} released so far — the rest open as the semester reaches them.`}
+      </p>
     </header>
 
     {byPhase.map(group => (
@@ -32,8 +39,16 @@ const byPhase = phases
           <span class="hw-phase__rule"></span>
         </div>
         <div class="hw-rows">
-          {group.items.map(hw => (
-            <a href={`${base}homeworks/${hw.id}/`} class="hw-row gsap-fade-up" data-phase={hw.phase}>
+          {group.items.map(hw => {
+            const lock = homeworkLock(hw.id);
+            const Row = lock.released ? 'a' : 'div';
+            return (
+            <Row
+              href={lock.released ? `${base}homeworks/${hw.id}/` : undefined}
+              class:list={['hw-row', 'gsap-fade-up', { 'hw-row--locked': !lock.released }]}
+              data-phase={hw.phase}
+              aria-disabled={lock.released ? undefined : 'true'}
+            >
               <div class="hw-row__id">
                 <LayerGlyph focus={hw.layerFocus} />
                 <span class="hw-row__num">HW{hw.num}</span>
@@ -42,7 +57,9 @@ const byPhase = phases
                 <h2 class="hw-row__title">{hw.title}</h2>
                 <p class="hw-row__desc">{hw.overview}</p>
                 <div class="hw-row__meta">
-                  <span class="hw-row__due"><Icon name="calendar" size={13} />Due {hw.due}</span>
+                  {lock.released && (
+                    <span class="hw-row__due"><Icon name="calendar" size={13} />Due {hw.due}</span>
+                  )}
                   <span class="hw-row__fact"><Icon name="file" size={13} />{hw.problems.length} problems</span>
                   {hw.chapters.length > 0 && (
                     <span class="hw-row__fact">
@@ -50,14 +67,17 @@ const byPhase = phases
                       {hw.chapters.map(c => c.label.split(' — ')[0]).join(', ')}
                     </span>
                   )}
-                  {hw.tools.some(t => t.href) && (
+                  {lock.released && hw.tools.some(t => t.href) && (
                     <span class="hw-row__live"><Icon name="sliders" size={12} />tool online</span>
                   )}
                 </div>
               </div>
-              <Icon name="arrow-right" size={20} class="hw-row__arrow" />
-            </a>
-          ))}
+              {lock.released
+                ? <Icon name="arrow-right" size={20} class="hw-row__arrow" />
+                : <span class="hw-row__lock"><Icon name="lock" size={13} />{lock.label}</span>}
+            </Row>
+            );
+          })}
         </div>
       </section>
     ))}
@@ -201,6 +221,69 @@ const byPhase = phases
   :global([data-theme="dark"]) .hw-row:hover {
     border-color: var(--phase, var(--color-accent));
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ── Not released yet ───────────────────────────────────────────────────
+     A locked row is a <div>, not an <a>, so it is already unreachable by
+     keyboard and by click. The styling only has to make that legible: the
+     phase rail and the hover lift are removed, so nothing invites a click,
+     and the whole row is dimmed rather than greyed to a different hue —
+     it is the same row, just not open yet. */
+  /* NOTE: do NOT dim these with `opacity`. Every row carries .gsap-fade-up,
+     and GSAP animates opacity as an INLINE style — which beats any class rule
+     here, so the locked state silently rendered at full strength. `filter` is
+     not touched by that animation, and muting the text directly cannot be
+     overridden by it either. */
+  .hw-row--locked {
+    cursor: default;
+    border-style: dashed;
+    filter: grayscale(0.7);
+  }
+
+  .hw-row--locked .hw-row__title,
+  .hw-row--locked .hw-row__desc,
+  .hw-row--locked .hw-row__fact { color: var(--color-text-muted); }
+
+  .hw-row--locked .hw-row__id { filter: grayscale(1); opacity: 0.55; }
+
+  .hw-row--locked:hover {
+    border-color: var(--color-border);
+    transform: none;
+    box-shadow: none;
+  }
+
+  .hw-row--locked:hover::before { height: 0; opacity: 0; }
+
+  :global([data-theme="dark"]) .hw-row--locked:hover {
+    border-color: #2D3F59;
+    box-shadow: none;
+  }
+
+  .hw-row__lock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex: none;
+    align-self: center;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-text-muted);
+    border: 1px dashed var(--color-border);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .hw-header__release {
+    margin-top: 0.875rem;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid var(--color-accent);
+    border-radius: 0 8px 8px 0;
+    background: var(--color-surface-alt);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
   }
 
   .hw-row__id {

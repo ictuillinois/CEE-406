@@ -3,24 +3,36 @@ import DocsLayout from '../../layouts/DocsLayout.astro';
 import LayerGlyph from '../../components/LayerGlyph.astro';
 import { homeworks } from '../../data/homeworks';
 import { hwGuides } from '../../data/hwGuides';
+import { isHomeworkReleased } from '../../data/release';
 
+// Only released homeworks get a page. This is the gate that actually matters:
+// hiding the card on the index would still leave /homeworks/hw7/ reachable —
+// with its handout downloads — to anyone who typed the URL.
+//
+// getStaticPaths is hoisted and evaluated in its own scope, so it cannot close
+// over a const declared out here. It does its own filtering; `released` below
+// is for the sidebar and the prev/next links, which run in component scope.
 export function getStaticPaths() {
-  return homeworks.map(hw => ({ params: { id: hw.id }, props: { hw } }));
+  return homeworks
+    .filter(h => isHomeworkReleased(h.id))
+    .map(hw => ({ params: { id: hw.id }, props: { hw } }));
 }
+
+const released = homeworks.filter(h => isHomeworkReleased(h.id));
 
 const { hw } = Astro.props;
 const base = import.meta.env.BASE_URL;
 
-const sidebarModules = homeworks.map(h => ({
+const sidebarModules = released.map(h => ({
   id: h.id,
   label: h.title,
   icon: `text:HW${h.num}`,
   href: `${base}homeworks/${h.id}/`,
 }));
 
-const idx = homeworks.findIndex(h => h.id === hw.id);
-const prev = idx > 0 ? homeworks[idx - 1] : null;
-const next = idx < homeworks.length - 1 ? homeworks[idx + 1] : null;
+const idx = released.findIndex(h => h.id === hw.id);
+const prev = idx > 0 ? released[idx - 1] : null;
+const next = idx < released.length - 1 ? released[idx + 1] : null;
 
 const guide = hwGuides[hw.id];
 

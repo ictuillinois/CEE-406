@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { textbook, chapters, appendices } from '../../data/textbook';
+import { TEXTBOOK_LIBRARY_URL, TEXTBOOK_CITATION, isHomeworkReleased } from '../../data/release';
 
 export function getStaticPaths() {
   return textbook.map(entry => ({ params: { id: entry.id }, props: { entry } }));
@@ -14,7 +15,13 @@ const prev = idx > 0 ? textbook[idx - 1] : null;
 const next = idx < textbook.length - 1 ? textbook[idx + 1] : null;
 
 const heading = entry.kind === 'chapter' ? `Chapter ${entry.num}` : `Appendix ${entry.num}`;
-const pdfUrl = `${base}textbook/${entry.pdf}`;
+
+// This page used to embed public/textbook/<entry.pdf> in an <iframe> and offer
+// it for download. It no longer does, and the file no longer exists: Huang is a
+// copyrighted commercial textbook and this repository is public. What survives
+// is the part that was ours to publish — the citation, the course's own summary
+// of the chapter, and the homeworks it backs — plus a route to a legitimate
+// copy. See src/data/release.ts for the full reasoning.
 ---
 
 <BaseLayout
@@ -59,27 +66,46 @@ const pdfUrl = `${base}textbook/${entry.pdf}`;
           <p class="reader-head__desc">{entry.desc}</p>
         </div>
         <div class="reader-head__actions">
-          {entry.relatedHws.map(h => (
-            <a href={`${base}homeworks/${h.id}/`} class="reader-hw">{h.label}</a>
-          ))}
-          <a href={pdfUrl} target="_blank" rel="noopener" class="btn btn-primary reader-dl">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-            <span>Download PDF</span>
+          <a href={TEXTBOOK_LIBRARY_URL} target="_blank" rel="noopener" class="btn btn-primary reader-dl">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M4 5.5A2.5 2.5 0 016.5 3H12v17H6.5A2.5 2.5 0 004 22V5.5zM20 5.5A2.5 2.5 0 0017.5 3H12v17h5.5a2.5 2.5 0 012.5 2V5.5z"/></svg>
+            <span>Find this book in the Library</span>
           </a>
         </div>
       </header>
 
-      <div class="reader-frame-wrap">
-        <iframe
-          class="reader-frame"
-          src={`${pdfUrl}#view=FitH`}
-          title={`${heading} — ${entry.title}`}
-          loading="lazy"
-        ></iframe>
-        <p class="reader-fallback">
-          If the reader doesn't load, <a href={pdfUrl} target="_blank" rel="noopener">open the PDF directly</a>.
+      <section class="reader-source">
+        <h2 class="reader-source__h">Reading this chapter</h2>
+        <p class="reader-source__cite">{TEXTBOOK_CITATION}</p>
+        <p class="reader-source__body">
+          The course does not host the text. {heading} is part of a copyrighted
+          commercial book, and redistributing it is not something this site can do.
+          The University Library holds it — use the catalogue record below to borrow a
+          physical copy, check for an electronic edition, or place a request through
+          I-Share if every copy is out.
         </p>
-      </div>
+        <p class="reader-source__actions">
+          <a href={TEXTBOOK_LIBRARY_URL} target="_blank" rel="noopener" class="reader-source__link">
+            University of Illinois Library catalogue &rarr;
+          </a>
+        </p>
+        {entry.relatedHws.length > 0 && (
+          <p class="reader-source__hws">
+            <span class="reader-source__hws-label">Backs</span>
+            {entry.relatedHws.map(h => (
+              isHomeworkReleased(h.id)
+                ? <a href={`${base}homeworks/${h.id}/`} class="reader-hw">{h.label}</a>
+                : <span class="reader-hw reader-hw--locked" title="Not released yet">{h.label}</span>
+            ))}
+          </p>
+        )}
+
+        <p class="reader-source__note">
+          Everything on this page other than the citation is course material and stays
+          freely available. The <a href={`${base}tools/`}>online tools</a> implement the
+          same equations, with the chapter and equation numbers cited on each one, so you
+          can check your work against the book rather than substitute for it.
+        </p>
+      </section>
 
       <nav class="reader-nav" aria-label="Chapter navigation">
         {prev ? (
@@ -253,35 +279,93 @@ const pdfUrl = `${base}textbook/${entry.pdf}`;
 
   .reader-hw:hover { background: rgba(232, 119, 34, 0.15); }
 
+  /* A homework this chapter backs, that has not been released yet. It still
+     earns a chip — knowing the chapter matters later is useful — but it must
+     not look clickable, because its page does not exist. */
+  .reader-hw--locked {
+    color: var(--color-text-muted);
+    background: transparent;
+    border-color: var(--color-border);
+    border-style: dashed;
+    cursor: default;
+  }
+  .reader-hw--locked:hover { background: transparent; }
+
   .reader-dl {
     font-size: 0.8125rem;
     padding: 0.5rem 0.9rem;
   }
 
-  /* ── PDF frame ── */
-  .reader-frame-wrap {
+  /* ── Where to get the book ──────────────────────────────────────────────
+     This block replaces the PDF iframe. It is deliberately a calm, ordinary
+     content card and not a warning banner: a student arriving here has done
+     nothing wrong, and the useful information is the catalogue link, not an
+     apology. */
+  .reader-source {
     border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
     border-radius: 10px;
-    overflow: hidden;
     background: var(--color-surface-alt);
+    padding: 1.25rem 1.5rem;
   }
 
-  .reader-frame {
-    display: block;
-    width: 100%;
-    height: min(78vh, 900px);
-    border: none;
+  .reader-source__h {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
   }
 
-  .reader-fallback {
-    margin: 0;
-    padding: 0.5rem 1rem;
-    font-size: 0.75rem;
+  .reader-source__cite {
+    margin: 0 0 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
     color: var(--color-text-muted);
-    border-top: 1px solid var(--color-border);
   }
 
-  .reader-fallback a {
+  .reader-source__body {
+    margin: 0 0 0.875rem;
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  .reader-source__actions { margin: 0 0 0.875rem; }
+
+  .reader-source__link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .reader-source__hws {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0 0 0.875rem;
+  }
+
+  .reader-source__hws-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin-right: 0.1rem;
+  }
+
+  .reader-source__note {
+    margin: 0;
+    padding-top: 0.875rem;
+    border-top: 1px dashed var(--color-border);
+    font-size: 0.8rem;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  .reader-source__note a {
     color: var(--color-accent);
     text-decoration: underline;
     text-underline-offset: 2px;

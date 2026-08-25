@@ -1,10 +1,18 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
+import Icon from '../../components/Icon.astro';
 import { tools, toolHref } from '../../data/tools';
+import { toolLock } from '../../data/release';
 
 const base = import.meta.env.BASE_URL;
-const live = tools;
+
+// Two lists, one source. A locked tool keeps its card — knowing the toolbox
+// exists is part of seeing the shape of the course — but it has no link, and
+// its page is not built at all (its index.astro is renamed _index.astro, which
+// Astro does not route). release.test.mjs asserts those two facts agree.
+const live = tools.filter(t => toolLock(t.slug).released);
+const locked = tools.filter(t => !toolLock(t.slug).released);
 ---
 
 <BaseLayout
@@ -21,6 +29,13 @@ const live = tools;
         in your browser — nothing to install, nothing to license — and the calculators are
         built to let you check hand calculations, not skip them.
       </p>
+      {locked.length > 0 && (
+        <p class="tools-header__release">
+          {live.length} of {tools.length} are open. The rest unlock alongside the homework
+          that needs them, so the toolbox grows with the course rather than arriving all at
+          once.
+        </p>
+      )}
     </header>
 
     <section class="tools-group">
@@ -31,10 +46,18 @@ const live = tools;
       </div>
       <div class="tools-list stagger-grid">
         {live.map(t => (
-          <a href={toolHref(base, t)} class="tl-card gsap-stagger" style={`--tool-color: ${t.color}`}>
-            <div class="tl-card__glyph" aria-hidden="true">
-              <Fragment set:html={t.glyph} />
-            </div>
+          <a href={toolHref(base, t)} class="tl-card tl-card--shot gsap-stagger" style={`--tool-color: ${t.color}`}>
+            {t.image
+              ? <div class="tl-card__shot">
+                  <img
+                    src={`${base}tools/${t.image}`}
+                    alt={t.imageAlt ?? ''}
+                    loading="lazy" decoding="async"
+                  />
+                </div>
+              : <div class="tl-card__glyph" aria-hidden="true">
+                  <Fragment set:html={t.glyph} />
+                </div>}
             <div class="tl-card__head">
               <span class="tl-card__name">{t.name}</span>
               <div class="tl-card__hws">
@@ -50,6 +73,36 @@ const live = tools;
         ))}
       </div>
     </section>
+
+    {locked.length > 0 && (
+      <section class="tools-group">
+        <div class="tools-group__label gsap-fade-up">
+          <span class="tools-locked-dot"></span>
+          <span>Unlocks later</span>
+          <span class="tools-group__rule"></span>
+        </div>
+        <div class="tools-list stagger-grid">
+          {locked.map(t => (
+            <div class="tl-card tl-card--locked gsap-stagger" style={`--tool-color: ${t.color}`} aria-disabled="true">
+              <div class="tl-card__glyph" aria-hidden="true">
+                <Fragment set:html={t.glyph} />
+              </div>
+              <div class="tl-card__head">
+                <span class="tl-card__name">{t.name}</span>
+                <div class="tl-card__hws">
+                  {t.hws.map(h => <span class="tl-card__hw">{h}</span>)}
+                </div>
+              </div>
+              <p class="tl-card__desc">{t.desc}</p>
+              <div class="tl-card__foot">
+                <span class="tl-card__ref">{t.ref}</span>
+                <span class="tl-card__locked"><Icon name="lock" size={12} />{toolLock(t.slug).label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
 
   </div>
 </BaseLayout>
@@ -111,10 +164,118 @@ const live = tools;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
   }
 
+  /* Hollow, where "live" is filled and glowing. Same size, same position, so
+     the two group headings read as one scale rather than two decorations. */
+  .tools-locked-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid var(--color-text-muted);
+    opacity: 0.7;
+  }
+
   .tools-group__rule {
     flex: 1;
     height: 1px;
     background: var(--color-border);
+  }
+
+  .tools-header__release {
+    margin-top: 0.875rem;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid var(--color-accent);
+    border-radius: 0 8px 8px 0;
+    background: var(--color-surface-alt);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  /* A locked tool card is a <div>: not focusable, not clickable. The dim is
+     what carries the state; the glyph keeps its colour so the card still
+     reads as that particular tool rather than as a grey placeholder. */
+  /* .gsap-stagger animates inline opacity on these, so the locked state uses
+     filter + muted text instead — see the note on .hw-row--locked. */
+  .tl-card--locked {
+    cursor: default;
+    border-style: dashed;
+    filter: grayscale(0.75);
+  }
+
+  .tl-card--locked .tl-card__name,
+  .tl-card--locked .tl-card__desc { color: var(--color-text-muted); }
+
+  .tl-card--locked .tl-card__glyph { opacity: 0.6; }
+
+  .tl-card--locked:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--color-border);
+  }
+
+  .tl-card__locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--color-text-muted);
+  }
+
+  /* A live tool with a screenshot leads with it — same capture the landing page
+     and the E-Labs site use. The card keeps its padding for the text but the
+     shot runs full-bleed to the card edge, so the image reads as the subject
+     rather than as an illustration inside a box. */
+  /* Two classes, not one: `.tl-card` sets `padding` as a shorthand and is
+     declared later in this sheet, so a single-class override loses to it and
+     the shot sat inset by 1.5rem instead of running to the card edge. */
+  .tl-card.tl-card--shot { padding-top: 0; padding-left: 0; padding-right: 0; }
+  .tl-card.tl-card--shot > :not(.tl-card__shot) { padding-left: 1.5rem; padding-right: 1.5rem; }
+
+  .tl-card__shot {
+    position: relative;
+    /* 16:9 sits between the two captures (1.66 and 1.91), so neither is
+       cropped much: the Gear3D render loses a little empty grid top and
+       bottom, the Cross-Section screenshot a sliver of each side rail.
+       A single ratio matters more than a perfect fit — two cards side by
+       side with different heights read as a mistake. */
+    aspect-ratio: 16 / 9;
+    margin-bottom: 1rem;
+    background: var(--color-surface-alt);
+    border-bottom: 1px solid var(--color-border);
+    overflow: hidden;
+  }
+
+  .tl-card__shot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tl-card--shot:hover .tl-card__shot img { transform: scale(1.035); }
+
+  .tl-card__shot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--tool-color, var(--color-accent)) 12%, transparent),
+      transparent 55%
+    );
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .tl-card--shot:hover .tl-card__shot::after { opacity: 0; }
+
+  :global([data-theme="dark"]) .tl-card__shot {
+    background: #0D1526;
+    border-bottom-color: #2D3F59;
   }
 
   .tools-list {

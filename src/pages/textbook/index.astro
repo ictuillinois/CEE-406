@@ -1,13 +1,14 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { chapters, appendices } from '../../data/textbook';
+import { TEXTBOOK_LIBRARY_URL, TEXTBOOK_CITATION } from '../../data/release';
 
 const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout
   title="Textbook · CEE 406"
-  description="Huang, Pavement Analysis and Design (2nd ed., 2004) — read the course textbook online, chapter by chapter."
+  description="The reading map for CEE 406 — what each chapter of Huang, Pavement Analysis and Design (2004) covers, which homeworks it backs, and where to borrow the book from the University Library."
 >
   <div class="container tb-page">
     <header class="tb-header gsap-fade-up">
@@ -15,10 +16,22 @@ const base = import.meta.env.BASE_URL;
       <h1>Pavement Analysis and Design</h1>
       <p class="tb-header__byline">Yang H. Huang &middot; 2nd edition, 2004 &middot; Pearson</p>
       <p class="tb-header__desc">
-        The complete textbook, one chapter per page. Each chapter opens in an embedded reader
-        with a download link, and points back to the homeworks that use it.
-        Provided for enrolled CEE 406 students only.
+        The reading map for the course: what each chapter covers and which homeworks it
+        backs. The book itself is not hosted here — it is a copyrighted commercial text,
+        and the University Library is where you get it.
       </p>
+      <div class="tb-header__source">
+        <p class="tb-header__cite">{TEXTBOOK_CITATION}</p>
+        <a href={TEXTBOOK_LIBRARY_URL} target="_blank" rel="noopener" class="btn btn-primary tb-header__cta">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M4 5.5A2.5 2.5 0 016.5 3H12v17H6.5A2.5 2.5 0 004 22V5.5zM20 5.5A2.5 2.5 0 0017.5 3H12v17h5.5a2.5 2.5 0 012.5 2V5.5z"/></svg>
+          <span>Find it in the University Library</span>
+        </a>
+        <p class="tb-header__note">
+          Borrow a copy, check for an electronic edition, or request it through I-Share if
+          every copy is out. The <a href={`${base}tools/`}>online tools</a> cite the chapter
+          and equation numbers they implement, so you can work alongside the book.
+        </p>
+      </div>
     </header>
 
     <section class="tb-group">
@@ -108,6 +121,45 @@ const base = import.meta.env.BASE_URL;
     font-size: 0.9375rem;
     line-height: 1.65;
     margin: 0;
+  }
+
+  /* Where to actually get the book. This sits directly under the masthead
+     because it is now the most useful thing on the page — it replaced twenty
+     chapter downloads, and a student who came here for a PDF needs to land on
+     the catalogue link without hunting for it. */
+  .tb-header__source {
+    margin-top: 1.25rem;
+    padding: 1.125rem 1.25rem;
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    border-radius: 10px;
+    background: var(--color-surface-alt);
+  }
+
+  .tb-header__cite {
+    margin: 0 0 0.875rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--color-text-muted);
+  }
+
+  .tb-header__cta {
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.9rem;
+  }
+
+  .tb-header__note {
+    margin: 0.875rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+  }
+
+  .tb-header__note a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .tb-group { margin-bottom: 2.5rem; }

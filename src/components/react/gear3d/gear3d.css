@@ -1,0 +1,1788 @@
+/* ============================================================
+   Gear3D — app styles (CEE 406 island port)
+   Prefix: g3-
+   ------------------------------------------------------------
+   Ported from the standalone E-Lab. The layout, the responsive
+   ladder, the touch sizing and every comment recording a real
+   measurement are unchanged — they are worth more than a rewrite.
+
+   Three things changed, and nothing else:
+
+     1. TOKENS MOVED OFF :root. They are declared on .g3-app and
+        inherit down, per the integration contract in
+        docs/dashboard-visual-language.md §0.1 — the same rule
+        tools.css follows for --cee-* and crosssection.css for
+        --xs-*. On :root they would repaint the course site.
+
+     2. THE PALETTE IS THE COURSE PALETTE. Upstream is teal on
+        slate; this is Illini orange on navy, so Gear3D reads as
+        part of the toolbox rather than as a transplant.
+        --g3-graphite is deliberately KEPT at its upstream value:
+        the comments below record WCAG measurements, and it
+        clears them on the new surfaces too. --g3-muted did NOT
+        survive the move in the dark theme — the course's raised
+        navy is lighter than upstream's slate and pushed it from
+        4.53:1 to 4.46:1 — so it is lifted. See the note beside
+        it, and tokens.test.mjs, which re-runs upstream's own
+        contrast gate against THIS palette. Never assume a
+        re-skin inherits an upstream contrast result.
+
+     3. THE FIGURE TOKENS ARE UNTOUCHED. --g3-fig-* on .g3-viewport
+        are the colours of the DRAWING, not of the app, and they
+        end up in exported PNGs, SVGs and PDFs that go into
+        reports. A student's figure must not change because the
+        course site changed its accent colour.
+
+   The site-button overrides kept their !important: they are
+   scoped inside .g3-app, so nothing leaks outward, and they are
+   what stops the host stylesheet repainting every control.
+   ------------------------------------------------------------
+   DESIGN DIRECTION (see DESIGN.md for the full rationale)
+   Grounded in measurement instruments and aircraft technical
+   documentation: drafting film, gauge faces, ruled datum lines.
+
+   Six tokens carry the identity:
+     --g3-ink       deep slate, the drawn line
+     --g3-paper     drafting film, the ground
+     --g3-graphite  secondary text and inactive rules
+     --g3-rule      hairline separators
+     --g3-datum     teal, ties Gear3D to the rest of E-Labs
+     --g3-signal    instrument red-orange, the needle colour.
+                    Used ONLY for the live measurement and the
+                    current selection. Nothing decorative is ever
+                    this colour, so it always means "this one".
+
+   SIGNATURE ELEMENT: the datum tick. Every panel heading carries a
+   hairline rule that terminates in a short perpendicular tick, the
+   way an extension line terminates on a drawing. It is the same
+   mark the dimension engine draws in the viewport, so the panel
+   furniture and the figure share a vocabulary.
+
+   Numbers are everywhere in this app, so a tabular-figure face is
+   a functional requirement, not a stylistic one.
+   ============================================================ */
+
+.g3-app {
+    --g3-datum: #e87722;
+    --g3-datum-hover: #c2500f;
+    --g3-datum-glow: rgba(232, 119, 34, 0.26);
+    --g3-signal: #1b2d4a;
+    --g3-signal-soft: rgba(27, 45, 74, 0.10);
+    --g3-warn: #b8860b;
+    --g3-mono: var(--font-mono, ui-monospace, 'IBM Plex Mono', Consolas, monospace);
+    --g3-sans: var(--font-body, ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif);
+    --g3-rail: 264px;
+    --g3-rail-right: 288px;
+}
+
+.g3-app {
+    --g3-ink: #1a1a2e;
+    --g3-paper: #ffffff;
+    --g3-surface: #f8f9fb;
+    --g3-surface-2: #eef1f6;
+    --g3-inset: #e6eaf0;
+    /* Both raised to clear WCAG AA (4.5:1) on the DARKEST surface each is
+       drawn on, which is --g3-inset, not --g3-surface. The old --g3-muted
+       (#8b98a5) managed only 2.72:1 on the panel and 2.32:1 on an inset —
+       it failed on every background in this theme, across 55 elements.
+       Every one of the 16 uses of --g3-muted is a `color:`, so raising it
+       costs nothing decorative.
+       Graphite is darkened with it to keep the hierarchy two steps wide:
+       7.06:1 against muted's 5.34:1 on the panel. */
+    --g3-graphite: #465564;
+    --g3-muted: #5a6774;
+    --g3-wordmark: #a8440c;   /* 5.17:1 on --g3-inset, the mark tile it sits on */
+    --g3-rule: #dfe3e8;
+    --g3-rule-strong: #c6ccd4;
+    --g3-shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 6px 16px rgba(16, 24, 40, .05);
+}
+
+[data-theme="dark"] .g3-app {
+    --g3-datum: #f0913f;
+    --g3-datum-hover: #f6b37b;
+    --g3-signal: #5aaef5;
+    --g3-signal-soft: rgba(90, 174, 245, 0.16);
+    --g3-warn: #d9a441;
+    --g3-ink: #f1f5f9;
+    --g3-paper: #0f1a2e;
+    --g3-surface: #162033;
+    --g3-surface-2: #1b2740;
+    --g3-inset: #101b2f;
+    --g3-graphite: #9fb0be;
+    /* 4.06:1 on the panel and 3.65:1 on a raised surface — marginal, and
+       still a failure. 4.53:1 at worst now. Graphite already passes at
+       7.55:1 and is left alone. */
+    --g3-muted: #8293a1;
+    --g3-wordmark: var(--g3-datum);
+    --g3-rule: #2d3f59;
+    --g3-rule-strong: #3c5170;
+    --g3-shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 22px rgba(0, 0, 0, .3);
+}
+
+/* ============================================================
+   THE HIDDEN ATTRIBUTE MUST WIN
+   ------------------------------------------------------------
+   The UA stylesheet styles `[hidden]` as `display: none` at the
+   same specificity as any class selector — and an author rule
+   beats a UA rule outright. So every `.g3-thing { display: flex }`
+   below silently un-hides its own element the moment the app sets
+   `.hidden = true`.
+
+   That is not a cosmetic slip. `.g3-progress` is absolutely
+   positioned over `inset: 0` of the viewport with a translucent
+   backdrop and a blur, so leaving it displayed puts a grey haze
+   over the render AND swallows every pointer event: no orbit, no
+   click-to-select, and a viewport that looks unfinished. The same
+   bug also kept the modified badge, the aircraft assumption
+   notice and the custom export fields permanently on screen.
+   ============================================================ */
+.g3-app [hidden] { display: none !important; }
+
+/* ==================== SHELL ==================== */
+/* Upstream this centred itself in the browser window at 1620px. Here the
+   Astro page owns the measure (.tool-page--gear3d), so the app fills what it
+   is given and adds no padding of its own — the container already has some. */
+.g3-app {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 0 .5rem;
+    font-family: var(--g3-sans);
+    color: var(--g3-ink);
+}
+
+/* Gear3D is a three-column shell — 264px rail, viewport, 288px rail — not the
+   20rem-rail-plus-results grid every React tool uses, so it opts out of
+   .cee-tool's layout while keeping its tokens for the how-to panel and the
+   notes below. Two classes beat the one-class media query in tools.css. */
+.cee-tool.g3-tool {
+    display: block;
+    grid-template-columns: none;
+}
+.cee-tool.g3-tool > * + * { margin-top: 1.25rem; }
+
+/* One 24-unit grid at 1.75 weight, the same hand as Icon.astro. Sized in em so
+   a glyph tracks the text beside it — which is also why the upstream rules
+   that set `font-size` on an icon still size these. */
+.g3-app .g3-i {
+    display: inline-block;
+    flex: none;
+    width: 1.05em;
+    height: 1.05em;
+    vertical-align: -0.16em;
+}
+
+/* ============================================================
+   HEADER — a drafting title block
+   ------------------------------------------------------------
+   Composed the way an engineering title block is, rather than as
+   a row of equal cells:
+
+     ORIGINATOR | .......... SUBJECT .......... | METADATA
+
+   The subject — what is loaded — is the drawing title. It is the
+   one field that changes, so it carries the weight; the metadata
+   is fixed-width and recessive. An earlier version gave every
+   cell the same width and the same emphasis, which is
+   arrangement rather than composition, and left the reader with
+   no idea what the sheet was of.
+
+   The datum tick appears ONCE, on the leading edge of the block,
+   instead of on every cell. A signature repeated six times in
+   80 px is wallpaper.
+   ============================================================ */
+.g3-app .app-header { padding: 1.1rem 0 .85rem; }
+
+.g3-titleblock {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    background: var(--g3-surface);
+    border: 1px solid var(--g3-rule-strong);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* The one datum tick: a short rule and cross-tick on the block's
+   leading edge, the same mark the dimension engine draws. */
+.g3-titleblock::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 50%;
+    width: 3px; height: 1px;
+    background: var(--g3-datum);
+    z-index: 2;
+}
+
+/* ---------- originator ---------- */
+.g3-tb-mark {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .5rem 1rem .5rem .95rem;
+    background: var(--g3-inset);
+    border-right: 1px solid var(--g3-rule-strong);
+    flex: 0 0 auto;
+}
+
+.g3-tb-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px; height: 34px;
+    border-radius: 3px;
+    background: var(--g3-ink);
+    flex: 0 0 auto;
+}
+.g3-tb-icon svg { color: var(--g3-paper); }
+[data-theme="dark"] .g3-tb-icon { background: var(--g3-datum); }
+[data-theme="dark"] .g3-tb-icon svg { color: #0f1a2e; }
+
+.g3-tb-id { display: flex; flex-direction: column; gap: .1rem; }
+
+.g3-tb-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: .015em;
+    color: var(--g3-ink);
+    line-height: 1;
+}
+/* The wordmark's teal. WCAG exempts logotypes from the contrast minimum, so
+   this is a legibility choice rather than a compliance one — at 2.66:1 on the
+   light panel the '3D' visibly faded next to 'Gear', which reads as a
+   rendering fault rather than as branding. Same hue, 4.51:1 measured
+   against --g3-inset — the mark tile it actually sits on, which is darker
+   than the panel behind it. The dark theme's
+   teal already sits at a comfortable ratio on its own surface and is left
+   alone. */
+.g3-tb-name b { color: var(--g3-wordmark); font-weight: 600; }
+
+.g3-tb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .62rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--g3-muted);
+    text-decoration: none;
+    transition: color .16s ease, transform .16s ease;
+}
+.g3-tb-back:hover { color: var(--g3-datum); transform: translateX(-2px); }
+.g3-tb-back .g3-i { font-size: .58rem; }
+
+/* ---------- subject: the drawing title ---------- */
+.g3-tb-subject {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: .14rem;
+    padding: .5rem 1rem;
+    border-right: 1px solid var(--g3-rule);
+    /* Takes the slack, so metadata stays pinned right whatever the width. */
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.g3-tb-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    font-size: .95rem;
+    font-weight: 500;
+    color: var(--g3-ink);
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* State flag. Instrument red, because a unit edited away from its cited
+   reference is exactly the kind of thing a reader must not miss. */
+.g3-tb-flag {
+    flex: 0 0 auto;
+    padding: .1rem .38rem;
+    font-family: var(--g3-mono);
+    font-size: .58rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--g3-signal);
+    border: 1px solid var(--g3-signal);
+    border-radius: 2px;
+    line-height: 1.4;
+}
+.g3-tb-flag[hidden] { display: none; }
+
+/* ---------- metadata ---------- */
+.g3-tb-cell {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: .14rem;
+    padding: .5rem .9rem;
+    border-right: 1px solid var(--g3-rule);
+    flex: 0 0 auto;
+    min-width: 0;
+}
+.g3-tb-cell:last-child { border-right: 0; }
+.g3-tb-cell--rev { background: var(--g3-inset); border-left: 1px solid var(--g3-rule-strong); }
+
+.g3-tb-label {
+    font-size: .56rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--g3-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.g3-tb-value {
+    font-family: var(--g3-mono);
+    font-variant-numeric: tabular-nums;
+    font-size: .8rem;
+    color: var(--g3-ink);
+    white-space: nowrap;
+}
+
+@media screen and (max-width: 1180px) { .g3-tb-cell--wide { display: none; } }
+@media screen and (max-width: 820px) {
+    .g3-tb-name { font-size: .92rem; }
+    .g3-tb-title { font-size: .84rem; }
+    .g3-tb-cell { padding: .5rem .6rem; }
+}
+
+/* ==================== STUDIO GRID ==================== */
+.g3-studio {
+    display: grid;
+    grid-template-columns: var(--g3-rail) minmax(0, 1fr) var(--g3-rail-right);
+    grid-template-rows: auto minmax(460px, 66vh) auto;
+    grid-template-areas:
+        "toolbar toolbar  toolbar"
+        "left    viewport right"
+        "status  status   status";
+    gap: .6rem;
+    margin-top: 1rem;
+}
+
+/* ==================== TOOLBAR ==================== */
+.g3-toolbar {
+    grid-area: toolbar;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-wrap: wrap;
+    padding: .5rem .6rem;
+    background: var(--g3-surface);
+    border: 1px solid var(--g3-rule);
+    border-radius: 5px;
+}
+.g3-spacer { flex: 1 1 auto; }
+.g3-tool-sep { width: 1px; align-self: stretch; background: var(--g3-rule); margin: 0 .3rem; }
+
+.g3-viewtabs, .g3-unitsys {
+    display: inline-flex;
+    border: 1px solid var(--g3-rule);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--g3-paper);
+}
+.g3-vtab, .g3-uswitch {
+    padding: .34rem .8rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    border: 0;
+    border-right: 1px solid var(--g3-rule);
+    background: transparent;
+    color: var(--g3-graphite);
+    cursor: pointer;
+    transition: background .16s ease, color .16s ease;
+}
+.g3-vtab:last-child, .g3-uswitch:last-child { border-right: 0; }
+.g3-vtab:hover, .g3-uswitch:hover { background: var(--g3-surface-2); color: var(--g3-ink); }
+.g3-vtab.is-active, .g3-uswitch.is-active { background: var(--g3-ink); color: var(--g3-paper); }
+[data-theme="dark"] .g3-vtab.is-active,
+[data-theme="dark"] .g3-uswitch.is-active { background: var(--g3-datum); color: #0f1a2e; }
+
+/* ==================== PANELS ==================== */
+.g3-panel {
+    background: var(--g3-surface);
+    border: 1px solid var(--g3-rule);
+    border-radius: 5px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+.g3-left { grid-area: left; }
+.g3-right { grid-area: right; display: flex; flex-direction: column; }
+
+.g3-panel details { border-bottom: 1px solid var(--g3-rule); }
+.g3-panel details:last-child { border-bottom: 0; }
+
+.g3-panel summary {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .58rem .7rem .58rem 1.55rem;
+    font-size: .74rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--g3-graphite);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+.g3-panel summary::-webkit-details-marker { display: none; }
+.g3-panel summary .g3-i { color: var(--g3-datum); font-size: .82rem; width: 1em; }
+.g3-panel summary:hover { color: var(--g3-ink); background: var(--g3-surface-2); }
+
+/* Signature element: the datum tick. A hairline rule terminating in a
+   perpendicular tick, exactly as an extension line terminates on a drawing. */
+.g3-panel summary::before {
+    content: "";
+    position: absolute;
+    left: .55rem; top: 50%;
+    width: 8px; height: 1px;
+    background: var(--g3-rule-strong);
+    transition: background .18s ease, width .18s ease;
+}
+.g3-panel summary::after {
+    content: "";
+    position: absolute;
+    left: .55rem; top: calc(50% - 3px);
+    width: 1px; height: 7px;
+    background: var(--g3-rule-strong);
+    transition: background .18s ease;
+}
+.g3-panel details[open] > summary::before,
+.g3-panel details[open] > summary::after { background: var(--g3-datum); }
+
+.g3-group { padding: .25rem .7rem .8rem; }
+
+.g3-field {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .42rem;
+}
+.g3-field label {
+    flex: 0 0 74px;
+    font-size: .76rem;
+    color: var(--g3-graphite);
+    margin: 0;
+}
+.g3-field label.g3-label--wide { flex-basis: 46px; }
+.g3-field--num .g3-range { flex: 1 1 auto; min-width: 0; }
+
+.g3-select, .g3-num, .g3-text, .g3-textarea {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: .32rem .45rem;
+    font-size: .8rem;
+    font-family: inherit;
+    color: var(--g3-ink);
+    background: var(--g3-paper);
+    border: 1px solid var(--g3-rule);
+    border-radius: 3px;
+}
+.g3-num { font-family: var(--g3-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.g3-num--tiny { flex: 0 0 62px; }
+.g3-textarea { width: 100%; min-height: 62px; resize: vertical; margin-top: .3rem; }
+
+.g3-select:focus-visible, .g3-num:focus-visible, .g3-text:focus-visible,
+.g3-textarea:focus-visible, .g3-range:focus-visible, .g3-color:focus-visible {
+    outline: 2px solid var(--g3-datum);
+    outline-offset: 1px;
+}
+
+.g3-unit { font-size: .7rem; color: var(--g3-muted); flex: 0 0 auto; font-family: var(--g3-mono); }
+
+.g3-range { -webkit-appearance: none; appearance: none; height: 3px; background: var(--g3-inset); border-radius: 2px; }
+.g3-range::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--g3-paper); border: 2px solid var(--g3-datum); cursor: pointer;
+}
+.g3-range::-moz-range-thumb {
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--g3-paper); border: 2px solid var(--g3-datum); cursor: pointer;
+}
+
+.g3-color { flex: 0 0 40px; height: 26px; padding: 1px; background: var(--g3-paper); border: 1px solid var(--g3-rule); border-radius: 3px; }
+
+.g3-icon-btn {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    padding: 0;
+    border: 1px solid var(--g3-rule);
+    border-radius: 3px;
+    background: var(--g3-paper);
+    color: var(--g3-muted);
+    font-size: .72rem;
+    cursor: pointer;
+    transition: color .16s ease, border-color .16s ease;
+}
+.g3-icon-btn:hover { color: var(--g3-signal); border-color: var(--g3-signal); }
+
+.g3-check { display: inline-flex !important; align-items: center; gap: .45rem; flex: 1 1 auto !important; cursor: pointer; font-size: .78rem; color: var(--g3-ink) !important; }
+.g3-check input { margin: 0; accent-color: var(--g3-datum); }
+
+.g3-rule { border: 0; border-top: 1px solid var(--g3-rule); margin: .6rem 0; }
+
+.g3-note {
+    margin: .5rem 0 0;
+    font-size: .7rem;
+    line-height: 1.5;
+    color: var(--g3-muted);
+    border-left: 2px solid var(--g3-rule);
+    padding-left: .5rem;
+}
+.g3-note kbd {
+    font-family: var(--g3-mono); font-size: .92em;
+    background: var(--g3-inset); border: 1px solid var(--g3-rule);
+    border-radius: 3px; padding: 0 .25em;
+}
+
+.g3-meta {
+    font-size: .72rem;
+    line-height: 1.55;
+    color: var(--g3-graphite);
+    margin-top: .45rem;
+    padding-top: .45rem;
+    border-top: 1px dashed var(--g3-rule);
+}
+.g3-meta dl { display: grid; grid-template-columns: auto 1fr; gap: .1rem .6rem; margin: 0; }
+.g3-meta dt { color: var(--g3-muted); }
+.g3-meta dd { margin: 0; font-family: var(--g3-mono); font-variant-numeric: tabular-nums; color: var(--g3-ink); }
+
+.g3-report {
+    margin-top: .5rem;
+    padding: .45rem .55rem;
+    font-size: .71rem;
+    line-height: 1.55;
+    background: var(--g3-inset);
+    border: 1px solid var(--g3-rule);
+    border-radius: 3px;
+    font-variant-numeric: tabular-nums;
+}
+.g3-report strong { color: var(--g3-ink); }
+.g3-report .g3-delta-up { color: var(--g3-signal); }
+.g3-report .g3-delta-down { color: var(--g3-datum); }
+
+.g3-badge-modified {
+    display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
+    margin-top: .5rem; padding: .4rem .5rem;
+    font-size: .71rem;
+    color: var(--g3-ink);
+    background: var(--g3-signal-soft);
+    border-left: 2px solid var(--g3-signal);
+    border-radius: 0 3px 3px 0;
+}
+.g3-badge-modified .g3-i { color: var(--g3-signal); }
+
+/* Assumed-value notice. Uses the warn colour rather than the signal red:
+   signal red means "this is the live measurement", and an assumption is a
+   caveat, not a reading. */
+.g3-badge-assumed {
+    display: flex; align-items: flex-start; gap: .45rem;
+    margin-top: .5rem; padding: .45rem .55rem;
+    font-size: .69rem; line-height: 1.5;
+    color: var(--g3-ink);
+    background: color-mix(in srgb, var(--g3-warn) 14%, transparent);
+    border-left: 2px solid var(--g3-warn);
+    border-radius: 0 3px 3px 0;
+}
+.g3-badge-assumed .g3-i { color: var(--g3-warn); margin-top: .12rem; flex: 0 0 auto; }
+.g3-badge-assumed strong { color: var(--g3-ink); }
+
+/* Custom dimension list */
+.g3-dimlist { margin-top: .45rem; display: flex; flex-direction: column; gap: .18rem; }
+.g3-dimlist:empty { display: none; }
+.g3-dimrow {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .22rem .35rem;
+    font-size: .71rem;
+    background: var(--g3-inset);
+    border: 1px solid var(--g3-rule);
+    border-radius: 3px;
+}
+.g3-dimrow-value {
+    font-family: var(--g3-mono); font-variant-numeric: tabular-nums;
+    color: var(--g3-ink); flex: 0 0 auto;
+}
+.g3-dimrow-note {
+    color: var(--g3-muted); flex: 1 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.g3-dimrow-del {
+    flex: 0 0 auto; border: 0; background: none; cursor: pointer;
+    color: var(--g3-muted); padding: 0 .15rem; font-size: .72rem;
+}
+.g3-dimrow-del:hover { color: var(--g3-signal); }
+
+/* Measure mode */
+.g3-viewport.is-measuring { cursor: crosshair; }
+.g3-btn.is-active { border-color: var(--g3-signal); color: var(--g3-signal); }
+
+.g3-mini-row { display: flex; gap: .35rem; flex-wrap: wrap; margin-top: .5rem; }
+
+/* ==================== BUTTONS ==================== */
+.g3-btn, .g3-linkbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    padding: .34rem .7rem;
+    font-size: .78rem;
+    font-family: inherit;
+    font-weight: 500;
+    color: var(--g3-ink);
+    background: var(--g3-paper);
+    border: 1px solid var(--g3-rule);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all .16s ease;
+}
+.g3-btn:hover { border-color: var(--g3-datum); color: var(--g3-datum); }
+.g3-btn:disabled { opacity: .45; cursor: not-allowed; }
+.g3-btn--primary { background: var(--g3-datum); border-color: var(--g3-datum); color: #fff; }
+.g3-btn--primary:hover { background: var(--g3-datum-hover); border-color: var(--g3-datum-hover); color: #fff; }
+.g3-btn--danger:hover { border-color: var(--g3-signal); color: var(--g3-signal); }
+
+.g3-linkbtn {
+    padding: 0; border: 0; background: none;
+    color: var(--g3-signal); text-decoration: underline; font-size: .71rem;
+}
+.g3-linkbtn:hover { color: var(--g3-ink); }
+
+/* ==================== VIEWPORT ==================== */
+.g3-viewport {
+    grid-area: viewport;
+    position: relative;
+    background: var(--g3-surface);
+    border: 1px solid var(--g3-rule);
+    border-radius: 5px;
+    overflow: hidden;
+    min-height: 0;
+}
+#g3-canvas { display: block; width: 100%; height: 100%; }
+
+.g3-overlay {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    color: var(--g3-ink);
+    font-family: var(--g3-sans);
+    font-variant-numeric: tabular-nums;
+}
+.g3-dim.is-highlighted .g3-dim-label { font-weight: 700; }
+
+/* Callouts are the one part of the overlay that accepts pointer events, so
+   they can be dragged while orbit and click-to-select keep working
+   everywhere else. */
+.g3-overlay .g3-callout { pointer-events: auto; cursor: grab; }
+.g3-overlay .g3-callout:hover rect { stroke: var(--g3-signal); stroke-width: 1.3; }
+.g3-overlay.is-dragging { cursor: grabbing; }
+.g3-overlay.is-dragging .g3-callout { cursor: grabbing; }
+
+.g3-hud, .g3-hud-right, .g3-axisbadge {
+    position: absolute;
+    padding: .28rem .55rem;
+    font-size: .68rem;
+    font-family: var(--g3-mono);
+    color: var(--g3-graphite);
+    background: color-mix(in srgb, var(--g3-paper) 86%, transparent);
+    border: 1px solid var(--g3-rule);
+    border-radius: 3px;
+    pointer-events: none;
+}
+.g3-hud { top: .5rem; left: .5rem; }
+.g3-hud-right { top: .5rem; right: .5rem; }
+.g3-axisbadge { bottom: .5rem; right: .5rem; line-height: 1.5; }
+.g3-axisbadge b { color: var(--g3-datum); }
+
+.g3-progress {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .7rem;
+    background: color-mix(in srgb, var(--g3-paper) 82%, transparent);
+    backdrop-filter: blur(2px);
+}
+.g3-progress-bar { width: 220px; height: 3px; background: var(--g3-inset); border-radius: 2px; overflow: hidden; }
+.g3-progress-bar span { display: block; height: 100%; width: 0; background: var(--g3-datum); transition: width .2s ease; }
+.g3-progress-label { font-size: .74rem; color: var(--g3-graphite); font-family: var(--g3-mono); }
+
+/* ==================== TREE ==================== */
+.g3-tree-head {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .58rem .7rem;
+    border-bottom: 1px solid var(--g3-rule);
+}
+.g3-tree-head h3 {
+    margin: 0; font-size: .74rem; font-weight: 700; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--g3-graphite);
+    display: flex; align-items: center; gap: .5rem;
+}
+.g3-tree-head .g3-i { color: var(--g3-datum); }
+.g3-tree-total { margin-left: auto; font-size: .7rem; color: var(--g3-muted); font-family: var(--g3-mono); }
+
+.g3-tree { flex: 1 1 auto; overflow-y: auto; padding: .35rem 0; min-height: 120px; }
+
+.g3-node {
+    display: flex; align-items: center; gap: .4rem;
+    padding: .22rem .7rem;
+    font-size: .76rem;
+    color: var(--g3-ink);
+    cursor: pointer;
+    border-left: 2px solid transparent;
+}
+.g3-node:hover { background: var(--g3-surface-2); }
+.g3-node.is-selected { background: var(--g3-signal-soft); border-left-color: var(--g3-signal); }
+.g3-node.is-dim { color: var(--g3-muted); }
+.g3-node .g3-node-tag {
+    font-family: var(--g3-mono); font-size: .68rem;
+    color: var(--g3-muted); margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+.g3-node[data-depth="1"] { padding-left: 1.5rem; }
+.g3-node[data-depth="2"] { padding-left: 2.4rem; }
+.g3-node[data-depth="3"] { padding-left: 3.3rem; }
+.g3-node-iso {
+    border: 0; background: none; color: var(--g3-muted);
+    cursor: pointer; padding: 0 .2rem; font-size: .7rem;
+}
+.g3-node-iso:hover { color: var(--g3-datum); }
+
+.g3-props { border-top: 1px solid var(--g3-rule); padding: .55rem .7rem .8rem; max-height: 42%; overflow-y: auto; }
+.g3-props h4 {
+    margin: 0 0 .45rem; font-size: .72rem; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--g3-graphite);
+}
+.g3-source {
+    margin-top: .55rem; padding-top: .5rem;
+    border-top: 1px dashed var(--g3-rule);
+    font-size: .68rem; line-height: 1.55; color: var(--g3-muted);
+}
+.g3-source b { color: var(--g3-graphite); display: block; margin-bottom: .15rem; letter-spacing: .06em; text-transform: uppercase; font-size: .64rem; }
+
+/* ==================== STATUS ==================== */
+.g3-status {
+    grid-area: status;
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    padding: .35rem .7rem;
+    font-size: .71rem;
+    color: var(--g3-graphite);
+    background: var(--g3-surface);
+    border: 1px solid var(--g3-rule);
+    border-radius: 5px;
+}
+.g3-status-sep { width: 1px; height: 12px; background: var(--g3-rule); }
+.g3-mono { font-family: var(--g3-mono); font-variant-numeric: tabular-nums; }
+
+/* ==================== TOASTS ==================== */
+.g3-toast-wrap {
+    position: fixed; bottom: 1.1rem; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: .4rem; z-index: 9999;
+    pointer-events: none;
+}
+.g3-toast {
+    padding: .5rem .9rem;
+    font-size: .8rem;
+    color: var(--g3-paper);
+    background: var(--g3-ink);
+    border-radius: 4px;
+    box-shadow: var(--g3-shadow);
+    max-width: 60ch;
+    animation: g3-toast-in .22s ease;
+}
+.g3-toast--error { background: var(--g3-signal); }
+.g3-toast--warn { background: var(--g3-warn); color: #1a1405; }
+@keyframes g3-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ==================== RESPONSIVE ==================== */
+@media screen and (max-width: 1280px) {
+    .g3-studio {
+        grid-template-columns: 232px minmax(0, 1fr) 244px;
+    }
+}
+
+/* The tablet and handheld ladder lives at the END of this file, under
+   RESPONSIVE - TABLET & HANDHELD. It has to sit after the v1.7 refinement
+   pass, which restates .g3-hud, .g3-viewport and the panel chrome at the
+   same specificity: a stacking rule written up here would be silently
+   overruled by a rule two hundred lines below it. */
+
+/* ==================== REDUCED MOTION ==================== */
+@media (prefers-reduced-motion: reduce) {
+    .g3-app *, .g3-app *::before, .g3-app *::after {
+        animation-duration: .001ms !important;
+        transition-duration: .001ms !important;
+    }
+}
+
+/* ============================================================
+   VISUAL REFINEMENT (v1.7)
+   ------------------------------------------------------------
+   A craft pass over the existing system. It introduces no new
+   colours and no new controls: every rule below reuses the tokens
+   declared at the top of this file. Three ideas run through it.
+
+   1. THE VIEWPORT IS A SHEET, NOT A HOLE.
+      The figure background is publication white by deliberate
+      decision — the annotation halo in annotate/dimensions.js
+      depends on it, so that a figure exported on white while the
+      app runs dark does not get a dark halo swallowing its own
+      text. That decision is right, and it means the dark theme
+      shows a white plate. Unavoidable is not the same as
+      accidental: given an edge, a lift and a mat, the plate reads
+      as drafting film lying on a desk rather than a hole punched
+      through the interface.
+
+      DO NOT ADD PADDING TO .g3-viewport. The SVG annotation
+      overlay is inset:0, which resolves against the PADDING box,
+      while the canvas fills the CONTENT box. Padding would
+      silently offset every dimension line from the geometry it
+      measures — the failure would look like a projection bug and
+      would be hunted for in the maths. Border and box-shadow do
+      not have this problem, which is why the mat below is a
+      shadow ring.
+
+   2. CHROME DRAWN OVER THE FIGURE FOLLOWS THE FIGURE.
+      The HUD, the axis badge and the scale bar sit on the white
+      plate, not on the app surface, so they take the figure's
+      colours rather than the theme's. This is the same rule the
+      label halo already follows. Without it, the dark theme puts
+      near-black pills on white paper — high-contrast blocks that
+      read as heavier than the drawing they annotate.
+
+   3. CHROME RECEDES UNTIL ASKED FOR.
+      Twenty identical isolate buttons down one edge of the
+      structure tree is noise the eye filters on every glance. They
+      appear on hover and on keyboard focus, and stay visible on
+      the selected row.
+   ============================================================ */
+
+/* ---- 1. The sheet ---------------------------------------- */
+
+.g3-viewport {
+    /* Colours for anything drawn ON the figure. Held here, on the
+       element that owns the plate, so the HUD cannot drift from it. */
+    --g3-fig-paper: #ffffff;
+    --g3-fig-ink: #16202b;
+    --g3-fig-muted: #5c6b7a;
+    --g3-fig-rule: #ccd5dd;
+    /* The datum teal, dark enough to read as small text ON THE FIGURE. The
+       theme's own --g3-datum-hover manages only 3.88:1 on white in the light
+       theme and 2.88:1 in the dark one, because it is tuned for panels, not
+       for paper. Same hue, 4.51:1. */
+    --g3-fig-datum: #138483;
+
+    border-color: var(--g3-rule-strong);
+    /* The ring is the mat; the drop is the lift off the desk. A ring
+       rather than padding, for the reason in the header above. */
+    box-shadow:
+        0 0 0 4px var(--g3-inset),
+        0 8px 22px -14px rgba(0, 0, 0, .40);
+}
+
+[data-theme="dark"] .g3-viewport {
+    box-shadow:
+        0 0 0 4px var(--g3-inset),
+        0 14px 34px -16px rgba(0, 0, 0, .85);
+}
+
+/* ---- 2. Instrument chrome -------------------------------- */
+
+.g3-hud, .g3-hud-right, .g3-axisbadge {
+    color: var(--g3-fig-muted);
+    background: color-mix(in srgb, var(--g3-fig-paper) 82%, transparent);
+    border-color: color-mix(in srgb, var(--g3-fig-rule) 85%, transparent);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 1px 2px rgba(22, 32, 43, .06);
+    letter-spacing: .015em;
+}
+
+.g3-axisbadge b { color: var(--g3-fig-datum); }
+
+/* In quad view every pane carries its own label, drawn into the SVG
+   at the pane's top-left. The floating HUD sits at the viewport's
+   top-left, which is the PLAN pane's corner, and covers it. Quad
+   already states what it is in the right-hand HUD, so the left one
+   stands down rather than fighting for the same 40 pixels. */
+.g3-viewport.is-quad .g3-hud { opacity: 0; pointer-events: none; }
+
+.g3-progress {
+    background: color-mix(in srgb, var(--g3-fig-paper) 80%, transparent);
+}
+.g3-progress-label { color: var(--g3-fig-muted); }
+
+/* ---- 3. Controls ----------------------------------------- */
+
+.g3-select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 1.4rem;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    /* A select with no chevron reads as a text input the user cannot
+       type into. Neutral grey so one mark serves both themes. */
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238b98a5' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .45rem center;
+    background-size: 9px 6px;
+}
+.g3-select::-ms-expand { display: none; }
+
+.g3-select:hover, .g3-num:hover, .g3-text:hover {
+    border-color: var(--g3-rule-strong);
+}
+
+/* The model and class names are long — 'Class 9 — Five-axle
+   single-trailer truck' — and were being cut mid-word by a label
+   column sized for 'Domain'. Narrower label, more room for the
+   value, and an ellipsis when it still does not fit. */
+.g3-field label { flex-basis: 62px; }
+
+/* ---- 4. Structure tree ----------------------------------- */
+
+.g3-node { position: relative; transition: background-color .1s ease; }
+
+/* Depth guides. Indentation alone leaves the eye counting pixels to
+   work out which axle a wheel belongs to. */
+.g3-node[data-depth="1"]::before,
+.g3-node[data-depth="2"]::before,
+.g3-node[data-depth="3"]::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--g3-rule);
+}
+.g3-node[data-depth="1"]::before { left: .95rem; }
+.g3-node[data-depth="2"]::before { left: 1.85rem; }
+.g3-node[data-depth="3"]::before { left: 2.75rem; }
+
+.g3-node.is-selected { border-left-width: 2px; }
+.g3-node.is-selected .g3-node-tag { color: var(--g3-signal); }
+
+.g3-node-iso {
+    opacity: 0;
+    transition: opacity .12s ease, color .12s ease;
+}
+/* Hidden by opacity, not display, so it keeps its place in the tab
+   order and does not reflow the row when it appears. */
+.g3-node:hover .g3-node-iso,
+.g3-node.is-selected .g3-node-iso,
+.g3-node-iso:focus-visible { opacity: 1; }
+
+/* ---- 5. Panels ------------------------------------------- */
+
+/* Section headers hold their place while their contents scroll, so
+   a long dimension list never leaves you wondering which section
+   you are reading. */
+.g3-panel summary {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--g3-surface);
+}
+
+.g3-panel, .g3-tree, .g3-props {
+    scrollbar-width: thin;
+    scrollbar-color: var(--g3-rule-strong) transparent;
+}
+.g3-panel::-webkit-scrollbar,
+.g3-tree::-webkit-scrollbar,
+.g3-props::-webkit-scrollbar { width: 10px; }
+.g3-panel::-webkit-scrollbar-track,
+.g3-tree::-webkit-scrollbar-track,
+.g3-props::-webkit-scrollbar-track { background: transparent; }
+.g3-panel::-webkit-scrollbar-thumb,
+.g3-tree::-webkit-scrollbar-thumb,
+.g3-props::-webkit-scrollbar-thumb {
+    background: var(--g3-rule);
+    border: 3px solid var(--g3-surface);
+    border-radius: 5px;
+}
+.g3-panel:hover::-webkit-scrollbar-thumb,
+.g3-tree:hover::-webkit-scrollbar-thumb,
+.g3-props:hover::-webkit-scrollbar-thumb { background: var(--g3-rule-strong); }
+
+/* ---- 6. Status bar --------------------------------------- */
+
+/* A readout with nothing to report showed a lone em dash, which
+   reads as a broken field rather than an idle one. main.js now
+   empties it, and an empty readout takes its separator with it. */
+.g3-status-item:empty { display: none; }
+.g3-status-item:empty + .g3-status-sep,
+.g3-status-sep:has(+ .g3-status-item:empty) { display: none; }
+.g3-status-item { letter-spacing: .01em; }
+
+/* The axle/tire count is a single reading and must not break across two
+   lines when the rail narrows; the header lets it win the space instead. */
+.g3-tree-total { white-space: nowrap; }
+.g3-tree-head h3 { min-width: 0; }
+
+/* ---- 7. Motion ------------------------------------------- */
+
+.g3-btn, .g3-icon-btn, .g3-vtab, .g3-uswitch {
+    transition: color .12s ease, background-color .12s ease, border-color .12s ease;
+}
+
+/* ============================================================
+   SITE BUTTON OVERRIDES
+   ------------------------------------------------------------
+   The site-wide stylesheet styles bare <button> with a teal
+   background and `color: #fff !important`, plus a dark-mode
+   variant. Every button in this app is scoped under .Gear3D and
+   restated here so the app's controls are not repainted by it.
+   Any NEW button class added to this app needs a line here too.
+   ============================================================ */
+.g3-app .g3-btn,
+.g3-app .g3-vtab,
+.g3-app .g3-uswitch,
+.g3-app .g3-linkbtn,
+.g3-app .g3-node-iso {
+    text-transform: none !important;
+    letter-spacing: normal;
+    box-shadow: none !important;
+    height: auto !important;
+    line-height: 1.4 !important;
+    text-decoration: none;
+}
+.g3-app .g3-btn { color: var(--g3-ink) !important; background: var(--g3-paper) !important; }
+.g3-app .g3-btn:hover { color: var(--g3-datum) !important; }
+/* Measure toggle while engaged. Instrument red, because an armed measurement
+   IS the live reading — the one case where a button earns the signal colour. */
+.g3-app .g3-btn.is-active,
+.g3-app .g3-btn.is-active:hover {
+    color: var(--g3-signal) !important;
+    border-color: var(--g3-signal);
+    background: var(--g3-signal-soft) !important;
+}
+/* Toolbar on/off toggles. Datum teal, because these mark STATE — what is
+   currently switched on — rather than a live reading. */
+.g3-app .g3-btn.is-on,
+.g3-app .g3-btn.is-on:hover {
+    color: var(--g3-datum) !important;
+    border-color: var(--g3-datum);
+    background: color-mix(in srgb, var(--g3-datum) 12%, transparent) !important;
+}
+.g3-app .g3-icon-btn { color: var(--g3-muted) !important; background: var(--g3-paper) !important; }
+.g3-app .g3-icon-btn:hover { color: var(--g3-signal) !important; }
+.g3-app .g3-dimrow-del { color: var(--g3-muted) !important; background: none !important; }
+.g3-app .g3-dimrow-del:hover { color: var(--g3-signal) !important; }
+.g3-app .g3-btn--primary,
+.g3-app .g3-btn--primary:hover { color: #fff !important; background: var(--g3-datum) !important; }
+.g3-app .g3-vtab,
+.g3-app .g3-uswitch { color: var(--g3-graphite) !important; background: transparent !important; }
+.g3-app .g3-vtab.is-active,
+.g3-app .g3-uswitch.is-active { color: var(--g3-paper) !important; background: var(--g3-ink) !important; }
+[data-theme="dark"] .g3-app .g3-vtab.is-active,
+[data-theme="dark"] .g3-app .g3-uswitch.is-active { color: #0f1a2e !important; background: var(--g3-datum) !important; }
+.g3-app .g3-linkbtn { color: var(--g3-signal) !important; background: none !important; text-decoration: underline; }
+.g3-app .g3-node-iso { color: var(--g3-muted) !important; background: none !important; }
+.g3-app .g3-node-iso:hover { color: var(--g3-datum) !important; }
+
+/* ============================================================
+   CHECKBOXES
+   ------------------------------------------------------------
+   The site reset applies `appearance: none` to every input, and a
+   checkbox with no appearance and no replacement box has no
+   intrinsic size: measured on desktop, every toggle in the rail
+   laid out at 0x0. Ghost parts, the five dimension sets, dual
+   units, callouts, the scale bar and the footprint switch were all
+   live and all invisible - clicking the label worked, and nothing
+   on screen said so or showed what was on.
+
+   The site reset now hands checkboxes and radios their native
+   rendering back, so this block is no longer what makes them
+   visible. It is kept because native controls do not carry the
+   drafting language the rest of this rail is drawn in - the square
+   corners, the rule weight, the datum teal - and because the tick
+   has to flip to ink on the dark theme, where teal is the light
+   colour.
+   ============================================================ */
+.g3-app input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    background: var(--g3-paper);
+    border: 1px solid var(--g3-rule-strong);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+}
+.g3-app input[type="checkbox"]:hover { border-color: var(--g3-datum); }
+.g3-app input[type="checkbox"]:checked {
+    background: var(--g3-datum);
+    border-color: var(--g3-datum);
+}
+
+/* Centred by transform rather than by fixed offsets, so the tick stays
+   centred when the touch rules grow the box to 20px. */
+.g3-app input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 1.6px 1.6px 0;
+    transform: translate(-50%, -50%) rotate(43deg);
+}
+/* Teal is light in the dark theme; a white tick on it is unreadable, the
+   same reason the active view tab uses ink there. */
+[data-theme="dark"] .g3-app input[type="checkbox"]:checked::after { border-color: #0f1a2e; }
+.g3-app input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--g3-datum);
+    outline-offset: 1px;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET & HANDHELD (v1.9)
+   ------------------------------------------------------------
+   The app is a three-column CAD shell: rail, viewport, rail.
+   Until now it had one fallback — below 980px everything
+   stacked in source order — and source order puts the control
+   rail BEFORE the viewport. Measured on a 390×844 handset that
+   put the 3D view at y=735, behind a six-row toolbar and a
+   320px scrolling panel: the one thing the app exists to show
+   was the one thing you could not see without hunting for it.
+
+   Three ideas run through the ladder below.
+
+   1. THE VIEWPORT IS THE FIRST THING, NOT THE THIRD.
+      On a handheld the grid areas re-order so the sheet sits
+      directly under the toolbar; panels follow it. This is a
+      grid-template-areas change only — the DOM order is
+      untouched, so the tab sequence still runs controls-then-
+      canvas for a keyboard user, which is the order they want.
+
+   2. A TABLET IS NOT A BIG PHONE.
+      720–1100px keeps a real rail beside the viewport and moves
+      only the structure panel below, where the full width lets
+      it split into tree | properties. The break sits at 720 so
+      the portrait iPad Mini (744px) stays a tablet; the widest
+      phone in portrait is ~430px, so nothing below the line is
+      a phone. The rail is a clamp rather than a fixed 250px,
+      because at 744px a fixed rail would leave the viewport
+      narrower than the panel standing beside it.
+
+   3. TOUCH SIZING IS A POINTER QUESTION, NOT A WIDTH QUESTION.
+      The target-size rules hang off (pointer: coarse), so a
+      touch laptop at 1400px gets them and a 700px desktop
+      window does not.
+
+   dvh is stated after vh throughout: a browser without dvh
+   keeps the vh line, and one with it avoids the URL-bar jump
+   that makes a 66vh viewport resize itself mid-scroll.
+   ============================================================ */
+
+/* ---------- Tablet: rail + viewport, structure below -------- */
+@media screen and (max-width: 1100px) and (min-width: 720px) {
+    .g3-studio {
+        grid-template-columns: clamp(210px, 26vw, 250px) minmax(0, 1fr);
+        grid-template-rows: auto minmax(400px, 58vh) auto auto;
+        grid-template-rows: auto minmax(400px, 58dvh) auto auto;
+        grid-template-areas:
+            "toolbar  toolbar"
+            "left     viewport"
+            "right    right"
+            "status   status";
+    }
+
+    /* Given the full width, the structure panel stops being a
+       tall thin list and becomes what it is on the desktop rail:
+       a tree you pick from, and the properties of what you
+       picked, readable at the same time. */
+    .g3-right {
+        display: grid;
+        grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        max-height: 320px;
+        overflow: hidden;
+    }
+    .g3-tree-head { grid-column: 1 / -1; }
+    .g3-tree { grid-column: 1; grid-row: 2; overflow-y: auto; }
+    .g3-props {
+        grid-column: 2; grid-row: 2;
+        max-height: none;
+        border-top: 0;
+        border-left: 1px solid var(--g3-rule);
+    }
+}
+
+/* ---------- Handheld: viewport first, panels beneath -------- */
+@media screen and (max-width: 719px) {
+    .g3-studio {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(300px, 56vh) auto auto auto;
+        grid-template-rows: auto minmax(300px, 56dvh) auto auto auto;
+        grid-template-areas:
+            "toolbar"
+            "viewport"
+            "left"
+            "right"
+            "status";
+        gap: .5rem;
+    }
+
+    /* Panels are read one at a time on a phone, so they get their
+       natural height. The old 320px cap made each one a scroller
+       inside the page scroller — two nested scrolls under one
+       thumb, where a flick meant as "next section" instead spins
+       a list. main.js closes them on first load so the stack
+       still starts short. */
+    .g3-panel {
+        max-height: none;
+        overflow-y: visible;
+    }
+    .g3-right {
+        display: block;
+        max-height: none;
+    }
+    .g3-tree { max-height: 45vh; }
+    .g3-props { max-height: none; }
+
+    /* The coordinate readout is a mouse-hover artefact and never
+       updates on touch, so it stops taking a row. */
+    .g3-status { font-size: .68rem; }
+    .g3-status #g3-status-coords { display: none; }
+}
+
+/* ---------- Compact toolbar: one scrolling row -------------- */
+/* Wrapping produced a six-row, 157px-tall control block that
+   pushed the sheet further down the page with every tool it
+   gained. A single row that scrolls sideways stays ~50px
+   whatever is in it, and sticks to the top so the view tabs,
+   Fit and Export remain reachable while the panels below are
+   being scrolled. */
+@media screen and (max-width: 1100px) {
+    .g3-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+    .g3-toolbar::-webkit-scrollbar { display: none; }
+    .g3-toolbar > * { flex: 0 0 auto; }
+    /* A flex spacer inside a horizontal scroller has no slack to
+       take: it collapses to nothing and contributes only a gap. */
+    .g3-toolbar .g3-spacer { display: none; }
+}
+
+/* The title block is sized for a desktop sheet. On a tablet the
+   30px it gives back is 30px of viewport. */
+@media screen and (max-width: 1100px) {
+    .g3-app .app-header { padding: .7rem 0 .55rem; }
+    .g3-app { padding-left: .75rem; padding-right: .75rem; }
+}
+
+/* ---------- Handheld viewport chrome ------------------------ */
+/* The interaction hint is written for a mouse and is long.
+   main.js swaps the wording for touch; here it moves out of the
+   top-right corner, where at these widths it collided with the
+   model readout, down to the bottom-left. The axis badge already
+   owns bottom-right. */
+@media screen and (max-width: 719px), screen and (max-height: 500px) and (orientation: landscape) {
+    .g3-hud-right {
+        top: auto;
+        bottom: .5rem;
+        left: .5rem;
+        right: auto;
+        max-width: calc(100% - 5.5rem);
+    }
+    .g3-hud, .g3-hud-right, .g3-axisbadge { font-size: .62rem; }
+    .g3-progress-bar { width: min(220px, 60%); }
+}
+
+/* ---------- Handheld, landscape ----------------------------- */
+/* A phone on its side is ~390px tall and up to ~930px wide, so
+   it lands in the tablet band on width alone. It is not a
+   tablet: a 250px rail against a 390px-tall screen leaves a
+   viewport the size of a postage stamp. Height decides here,
+   and the whole layout is restated rather than patched so this
+   block does not depend on which band it happens to override. */
+@media screen and (max-width: 1100px) and (max-height: 500px) and (orientation: landscape) {
+    .g3-studio {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(200px, 72vh) auto auto auto;
+        grid-template-rows: auto minmax(200px, 72dvh) auto auto auto;
+        grid-template-areas:
+            "toolbar"
+            "viewport"
+            "left"
+            "right"
+            "status";
+        gap: .5rem;
+    }
+    .g3-panel { max-height: none; overflow-y: visible; }
+    .g3-right { display: block; max-height: none; }
+    .g3-props { max-height: none; }
+
+    /* Vertical space is the scarce resource; the title block
+       keeps only the revision cell it is named for. */
+    .g3-app .app-header { padding: .5rem 0 .4rem; }
+    .g3-tb-cell:not(.g3-tb-cell--rev) { display: none; }
+}
+
+/* ---------- Touch target sizing ----------------------------- */
+/* WCAG 2.2 puts the floor at 24px; 44px is the AAA figure and
+   what both platform guidelines ask for. Toolbar controls — the
+   ones hit while holding the device one-handed — get the full
+   44. In-panel fields get 40: a rail of forty 44px rows is a
+   very long rail, and those are two-handed, seated controls.
+
+   Stated as min-height because the site-wide button override at
+   the foot of this file pins `height: auto !important`, which a
+   plain height would lose to. */
+@media (pointer: coarse) {
+    .g3-app .g3-btn,
+    .g3-app .g3-vtab,
+    .g3-app .g3-uswitch {
+        min-height: 44px;
+        padding-left: .85rem;
+        padding-right: .85rem;
+    }
+    .g3-app .g3-toolbar .g3-btn { padding-left: .7rem; padding-right: .7rem; }
+
+    .g3-select, .g3-num, .g3-text { min-height: 40px; }
+    .g3-num--tiny { flex-basis: 68px; }
+    .g3-color { height: 40px; }
+    .g3-panel summary { min-height: 48px; }
+    .g3-check input { width: 20px; height: 20px; }
+
+    .g3-app .g3-icon-btn { min-width: 40px; min-height: 40px; }
+    .g3-app .g3-dimrow-del { min-width: 36px; min-height: 36px; }
+    .g3-app .g3-node-iso { min-width: 34px; min-height: 32px; }
+
+    /* A range input is as tall as its track, and this track is 3px. The
+       thumb may be 13px but the element you have to hit is 3px of screen,
+       which no thumb can rescue. The input grows to a 40px grab area and
+       hands the painting of the track to the pseudo-element, so the
+       control looks unchanged and is far easier to catch. */
+    .g3-range {
+        height: 40px;
+        background: transparent;
+    }
+    .g3-range::-webkit-slider-runnable-track {
+        height: 3px;
+        border-radius: 2px;
+        background: var(--g3-inset);
+    }
+    .g3-range::-moz-range-track {
+        height: 3px;
+        border-radius: 2px;
+        background: var(--g3-inset);
+    }
+    .g3-range::-webkit-slider-thumb {
+        width: 22px;
+        height: 22px;
+        /* (track 3 - thumb 22) / 2 centres the thumb on the track. */
+        margin-top: -9.5px;
+    }
+    .g3-range::-moz-range-thumb { width: 20px; height: 20px; }
+
+    /* The checkbox itself is 20px, but the whole label is the target, so
+       it is the label that has to carry the height. */
+    .g3-check { min-height: 40px; }
+
+    /* Scroll affordances that only appear on hover do not appear
+       at all on touch. */
+    .g3-tree::-webkit-scrollbar-thumb,
+    .g3-props::-webkit-scrollbar-thumb,
+    .g3-panel::-webkit-scrollbar-thumb { background: var(--g3-rule-strong); }
+
+    /* A 17px text link in the title block. Padding, not font size: the
+       block is a drafting header and the type belongs at the size it is. */
+    .g3-tb-back { padding: .5rem .25rem .5rem 0; }
+}
+
+/* ---------- Affordances that were hover-only ---------------- */
+/* The isolate control on a tree row sits at opacity 0 until the row is
+   hovered or selected, and a touchscreen never hovers anything. Selection
+   still reveals it, so the feature was reachable — but only once you had
+   already tapped the row, which is a poor way to learn that a control
+   exists. On touch it stands quietly on every row instead. */
+@media (hover: none) {
+    .g3-node-iso { opacity: .55; }
+    .g3-node.is-selected .g3-node-iso { opacity: 1; }
+}
+
+/* ============================================================
+   GEAR NOMENCLATURE — FAA Order 5300.7  (v1.9)
+   ------------------------------------------------------------
+   The gear name is the densest string on screen: `2D/3D2(X)` is
+   six variables in nine characters. It is set in the mono face at
+   display size, and the decomposition below spends the space the
+   name saves.
+   ============================================================ */
+
+.g3-gearname {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .5rem;
+    padding-bottom: .3rem;
+    border-bottom: 1px solid var(--g3-rule);
+}
+.g3-gearname-code {
+    font-family: var(--g3-mono);
+    font-size: 1.24rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+    color: var(--g3-ink);
+    line-height: 1.1;
+}
+.g3-gearname-wheels {
+    font-size: .64rem;
+    color: var(--g3-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+.g3-gearname-prose {
+    margin: .35rem 0 .1rem;
+    font-size: .73rem;
+    line-height: 1.5;
+    color: var(--g3-graphite);
+}
+
+/* ---------- the name, taken apart ---------- */
+.g3-gearparts { display: grid; gap: .3rem; margin: .5rem 0 .2rem; }
+.g3-gcpart {
+    display: grid;
+    grid-template-columns: 5.6rem 1fr;
+    gap: .1rem .55rem;
+    padding-left: .5rem;
+    border-left: 2px solid var(--g3-rule);
+}
+.g3-gcpart-k {
+    font-size: .63rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--g3-muted);
+    align-self: center;
+}
+.g3-gcpart-v { font-size: .74rem; color: var(--g3-ink); align-self: center; }
+.g3-gcpart-n {
+    grid-column: 1 / -1;
+    font-size: .655rem;
+    line-height: 1.45;
+    color: var(--g3-muted);
+}
+
+/* ---------- parser feedback ---------- */
+.g3-report.is-ok { border-left: 2px solid var(--g3-datum); }
+.g3-report.is-bad { border-left: 2px solid var(--g3-signal); }
+.g3-gc-ok { color: var(--g3-datum); font-weight: 600; margin-bottom: .18rem; }
+.g3-gc-ok .g3-mono { font-size: .8rem; color: var(--g3-ink); }
+.g3-gc-bad { color: var(--g3-signal); font-weight: 600; margin-bottom: .18rem; }
+.g3-gc-count { color: var(--g3-muted); margin-top: .18rem; }
+
+/* ---------- render resolution readout ---------- */
+/* A gauge face, not a label: the number is the point, so it gets the mono
+   face at size and the units sit under it in the muted tone. */
+.g3-resbar {
+    display: grid;
+    gap: .1rem;
+    margin: .1rem 0 .55rem;
+    padding: .42rem .55rem;
+    background: var(--g3-inset);
+    border: 1px solid var(--g3-rule);
+    border-left: 2px solid var(--g3-datum);
+    border-radius: 3px;
+}
+.g3-resbar-k {
+    font-size: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--g3-muted);
+}
+.g3-resbar-v {
+    font-size: .92rem;
+    font-weight: 600;
+    color: var(--g3-ink);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+.g3-resbar-n {
+    font-size: .63rem;
+    color: var(--g3-muted);
+    font-variant-numeric: tabular-nums;
+}
+.g3-resbar-n.is-uhd { color: var(--g3-datum); font-weight: 600; }
+.g3-status-item.is-uhd { color: var(--g3-datum); }
+
+/* Schematic flag. The other two title-block flags are instrument red because
+   they mark a deviation from the cited reference. This one is amber, matching
+   the assumed-value notice, because it marks the same KIND of thing: a value
+   that was chosen rather than measured. */
+.g3-tb-flag--schematic { color: var(--g3-warn); border-color: var(--g3-warn); }
+
+/* ============================================================
+   GEAR CONFIGURATION CATALOGUE
+   ------------------------------------------------------------
+   Figure 2 and Table 3 as a sheet. The thumbnails are the point,
+   so they take the top of each card at a fixed height: a grid of
+   wheel patterns is scannable in a way a grid of gear codes is
+   not, which is why the Order draws Figure 2 at all.
+   ============================================================ */
+
+/* Above the SITE's fixed chrome, not just above the app's.
+   The shared stylesheet puts the mobile title bar at 10001, the slide-out nav
+   panel at 10002 and the theme / back-to-top buttons at 10000. At the app-local
+   z-index this modal started with, all four punched straight through it — the
+   hamburger sat on top of the catalogue's own title on a phone, and the theme
+   toggle floated over the card grid on every screen size. A modal has to be the
+   topmost thing on the page or it is not modal. */
+.g3-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    display: grid;
+    place-items: center;
+    padding: 2.5vh 2vw;
+}
+.g3-modal[hidden] { display: none; }
+body.g3-modal-open { overflow: hidden; }
+
+.g3-modal-scrim {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in srgb, var(--g3-paper) 30%, rgba(8, 12, 17, .72));
+    backdrop-filter: blur(2px);
+}
+.g3-modal-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(1180px, 96vw);
+    max-height: 95vh;
+    background: var(--g3-surface);
+    border: 1px solid var(--g3-rule-strong);
+    border-radius: 5px;
+    box-shadow: var(--g3-shadow);
+    overflow: hidden;
+}
+.g3-modal-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 1rem;
+    border-bottom: 1px solid var(--g3-rule);
+    background: var(--g3-paper);
+    flex: 0 0 auto;
+}
+.g3-modal-head h2 {
+    margin: 0;
+    font-size: .96rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    color: var(--g3-ink);
+    line-height: 1.3;
+}
+.g3-modal-head p {
+    margin: .18rem 0 0;
+    font-size: .69rem;
+    color: var(--g3-muted);
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    flex-wrap: wrap;
+}
+.g3-modal-tools { display: flex; align-items: center; gap: .45rem; flex: 0 0 auto; }
+.g3-modal-tools .g3-text { width: 15rem; max-width: 40vw; }
+
+.g3-cat-legend { display: inline-flex; align-items: center; gap: .55rem; }
+.g3-cat-dot { display: inline-flex; align-items: center; gap: .28rem; }
+.g3-cat-dot::before {
+    content: '';
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    display: inline-block;
+}
+.g3-cat-dot--real::before { background: var(--g3-datum); }
+.g3-cat-dot--schem::before { background: var(--g3-warn); }
+
+.g3-cat-body { overflow: auto; padding: .2rem 1rem 1.1rem; }
+.g3-cat-section { padding-top: 1rem; }
+.g3-cat-section[hidden] { display: none; }
+.g3-cat-section h3 {
+    margin: 0;
+    font-size: .69rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--g3-ink);
+}
+/* The datum tick, this app's signature mark — see the header of this file. */
+.g3-cat-section h3::after {
+    content: '';
+    display: block;
+    height: 1px;
+    margin-top: .38rem;
+    background: var(--g3-rule-strong);
+    box-shadow: 0 3px 0 -2px var(--g3-rule-strong);
+}
+.g3-cat-blurb {
+    margin: .45rem 0 .8rem;
+    font-size: .7rem;
+    line-height: 1.55;
+    color: var(--g3-muted);
+    max-width: 62ch;
+}
+
+.g3-cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+    gap: .6rem;
+}
+.g3-cat-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--g3-paper);
+    border: 1px solid var(--g3-rule);
+    border-radius: 4px;
+    overflow: hidden;
+    text-align: left;
+}
+.g3-cat-card[hidden] { display: none; }
+.g3-cat-card[data-unit] { cursor: pointer; }
+.g3-cat-card[data-unit]:hover,
+.g3-cat-card[data-unit]:focus-visible {
+    border-color: var(--g3-datum);
+    box-shadow: 0 0 0 2px var(--g3-datum-glow);
+    outline: none;
+}
+.g3-cat-card.is-absent { opacity: .62; }
+
+/* The thumbnail well STRETCHES its SVG, and that is load-bearing.
+   An SVG carries an intrinsic aspect ratio, so it only letterboxes when its
+   viewport is definite on both axes. Two ways of writing this well failed:
+   `place-items: center` leaves the grid item's height indefinite, and absolute
+   `inset` does not help either, because a positioned replaced element resolves
+   `width: auto` from its intrinsic size rather than from its insets. Both left
+   a square wheel plan 199px tall in a 108px box, spilling over the card's own
+   text. A stretched grid item has a definite height, which is all
+   preserveAspectRatio needs. */
+.g3-cat-fig {
+    display: grid;
+    height: 108px;
+    padding: .6rem;
+    background: var(--g3-inset);
+    border-bottom: 1px solid var(--g3-rule);
+    overflow: hidden;
+}
+/* Figure 2's own drawing: outlined ellipses, nothing filled. The body gear is
+   the one thing that has to be told apart from the main gear, so it is the one
+   thing that gets a second colour. */
+.g3-wp {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+.g3-wp ellipse {
+    fill: none;
+    stroke-width: .07;
+    vector-effect: non-scaling-stroke;
+}
+.g3-wp-main { stroke: var(--g3-ink); }
+.g3-wp-body { stroke: var(--g3-datum); }
+
+.g3-cat-meta { padding: .5rem .55rem .55rem; display: grid; gap: .22rem; }
+.g3-cat-code {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .4rem;
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--g3-ink);
+}
+.g3-cat-badge {
+    font-family: var(--g3-sans);
+    font-size: .55rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    padding: .08rem .3rem;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+}
+.g3-cat-card.is-real .g3-cat-badge { color: var(--g3-datum); }
+.g3-cat-card.is-schematic .g3-cat-badge { color: var(--g3-warn); }
+.g3-cat-card.is-absent .g3-cat-badge { color: var(--g3-muted); }
+
+.g3-cat-desc { font-size: .68rem; line-height: 1.45; color: var(--g3-graphite); }
+.g3-cat-facts {
+    display: flex;
+    gap: .55rem;
+    font-size: .63rem;
+    color: var(--g3-muted);
+    font-variant-numeric: tabular-nums;
+}
+.g3-cat-ac {
+    font-size: .645rem;
+    line-height: 1.4;
+    color: var(--g3-muted);
+    padding-top: .18rem;
+    border-top: 1px dotted var(--g3-rule);
+}
+.g3-cat-ac .g3-i { color: var(--g3-graphite); margin-right: .22rem; font-size: .6rem; }
+.g3-cat-ac--none { font-style: italic; }
+
+/* What the card actually loads, when that is not the aircraft the Order names
+   against the code. Set apart from the tabulated-aircraft line so the two are
+   never read as one list. */
+.g3-cat-loads {
+    font-size: .635rem;
+    line-height: 1.4;
+    color: var(--g3-datum);
+    padding-top: .16rem;
+}
+.g3-cat-loads .g3-i { margin-right: .22rem; font-size: .58rem; }
+
+/* Site stylesheet override — see the SITE BUTTON OVERRIDES block above. A card
+   carrying role="button" is styled as a bare button by the site reset. */
+.g3-app .g3-cat-card {
+    background: var(--g3-paper) !important;
+    color: var(--g3-ink) !important;
+    text-transform: none !important;
+    letter-spacing: normal;
+    box-shadow: none;
+    height: auto !important;
+    line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+    .g3-modal { padding: 0; }
+    .g3-modal-panel { width: 100vw; max-height: 100vh; border-radius: 0; border: 0; }
+    .g3-modal-head { flex-direction: column; gap: .55rem; }
+    .g3-modal-tools { width: 100%; }
+    .g3-modal-tools .g3-text { flex: 1 1 auto; width: auto; max-width: none; }
+    .g3-cat-grid { grid-template-columns: repeat(auto-fill, minmax(152px, 1fr)); }
+    .g3-cat-fig { height: 92px; }
+}
+/* Touch sizing hangs off the pointer, not the width — see the responsive
+   ladder note in CLAUDE.md. A touch laptop gets this; a narrow window does not. */
+@media (pointer: coarse) {
+    .g3-modal-tools .g3-icon-btn { min-width: 44px; min-height: 44px; }
+    .g3-modal-tools .g3-text { min-height: 44px; }
+    .g3-cat-card[data-unit] { min-height: 44px; }
+}

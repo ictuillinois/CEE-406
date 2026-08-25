@@ -8,7 +8,7 @@
 interface Props {
   name:
     | 'calendar' | 'layers' | 'sliders' | 'file' | 'download'
-    | 'arrow-right' | 'book' | 'external' | 'check' | 'chart';
+    | 'arrow-right' | 'book' | 'external' | 'check' | 'chart' | 'lock';
   /** Rendered size in px. The stroke stays optically even across sizes. */
   size?: number;
   label?: string;
@@ -32,6 +32,9 @@ const paths: Record<Props['name'], string> = {
   external: '<path d="M14 4h6v6"/><path d="M20 4 10.5 13.5"/><path d="M18 14v5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 19V8a1.5 1.5 0 0 1 1.5-1.5H10"/>',
   check: '<path d="M4.5 12.5 9.5 17.5 19.5 7"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  // Not released yet. A closed shackle, not a padlock with a keyhole — the
+  // meaning is "opens later", not "forbidden".
+  lock: '<rect x="4.5" y="10.5" width="15" height="10" rx="2.2"/><path d="M8 10.5V7.75a4 4 0 0 1 8 0v2.75"/>',
 };
 ---
 

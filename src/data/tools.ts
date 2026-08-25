@@ -20,6 +20,18 @@ export interface Tool {
   ref: string;
   desc: string;
   glyph: string;
+  /**
+   * Screenshot under public/tools/, e.g. 'gear3d.webp'. Where a tool has one,
+   * the showcase leads with it instead of the stroke glyph — a render of the
+   * thing working sells it better than a 120x44 motif ever will. The glyph is
+   * still required: it is what the compact lists and locked cards use.
+   *
+   * These are the same captures the E-Labs site uses, so a tool looks the same
+   * wherever a student meets it.
+   */
+  image?: string;
+  /** Alt text for `image`. Required whenever image is set. */
+  imageAlt?: string;
 }
 
 export const tools: Tool[] = [
@@ -286,6 +298,8 @@ export const tools: Tool[] = [
     color: '#14B489',
     hws: ['Figures', 'Ch. 1'],
     ref: 'FAA P-401 · P-209 · P-154 · P-501',
+    image: 'cross-section-studio.webp',
+    imageAlt: 'A true-to-scale 3-D pavement cross section: asphalt surface over base, subbase and subgrade, each layer rendered with its own procedural material.',
     desc: 'The figure every write-up needs and nobody wants to redraw: a true-to-scale 3-D pavement section, eighteen procedural materials, thirteen airfield and highway templates — and the PNG copied straight to your clipboard, with or without a background.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path class="anim" d="M14 15h70l14-8H28z"/>
@@ -293,6 +307,25 @@ export const tools: Tool[] = [
       <path d="M14 21v8h76v-8" opacity="0.7"/>
       <path d="M14 29v9h82v-9" opacity="0.45"/>
       <path d="M90 29l10-6M96 38l10-6" opacity="0.3" stroke-width="1.5"/>
+    </svg>`,
+  },
+  {
+    name: 'Gear3D',
+    slug: 'gear3d',
+    color: '#10b981',
+    hws: ['HW4', 'HW5', 'Ch. 6'],
+    ref: 'FHWA classes 1–13 · FAA Order 5300.7',
+    image: 'gear3d.webp',
+    imageAlt: 'A dual-tandem axle rendered in 3-D on a measurement grid, with the dual spacing, track width and axle spacing called out as dimension lines in millimetres.',
+    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions — and contact-patch corner coordinates exported in millimetres for a finite-element pre-processor.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 12h74l10 9v8H18z" opacity="0.5"/>
+      <circle class="anim" cx="34" cy="31" r="7"/>
+      <circle cx="76" cy="31" r="7"/>
+      <circle cx="92" cy="31" r="7"/>
+      <path d="M34 31h0M76 31h0M92 31h0" stroke-width="3"/>
+      <path d="M34 40h58" opacity="0.35" stroke-width="1.5"/>
+      <path d="M34 37v6M92 37v6" opacity="0.35" stroke-width="1.5"/>
     </svg>`,
   },
 ];

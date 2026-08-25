@@ -1,13 +1,28 @@
 ---
+import { tools } from '../data/tools';
+import { isToolReleased } from '../data/release';
+
 const base = import.meta.env.BASE_URL;
 
+// These shortcuts are hardcoded and appear on EVERY page, so they are the one
+// place a link can outlive the thing it points at without any index noticing.
+// This list used to name stress-explorer and esal-calculator; both are locked
+// now, and both returned 404 on all 26 pages. Naming a tool here now goes
+// through the catalogue and the release gate, so it cannot happen again.
+const shortcut = (slug: string, icon: string, desc: string) => {
+  const t = tools.find(x => x.slug === slug);
+  if (!t || !isToolReleased(slug)) return null;
+  return { icon, label: t.name, desc, href: `${base}tools/${slug}/` };
+};
+
+// Same order as the nav and the landing page: tools first.
 const quickLinks = [
-  { icon: '📝', label: 'Homeworks', desc: 'Assignments HW1–HW10 with tools and handouts', href: `${base}homeworks/` },
-  { icon: '📖', label: 'Textbook', desc: 'Huang (2004) — chapters and appendices', href: `${base}textbook/` },
-  { icon: '🧰', label: 'Online Tools', desc: 'Interactive calculators for the homeworks', href: `${base}tools/` },
-  { icon: '📐', label: 'Stress Explorer', desc: 'One-layer elastic response under a circular load', href: `${base}tools/stress-explorer/` },
-  { icon: '🚛', label: 'ESAL Calculator', desc: 'AASHTO load equivalency and design traffic', href: `${base}tools/esal-calculator/` },
-];
+  { icon: '🧰', label: 'Online Tools', desc: 'Interactive calculators and 3-D studios for the homeworks', href: `${base}tools/` },
+  shortcut('gear3d', '🚛', 'Axle and landing-gear configurations, true to scale in 3-D'),
+  shortcut('cross-section-studio', '📐', 'Publication-quality 3-D pavement cross sections'),
+  { icon: '📝', label: 'Homeworks', desc: 'The assignment sequence, released week by week', href: `${base}homeworks/` },
+  { icon: '📖', label: 'Textbook', desc: 'Reading map and where to borrow the book', href: `${base}textbook/` },
+].filter(Boolean);
 ---
 
 <div class="search-overlay" id="search-overlay" aria-hidden="true">

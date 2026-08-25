@@ -1,0 +1,112 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Gear3DApp from '../../../components/react/gear3d/Gear3DApp';
+
+const base = import.meta.env.BASE_URL;
+---
+
+<BaseLayout
+  title="Gear3D · CEE 406 Tools"
+  description="A true-to-scale 3-D visualizer of truck axle configurations and aircraft landing gear — measurable dimensions, three contact-patch models, and footprint coordinates that drop straight into a finite-element pre-processor."
+>
+  <div class="container tool-page tool-page--gear3d">
+    <nav class="doc-breadcrumb" aria-label="Breadcrumb">
+      <a href={base}>Home</a>
+      <span class="doc-breadcrumb__sep">/</span>
+      <a href={`${base}tools/`}>Tools</a>
+      <span class="doc-breadcrumb__sep">/</span>
+      <span class="doc-breadcrumb__current">Gear3D</span>
+    </nav>
+
+    <header class="tool-head">
+      <div>
+        <h1 class="tool-head__title">Gear3D</h1>
+        <p class="tool-head__desc">
+          Design ESALs start from an axle configuration, and an axle configuration is
+          hard to reason about from a table of spacings. This draws it — every FHWA truck
+          class and the FAA landing-gear catalogue, true to scale, from any angle, with the
+          spacings and track widths as <strong>measurable dimensions</strong> rather than
+          numbers you have to trust
+          (<a href={`${base}textbook/ch06/`}>Ch. 6</a>).
+          Then it gives you the <strong>contact patches</strong> — three models, because the
+          literature offers three — and exports their corner coordinates in millimetres for
+          a finite-element pre-processor.
+        </p>
+      </div>
+      <div class="tool-head__hws">
+        <a href={`${base}homeworks/hw4/`} class="tool-hw-chip">HW4</a>
+        <a href={`${base}homeworks/hw5/`} class="tool-hw-chip">HW5</a>
+        <a href={`${base}textbook/ch06/`} class="tool-hw-chip">Ch. 6</a>
+      </div>
+    </header>
+
+    <Gear3DApp client:only="react" />
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-page { padding-top: 2rem; padding-bottom: 5rem; }
+
+  /* Gear3D is a three-column shell — a 264px rail, the viewport, a 288px rail.
+     At the site's 1280px measure the viewport is left with about 700px, and a
+     class 9 semitrailer at true scale is then roughly 40px tall. Upstream ran
+     at 1620px; this page alone does the same, which is the difference between
+     reading a gear layout and squinting at one. */
+  .tool-page--gear3d { max-width: 1620px; }
+
+  .tool-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+  }
+
+  .tool-head__title {
+    font-size: clamp(1.625rem, 3.5vw, 2.25rem);
+    margin: 0 0 0.5rem;
+  }
+
+  .tool-head__desc {
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--color-text-muted);
+    max-width: 44rem;
+    margin: 0;
+  }
+
+  .tool-head__desc strong { color: var(--color-text); font-weight: 600; }
+  .tool-head__desc a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .tool-head__hws { display: flex; gap: 0.4rem; }
+
+  .tool-hw-chip {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-accent);
+    background: rgba(232, 119, 34, 0.08);
+    border: 1px solid rgba(232, 119, 34, 0.2);
+    border-radius: 6px;
+    padding: 0.3rem 0.55rem;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+  }
+  .tool-hw-chip:hover { background: rgba(232, 119, 34, 0.15); }
+
+  /* On a handheld the masthead is what stands between the reader and the tool.
+     Same treatment as the Cross-Section Studio page, for the same reason. */
+  @media (max-width: 719px) {
+    .tool-page { padding-top: 1.25rem; }
+    .tool-head { margin-bottom: 1rem; gap: 0.75rem; }
+    .tool-head__title { font-size: 1.5rem; margin-bottom: 0.35rem; }
+    .tool-head__desc { font-size: 0.83rem; line-height: 1.55; }
+    .tool-head__hws { order: -1; }
+  }
+</style>

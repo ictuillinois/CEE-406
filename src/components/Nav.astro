@@ -5,10 +5,13 @@ const base = import.meta.env.BASE_URL;
 const currentPath = Astro.url.pathname;
 
 const navItems = [
+  // Order matters and is deliberate: the tools are what this site can offer a
+  // student today, so they come first. Homeworks and the textbook follow the
+  // order of the landing page, which uses the same sequence.
   { label: 'Home', href: base },
+  { label: 'Tools', href: `${base}tools/` },
   { label: 'Homeworks', href: `${base}homeworks/` },
   { label: 'Textbook', href: `${base}textbook/` },
-  { label: 'Tools', href: `${base}tools/` },
 ];
 
 function isActive(href: string) {

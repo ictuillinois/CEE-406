@@ -24,3 +24,19 @@ pnpm-debug.log*
 # ── Source archives (Box only — the website serves curated copies from public/) ──
 Chapters/
 Homeworks Fall 2024/
+
+# ── Textbook: never publish ──────────────────────────────────────────────────
+# Huang, Pavement Analysis and Design (2004) is a copyrighted commercial text and
+# this repository is PUBLIC. The 20 chapter/appendix PDFs were removed from here
+# and purged from git history; the site cites the book and links to the UIUC
+# Library instead. This rule exists so a future `cp Chapters/* public/textbook/`
+# cannot quietly re-publish it. See src/data/release.ts.
+public/textbook/
+
+# Homework material is NOT ignored — it is released week by week, and unlocking a
+# homework means copying that week's files from "Homeworks Fall 2024/" into
+# public/homeworks/<id>/ and adding the id to RELEASED_HOMEWORKS. Copy only
+# assignments, handouts and data: never solution keys (*_solutions*, *Key*),
+# graded submissions, or exams — and check that a third-party handout is ours to
+# redistribute before it goes in. src/data/release.test.mjs fails the build if a
+# file is staged for a homework that is not released.
