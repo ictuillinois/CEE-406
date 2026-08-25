@@ -26,25 +26,16 @@ jobs:
         with:
           enablement: true
 
-      - name: Detect Pages visibility
-        id: pages-check
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VISIBILITY=$(gh api repos/${{ github.repository }}/pages --jq '.public' 2>/dev/null || echo 'false')
-          echo "pages_public=${VISIBILITY}" >> $GITHUB_OUTPUT
-          if [ "$VISIBILITY" = "true" ]; then
-            echo "📢 Pages is PUBLIC — building with base=/CEE-406/"
-          else
-            echo "🔒 Pages is PRIVATE — building with base=/"
-          fi
-
+      # The base path is NOT detected any more. It used to be derived from
+      # Pages visibility (public -> /CEE-406/), which was right for a project
+      # page and wrong for a custom domain: cee406.com serves from the root,
+      # so a /CEE-406/ base 404'd every stylesheet and the site rendered
+      # unstyled. The target is fixed in astro.config.mjs, and public/CNAME
+      # binds the domain on every deploy.
       - name: Build Astro
         uses: withastro/action@v3
         with:
           node-version: 22
-        env:
-          PAGES_PUBLIC: ${{ steps.pages-check.outputs.pages_public }}
 
   deploy:
     needs: build
