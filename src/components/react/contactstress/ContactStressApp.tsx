@@ -21,7 +21,7 @@ import Legend from '../ui/Legend';
 import RampBar from '../ui/RampBar';
 import {
   useTheme, chartColors, baseLayout, plotConfig, axis, gridAxis, rampScale,
-  HUES, TOKENS, withAlpha, num, type Mode,
+  divergingScale, num,
 } from '../chartTheme';
 import {
   loadManifest, loadTire, predict, CHANNELS,
@@ -51,18 +51,10 @@ const SUBLABEL: Record<Channel, string> = {
   transverse: 'across the tyre',
 };
 
-/** Diverging scale for the signed shear components: blue ← 0 → orange. */
-function divergingScale(theme: Mode): [number, string][] {
-  const h = HUES[theme];
-  const mid = TOKENS[theme].surface;
-  return [
-    [0, h.blue],
-    [0.25, withAlpha(h.blue, 0.45)],
-    [0.5, mid],
-    [0.75, withAlpha(h.orange, 0.45)],
-    [1, h.orange],
-  ];
-}
+/* The signed shear components take the shared diverging scale (blue ← 0 →
+   orange): zero is the card, so "no shear here" reads as bare surface in
+   either theme, and neither sign of the friction force is drawn louder than
+   the other. See `divergingScale` in chartTheme for the full contract. */
 
 type View = 'all' | Channel;
 
