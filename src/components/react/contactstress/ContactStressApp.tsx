@@ -31,7 +31,7 @@ import {
 import {
   idealizedContact, huangOutline, circleOutline, rectOutline,
   fieldMetrics, compare, decimate, peakRow, rowProfile, colProfile,
-  CONTACT_THRESHOLD, SPEED_KMH, PRESETS, SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, clampTo,
+  CONTACT_THRESHOLD, SPEED_KMH, SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, clampTo,
   forceOut, forceUnit, pressureOut, pressureUnit, lengthOut, lengthUnit,
   areaOut, areaUnit, N_PER_LBF, PSI_PER_MPA,
   type UnitSystem,
@@ -63,7 +63,6 @@ function divergingScale(theme: Mode): [number, string][] {
     [1, h.orange],
   ];
 }
-
 
 type View = 'all' | Channel;
 
@@ -389,29 +388,6 @@ export default function ContactStressApp() {
       {/* ─────────────────────────── controls ─────────────────────────── */}
       <aside className="cee-panel">
         <h2 className="cee-panel__title">Tyre and loading</h2>
-
-        <div className="cee-presets">
-          {PRESETS.map((p) => (
-            <button
-              key={p.name}
-              type="button"
-              className="cee-chip"
-              title={p.note}
-              onClick={() => {
-                setTire(p.inp.tire);
-                // Every preset is inside its tyre's admissible box; clamp anyway
-                // so adding one can never put the sliders outside their track.
-                setLoad(clampTo(p.inp.load, SAFE_RANGE[p.inp.tire].load));
-                setPressure(clampTo(p.inp.pressure, SAFE_RANGE[p.inp.tire].pressure));
-                setSlip(p.inp.slip);
-                setSpeed(p.inp.speed);
-                setCondition(p.inp.condition);
-              }}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
 
         <div className="cee-seg" role="group" aria-label="Tyre configuration">
           <button type="button" className={tire === 'DTA' ? 'is-active' : ''} onClick={() => setTire('DTA')}>
@@ -778,8 +754,9 @@ export default function ContactStressApp() {
               <div className="cee-howto__body">
                 <ol>
                   <li>
-                    Start from a preset. <strong>Figure 8 · free rolling</strong> is the headline case
-                    of the source paper, so the surfaces here should look like the ones printed there.
+                    The tool opens on the headline case of the source paper — a dual assembly at
+                    42 kN and 0.69 MPa, free rolling at 8 km/h — so the surfaces here should look
+                    like the ones printed there.
                   </li>
                   <li>
                     Read the first strip. <strong>Peak vertical stress</strong> against inflation
