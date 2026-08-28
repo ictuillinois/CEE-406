@@ -581,6 +581,32 @@ Totals and envelopes are drawn in `text/primary`, heavier stroke — a neutral, 
 Per §A4.2 the ramp **reverses its empty end in dark mode**. The Stress Explorer's pressure bulb
 already does this ad-hoc; it moves into `chartTheme.ts` as the single source.
 
+**Deviation 1 — continuous magnitude fields do not reverse.** §A4.2's reversal is right for a
+*count*: a cell with nothing in it should sink into the card, which means pale on white and dark on
+navy. It is wrong for a *physical magnitude* drawn as a continuous field — a stress surface, a
+contact patch, a pressure bulb. There the colour **is** the quantity, and swapping the ends with the
+site theme makes one figure say opposite things in the two themes. The Contact Stress Visualizer
+shipped that way: `rampScale('orange', 'dark')` put the deep 900 at `t=0`, so the near-zero haze
+around the tyre patch came out in strong burnt orange and the peak in pale 100, and anyone reading
+saturation as magnitude read the field inside out.
+
+So a field takes `fieldScale(theme)`, which runs **washed at zero → intense at the peak in both
+themes**. One hue cannot do that on two surfaces, because "intense" is dark on white and luminous on
+navy, so it is a per-theme multi-hue warm ramp cut so that **contrast against its own card rises
+monotonically with the value** — the one cue that reads as magnitude on either surface.
+
+| | zero | | | | | peak | vs. card |
+|---|---|---|---|---|---|---|---|
+| **Field, light** (on `#FFFFFF`) | `#FFE1C0` | `#FCC983` | `#F9A445` | `#F0771B` | `#D5450E` | `#A3160F` | 1.25 → 7.84 |
+| **Field, dark** (on `#162033`) | `#2A2E3C` | `#4E3229` | `#7F4420` | `#B35D18` | `#E08A18` | `#F9C24A` | 1.21 → 9.97 |
+
+Still the stress hue of §B4 — the light ramp is the orange ramp opened out through amber and closed
+into deep red, the dark one the same path from a near-neutral charcoal up to a luminous amber.
+Lightness is monotone in whichever direction its card requires, and chroma climbs with the value
+until the sRGB gamut caps it at the last stop. `src/components/react/fieldRamp.test.mjs` asserts all
+of it, including that the ends do **not** swap. Named ramps keep the §A4.2 reversal; only fields opt
+out. Signed fields are a different problem again and take a diverging scale (§A4.4).
+
 ## B6. Plotly binding
 
 Plotly is the rendering engine, so §A7 has to be expressed as trace/layout defaults. These live in

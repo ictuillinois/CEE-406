@@ -8,11 +8,16 @@
 // what is. The idealisations it is measured against are Huang §1.3 —
 // Eq. 1.1 and Figures 1.13/1.14 — and live in equations.ts.
 //
-// Colour: vertical stress is one-signed and takes the sequential orange ramp
-// bound to stress in docs/chart-standards.md §B4. The two shear components
-// change sign inside the footprint, and a sequential ramp on signed data hides
-// exactly the thing the student is looking for, so they take a diverging
-// blue–orange scale built from the same tokens, symmetric about zero.
+// Colour: vertical stress is one-signed, so it takes `fieldScale` — the
+// magnitude ramp of docs/chart-standards.md §B5 deviation 1, still the stress
+// hue of §B4 but washed at zero and intense at the peak in *both* themes. The
+// named §B5 ramps reverse their ends in dark mode (§A4.2), which is right for
+// a count and wrong here: it painted the near-zero haze around the patch in
+// deep 900 orange and the peak in pale 100, so the field read inside out. The
+// two shear components change sign inside the footprint, and any sequential
+// ramp on signed data hides exactly the thing the student is looking for, so
+// they take a diverging blue–orange scale from the same tokens, symmetric
+// about zero.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
 import Card from '../ui/Card';
@@ -20,7 +25,7 @@ import KpiStrip, { Kpi } from '../ui/KpiStrip';
 import Legend from '../ui/Legend';
 import RampBar from '../ui/RampBar';
 import {
-  useTheme, chartColors, baseLayout, plotConfig, axis, gridAxis, rampScale,
+  useTheme, chartColors, baseLayout, plotConfig, axis, gridAxis, fieldScale,
   HUES, TOKENS, withAlpha, num, type Mode,
 } from '../chartTheme';
 import {
@@ -258,7 +263,7 @@ export default function ContactStressApp() {
       await Plotly.react(el, [{
         type: 'surface' as const,
         x: dxs, y: dys, z: d.data,
-        colorscale: signed ? divergingScale(theme) : rampScale('orange', theme),
+        colorscale: signed ? divergingScale(theme) : fieldScale(theme),
         cmin: signed ? -lim : 0,
         cmax: lim,
         showscale: false,
@@ -302,7 +307,7 @@ export default function ContactStressApp() {
             const v = fields.vertical[r * w + k];
             return v >= CONTACT_THRESHOLD ? v : null;
           })),
-        colorscale: rampScale('orange', theme),
+        colorscale: fieldScale(theme),
         zmin: 0, zmax: Math.max(metrics.vertical.peak, 1e-6),
         showscale: false,
         hoverongaps: false,
@@ -671,7 +676,7 @@ export default function ContactStressApp() {
                     <div className="cee-figure__plot" ref={surfRefs[ch]} role="img"
                       aria-label={`${LABEL[ch]} surface, ${SUBLABEL[ch]}, ranging from ${result.metrics[ch].min.toFixed(3)} to ${result.metrics[ch].peak.toFixed(3)} megapascals`} />
                     {ch === 'vertical' ? (
-                      <RampBar ramp="orange" theme={theme} caption="σz" lowLabel="0" highLabel={`${P(result.metrics.vertical.peak)} ${pressureUnit(unit)}`} />
+                      <RampBar theme={theme} stops={fieldScale(theme)} caption="σz" lowLabel="0" highLabel={`${P(result.metrics.vertical.peak)} ${pressureUnit(unit)}`} />
                     ) : (
                       <div className="cee-rampbar">
                         <span className="cee-rampbar__caption">{ch === 'longitudinal' ? 'σx' : 'σy'}</span>
