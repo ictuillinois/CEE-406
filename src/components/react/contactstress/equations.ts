@@ -25,6 +25,27 @@
 // is what the model was trained in. Conversions to the course's customary
 // units are at the bottom and are display-only.
 
+/* This file imports nothing, not even a type — which is what lets it be read
+   as the plain statement of the classical side. The keys below are the same
+   strings predictor.ts types its own Inputs with, restated rather than
+   imported. Keep them in step with predictor.ts by hand; predictor.test.mjs
+   feeds these presets straight into predict(), so a mismatch fails there. */
+export type TireKey = 'DTA' | 'WBT';
+export type SpeedKey = '5mph' | '70mph';
+export type ConditionKey = 'FR' | 'Brake' | 'Acc';
+
+export interface PresetInputs {
+  tire: TireKey;
+  /** Wheel load on the tyre, newtons. */
+  load: number;
+  /** Inflation pressure, MPa. */
+  pressure: number;
+  /** Slip ratio, 0-1. Zero whenever the condition is free rolling. */
+  slip: number;
+  speed: SpeedKey;
+  condition: ConditionKey;
+}
+
 /** Huang Eq. 1.1: Ac = 0.5227 L^2 for the rectangle-plus-semicircles outline. */
 export const HUANG_SHAPE_FACTOR = 0.5227;
 
@@ -251,6 +272,113 @@ export function compare(
     tension: vertical.peak > 0 ? Math.abs(Math.min(vertical.min, 0)) / vertical.peak : 0,
   };
 }
+
+export interface Preset {
+  name: string;
+  note: string;
+  inp: PresetInputs;
+}
+
+/* Every preset is a case somebody can check: four are figures in the source
+   paper, the rest are the axle loads this course actually designs for.
+   They live here, not in the component, so that a test with no React can
+   assert every one of them lands inside SAFE_RANGE below — a preset outside it
+   would be silently clamped, and would then no longer be the printed case it
+   claims to reproduce. */
+export const PRESETS: Preset[] = [
+  {
+    name: 'Figure 8 · free rolling',
+    note: 'The headline case of Lang et al. (2026): 42 kN, 0.69 MPa, 8 km/h.',
+    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0, speed: '5mph', condition: 'FR' },
+  },
+  {
+    name: 'Figure 8 · braking 7%',
+    note: 'Same wheel, 7% slip under braking — the longitudinal field goes positive.',
+    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Brake' },
+  },
+  {
+    name: 'Figure 8 · accelerating 7%',
+    note: 'Same wheel, 7% slip under acceleration — the longitudinal field reverses.',
+    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Acc' },
+  },
+  {
+    name: 'Figure 7 · 45.4 kN',
+    note: 'The heaviest of the four loads for which the paper prints the summed vertical stress.',
+    inp: { tire: 'DTA', load: 45430, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
+  },
+  {
+    name: 'Standard axle · one tyre',
+    note: '80 kN (18 kip) single axle on dual tyres: 20 kN per tyre at 0.69 MPa (100 psi).',
+    inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '5mph', condition: 'FR' },
+  },
+  {
+    name: 'Highway speed',
+    note: 'The same wheel at 112.65 km/h (70 mph) instead of 8 km/h.',
+    inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '70mph', condition: 'FR' },
+  },
+  {
+    name: 'Wide-base tyre',
+    note: 'One wide-base tyre carrying what a dual assembly would, free rolling.',
+    inp: { tire: 'WBT', load: 25000, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
+  },
+];
+/* ─────────── the range over which the surrogate stays admissible ───────────
+ *
+ * Two of the residuals above have thresholds, and in the corners of the
+ * training domain a prediction crosses them: at very light load the vertical
+ * resultant overshoots the applied load by tens of percent, at heavy load on a
+ * soft tyre it undershoots it, and the wide-base branch turns tensile over
+ * whole bands. None of that is a bug — Eq. 5 of Lang et al. trains equilibrium
+ * as a *soft* penalty, so a residual is expected — but a slider that walks a
+ * student into a field which is not a statically admissible answer teaches
+ * nothing except that the instrument is unreliable.
+ *
+ * So the two sliders span only the rectangle inside which every prediction
+ * closes: equilibrium within EQUILIBRIUM_BAND and tensile fraction at or below
+ * TENSION_LIMIT, for EVERY speed, rolling condition and slip ratio the tool
+ * offers. Worst-casing over the rolling controls is deliberate — bounds that
+ * jumped when you pressed "Braking" would read as a broken slider.
+ *
+ * These are the largest such rectangles, found by sweeping the shipped
+ * artefact; equations.test.mjs is not able to re-derive them (it has no
+ * artefact), so predictor.test.mjs owns that check and fails if any corner or
+ * interior sample ever leaves the band.
+ *
+ * The residual KPIs stay on the page. Narrowing the range is not hiding the
+ * residual — it is declining to quote a prediction that does not close.
+ */
+export const EQUILIBRIUM_BAND: [number, number] = [0.85, 1.15];
+export const TENSION_LIMIT = 0.12;
+
+export interface SafeRange {
+  /** Wheel load, N. */
+  load: [number, number];
+  /** Inflation pressure, MPa. */
+  pressure: [number, number];
+}
+
+export const SAFE_RANGE: Record<TireKey, SafeRange> = {
+  /* Trained over 0.99-60.1 kN x 0.50-1.00 MPa. Equilibrium overshoots 1.15
+     below ~13 kN and falls back through 0.85 above ~46 kN — the softer the
+     tyre the earlier, which is why the pressure floor is what buys the load
+     ceiling. The box still holds every published-figure preset (20-45.4 kN at
+     0.69-0.70 MPa), which is the binding constraint on it: the whole point of
+     those presets is that the tool reproduces a printed case, and a preset
+     outside the box would be clamped into something else. Worst residual
+     anywhere inside: equilibrium 0.855, tension 0.093. */
+  DTA: { load: [14000, 46000], pressure: [0.685, 1.0] },
+  /* Trained over 1.0-56.0 kN x 0.40-1.00 MPa. The wide-base branch is an
+     extension beyond the published paper and carries much larger residuals —
+     it over-closes by 9-14% everywhere, and its tensile fraction reaches 25%
+     below 0.55 MPa and again above ~36 kN — so the admissible box is a good
+     deal smaller than the trained one. Worst inside: equilibrium 1.137,
+     tension 0.097. */
+  WBT: { load: [11000, 27000], pressure: [0.68, 1.0] },
+};
+
+/** Clamp a value into an inclusive range. */
+export const clampTo = (v: number, [lo, hi]: [number, number]) =>
+  Math.min(Math.max(v, lo), hi);
 
 /* ─────────────────────────────── profiles ─────────────────────────────── */
 

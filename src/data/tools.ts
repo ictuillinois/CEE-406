@@ -315,6 +315,8 @@ export const tools: Tool[] = [
     color: '#E87722',
     hws: ['HW3', 'HW4', 'Ch. 1'],
     ref: 'Lang et al. 2026 · phyContactGAN · Huang Eq. 1.1',
+    image: 'contact-stress.webp',
+    imageAlt: 'The predicted contact patch of a truck tyre in plan view — five orange ribs of vertical stress — with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
     desc: 'The 3-D contact stresses a truck tyre really applies — vertical, longitudinal and transverse — from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>

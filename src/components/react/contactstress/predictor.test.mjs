@@ -31,7 +31,10 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 import { loadManifest, loadTire, predict, cubicWeights, CHANNELS } from './predictor.ts';
-import { fieldMetrics, idealizedContact, compare } from './equations.ts';
+import {
+  fieldMetrics, idealizedContact, compare,
+  SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, PRESETS,
+} from './equations.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..', '..');
@@ -307,4 +310,66 @@ test('braking and acceleration flip the sign of the longitudinal field', () => {
     'free rolling should be the mildest of the three');
   assert.ok(brake.resultant > 0 && acc.resultant < 0,
     'the longitudinal resultant is the friction force, and it reverses');
+});
+
+/* ── 4. the sliders cannot reach a prediction that does not close ─────── */
+
+/* SAFE_RANGE is the box the two sliders span, and it exists so that nothing a
+   student can reach fails either residual check — the tool used to hand out
+   three different warnings at the corners of the training domain. The box was
+   chosen by sweeping THIS artefact, so it is only as good as the artefact:
+   re-bake the payload without re-sweeping and this is what says so.
+
+   The box was derived from a 159,073-prediction sweep at slider resolution
+   (load 250 N, pressure 0.005 MPa, eighteen rolling controls), which measured
+   the worst residual anywhere reachable as equilibrium 0.8555 / 1.1367 and
+   tension 0.0970. That sweep takes about half an hour, so it is not what runs
+   here: this is a coarser grid over the same box, on the conditions that
+   carried those worst cases. It is a regression gate, not the derivation. */
+test('no warning is reachable anywhere the sliders go', () => {
+  const CONDS = {
+    DTA: [['FR', '5mph', 0], ['FR', '70mph', 0],
+      ['Acc', '70mph', 1], ['Acc', '5mph', 0.07438], ['Brake', '70mph', 1], ['Brake', '5mph', 1]],
+    WBT: [['FR', '5mph', 0]],
+  };
+  for (const tire of ['DTA', 'WBT']) {
+    const t = manifest.tires[tire];
+    const box = SAFE_RANGE[tire];
+    assert.ok(box.load[0] >= t.domain.load[0] && box.load[1] <= t.domain.load[1],
+      `${tire}: the load slider leaves the training domain`);
+    assert.ok(box.pressure[0] >= t.domain.pressure[0] && box.pressure[1] <= t.domain.pressure[1],
+      `${tire}: the pressure slider leaves the training domain`);
+
+    for (let l = box.load[0]; l <= box.load[1] + 1; l += 1000) {
+      const load = Math.min(l, box.load[1]);
+      for (let q = box.pressure[0]; q <= box.pressure[1] + 1e-9; q += 0.02) {
+        const pressure = Math.min(q, box.pressure[1]);
+        for (const [condition, speed, slip] of CONDS[tire]) {
+          const f = predict(packs[tire], 'vertical',
+            { tire, load, pressure, slip: condition === 'FR' ? 0 : slip, speed, condition });
+          const m = fieldMetrics(f, t.height, t.width, t.mmPerPixelY, t.mmPerPixelX);
+          const c = compare(m, idealizedContact(load, pressure), load);
+          const at = `${tire} at ${(load / 1000).toFixed(2)} kN, ${pressure.toFixed(3)} MPa, ${speed}/${condition} slip ${slip}`;
+          assert.ok(c.equilibrium >= EQUILIBRIUM_BAND[0] && c.equilibrium <= EQUILIBRIUM_BAND[1],
+            `${at}: equilibrium ${c.equilibrium.toFixed(4)} is outside ${JSON.stringify(EQUILIBRIUM_BAND)} — the tool would warn`);
+          assert.ok(c.tension <= TENSION_LIMIT,
+            `${at}: tensile fraction ${c.tension.toFixed(4)} exceeds ${TENSION_LIMIT} — the tool would warn`);
+        }
+      }
+    }
+  }
+});
+
+test('every preset lands inside the box its tyre offers', () => {
+  // A preset outside SAFE_RANGE is silently clamped, and then no longer is the
+  // printed case it is named after. Four of these are figures in Lang et al.
+  // (2026) and the tool is calibrated against them.
+  assert.ok(PRESETS.length >= 7, 'presets have gone missing');
+  for (const p of PRESETS) {
+    const b = SAFE_RANGE[p.inp.tire];
+    assert.ok(p.inp.load >= b.load[0] && p.inp.load <= b.load[1],
+      `${p.name}: ${p.inp.load} N is outside the ${p.inp.tire} load slider ${JSON.stringify(b.load)}`);
+    assert.ok(p.inp.pressure >= b.pressure[0] && p.inp.pressure <= b.pressure[1],
+      `${p.name}: ${p.inp.pressure} MPa is outside the ${p.inp.tire} pressure slider ${JSON.stringify(b.pressure)}`);
+  }
 });
