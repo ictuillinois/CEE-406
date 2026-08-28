@@ -126,6 +126,42 @@ export function rampEnds(name: RampName, theme: Mode): [string, string] {
   return [s[0][1], s[s.length - 1][1]];
 }
 
+/**
+ * Diverging colorscale for SIGNED data — a quantity that changes sign inside
+ * the domain, where a sequential ramp would hide the sign change that is the
+ * whole point. Sequential data must keep using `rampScale`.
+ *
+ * Three properties, and all three are what make it read in both themes:
+ *
+ *  - **Zero is the card.** The midpoint is `TOKENS[theme].surface`, so "none
+ *    here" reads as bare surface rather than as a colour the eye has to learn.
+ *    This is the one ramp that is *not* reversed between modes: it does not
+ *    need to be, because its neutral is defined as the background itself.
+ *  - **The arms are equal in lightness.** Neither sign is the important one,
+ *    so neither may be the louder one. (Measured: the two ends sit within
+ *    1.01:1 of each other in light and 1.00:1 in dark.)
+ *  - **Blue↔orange, never red↔green.** The pair has to survive deuteranopia
+ *    and protanopia, and it doubles as the §B4 semantic pair.
+ *
+ * Stops are mixed into the surface, not alpha'd — see `mixHex` for why that
+ * distinction is load-bearing on a 3-D surface.
+ */
+export function divergingScale(
+  theme: Mode,
+  low: Hue = 'blue',
+  high: Hue = 'orange'
+): [number, string][] {
+  const h = HUES[theme];
+  const mid = TOKENS[theme].surface;
+  return [
+    [0, h[low]],
+    [0.25, mixHex(h[low], mid, 0.45)],
+    [0.5, mid],
+    [0.75, mixHex(h[high], mid, 0.45)],
+    [1, h[high]],
+  ];
+}
+
 /* ──────────────────────────── Semantic (§A3.5) ──────────────────────────── */
 export const SEMANTIC = {
   positive: { fg: '#12B76A', tint: '#E6F7EF' },
@@ -256,6 +292,32 @@ export function withAlpha(hex: string, alpha: number): string {
   if (!hex.startsWith('#')) return hex;
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+/**
+ * `fg` at `t` opacity resolved against `bg`, returned OPAQUE.
+ *
+ * This is `withAlpha`'s counterpart, and the distinction is not cosmetic.
+ * Alpha means "let the background through", which is what an SVG area fill
+ * wants — `areaFill` and every 2-D `fillcolor` composite over the card and are
+ * correct as rgba(). A **colorscale on a gl3d `surface`** is a different
+ * animal: alpha there is applied to the *mesh fragments*, so a translucent
+ * stop does not tint toward the card, it makes the sheet see-through — the far
+ * side of the surface, the axis walls and the grid all show through the near
+ * side, and Plotly's depth sort makes which one wins view-dependent.
+ *
+ * So: rgba() for anything drawn flat, `mixHex` for anything drawn in 3-D.
+ * Passing the theme's own surface token as `bg` keeps the result mode-correct,
+ * because the colour it fades into is the card it is actually drawn on.
+ */
+export function mixHex(fg: string, bg: string, t: number): string {
+  const p = (h: string) => {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const [a, b] = [p(fg), p(bg)];
+  const c = a.map((v, i) => Math.round(v * t + b[i] * (1 - t)));
+  return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
 /**
