@@ -1106,3 +1106,61 @@
   .cee-input,
   .cee-select { transition: none; }
 }
+
+/* ── Contact Stress Visualizer: the three 3-D windows ──────────────────
+ * One window per stress direction, side by side where there is room and
+ * stacked where there is not. The "focus one" state collapses to a single
+ * column and the hidden figures use [hidden], never display:none in a style
+ * attribute, so Plotly can still measure them when they come back.
+ */
+.cs-windows {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1180px) {
+  .cs-windows { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cs-windows--one { grid-template-columns: 1fr; }
+}
+
+.cs-window {
+  margin: 0;
+  min-width: 0;
+  background: var(--cee-sunken);
+  border-radius: var(--cee-radius-inner);
+  padding: 0.85rem 0.85rem 0.6rem;
+}
+
+.cs-window__head {
+  display: grid;
+  gap: 0.1rem;
+  margin-bottom: 0.35rem;
+}
+
+.cs-window__title {
+  font-family: var(--font-heading);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--cee-ink);
+}
+
+.cs-window__range {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--cee-brand);
+}
+
+.cs-window__sub {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--cee-muted);
+}
+
+/* The 3-D scenes are WebGL and paint their own background; keep the card's
+   surface behind them so a transparent scene does not show the page ground. */
+.cs-window .cee-figure__plot { background: transparent; }
+
+/* Section headings inside the Contact Stress control rail: the panel title
+   carries a rule above it, which collides with a preceding hint paragraph. */
+.cee-panel__title.cs-section { margin-top: 1.5rem; }

@@ -59,6 +59,7 @@ export const HOMEWORK_WEEK: Record<string, number> = {
 export const RELEASED_TOOLS: Record<string, true> = {
   gear3d: true,
   'cross-section-studio': true,
+  'contact-stress': true,
 };
 
 /** Planned release week per tool, for the locked label. Optional. */

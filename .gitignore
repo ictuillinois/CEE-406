@@ -40,3 +40,13 @@ public/textbook/
 # graded submissions, or exams — and check that a third-party handout is ours to
 # redistribute before it goes in. src/data/release.test.mjs fails the build if a
 # file is staged for a homework that is not released.
+
+# ── Contact Stress Predictor: the trained model, never published ─────────────
+# The phyContactGAN checkpoints (three x 135 MB), their 2.1 GB training arrays,
+# and the offline pipeline that reads them. They are the authors' intellectual
+# property (Lang, Villamil & Al-Qadi 2026, ICT) and this repository is PUBLIC.
+# What the site ships is public/tools/contact-stress/ — a precomputed, 2 mm,
+# PCA-compressed sample of the model's OUTPUT, plus the citation. Re-bake it
+# with the scripts in "Contact Stress Predictor/pipeline/", never by copying a
+# .pth anywhere near src/ or public/.
+Contact Stress Predictor/

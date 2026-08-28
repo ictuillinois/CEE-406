@@ -1,0 +1,654 @@
+{
+ "version": 2,
+ "source": {
+  "citation": "Lang, H., Villamil, W. D., and Al-Qadi, I. L. (2026). 3D tire-pavement contact stresses: physics-informed prediction approach. International Journal of Pavement Engineering, 27(1), 2621970.",
+  "doi": "10.1080/10298436.2026.2621970",
+  "model": "phyContactGAN - Pix2Pix Skip-U-Net generator, Table 5 checkpoint",
+  "tire": "275/80R22.5 truck tyre on a 22.5 in rim (DTA); wide-base tyre (WBT)",
+  "note": "Precomputed sample of the trained generator output over its full training domain, compressed to a shared PCA basis per tyre and channel. The network and its weights are not distributed."
+ },
+ "channels": [
+  "vertical",
+  "longitudinal",
+  "transverse"
+ ],
+ "interpolation": "cubic4",
+ "tires": {
+  "DTA": {
+   "height": 112,
+   "width": 161,
+   "nativeHeight": 224,
+   "nativeWidth": 321,
+   "mmPerPixelY": 2.0,
+   "mmPerPixelX": 1.9937888198757765,
+   "loads": [
+    989.7295,
+    1558.4526,
+    2655.0481,
+    4111.7719,
+    5866.0679,
+    7881.0803,
+    10131.6047,
+    12598.9434,
+    15268.4842,
+    18128.3847,
+    21168.7858,
+    24381.3071,
+    27758.707,
+    31294.6429,
+    34983.4976,
+    38820.2488,
+    42800.3704,
+    46919.7543,
+    51174.6493,
+    55561.6117,
+    60077.4648
+   ],
+   "pressures": [
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+   ],
+   "groups": [
+    {
+     "speed": "5mph",
+     "condition": "FR",
+     "slips": [
+      0.0
+     ]
+    },
+    {
+     "speed": "5mph",
+     "condition": "Brake",
+     "slips": [
+      0.0,
+      0.00826,
+      0.03306,
+      0.07438,
+      0.13223,
+      0.20661,
+      0.29752,
+      0.40496,
+      0.52893,
+      0.66942,
+      0.82645,
+      1.0
+     ]
+    },
+    {
+     "speed": "5mph",
+     "condition": "Acc",
+     "slips": [
+      0.0,
+      0.00826,
+      0.03306,
+      0.07438,
+      0.13223,
+      0.20661,
+      0.29752,
+      0.40496,
+      0.52893,
+      0.66942,
+      0.82645,
+      1.0
+     ]
+    },
+    {
+     "speed": "70mph",
+     "condition": "FR",
+     "slips": [
+      0.0
+     ]
+    },
+    {
+     "speed": "70mph",
+     "condition": "Brake",
+     "slips": [
+      0.0,
+      0.00826,
+      0.03306,
+      0.07438,
+      0.13223,
+      0.20661,
+      0.29752,
+      0.40496,
+      0.52893,
+      0.66942,
+      0.82645,
+      1.0
+     ]
+    },
+    {
+     "speed": "70mph",
+     "condition": "Acc",
+     "slips": [
+      0.0,
+      0.00826,
+      0.03306,
+      0.07438,
+      0.13223,
+      0.20661,
+      0.29752,
+      0.40496,
+      0.52893,
+      0.66942,
+      0.82645,
+      1.0
+     ]
+    }
+   ],
+   "rank": {
+    "vertical": 64,
+    "longitudinal": 32,
+    "transverse": 28
+   },
+   "file": "dta.bin",
+   "bytes": 3907552,
+   "gzipBytes": 2757904,
+   "nodes": 6300,
+   "sections": {
+    "vertical.mean": {
+     "offset": 0,
+     "count": 18032,
+     "dtype": "i16",
+     "scale": 2.797196483096907e-05
+    },
+    "longitudinal.mean": {
+     "offset": 36064,
+     "count": 18032,
+     "dtype": "i16",
+     "scale": 6.225169051514629e-07
+    },
+    "transverse.mean": {
+     "offset": 72128,
+     "count": 18032,
+     "dtype": "i16",
+     "scale": 7.414744843619385e-07
+    },
+    "vertical.basisScale": {
+     "offset": 108192,
+     "count": 64,
+     "dtype": "f32"
+    },
+    "vertical.basis": {
+     "offset": 108448,
+     "count": 1154048,
+     "dtype": "i8",
+     "filter": "deltaRows",
+     "shape": [
+      64,
+      112,
+      161
+     ]
+    },
+    "longitudinal.basisScale": {
+     "offset": 1262496,
+     "count": 32,
+     "dtype": "f32"
+    },
+    "longitudinal.basis": {
+     "offset": 1262624,
+     "count": 577024,
+     "dtype": "i8",
+     "filter": "deltaRows",
+     "shape": [
+      32,
+      112,
+      161
+     ]
+    },
+    "transverse.basisScale": {
+     "offset": 1839648,
+     "count": 28,
+     "dtype": "f32"
+    },
+    "transverse.basis": {
+     "offset": 1839760,
+     "count": 504896,
+     "dtype": "i8",
+     "filter": "deltaRows",
+     "shape": [
+      28,
+      112,
+      161
+     ]
+    },
+    "vertical.coeffScale": {
+     "offset": 2344656,
+     "count": 64,
+     "dtype": "f32"
+    },
+    "vertical.coeff.5mph.FR": {
+     "offset": 2344912,
+     "count": 8064,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      1,
+      64
+     ]
+    },
+    "vertical.coeff.5mph.Brake": {
+     "offset": 2361040,
+     "count": 96768,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      64
+     ]
+    },
+    "vertical.coeff.5mph.Acc": {
+     "offset": 2554576,
+     "count": 96768,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      64
+     ]
+    },
+    "vertical.coeff.70mph.FR": {
+     "offset": 2748112,
+     "count": 8064,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      1,
+      64
+     ]
+    },
+    "vertical.coeff.70mph.Brake": {
+     "offset": 2764240,
+     "count": 96768,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      64
+     ]
+    },
+    "vertical.coeff.70mph.Acc": {
+     "offset": 2957776,
+     "count": 96768,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      64
+     ]
+    },
+    "longitudinal.coeffScale": {
+     "offset": 3151312,
+     "count": 32,
+     "dtype": "f32"
+    },
+    "longitudinal.coeff.5mph.FR": {
+     "offset": 3151440,
+     "count": 4032,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      1,
+      32
+     ]
+    },
+    "longitudinal.coeff.5mph.Brake": {
+     "offset": 3159504,
+     "count": 48384,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      32
+     ]
+    },
+    "longitudinal.coeff.5mph.Acc": {
+     "offset": 3256272,
+     "count": 48384,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      32
+     ]
+    },
+    "longitudinal.coeff.70mph.FR": {
+     "offset": 3353040,
+     "count": 4032,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      1,
+      32
+     ]
+    },
+    "longitudinal.coeff.70mph.Brake": {
+     "offset": 3361104,
+     "count": 48384,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      32
+     ]
+    },
+    "longitudinal.coeff.70mph.Acc": {
+     "offset": 3457872,
+     "count": 48384,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      32
+     ]
+    },
+    "transverse.coeffScale": {
+     "offset": 3554640,
+     "count": 28,
+     "dtype": "f32"
+    },
+    "transverse.coeff.5mph.FR": {
+     "offset": 3554752,
+     "count": 3528,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      1,
+      28
+     ]
+    },
+    "transverse.coeff.5mph.Brake": {
+     "offset": 3561808,
+     "count": 42336,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      28
+     ]
+    },
+    "transverse.coeff.5mph.Acc": {
+     "offset": 3646480,
+     "count": 42336,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      28
+     ]
+    },
+    "transverse.coeff.70mph.FR": {
+     "offset": 3731152,
+     "count": 3528,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      1,
+      28
+     ]
+    },
+    "transverse.coeff.70mph.Brake": {
+     "offset": 3738208,
+     "count": 42336,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      28
+     ]
+    },
+    "transverse.coeff.70mph.Acc": {
+     "offset": 3822880,
+     "count": 42336,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      21,
+      6,
+      12,
+      28
+     ]
+    }
+   },
+   "domain": {
+    "load": [
+     989.7295,
+     60077.4648
+    ],
+    "pressure": [
+     0.5,
+     1.0
+    ],
+    "slip": [
+     0.0,
+     1.0
+    ]
+   }
+  },
+  "WBT": {
+   "height": 196,
+   "width": 161,
+   "nativeHeight": 391,
+   "nativeWidth": 321,
+   "mmPerPixelY": 1.9948979591836735,
+   "mmPerPixelX": 1.9937888198757765,
+   "loads": [
+    1000.0,
+    1987.1626,
+    3697.0078,
+    5855.2828,
+    8368.4426,
+    11183.4567,
+    14265.0236,
+    17587.4976,
+    21131.1783,
+    24880.3316,
+    28822.0236,
+    32945.3836,
+    37241.1125,
+    41701.1402,
+    46318.3789,
+    51086.541,
+    56000.0
+   ],
+   "pressures": [
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    1.0
+   ],
+   "groups": [
+    {
+     "speed": "5mph",
+     "condition": "FR",
+     "slips": [
+      0.0
+     ]
+    }
+   ],
+   "rank": {
+    "vertical": 26,
+    "longitudinal": 18,
+    "transverse": 18
+   },
+   "file": "wbt.bin",
+   "bytes": 2161060,
+   "gzipBytes": 1025290,
+   "nodes": 119,
+   "sections": {
+    "vertical.mean": {
+     "offset": 0,
+     "count": 31556,
+     "dtype": "i16",
+     "scale": 2.5088091039510614e-05
+    },
+    "longitudinal.mean": {
+     "offset": 63112,
+     "count": 31556,
+     "dtype": "i16",
+     "scale": 2.0952625667135334e-06
+    },
+    "transverse.mean": {
+     "offset": 126224,
+     "count": 31556,
+     "dtype": "i16",
+     "scale": 3.8313951884350134e-06
+    },
+    "vertical.basisScale": {
+     "offset": 189336,
+     "count": 26,
+     "dtype": "f32"
+    },
+    "vertical.basis": {
+     "offset": 189440,
+     "count": 820456,
+     "dtype": "i8",
+     "filter": "deltaRows",
+     "shape": [
+      26,
+      196,
+      161
+     ]
+    },
+    "longitudinal.basisScale": {
+     "offset": 1009896,
+     "count": 18,
+     "dtype": "f32"
+    },
+    "longitudinal.basis": {
+     "offset": 1009968,
+     "count": 568008,
+     "dtype": "i8",
+     "filter": "deltaRows",
+     "shape": [
+      18,
+      196,
+      161
+     ]
+    },
+    "transverse.basisScale": {
+     "offset": 1577976,
+     "count": 18,
+     "dtype": "f32"
+    },
+    "transverse.basis": {
+     "offset": 1578048,
+     "count": 568008,
+     "dtype": "i8",
+     "filter": "deltaRows",
+     "shape": [
+      18,
+      196,
+      161
+     ]
+    },
+    "vertical.coeffScale": {
+     "offset": 2146056,
+     "count": 26,
+     "dtype": "f32"
+    },
+    "vertical.coeff.5mph.FR": {
+     "offset": 2146160,
+     "count": 3094,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      17,
+      7,
+      1,
+      26
+     ]
+    },
+    "longitudinal.coeffScale": {
+     "offset": 2152348,
+     "count": 18,
+     "dtype": "f32"
+    },
+    "longitudinal.coeff.5mph.FR": {
+     "offset": 2152420,
+     "count": 2142,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      17,
+      7,
+      1,
+      18
+     ]
+    },
+    "transverse.coeffScale": {
+     "offset": 2156704,
+     "count": 18,
+     "dtype": "f32"
+    },
+    "transverse.coeff.5mph.FR": {
+     "offset": 2156776,
+     "count": 2142,
+     "dtype": "i16",
+     "filter": "deltaAxis0",
+     "shape": [
+      17,
+      7,
+      1,
+      18
+     ]
+    }
+   },
+   "domain": {
+    "load": [
+     1000.0,
+     56000.0
+    ],
+    "pressure": [
+     0.4,
+     1.0
+    ],
+    "slip": [
+     0.0,
+     0.0
+    ]
+   }
+  }
+ }
+}

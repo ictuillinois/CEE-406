@@ -310,6 +310,20 @@ export const tools: Tool[] = [
     </svg>`,
   },
   {
+    name: 'Contact Stress Visualizer',
+    slug: 'contact-stress',
+    color: '#E87722',
+    hws: ['HW3', 'HW4', 'Ch. 1'],
+    ref: 'Lang et al. 2026 · phyContactGAN · Huang Eq. 1.1',
+    desc: 'The 3-D contact stresses a truck tyre really applies — vertical, longitudinal and transverse — from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
+      <path d="M26 34 V16 M38 34 V9 M50 34 V6 M62 34 V6 M74 34 V9 M86 34 V16" opacity="0.5"/>
+      <path class="anim" d="M20 30 Q32 12 44 7 T68 7 Q80 12 92 30"/>
+      <ellipse cx="56" cy="34" rx="36" ry="5" opacity="0.3" stroke-dasharray="3 3"/>
+    </svg>`,
+  },
+  {
     name: 'Gear3D',
     slug: 'gear3d',
     color: '#10b981',
