@@ -64,52 +64,6 @@ function divergingScale(theme: Mode): [number, string][] {
   ];
 }
 
-interface Preset {
-  name: string;
-  note: string;
-  inp: Omit<Inputs, 'tire'> & { tire: TireType };
-}
-
-/* Every preset is a case somebody can check: four are figures in the source
-   paper, the rest are the axle loads this course actually designs for. */
-const PRESETS: Preset[] = [
-  {
-    name: 'Figure 8 · free rolling',
-    note: 'The headline case of Lang et al. (2026): 42 kN, 0.69 MPa, 8 km/h.',
-    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-  {
-    name: 'Figure 8 · braking 7%',
-    note: 'Same wheel, 7% slip under braking — the longitudinal field goes positive.',
-    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Brake' },
-  },
-  {
-    name: 'Figure 8 · accelerating 7%',
-    note: 'Same wheel, 7% slip under acceleration — the longitudinal field reverses.',
-    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Acc' },
-  },
-  {
-    name: 'Figure 7 · 45.4 kN',
-    note: 'The heaviest of the four loads for which the paper prints the summed vertical stress.',
-    inp: { tire: 'DTA', load: 45430, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-  {
-    name: 'Standard axle · one tyre',
-    note: '80 kN (18 kip) single axle on dual tyres: 20 kN per tyre at 0.69 MPa (100 psi).',
-    inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-  {
-    name: 'Highway speed',
-    note: 'The same wheel at 112.65 km/h (70 mph) instead of 8 km/h.',
-    inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '70mph', condition: 'FR' },
-  },
-  {
-    name: 'Wide-base tyre',
-    note: 'One wide-base tyre carrying what a dual assembly would, free rolling.',
-    inp: { tire: 'WBT', load: 25000, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-];
-
 type View = 'all' | Channel;
 
 export default function ContactStressApp() {
@@ -432,27 +386,6 @@ export default function ContactStressApp() {
       {/* ─────────────────────────── controls ─────────────────────────── */}
       <aside className="cee-panel">
         <h2 className="cee-panel__title">Tyre and loading</h2>
-
-        <div className="cee-presets">
-          {PRESETS.map((p) => (
-            <button
-              key={p.name}
-              type="button"
-              className="cee-chip"
-              title={p.note}
-              onClick={() => {
-                setTire(p.inp.tire);
-                setLoad(p.inp.load);
-                setPressure(p.inp.pressure);
-                setSlip(p.inp.slip);
-                setSpeed(p.inp.speed);
-                setCondition(p.inp.condition);
-              }}
-            >
-              {p.name}
-            </button>
-          ))}
-        </div>
 
         <div className="cee-seg" role="group" aria-label="Tyre configuration">
           <button type="button" className={tire === 'DTA' ? 'is-active' : ''} onClick={() => setTire('DTA')}>
@@ -818,8 +751,9 @@ export default function ContactStressApp() {
               <div className="cee-howto__body">
                 <ol>
                   <li>
-                    Start from a preset. <strong>Figure 8 · free rolling</strong> is the headline case
-                    of the source paper, so the surfaces here should look like the ones printed there.
+                    The tool opens on the headline case of the source paper — a dual assembly at
+                    42 kN and 0.69 MPa, free rolling at 8 km/h — so the surfaces here should look
+                    like the ones printed there.
                   </li>
                   <li>
                     Read the first strip. <strong>Peak vertical stress</strong> against inflation
