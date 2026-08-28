@@ -50,3 +50,10 @@ public/textbook/
 # with the scripts in "Contact Stress Predictor/pipeline/", never by copying a
 # .pth anywhere near src/ or public/.
 Contact Stress Predictor/
+
+# ── Claude Code local session state ──────────────────────────────────────────
+# .claude/worktrees/ holds throwaway git worktrees (each with its own
+# node_modules) that agent sessions check out and delete. Local tooling state,
+# never project content — and on this Box-synced drive the directories often
+# outlive the session that made them, because Box holds a handle open.
+.claude/
