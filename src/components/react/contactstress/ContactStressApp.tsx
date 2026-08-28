@@ -31,7 +31,7 @@ import {
 import {
   idealizedContact, huangOutline, circleOutline, rectOutline,
   fieldMetrics, compare, decimate, peakRow, rowProfile, colProfile,
-  CONTACT_THRESHOLD, SPEED_KMH,
+  CONTACT_THRESHOLD, SPEED_KMH, PRESETS, SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, clampTo,
   forceOut, forceUnit, pressureOut, pressureUnit, lengthOut, lengthUnit,
   areaOut, areaUnit, N_PER_LBF, PSI_PER_MPA,
   type UnitSystem,
@@ -64,51 +64,6 @@ function divergingScale(theme: Mode): [number, string][] {
   ];
 }
 
-interface Preset {
-  name: string;
-  note: string;
-  inp: Omit<Inputs, 'tire'> & { tire: TireType };
-}
-
-/* Every preset is a case somebody can check: four are figures in the source
-   paper, the rest are the axle loads this course actually designs for. */
-const PRESETS: Preset[] = [
-  {
-    name: 'Figure 8 · free rolling',
-    note: 'The headline case of Lang et al. (2026): 42 kN, 0.69 MPa, 8 km/h.',
-    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-  {
-    name: 'Figure 8 · braking 7%',
-    note: 'Same wheel, 7% slip under braking — the longitudinal field goes positive.',
-    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Brake' },
-  },
-  {
-    name: 'Figure 8 · accelerating 7%',
-    note: 'Same wheel, 7% slip under acceleration — the longitudinal field reverses.',
-    inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Acc' },
-  },
-  {
-    name: 'Figure 7 · 45.4 kN',
-    note: 'The heaviest of the four loads for which the paper prints the summed vertical stress.',
-    inp: { tire: 'DTA', load: 45430, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-  {
-    name: 'Standard axle · one tyre',
-    note: '80 kN (18 kip) single axle on dual tyres: 20 kN per tyre at 0.69 MPa (100 psi).',
-    inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-  {
-    name: 'Highway speed',
-    note: 'The same wheel at 112.65 km/h (70 mph) instead of 8 km/h.',
-    inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '70mph', condition: 'FR' },
-  },
-  {
-    name: 'Wide-base tyre',
-    note: 'One wide-base tyre carrying what a dual assembly would, free rolling.',
-    inp: { tire: 'WBT', load: 25000, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
-  },
-];
 
 type View = 'all' | Channel;
 
@@ -180,12 +135,14 @@ export default function ContactStressApp() {
     setSlip(0);
   }, [wbtOnlyFR]);
 
-  // Keep the wheel load and pressure inside the branch that is loaded.
+  /* Keep the wheel load and pressure inside the admissible box of whichever
+     branch is selected — the two boxes differ, and the wide-base one is much
+     the smaller, so switching tyre has to pull the sliders in with it. */
+  const safe = SAFE_RANGE[tire];
   useEffect(() => {
-    if (!spec) return;
-    setLoad((L) => Math.min(Math.max(L, spec.domain.load[0]), spec.domain.load[1]));
-    setPressure((p) => Math.min(Math.max(p, spec.domain.pressure[0]), spec.domain.pressure[1]));
-  }, [spec]);
+    setLoad((L) => clampTo(L, safe.load));
+    setPressure((p) => clampTo(p, safe.pressure));
+  }, [safe]);
 
   const inputs: Inputs = useMemo(
     () => ({ tire, load, pressure, slip: condition === 'FR' ? 0 : slip, speed, condition }),
@@ -399,24 +356,21 @@ export default function ContactStressApp() {
   const A = (mm2: number) => areaOut(mm2, unit).toFixed(0);
   const L = (mm: number) => lengthOut(mm, unit).toFixed(unit === 'SI' ? 0 : 1);
 
+  /* A backstop, not an expected path. SAFE_RANGE is chosen so that neither of
+     these can fire anywhere the sliders reach, and predictor.test.mjs asserts
+     that over the whole box for every rolling condition — so if one ever shows
+     up, the artefact has been re-baked and the box has not been re-swept. */
   const warnings: string[] = [];
   if (result) {
-    if (load < 3000) {
-      warnings.push(
-        `At ${F(load, 2)} ${forceUnit(unit)} the wheel is barely loaded. This is the corner of the ` +
-        `training set where the surrogate is weakest — its vertical resultant overshoots the applied ` +
-        `load by up to 40% and its peak stress reads ~4% low.`
-      );
-    }
     const eq = result.cmp.equilibrium;
-    if (eq < 0.85 || eq > 1.15) {
+    if (eq < EQUILIBRIUM_BAND[0] || eq > EQUILIBRIUM_BAND[1]) {
       warnings.push(
         `The predicted vertical stresses integrate to ${(eq * 100).toFixed(0)}% of the applied wheel ` +
         `load. Equation 5 of the paper penalises exactly this residual during training, but it is a ` +
         `soft constraint: the network is not required to satisfy equilibrium and here it does not.`
       );
     }
-    if (result.cmp.tension > 0.12) {
+    if (result.cmp.tension > TENSION_LIMIT) {
       warnings.push(
         `${(result.cmp.tension * 100).toFixed(0)}% of the peak appears as tensile (negative) vertical ` +
         `stress. A tyre cannot pull on a pavement, so that is prediction error, not physics — it is ` +
@@ -425,7 +379,10 @@ export default function ContactStressApp() {
     }
   }
 
-  const dom = spec?.domain;
+  /* What the model was trained on, for the tooltips to set against what the
+     slider offers. Null until the manifest lands; the sliders are live before
+     then, so fall back to the range they are actually spanning. */
+  const trained = spec?.domain ?? safe;
 
   return (
     <div className="cee-tool">
@@ -442,8 +399,10 @@ export default function ContactStressApp() {
               title={p.note}
               onClick={() => {
                 setTire(p.inp.tire);
-                setLoad(p.inp.load);
-                setPressure(p.inp.pressure);
+                // Every preset is inside its tyre's admissible box; clamp anyway
+                // so adding one can never put the sliders outside their track.
+                setLoad(clampTo(p.inp.load, SAFE_RANGE[p.inp.tire].load));
+                setPressure(clampTo(p.inp.pressure, SAFE_RANGE[p.inp.tire].pressure));
                 setSlip(p.inp.slip);
                 setSpeed(p.inp.speed);
                 setCondition(p.inp.condition);
@@ -472,13 +431,13 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-load">
             <span>
               Wheel load
-              <Tip text="Load carried by this tyre, not by the axle. An 80 kN (18 kip) single axle on dual tyres puts about 20 kN on each. The model was trained from 0.99 to 60.1 kN." />
+              <Tip text={`Load carried by this tyre, not by the axle. An 80 kN (18 kip) single axle on dual tyres puts about 20 kN on each. The training set runs from ${F(trained.load[0], 2)} to ${F(trained.load[1], 2)} ${forceUnit(unit)}; the slider spans ${F(safe.load[0], 0)}–${F(safe.load[1], 0)} ${forceUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
             </span>
             <span className="cee-field__unit">{F(load, 2)} {forceUnit(unit)}</span>
           </label>
           <input
             id="cs-load" className="cee-slider" type="range"
-            min={dom?.load[0] ?? 1000} max={dom?.load[1] ?? 60000} step={10}
+            min={safe.load[0]} max={safe.load[1]} step={10}
             value={load} onChange={(e) => setLoad(num(e.target.value, load))}
           />
         </div>
@@ -487,13 +446,13 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-press">
             <span>
               Inflation pressure
-              <Tip text="Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Trained range 0.5–1.0 MPa (73–145 psi) for the dual assembly, 0.4–1.0 MPa for the wide-base tyre." />
+              <Tip text={`Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Trained range ${P(trained.pressure[0])}–${P(trained.pressure[1])} ${pressureUnit(unit)} for this tyre; the slider spans ${P(safe.pressure[0])}–${P(safe.pressure[1])} ${pressureUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
             </span>
             <span className="cee-field__unit">{P(pressure)} {pressureUnit(unit)}</span>
           </label>
           <input
             id="cs-press" className="cee-slider" type="range"
-            min={dom?.pressure[0] ?? 0.5} max={dom?.pressure[1] ?? 1} step={0.005}
+            min={safe.pressure[0]} max={safe.pressure[1]} step={0.005}
             value={pressure} onChange={(e) => setPressure(num(e.target.value, pressure))}
           />
         </div>
@@ -641,6 +600,52 @@ export default function ContactStressApp() {
             ))}
 
             <Card
+              title="Footprint against the design idealisation"
+              subtitle={
+                <>
+                  Plan view of σz, centred on the predicted patch. Cells below {CONTACT_THRESHOLD}{' '}
+                  MPa are left blank, so the coloured region is exactly the contact area measured
+                  above; the three textbook outlines all enclose <em>P/p</em>.
+                </>
+              }
+            >
+              <figure className="cee-figure">
+                <div className="cee-figure__plot" ref={planRef} role="img"
+                  aria-label={`Plan view of vertical contact stress. The predicted patch is ${result.metrics.vertical.extentLongitudinal.toFixed(0)} by ${result.metrics.vertical.extentTransverse.toFixed(0)} millimetres, ${result.cmp.areaOverIdeal.toFixed(2)} times the idealised area.`} />
+                {overlay && (
+                  <Legend
+                    items={[
+                      { label: 'Equal-area circle (layered theory)', color: chartColors(theme).blue, shape: 'line' },
+                      { label: 'Huang Fig. 1.14a · L × 0.6L', color: chartColors(theme).emerald, shape: 'dash' },
+                      { label: 'PCA equivalent rectangle', color: chartColors(theme).violet, shape: 'dash' },
+                    ]}
+                  />
+                )}
+                <figcaption className="cee-figcaption">
+                  All three outlines have area <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}; the real
+                  patch is {A(result.metrics.vertical.contactArea)} {areaUnit(unit)}, a factor of{' '}
+                  {result.cmp.areaOverIdeal.toFixed(2)}. Huang §1.3 argues the assumption is
+                  conservative because the sidewall of a high-pressure tyre is in tension. That holds
+                  in one corner only — a heavily loaded, softly inflated tyre, where the real patch
+                  is smaller than <em>P/p</em> and the real mean pressure is higher. Everywhere else
+                  the patch is the larger of the two, by up to a factor of two, and the assumption
+                  over-predicts the contact pressure instead.
+                  {result.metrics.vertical.bounds &&
+                    (result.metrics.vertical.bounds[0] === 0 ||
+                      result.metrics.vertical.bounds[1] === result.h - 1 ||
+                      result.metrics.vertical.bounds[2] === 0 ||
+                      result.metrics.vertical.bounds[3] === result.w - 1) && (
+                      <>
+                        {' '}The patch reaches the edge of the {Math.round(result.w * result.dx)} ×{' '}
+                        {Math.round(result.h * result.dy)} mm window the finite-element model was solved on,
+                        so the measured extent is a lower bound at this load.
+                      </>
+                    )}
+                </figcaption>
+              </figure>
+            </Card>
+
+            <Card
               title="Three-dimensional contact stress"
               subtitle="One window per direction, longitudinal × transverse in millimetres, each scaled to its own range. Drag to orbit, scroll to zoom; open one window on its own for labelled axes."
               affordance={
@@ -700,51 +705,6 @@ export default function ContactStressApp() {
                 friction force the tyre transmits, and it is invisible to any method that models the
                 tyre as a uniform vertical pressure.
               </p>
-            </Card>
-
-            <Card
-              title="Footprint against the design idealisation"
-              subtitle={
-                <>
-                  Plan view of σz, centred on the predicted patch. Cells below {CONTACT_THRESHOLD}{' '}
-                  MPa are left blank, so the coloured region is exactly the contact area measured
-                  above; the three textbook outlines all enclose <em>P/p</em>.
-                </>
-              }
-            >
-              <figure className="cee-figure">
-                <div className="cee-figure__plot" ref={planRef} role="img"
-                  aria-label={`Plan view of vertical contact stress. The predicted patch is ${result.metrics.vertical.extentLongitudinal.toFixed(0)} by ${result.metrics.vertical.extentTransverse.toFixed(0)} millimetres, ${result.cmp.areaOverIdeal.toFixed(2)} times the idealised area.`} />
-                {overlay && (
-                  <Legend
-                    items={[
-                      { label: 'Equal-area circle (layered theory)', color: chartColors(theme).blue, shape: 'line' },
-                      { label: 'Huang Fig. 1.14a · L × 0.6L', color: chartColors(theme).emerald, shape: 'dash' },
-                      { label: 'PCA equivalent rectangle', color: chartColors(theme).violet, shape: 'dash' },
-                    ]}
-                  />
-                )}
-                <figcaption className="cee-figcaption">
-                  All three outlines have area <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}; the real
-                  patch is {A(result.metrics.vertical.contactArea)} {areaUnit(unit)}, a factor of{' '}
-                  {result.cmp.areaOverIdeal.toFixed(2)}. Huang §1.3 argues the assumption is
-                  conservative because the sidewall of a high-pressure tyre is in tension. That holds
-                  at heavy load, where the real patch is smaller than <em>P/p</em> and the real mean
-                  pressure is higher; at light load the tyre barely deflects, the patch is far larger
-                  than <em>P/p</em>, and the assumption over-predicts the pressure instead.
-                  {result.metrics.vertical.bounds &&
-                    (result.metrics.vertical.bounds[0] === 0 ||
-                      result.metrics.vertical.bounds[1] === result.h - 1 ||
-                      result.metrics.vertical.bounds[2] === 0 ||
-                      result.metrics.vertical.bounds[3] === result.w - 1) && (
-                      <>
-                        {' '}The patch reaches the edge of the {Math.round(result.w * result.dx)} ×{' '}
-                        {Math.round(result.h * result.dy)} mm window the finite-element model was solved on,
-                        so the measured extent is a lower bound at this load.
-                      </>
-                    )}
-                </figcaption>
-              </figure>
             </Card>
 
             <div className="cee-chart-grid cee-chart-grid--2">
@@ -829,18 +789,22 @@ export default function ContactStressApp() {
                   </li>
                   <li>
                     Sweep the wheel load from one end of the slider to the other and watch{' '}
-                    <strong>contact area</strong> against <em>P/p</em>. It crosses 1.0 somewhere in
-                    the middle: below that load the real patch is bigger than the idealisation, above
-                    it, smaller. Find the crossing for two different inflation pressures.
+                    <strong>contact area</strong> against <em>P/p</em>. The ratio falls the whole
+                    way — the real patch grows more slowly than <em>P/p</em> does — and on a softly
+                    inflated tyre it drops through 1.0 near 40 kN. Now raise the inflation pressure
+                    and sweep again: it never gets there. The real patch stays larger than the
+                    idealisation everywhere else the slider reaches.
                   </li>
                   <li>
                     Switch to braking, then acceleration, and watch the longitudinal window. Most of
                     the change happens in the first 5–10% of slip; beyond ~25% the field barely moves.
                   </li>
                   <li>
-                    Before you quote a number, check <strong>equilibrium closure</strong>. If the
-                    predicted stresses do not add up to the load you applied, the field is not a
-                    statically admissible answer and the tool says so.
+                    Before you quote a number, read <strong>equilibrium closure</strong>. The two
+                    sliders are deliberately held to the part of the training domain where it stays
+                    inside ±15%, so you will not find a field here that badly fails to add up — but
+                    it is never exactly 100%, and how far off it is tells you how much of the third
+                    decimal place to believe.
                   </li>
                 </ol>
                 <p>
@@ -871,17 +835,6 @@ export default function ContactStressApp() {
                 <a href="https://doi.org/10.1080/10298436.2026.2621970" target="_blank" rel="noreferrer">
                   doi:10.1080/10298436.2026.2621970
                 </a>
-              </p>
-              <p className="cee-note">
-                The trained network is not distributed. This page loads a precomputed sample of its
-                output over the whole of its training domain — {spec?.nodes.toLocaleString()} grid
-                points for this tyre, compressed to a shared basis of{' '}
-                {spec ? Object.values(spec.rank).reduce((a, b) => a + b, 0) : 0} fields at{' '}
-                {spec?.mmPerPixelY.toFixed(1)} mm resolution ({spec ? (spec.gzipBytes / 1e6).toFixed(2) : '—'} MB)
-                — and interpolates it. Held-out error against the network itself is 0.007 MPa rms on
-                the vertical component, 0.4% on peak stress: below the 0.0086 MPa the network itself
-                carries against FEA, but not zero. The wide-base branch is an extension beyond the
-                published paper and carries larger residuals.
               </p>
               <p className="cee-note">
                 Idealised footprints follow Huang, <em>Pavement Analysis and Design</em> (2nd ed.)
