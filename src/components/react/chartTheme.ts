@@ -162,6 +162,54 @@ export function divergingScale(
   ];
 }
 
+/* ─────────────────── Magnitude fields (§B5 deviation 1) ───────────────────
+ * A documented exception to §A4.2's end reversal.
+ *
+ * The reversal is right for a *count*: a heatmap cell with nothing in it
+ * should sink into the card, so "empty" is pale on white and dark on navy.
+ * It is wrong for a *physical magnitude* rendered as a continuous field —
+ * a stress surface, a pressure bulb, a contact patch. There, colour is the
+ * quantity, and a scale whose ends swap with the site theme makes the same
+ * figure say the opposite thing in dark mode: the near-zero haze around a
+ * contact patch comes out in deep 900 orange while the peak is pale 100. A
+ * reader takes saturation for magnitude and reads the picture inside out.
+ *
+ * So the field ramp runs the same direction in both themes: **washed-out at
+ * zero, intense at the peak**. It cannot do that with one hue on two
+ * surfaces, because "intense" is dark on white and luminous on navy, so it
+ * is a multi-hue warm ramp per theme, cut so that contrast against its own
+ * card rises monotonically with the value — the one property that reads as
+ * magnitude on either surface.
+ *
+ *   light  #FFE1C0 → #A3160F   contrast vs #FFFFFF  1.25 → 7.84
+ *   dark   #2A2E3C → #F9C24A   contrast vs #162033  1.21 → 9.97
+ *
+ * Still the stress hue of §B4: the light ramp is the orange ramp opened out
+ * through amber and closed into deep red, the dark one the same path run
+ * from a near-neutral charcoal up to a luminous amber. Chroma climbs with
+ * the value until the sRGB gamut caps it at the last stop (a ~7 % dip,
+ * below the just-noticeable difference). Asserted in fieldRamp.test.mjs.
+ */
+export const FIELD_RAMP: Record<Mode, string[]> = {
+  light: ['#FFE1C0', '#FCC983', '#F9A445', '#F0771B', '#D5450E', '#A3160F'],
+  dark: ['#2A2E3C', '#4E3229', '#7F4420', '#B35D18', '#E08A18', '#F9C24A'],
+};
+
+/**
+ * Plotly colorscale for a one-signed magnitude field. Unlike `rampScale`,
+ * `t=0` is the washed end and `t=1` the intense end in *both* themes.
+ */
+export function fieldScale(theme: Mode): [number, string][] {
+  const steps = FIELD_RAMP[theme];
+  return steps.map((c, i) => [i / (steps.length - 1), c] as [number, string]);
+}
+
+/** The two ends of the field ramp (low, high) — for legends and swatches. */
+export function fieldEnds(theme: Mode): [string, string] {
+  const s = FIELD_RAMP[theme];
+  return [s[0], s[s.length - 1]];
+}
+
 /* ──────────────────────────── Semantic (§A3.5) ──────────────────────────── */
 export const SEMANTIC = {
   positive: { fg: '#12B76A', tint: '#E6F7EF' },
