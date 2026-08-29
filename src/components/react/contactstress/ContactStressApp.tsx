@@ -576,9 +576,8 @@ export default function ContactStressApp() {
               title="Footprint against the design idealisation"
               subtitle={
                 <>
-                  Plan view of σz, centred on the predicted patch. Cells below {CONTACT_THRESHOLD}{' '}
-                  MPa are left blank, so the coloured region is exactly the contact area measured
-                  above; the three textbook outlines all enclose <em>P/p</em>.
+                  Plan view of σz. Blank cells carry under {CONTACT_THRESHOLD} MPa; each textbook
+                  outline encloses <em>P/p</em>.
                 </>
               }
             >
@@ -595,14 +594,9 @@ export default function ContactStressApp() {
                   />
                 )}
                 <figcaption className="cee-figcaption">
-                  All three outlines have area <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}; the real
-                  patch is {A(result.metrics.vertical.contactArea)} {areaUnit(unit)}, a factor of{' '}
-                  {result.cmp.areaOverIdeal.toFixed(2)}. Huang §1.3 argues the assumption is
-                  conservative because the sidewall of a high-pressure tyre is in tension. That holds
-                  in one corner only — a heavily loaded, softly inflated tyre, where the real patch
-                  is smaller than <em>P/p</em> and the real mean pressure is higher. Everywhere else
-                  the patch is the larger of the two, by up to a factor of two, and the assumption
-                  over-predicts the contact pressure instead.
+                  Idealised <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}; real patch{' '}
+                  {A(result.metrics.vertical.contactArea)} {areaUnit(unit)} — a factor of{' '}
+                  {result.cmp.areaOverIdeal.toFixed(2)}.
                   {result.metrics.vertical.bounds &&
                     (result.metrics.vertical.bounds[0] === 0 ||
                       result.metrics.vertical.bounds[1] === result.h - 1 ||
@@ -610,8 +604,8 @@ export default function ContactStressApp() {
                       result.metrics.vertical.bounds[3] === result.w - 1) && (
                       <>
                         {' '}The patch reaches the edge of the {Math.round(result.w * result.dx)} ×{' '}
-                        {Math.round(result.h * result.dy)} mm window the finite-element model was solved on,
-                        so the measured extent is a lower bound at this load.
+                        {Math.round(result.h * result.dy)} mm solution window, so the extent is a
+                        lower bound here.
                       </>
                     )}
                 </figcaption>
@@ -620,7 +614,7 @@ export default function ContactStressApp() {
 
             <Card
               title="Three-dimensional contact stress"
-              subtitle="One window per direction, longitudinal × transverse in millimetres, each scaled to its own range. Drag to orbit, scroll to zoom; open one window on its own for labelled axes."
+              subtitle="One window per direction, each on its own scale. Drag to orbit, scroll to zoom."
               affordance={
                 <div className="cee-seg" style={{ marginBottom: 0 }} role="group" aria-label="Which window">
                   <button type="button" className={view === 'all' ? 'is-active' : ''} onClick={() => setView('all')}>All three</button>
@@ -672,79 +666,43 @@ export default function ContactStressApp() {
                 ))}
               </div>
               <p className="cee-figcaption">
-                The ribs are the load-carrying structure: the tread blocks stand well above the
-                inflation pressure and the grooves carry nothing. Braking pushes the longitudinal
-                surface entirely positive and acceleration entirely negative — that reversal is the
-                friction force the tyre transmits, and it is invisible to any method that models the
-                tyre as a uniform vertical pressure.
+                The ribs carry the load and stand well above the inflation pressure; the grooves
+                carry nothing. Braking drives σx entirely positive, acceleration entirely
+                negative — the friction force, which a uniform vertical pressure cannot represent.
               </p>
             </Card>
 
             <div className="cee-chart-grid cee-chart-grid--2">
               <Card
                 title="Profile along travel"
-                subtitle="Through the most heavily loaded rib — the cut of Figure 9 in the source paper."
+                subtitle="Through the most heavily loaded rib (paper, Fig. 9)."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={longRef} role="img"
                     aria-label="Longitudinal profiles of the three stress components through the peak rib" />
                   <Legend items={CHANNELS.map((ch) => ({ label: LABEL[ch], color: { vertical: chartColors(theme).orange, longitudinal: chartColors(theme).blue, transverse: chartColors(theme).emerald }[ch] }))} />
                   <figcaption className="cee-figcaption">
-                    The vertical profile is the parabola every textbook draws. The longitudinal one is
-                    not: under free rolling it is compressive at the front of the patch and tensile at
-                    the rear, and it changes sign where the tread element stops being laid down and
-                    starts being peeled off.
+                    σz is the textbook parabola. σx is not: free rolling, it is compressive at the
+                    front of the patch and tensile at the rear.
                   </figcaption>
                 </figure>
               </Card>
 
               <Card
                 title="Profile across the tyre"
-                subtitle="Through the middle of the patch — the cut of Figure 10 in the source paper."
+                subtitle="Across the middle of the patch (paper, Fig. 10)."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={tranRef} role="img"
                     aria-label="Transverse profiles of the three stress components across the middle of the patch" />
                   <Legend items={CHANNELS.map((ch) => ({ label: LABEL[ch], color: { vertical: chartColors(theme).orange, longitudinal: chartColors(theme).blue, transverse: chartColors(theme).emerald }[ch] }))} />
                   <figcaption className="cee-figcaption">
-                    Five ribs, five peaks, and the shoulder ribs carrying the most. The transverse
-                    component reverses sign from rib to rib as the tread is squeezed outward at the
-                    edges and inward at the centre — the mechanism behind near-surface shear damage.
+                    Five ribs, five peaks, the shoulders carrying most. σy reverses sign rib to
+                    rib — the mechanism behind near-surface shear damage.
                   </figcaption>
                 </figure>
               </Card>
             </div>
-
-            <Card
-              title="Is the surrogate behaving?"
-              subtitle="Two checks you can run on any prediction here, and should run before quoting one."
-            >
-              <KpiStrip>
-                <Kpi
-                  label="Equilibrium closure"
-                  value={`${(result.cmp.equilibrium * 100).toFixed(0)}%`}
-                  tip="Integral of σz over the footprint, divided by the wheel load you asked for. Physics says 100%. Equation 5 of the paper trains toward it as a soft penalty, so the residual is real information about how much to trust the prediction."
-                />
-                <Kpi
-                  label="Resultant force"
-                  value={F(result.metrics.vertical.resultant, 2)}
-                  unit={forceUnit(unit)}
-                  tip="What the predicted vertical field actually adds up to, over 2 mm cells."
-                />
-                <Kpi
-                  label="Tensile fraction"
-                  value={`${(result.cmp.tension * 100).toFixed(1)}%`}
-                  tip="Most negative σz as a fraction of the peak. A tyre cannot pull on a pavement, so anything here is prediction error."
-                />
-                <Kpi
-                  label="Friction force"
-                  value={F(result.metrics.longitudinal.resultant, 2)}
-                  unit={forceUnit(unit)}
-                  tip="Integral of the longitudinal component: the net tractive or braking force this tyre transmits. Near zero when free rolling, positive braking, negative accelerating."
-                  compact
-                />
-              </KpiStrip>
-            </Card>
 
             <details className="cee-card cee-howto">
               <summary>How to use this</summary>
@@ -774,11 +732,10 @@ export default function ContactStressApp() {
                     the change happens in the first 5–10% of slip; beyond ~25% the field barely moves.
                   </li>
                   <li>
-                    Before you quote a number, read <strong>equilibrium closure</strong>. The two
-                    sliders are deliberately held to the part of the training domain where it stays
-                    inside ±15%, so you will not find a field here that badly fails to add up — but
-                    it is never exactly 100%, and how far off it is tells you how much of the third
-                    decimal place to believe.
+                    The load and pressure sliders stop short of the training domain on purpose:
+                    they span only the part of it where the predicted field still sums back to the
+                    load you applied, within ±15%. It is a surrogate, so treat the third decimal
+                    place with care.
                   </li>
                 </ol>
                 <p>
@@ -797,18 +754,12 @@ export default function ContactStressApp() {
             <Card title="Where these numbers come from">
               <p className="cee-note">
                 Contact stresses are predicted by <strong>phyContactGAN</strong>, the physics-informed
-                conditional GAN of Lang, Villamil and Al-Qadi (2026), trained at the Illinois Center
-                for Transportation on 1,852 validated finite-element simulations of a 275/80R22.5
-                truck tyre on a rigid flat surface. Reported accuracy against FEA: 0.0086 MPa RMSE,
-                0.0036 MPa MAE, 0.17% MAPE.
-              </p>
-              <p className="cee-note">
-                Lang, H., Villamil, W. D., &amp; Al-Qadi, I. L. (2026). 3D tire–pavement contact
-                stresses: physics-informed prediction approach. <em>International Journal of Pavement
-                Engineering</em>, 27(1), 2621970.{' '}
+                conditional GAN of{' '}
                 <a href="https://doi.org/10.1080/10298436.2026.2621970" target="_blank" rel="noreferrer">
-                  doi:10.1080/10298436.2026.2621970
-                </a>
+                  Lang, Villamil and Al-Qadi (2026)
+                </a>, trained at the Illinois Center for Transportation on 1,852 validated
+                finite-element simulations of a 275/80R22.5 truck tyre on a rigid flat surface.
+                Reported accuracy against FEA: 0.0086 MPa RMSE, 0.0036 MPa MAE, 0.17% MAPE.
               </p>
               <p className="cee-note">
                 Idealised footprints follow Huang, <em>Pavement Analysis and Design</em> (2nd ed.)
