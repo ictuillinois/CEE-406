@@ -19,18 +19,31 @@ const base = import.meta.env.BASE_URL;
     </nav>
 
     <header class="tool-head">
-      <div>
+      <div class="tool-head__main">
         <h1 class="tool-head__title">Contact Stress Visualizer</h1>
         <p class="tool-head__desc">
           Every method in this course starts by assuming a truck tyre presses on the
           pavement as a uniform pressure equal to its inflation pressure, over a circle of
-          area <em>P</em>/<em>p</em>. It does not. This tool shows what it actually does —
-          the vertical, longitudinal and transverse contact stresses in three dimensions —
-          from <a href="https://doi.org/10.1080/10298436.2026.2621970" target="_blank" rel="noreferrer">phyContactGAN</a>,
-          a physics-informed network trained at ICT on 1,852 validated finite-element
-          simulations, and then measures the difference against the idealisation you will
-          use in <a href={`${base}homeworks/hw3/`}>HW3</a> and <a href={`${base}homeworks/hw4/`}>HW4</a>.
+          area <em>P</em>/<em>p</em>. It does not. This tool shows what it actually does.
         </p>
+
+        <aside class="tool-cite" aria-label="Source publication">
+          <p class="tool-cite__lead">
+            Every field on this page is predicted by <strong>phyContactGAN</strong>, developed by
+            <strong>H. Lang</strong>, <strong>W. D. Villamil</strong> and
+            <strong>I. L. Al-Qadi</strong> at the Illinois Center for Transportation. What
+            follows is a teaching interface to one slice of that research — the paper is the
+            full study, and the place to cite.
+          </p>
+          <p class="tool-cite__ref">
+            Lang, H., Villamil, W. D., &amp; Al-Qadi, I. L. (2026). 3D tire–pavement contact
+            stresses: physics-informed prediction approach. <em>International Journal of
+            Pavement Engineering</em>, 27(1), 2621970.
+            <a href="https://doi.org/10.1080/10298436.2026.2621970" target="_blank" rel="noreferrer">
+              doi:10.1080/10298436.2026.2621970
+            </a>
+          </p>
+        </aside>
       </div>
       <div class="tool-head__hws">
         <span class="tool-hw-chip">HW3</span>
@@ -71,10 +84,45 @@ const base = import.meta.env.BASE_URL;
     margin: 0;
   }
 
-  .tool-head__desc a {
+  .tool-head__main {
+    flex: 1 1 30rem;
+    min-width: 0;
+  }
+
+  /* The physics on this page is not the course's — it is a published model, and
+     the credit belongs beside the claim, not in a footnote at the bottom of a
+     long scroll. Accent rule + raised surface so it reads as attribution rather
+     than as more prose. */
+  .tool-cite {
+    max-width: 44rem;
+    margin: 1rem 0 0;
+    padding: 0.75rem 0.9rem;
+    border-left: 3px solid var(--color-accent);
+    border-radius: 0 8px 8px 0;
+    background: var(--color-surface-alt);
+  }
+
+  .tool-cite__lead {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  .tool-cite__ref {
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--color-text-muted);
+    margin: 0.5rem 0 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .tool-cite a {
     color: var(--color-accent);
     text-decoration: underline;
     text-underline-offset: 2px;
+    word-break: break-word;
   }
 
   .tool-head__hws { display: flex; gap: 0.4rem; }
