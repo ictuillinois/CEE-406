@@ -44,10 +44,10 @@ export default function CbrApp() {
 
   useEffect(() => {
     if (!res || !chartRef.current) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !chartRef.current) return;
+      if (canceled || !chartRef.current) return;
       const c = chartColors(theme);
       const measured = hueFor('stress', theme);
       const shifted = hueFor('deflection', theme);
@@ -94,7 +94,7 @@ export default function CbrApp() {
         ],
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [res, points, theme]);
 
   const update = (id: number, patch: Partial<Row>) =>

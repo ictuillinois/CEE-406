@@ -1,24 +1,24 @@
-/* The shipped contact-stress artefact, decoded by the code the browser runs.
+/* The shipped contact-stress artifact, decoded by the code the browser runs.
  *
  * This test is the only audit of public/tools/contact-stress that can be run
  * from this repository, because the trained phyContactGAN checkpoint is NOT in
  * it and never will be. fixture.json carries, for twenty cases:
  *
  *   probes / native* / store*  what the GENERATOR produced (torch, full 1 mm)
- *   recon*                     what the ARTEFACT reconstructs, per the Python
+ *   recon*                     what the ARTIFACT reconstructs, per the Python
  *                              reference reader in the model archive
  *
  * so there are two independent things to assert:
  *
  *   1. the TypeScript loader agrees with the reference reader to ~1e-4 MPa.
  *      Any drift is a bug in one of them — a filter, an offset, a weight.
- *   2. the artefact tracks the generator inside the tolerances that were
+ *   2. the artifact tracks the generator inside the tolerances that were
  *      MEASURED when it was baked (0.007 MPa rms vertical, 0.4% on peak), not
  *      inside tolerances that were hoped for.
  *
  * And one external anchor: Lang et al. (2026) print the summed vertical
  * contact stress for the four wheel loads of their Figure 7. Those numbers
- * came off the model, not off this artefact, so reproducing them is a check on
+ * came off the model, not off this artifact, so reproducing them is a check on
  * the whole chain.
  *
  * Run:  node --experimental-strip-types --test src/components/react/contactstress/predictor.test.mjs
@@ -53,7 +53,7 @@ globalThis.fetch = async (url) => {
     arrayBuffer: async () => buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength),
   };
 };
-/* Node 22 has DecompressionStream, but pin the behaviour rather than trust it. */
+/* Node 22 has DecompressionStream, but pin the behavior rather than trust it. */
 globalThis.Blob ??= (await import('node:buffer')).Blob;
 globalThis.Response ??= (await import('node:buffer')).Blob && globalThis.Response;
 
@@ -68,7 +68,7 @@ before(async () => {
 const near = (a, b, tol, what) =>
   assert.ok(Math.abs(a - b) <= tol, `${what}: ${a} vs ${b}, |diff| ${Math.abs(a - b)} > ${tol}`);
 
-/* ── 1. the artefact is what it says it is ────────────────────────────── */
+/* ── 1. the artifact is what it says it is ────────────────────────────── */
 
 test('the manifest names its source and never claims to ship the model', () => {
   assert.match(manifest.source.doi, /^10\.1080\/10298436\.2026\.2621970$/);
@@ -106,7 +106,7 @@ test('the grid covers the whole training domain of each branch', () => {
       'free rolling is slip = 0 by definition');
   }
   // The WBT branch was trained free-rolling at one speed only; its slip
-  // normalisation has std = 0. Baking anything else would be extrapolation.
+  // normalization has std = 0. Baking anything else would be extrapolation.
   const wbt = manifest.tires.WBT;
   assert.deepEqual(wbt.domain.pressure, [0.4, 1.0]);
   assert.deepEqual(wbt.groups.map((g) => `${g.speed}/${g.condition}`), ['5mph/FR']);
@@ -179,7 +179,7 @@ test('cubic weights are a partition of unity and reproduce the nodes', () => {
   assert.deepEqual(cubicWeights([0], 0.4), [{ i: 0, w: 1 }]);
 });
 
-/* ── 3. the artefact tracks the generator ─────────────────────────────── */
+/* ── 3. the artifact tracks the generator ─────────────────────────────── */
 
 test('reconstruction tracks the generator within the measured tolerance', () => {
   const tol = { vertical: 0.045, longitudinal: 0.03, transverse: 0.02 };
@@ -203,14 +203,14 @@ test('reconstruction tracks the generator within the measured tolerance', () => 
 });
 
 test('peak vertical stress tracks the generator, and the one place it does not', () => {
-  // Compared against the model decimated to the same 2 mm grid: the artefact
+  // Compared against the model decimated to the same 2 mm grid: the artifact
   // cannot be asked to reproduce a 1 mm peak it does not store. (That
   // decimation itself costs 2-4% of the 1 mm peak, which is recorded in the
   // tool's own notes rather than hidden.)
   //
   // Every case lands inside 1.5% except corner-lo — 990 N, the very lightest
   // wheel load in the training set — where the footprint is a small sharp blob
-  // and a basis learnt mostly from full-size footprints under-reads its peak by
+  // and a basis learned mostly from full-size footprints under-reads its peak by
   // 4.4%. It is also where the model's own equilibrium closure is worst (~1.38),
   // so the tool warns below 3 kN rather than pretending the corner is solid.
   const loose = new Set(['corner-lo']);
@@ -243,7 +243,7 @@ test("Figure 7 of Lang et al. (2026): the printed summed vertical stresses", () 
     const m = fieldMetrics(f, t.height, t.width, t.mmPerPixelY, t.mmPerPixelX);
     // 1.5% covers the two things between us and the printed value: this
     // checkpoint is not bit-identical to the one that produced the table, and
-    // the artefact is a 2 mm, rank-64 reconstruction of it.
+    // the artifact is a 2 mm, rank-64 reconstruction of it.
     near(m.resultant / expected, 1, 0.015, `${name} resultant vs printed`);
   }
 });
@@ -282,9 +282,9 @@ test('contact area and inflation pressure disagree, and by a load-dependent amou
   const light = at(6000);
   const heavy = at(55000);
   assert.ok(light.areaOverIdeal > 1.4,
-    `light wheel: real patch is only ${light.areaOverIdeal.toFixed(2)}x the idealised one`);
+    `light wheel: real patch is only ${light.areaOverIdeal.toFixed(2)}x the idealized one`);
   assert.ok(heavy.areaOverIdeal < 1.0,
-    `heavy wheel: real patch is ${heavy.areaOverIdeal.toFixed(2)}x the idealised one`);
+    `heavy wheel: real patch is ${heavy.areaOverIdeal.toFixed(2)}x the idealized one`);
   assert.ok(light.meanOverInflation < heavy.meanOverInflation,
     'mean contact pressure must rise relative to inflation pressure as the wheel is loaded');
   assert.ok(heavy.peakOverInflation > 2,
@@ -317,7 +317,7 @@ test('braking and acceleration flip the sign of the longitudinal field', () => {
 /* SAFE_RANGE is the box the two sliders span, and it exists so that nothing a
    student can reach fails either residual check — the tool used to hand out
    three different warnings at the corners of the training domain. The box was
-   chosen by sweeping THIS artefact, so it is only as good as the artefact:
+   chosen by sweeping THIS artifact, so it is only as good as the artifact:
    re-bake the payload without re-sweeping and this is what says so.
 
    The box was derived from a 159,073-prediction sweep at slider resolution
@@ -360,7 +360,7 @@ test('no warning is reachable anywhere the sliders go', () => {
   }
 });
 
-test('every preset lands inside the box its tyre offers', () => {
+test('every preset lands inside the box its tire offers', () => {
   // A preset outside SAFE_RANGE is silently clamped, and then no longer is the
   // printed case it is named after. Four of these are figures in Lang et al.
   // (2026) and the tool is calibrated against them.

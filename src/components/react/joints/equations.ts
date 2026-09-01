@@ -54,7 +54,7 @@ export const concreteTensileStrength = (fc: number): [number, number] =>
  * @param dT temperature range (placement minus lowest mean monthly), °F
  * @param alphaT coefficient of thermal expansion, per °F (5-6 ×10⁻⁶)
  * @param eps drying shrinkage coefficient (0.5-2.5 ×10⁻⁴)
- * @param C  slab-subbase friction adjustment: 0.65 stabilised, 0.80 granular
+ * @param C  slab-subbase friction adjustment: 0.65 stabilized, 0.80 granular
  */
 export const jointOpening = (L: number, dT: number, alphaT: number, eps: number, C: number) =>
   C * L * (alphaT * dT + eps);

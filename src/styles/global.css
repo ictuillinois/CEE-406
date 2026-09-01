@@ -730,11 +730,11 @@
   --transition: 0.2s ease;
 
   /* ── Phase palette ──────────────────────────────────────────────────────
-     The five course phases render as identical grey chips today, which wastes
+     The five course phases render as identical gray chips today, which wastes
      the one piece of structure a student most needs at a glance: where in the
      semester they are. These hues are the categorical set from
      docs/chart-standards.md §B4, so the course chrome and the tool charts
-     speak one colour language. Illini orange is kept for Design — the phase
+     speak one color language. Illini orange is kept for Design — the phase
      everything else has been building toward. */
   --phase-fundamentals: #F5B62E;
   --phase-materials:    #14B489;

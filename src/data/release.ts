@@ -9,7 +9,7 @@
 // Three separate concerns, deliberately not merged:
 //
 //   1. HOMEWORKS   — sequencing. Released week by week as the class reaches
-//                    them. Locked homeworks render as a greyed card and their
+//                    them. Locked homeworks render as a grayed card and their
 //                    page is not generated at all.
 //
 //   2. TOOLS       — sequencing. Same idea, but a tool's page is a real file
@@ -88,7 +88,7 @@ export const TOOL_WEEK: Record<string, number> = {
 
 export const TEXTBOOK_PDFS_PUBLISHED = false as const;
 
-/** Where students actually get the book: the UIUC Library catalogue record. */
+/** Where students actually get the book: the UIUC Library catalog record. */
 export const TEXTBOOK_LIBRARY_URL =
   'https://i-share-uiu.primo.exlibrisgroup.com/nde/fulldisplay?query=Pavement%20Analysis%20and%20Design&tab=Everything&search_scope=MyInst_and_CI&vid=01CARLI_UIU:CARLI_UIU_NDE&lang=en&docid=alma99598836912205899&adaptor=Local%20Search%20Engine&context=L&isFrbr=false&isHighlightedRecord=false&state=';
 

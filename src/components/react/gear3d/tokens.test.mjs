@@ -36,7 +36,7 @@ function relLuminance(c) {
 /** @param {string} h */
 function hexRGB(h) {
     const m = /^#?([0-9a-f]{6})$/i.exec(h.trim());
-    if (!m) throw new Error(`not a hex colour: ${h}`);
+    if (!m) throw new Error(`not a hex color: ${h}`);
     const n = parseInt(m[1], 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
@@ -90,7 +90,7 @@ function themeTokens(theme) {
 
 test('body text tokens clear WCAG AA on every surface they are drawn on', () => {
     // 4.5:1 is the AA minimum for text below 18.66px bold / 24px regular, and
-    // everything these tokens colour is small.
+    // everything these tokens color is small.
     const AA = 4.5;
     for (const theme of /** @type {const} */ (['light', 'dark'])) {
         const t = themeTokens(theme);
@@ -131,7 +131,7 @@ test('the wordmark clears AA on the mark tile it sits on', () => {
 });
 
 test('chrome drawn on the figure clears AA against the figure, not the theme', () => {
-    // --g3-fig-* colour the HUD and axis badge, which sit on the white plate
+    // --g3-fig-* color the HUD and axis badge, which sit on the white plate
     // whatever the interface theme is. The port leaves them at their upstream
     // values on purpose — they end up in exported figures — so this check is
     // here to make sure a future re-skin does not quietly pull them along.

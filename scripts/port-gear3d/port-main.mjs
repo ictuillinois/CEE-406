@@ -129,6 +129,11 @@ sub('texture basePath',
     });`);
 
 /* ---- 8. Named document keydown handlers, so they can be removed -------- */
+/* `closeCatalogue` is upstream's spelling and both strings below are upstream
+   text — the anchor has to match main.js byte for byte, and the replacement is
+   spliced in beside code that still calls it. The American spelling is applied
+   afterwards, to the whole generated file, by scripts/us-english.mjs, which
+   skips this script for exactly that reason. Do not respell these by hand. */
 sub('catalogue Escape handler',
 `    document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal.hidden) { closeCatalogue(); e.stopPropagation(); }
@@ -223,7 +228,7 @@ s += `
    ResizeObserver and WebGL context; the two global shortcut maps; the
    autosave debounce; any toast still counting down; and the body scroll
    lock, which would strand the page unscrollable if the tool were
-   unmounted with the catalogue open.
+   unmounted with the catalog open.
    ============================================================ */
 
 return function dispose() {

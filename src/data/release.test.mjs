@@ -111,12 +111,12 @@ test('no material is served for a homework that has not been released', () => {
     }
 });
 
-test('the library link is a real UIUC catalogue URL, not a placeholder', () => {
+test('the library link is a real UIUC catalog URL, not a placeholder', () => {
     const m = /TEXTBOOK_LIBRARY_URL\s*=\s*\n?\s*'([^']+)'/.exec(RELEASE_SRC);
     assert.ok(m, 'TEXTBOOK_LIBRARY_URL must be defined');
     const url = m[1];
     assert.ok(url.startsWith('https://'), 'library URL must be https');
     assert.match(url, /i-share-uiu\.primo\.exlibrisgroup\.com/,
-        'library URL should point at the UIUC I-Share catalogue');
-    assert.match(url, /docid=alma\d+/, 'library URL should carry the catalogue record id');
+        'library URL should point at the UIUC I-Share catalog');
+    assert.match(url, /docid=alma\d+/, 'library URL should carry the catalog record id');
 });

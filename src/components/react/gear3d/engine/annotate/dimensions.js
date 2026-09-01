@@ -43,7 +43,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
 export const DIMENSION_SETS = Object.freeze({
     longitudinal: { label: 'Longitudinal', hint: 'Axle spacings, group spans, wheelbase, overall length' },
     transverse: { label: 'Transverse', hint: 'Track width, overall width, dual spacing, section width' },
-    vertical: { label: 'Vertical', hint: 'Tire diameter, loaded radius, axle centre height' },
+    vertical: { label: 'Vertical', hint: 'Tire diameter, loaded radius, axle center height' },
     aircraft: { label: 'Aircraft gear', hint: 'Nose-to-main wheelbase, main gear track, tandem spacing' },
     custom: { label: 'Custom', hint: 'Dimensions you added by clicking two features' }
 });
@@ -98,7 +98,7 @@ export function autoDimensions(layout, opts = {}) {
                 axis: 'x',
                 offset: -420,
                 priority: 6,
-                note: `${prev.id} to ${a.id} centreline spacing`
+                note: `${prev.id} to ${a.id} centerline spacing`
             });
         });
 
@@ -117,7 +117,7 @@ export function autoDimensions(layout, opts = {}) {
                 axis: 'x',
                 offset: -1050,
                 priority: 9,
-                note: 'Outer bridge — first to last axle centreline'
+                note: 'Outer bridge — first to last axle centerline'
             });
         }
     }
@@ -141,7 +141,7 @@ export function autoDimensions(layout, opts = {}) {
                     axis: 'y',
                     offset: -520,
                     priority: 7,
-                    note: `Track width at ${a.id} — centre to centre of wheel positions`
+                    note: `Track width at ${a.id} — center to center of wheel positions`
                 });
             }
 
@@ -150,7 +150,7 @@ export function autoDimensions(layout, opts = {}) {
                 if (!seen.has(dualKey)) {
                     seen.add(dualKey);
                     const yc = a.trackWidth / 2;
-                    // Measured at the axle centreline, but stood off by more
+                    // Measured at the axle centerline, but stood off by more
                     // than a tire radius so the dimension line clears the
                     // wheel it belongs to instead of lying across the tread.
                     const standoff = a.geometry.freeRadius * 1.35;
@@ -162,7 +162,7 @@ export function autoDimensions(layout, opts = {}) {
                         axis: 'y',
                         offset: standoff,
                         priority: 8,
-                        note: `Dual spacing at ${a.id} — centre to centre of the dual pair`
+                        note: `Dual spacing at ${a.id} — center to center of the dual pair`
                     });
                 }
             }
@@ -205,7 +205,7 @@ export function autoDimensions(layout, opts = {}) {
                 axis: 'z',
                 offset: -300,
                 priority: 4,
-                note: `${w.tire} static loaded radius — also the axle centre height`
+                note: `${w.tire} static loaded radius — also the axle center height`
             });
         }
     }
@@ -238,7 +238,7 @@ export function autoDimensions(layout, opts = {}) {
                 axis: 'y',
                 offset: -1100,
                 priority: 10,
-                note: 'Main gear track — centreline to centreline of the main gear legs'
+                note: 'Main gear track — centerline to centerline of the main gear legs'
             });
         }
         for (const a of layout.axles) {
@@ -269,7 +269,7 @@ function meanY(l, id) {
 }
 
 /**
- * Value of a dimension in millimetres.
+ * Value of a dimension in millimeters.
  * @param {Dimension} d
  * @returns {number}
  */
@@ -291,8 +291,8 @@ export function dimensionValue(d) {
  * @property {number} [fontSize=12]
  * @property {string} [color]  ink; must contrast with the FIGURE background
  * @property {string} [accent]
- * @property {string} [halo]   text halo; the figure background colour
- * @property {Set<string>} [highlight] dimension ids to emphasise
+ * @property {string} [halo]   text halo; the figure background color
+ * @property {Set<string>} [highlight] dimension ids to emphasize
  */
 
 /**
@@ -547,7 +547,7 @@ function drawDimension(parent, d, g, box, style) {
     });
     label.textContent = g.text;
 
-    // Halo so the value stays legible over a dark tire. The halo colour is the
+    // Halo so the value stays legible over a dark tire. The halo color is the
     // FIGURE's background, not the app theme's — exporting on publication
     // white while the app runs in dark mode must not produce a dark halo that
     // swallows the light text inside it.
@@ -717,7 +717,7 @@ export function renderScaleBar(svg, o) {
  * Round a length to a 1/2/5 x 10^n value in the display unit.
  * @param {number} mm
  * @param {string} unitSystem
- * @returns {number} millimetres
+ * @returns {number} millimeters
  */
 export function niceLength(mm, unitSystem) {
     const inDisplay = unitSystem === 'US' ? mm / 25.4 : mm;

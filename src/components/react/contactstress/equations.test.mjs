@@ -1,4 +1,4 @@
-/* The classical footprint idealisations, against Huang's printed relations.
+/* The classical footprint idealizations, against Huang's printed relations.
  *
  * Huang, Pavement Analysis and Design (2nd ed.), §1.3:
  *   Figure 1.13   why contact pressure is not the inflation pressure
@@ -92,7 +92,7 @@ test('a uniform patch measures back to the pressure that made it', () => {
   close(m.extentTransverse, 80, 1e-9, 'transverse extent');
   close(m.extentLongitudinal, 120, 1e-9, 'longitudinal extent');
 
-  // ...and the comparison against the idealisation is then exactly unity.
+  // ...and the comparison against the idealization is then exactly unity.
   const id = idealizedContact(m.resultant, 0.8);
   const cmp = compare(m, id, m.resultant);
   close(cmp.meanOverInflation, 1, 1e-6, 'mean / inflation');
@@ -145,7 +145,7 @@ test('profiles and the peak row read the field they are given', () => {
   assert.deepEqual([...colProfile(f, h, w, 3)], [0, 0, 9, 0, 0]);
 });
 
-test('a heavier tyre at the same pressure needs proportionally more area', () => {
+test('a heavier tire at the same pressure needs proportionally more area', () => {
   const a = idealizedContact(20000, 0.7);
   const b = idealizedContact(40000, 0.7);
   close(b.area / a.area, 2, 1e-12, 'area scales with load');

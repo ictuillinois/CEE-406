@@ -53,7 +53,7 @@ test('a terminal serviceability of 2.5 is a real amount of distress', () => {
   assert.ok(psi > 2 && psi < 3.5, `PSI = ${psi.toFixed(2)} for a visibly worn pavement`);
 });
 
-test('the linearising transformations are the ones Huang defines', () => {
+test('the linearizing transformations are the ones Huang defines', () => {
   near(R1(9), Math.log10(10), 1e-12, 'R1 = log(1 + SV)');
   near(R2(0.2), 0.04, 1e-12, 'R2 = RD²');
   near(D1(16), 4, 1e-12, 'D1 = √(C + P)');

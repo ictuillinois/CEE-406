@@ -131,10 +131,10 @@ export default function StressExplorerApp() {
 
   useEffect(() => {
     if (!prof) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
 
       const c = chartColors(theme);
       const zProbeMm = probeClamped * a;
@@ -209,7 +209,7 @@ export default function StressExplorerApp() {
         }), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [prof, theme, probeClamped, a]);
 
   // Key values

@@ -121,10 +121,10 @@ export default function DamageApp() {
 
   useEffect(() => {
     if (!res) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
       const c = chartColors(theme);
 
       if (rutRef.current) {
@@ -156,7 +156,7 @@ export default function DamageApp() {
         }), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [res, theme]);
 
   const updateAc = (id: number, patch: Partial<SubRow>) =>

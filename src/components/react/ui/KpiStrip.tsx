@@ -3,7 +3,7 @@
 // N equal columns separated by 1px vertical hairlines:
 //   label  (14, secondary, sentence case)
 //   value  (40/700, primary, tracking -0.03em, tabular)
-//   delta  (arrow + semantic % + grey context phrase)
+//   delta  (arrow + semantic % + gray context phrase)
 //
 // Labels are sentence case, never CSS-uppercased: §A2.3 restricts uppercase to
 // eyebrows, and CLAUDE.md forbids text-transform on labels that may contain

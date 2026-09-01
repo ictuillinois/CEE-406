@@ -315,7 +315,7 @@ export function fitSigmoid(points: MasterPoint[]): SigmoidFit | null {
   // Physical bounds on the asymptotes, in log10(psi).
   //
   // Without them the fit is under-determined whenever the data does not span
-  // BOTH plateaus of the S — and it rarely does. The optimiser then drifts to
+  // BOTH plateaus of the S — and it rarely does. The optimizer then drifts to
   // a nearly straight line (gamma -> 0) with an enormous alpha, which fits the
   // observed range perfectly well while reporting a glassy modulus of billions
   // of psi. The residual looks fine; the physics is nonsense.
@@ -338,7 +338,7 @@ export function fitSigmoid(points: MasterPoint[]): SigmoidFit | null {
     return out as [number, number, number, number];
   };
 
-  // Seed: asymptotes just outside the data, transition centred on the mean.
+  // Seed: asymptotes just outside the data, transition centered on the mean.
   let p: [number, number, number, number] = clamp([
     yMin - 0.1,
     Math.max(0.5, yMax - yMin + 0.2),

@@ -2,12 +2,12 @@
 
 **Status: binding.** Every chart, KPI, table, and tool surface added to this site follows this
 document. It is the "soft-analytics" dashboard language (near-white page, hairline cards,
-generous radii, stripped chart chrome, colour doing the semantic work) *bound to the CEE 406
+generous radii, stripped chart chrome, color doing the semantic work) *bound to the CEE 406
 identity* — UIUC navy `#0F1A2E` / Illini orange `#E87722`, Sora + IBM Plex, dark mode.
 
 Two layers:
 
-- **§A The standard** — the design language itself. Rules, tokens, chart catalogue, anti-patterns.
+- **§A The standard** — the design language itself. Rules, tokens, chart catalog, anti-patterns.
 - **§B The CEE 406 binding** — how each token maps onto this site's existing palette and
   components, and every deliberate deviation with its reason. When §A and §B disagree, §B wins.
 
@@ -19,7 +19,7 @@ Two layers:
 
 A **near-white page**, **white cards with a hairline border and almost no shadow**, **generous
 corner radii (12–16 px)**, a **geometric-humanist sans with tight tracking**, and **charts stripped
-of every piece of chrome that isn't load-bearing**. Colour does almost all of the semantic work.
+of every piece of chrome that isn't load-bearing**. Color does almost all of the semantic work.
 One brand hue owns the UI and then either (a) expands into a **monochrome ramp** for ordered/stacked
 data, or (b) gives way to a **fixed categorical set** for unordered data. **Bar/segment geometry is
 treated as a rounded physical object**: pills, capsules, hexes, dots and ticks, not rectangles.
@@ -34,9 +34,9 @@ Texture (diagonal hatch, vertical gradient fade, ghost tracks) is used sparingly
 4. Ordered data → monochrome ramp of one hue. Unordered data → categorical hues. Never mix the two in one chart.
 5. No axis lines, no ticks, no borders around the plot area. Horizontal gridlines only, dashed or ultra-light, and often omitted.
 6. The y-axis is dropped whenever the magnitude is already stated in the KPI above the chart.
-7. Legends live **below** the plot, left- or centre-aligned, 8 px round dots, 13 px muted-grey labels.
+7. Legends live **below** the plot, left- or center-aligned, 8 px round dots, 13 px muted-gray labels.
 8. Every card header is `title (16–18 px semibold)` + a right-side affordance (`···`, a filter chip, or a select).
-9. Deltas are always `arrow + coloured % + grey context phrase`. Green up, red down, never coloured backgrounds.
+9. Deltas are always `arrow + colored % + gray context phrase`. Green up, red down, never colored backgrounds.
 10. Bars are objects: rounded caps, gaps between stacked segments, ghost tracks behind, gradients fading to the baseline.
 
 ## A1. Layout system
@@ -46,17 +46,17 @@ Texture (diagonal hatch, vertical gradient fade, ghost tracks) is used sparingly
 | Shell | Sidebar width | Notes |
 |---|---|---|
 | **Left rail + content** | 240–280 px | Default for ≥ 8 destinations |
-| **Top nav + content** | — | Use when ≤ 8 destinations; active item is a white pill with a soft shadow on a grey track |
+| **Top nav + content** | — | Use when ≤ 8 destinations; active item is a white pill with a soft shadow on a gray track |
 
 **Left rail spec**
 
 - Background white or 1–2 % darker than the page; separated by a 1 px right border, *not* a shadow.
 - Top: brand mark (32 px rounded-square logo tile + wordmark) and a **collapse button** — 32 px rounded-square, 1 px border, `chevrons-left` icon.
-- Grouping: uppercase section labels, 11–12 px, `letter-spacing: 0.06em`, muted grey. Groups may be collapsible with a chevron on the right.
+- Grouping: uppercase section labels, 11–12 px, `letter-spacing: 0.06em`, muted gray. Groups may be collapsible with a chevron on the right.
 - Item: 20 px outline icon + 14–15 px label, 40 px row height, 10 px gap, 10 px horizontal padding.
-- **Active state:** filled rounded-rect (10–12 px radius) in a 4 % neutral tint, text and icon at full-strength primary. *Not* a brand-coloured pill — brand colour is reserved for data and primary actions.
+- **Active state:** filled rounded-rect (10–12 px radius) in a 4 % neutral tint, text and icon at full-strength primary. *Not* a brand-colored pill — brand color is reserved for data and primary actions.
 - Sub-items: indented 28 px, connected by a 1 px vertical hairline with short horizontal ticks. Icon dropped at sub-level.
-- Badges: right-aligned pill, 20 px tall — brand-tinted for actionable counts, neutral grey for informational counts.
+- Badges: right-aligned pill, 20 px tall — brand-tinted for actionable counts, neutral gray for informational counts.
 - Footer block: utility links separated by a top hairline; destructive/`Logout` in red.
 - Optional promo/onboarding card at the bottom: 12 px radius, soft gradient image header, title 14 px semibold, body 12–13 px muted, a mini circular-progress indicator, and a ghost + solid button pair.
 
@@ -73,7 +73,7 @@ Directly under the title, a single row of controls, 36–40 px tall, 8–12 px g
 
 - **Select pills**: white, 1 px border, 999 px or 10 px radius, leading 16 px outline icon, label, trailing chevron.
 - **Add filter**: `+` glyph + label, same pill.
-- **Segmented control**: grey track, active = white pill with a 1 px border and a very soft shadow; a status dot may sit inside a segment.
+- **Segmented control**: gray track, active = white pill with a 1 px border and a very soft shadow; a status dot may sit inside a segment.
 - **Tabs**: text-only, 15 px, active is full-strength text with a 2 px underline flush to the row's bottom border; inactive muted. Tabs for *views*, segmented controls for *filters*.
 - Right-aligned secondary action with a leading icon.
 
@@ -109,7 +109,7 @@ No serif. No mono except for IDs, hashes, and code. *(See §B2 — this site sub
 | `metric-md` | 22–24 / 28 | 600 | −0.02em | Inline metric |
 | `title-page` | 26 / 32 | 600 | −0.02em | Page title |
 | `title-card` | 17 / 24 | 600 | −0.01em | Card header |
-| `subtitle` | 13–14 / 20 | 400 | 0 | Grey card sub-caption |
+| `subtitle` | 13–14 / 20 | 400 | 0 | Gray card sub-caption |
 | `body` | 14–15 / 22 | 400/500 | 0 | Rows, table cells |
 | `label` | 13 / 18 | 500 | 0 | Legends, KPI labels |
 | `caption` | 12 / 16 | 500 | 0 | Axis ticks, deltas, chips |
@@ -118,12 +118,12 @@ No serif. No mono except for IDs, hashes, and code. *(See §B2 — this site sub
 ### A2.3 Rules
 
 - KPI values are the **only** place tracking goes below −0.02em.
-- Axis tick labels: 12 px, muted grey, weight 500, never bold, **never rotated**. If labels would rotate, reduce tick count or switch to a horizontal-category chart.
+- Axis tick labels: 12 px, muted gray, weight 500, never bold, **never rotated**. If labels would rotate, reduce tick count or switch to a horizontal-category chart.
 - Numbers in tables and legends: **tabular figures, right-aligned**. Currency and % keep the symbol attached.
 - Card titles are sentence case. Section eyebrows are uppercase. **No title case anywhere.**
 - Sub-captions under a card title carry the encoding explanation that the stripped chart chrome no longer provides. Use them.
 
-## A3. Colour system — light mode
+## A3. Color system — light mode
 
 ### A3.1 Neutrals
 
@@ -151,7 +151,7 @@ active-tab underlines. It does **not** appear in navigation active states or in 
 
 ### A3.3 Categorical palette (unordered series, max 6 in one chart)
 
-Assign **1 → 6 in the listed order, never by data value**, so a series keeps its colour across
+Assign **1 → 6 in the listed order, never by data value**, so a series keeps its color across
 every chart in the product. Reserve the 6th for a genuine 6th series; 5 hues is the practical
 ceiling before the legend becomes work.
 
@@ -171,7 +171,7 @@ end labels. Never a diverging or rainbow scale unless the measure has a true mid
 | `info` | `#3B9BF0` | `#E8F3FE` | Neutral notice |
 | `neutral` | `#98A2AC` | `#F2F4F5` | "Pending", disabled |
 
-Semantic colour is **text + icon on a tint background** for pills, and **text + icon only** for
+Semantic color is **text + icon on a tint background** for pills, and **text + icon only** for
 deltas. Never a saturated fill behind white text at these sizes.
 
 ## A4. Dark mode
@@ -191,7 +191,7 @@ than the card, not lighter. `text/primary` is never pure white.
 
 ### A4.3 Textures and fades
 
-- Gradient area fills fade to **`transparent`**, never to a colour. Same code, correct result on both surfaces.
+- Gradient area fills fade to **`transparent`**, never to a color. Same code, correct result on both surfaces.
 - Diagonal hatch: light `rgba(255,255,255,0.35)` over the fill; dark `rgba(0,0,0,0.30)` over the fill. The hatch always *removes* light, so it inverts.
 - Ghost / target bars and dot-matrix background dots follow the `track/ghost` token per mode.
 
@@ -204,10 +204,10 @@ Note the reversal: **light mode hover goes darker, dark mode hover goes lighter.
 
 - **Style:** outline/stroke, 1.5–1.75 px, rounded caps and joins, 24 px optical grid (Lucide, or Phosphor Regular).
 - **Sizes:** 16 px inline/chips, 18 px table rows, 20 px navigation, 24 px card-header feature icons.
-- **Colour:** icons inherit text colour — `text/secondary` at rest, `text/primary` when active. A coloured icon means it encodes data (legend dot, status arrow), not decoration.
+- **Color:** icons inherit text color — `text/secondary` at rest, `text/primary` when active. A colored icon means it encodes data (legend dot, status arrow), not decoration.
 - **Feature icon tiles:** 36–40 px rounded-square (10 px radius), background = the relevant hue at 10–12 % tint, icon in the full hue. One per card header or status card.
 - **Status dots:** 6–8 px filled circles. Legend dots 8 px, `border-radius: 50%`, 8 px gap to the label.
-- **Delta arrows:** either bare `arrow-up`/`arrow-down` in the semantic colour, or a 16 px filled circle with a white arrow. Pick one per product.
+- **Delta arrows:** either bare `arrow-up`/`arrow-down` in the semantic color, or a 16 px filled circle with a white arrow. Pick one per product.
 
 ## A6. Component vocabulary
 
@@ -268,7 +268,7 @@ table. Circular rank badge (24 px, `bg/sunken`), 24 px logo, name (15/500), opti
 
 ### A6.7 Tooltip
 
-Surface-coloured, 12 px radius, 12–14 px padding, elevated shadow, **no arrow**:
+Surface-colored, 12 px radius, 12–14 px padding, elevated shadow, **no arrow**:
 
 ```
 Title (13/600)                    ← the x-category
@@ -276,12 +276,12 @@ Title (13/600)                    ← the x-category
 ```
 
 Triggered by a **vertical hover line** in time-series charts; the intersected point gets a 6 px
-filled dot with a 2 px surface-coloured ring.
+filled dot with a 2 px surface-colored ring.
 
 ### A6.8 Banner
 
 Full-width, 12 px radius, semantic tint background, no border. Leading 20 px icon, message with
-**bolded coloured spans** on the key nouns, trailing outline button. One per page, maximum.
+**bolded colored spans** on the key nouns, trailing outline button. One per page, maximum.
 
 ## A7. Chart chrome — the stripped-back rules
 
@@ -293,7 +293,7 @@ Full-width, 12 px radius, semantic tint background, no border. Leading 20 px ico
 | X gridlines | Only when the chart is a matrix/cell grid, and then as dashed cell separators |
 | Y axis labels | Omit whenever the magnitude appears in a KPI or on the marks. When kept: 12 px muted, 3–5 values, no unit repetition (unit on the top label or in the subtitle) |
 | X axis labels | 12 px muted, horizontal, abbreviated. Thin to every 2nd/3rd label rather than rotating |
-| Legend | Below the plot, 12–16 px above the card's bottom padding. 8 px round dots, 13 px muted labels, 20–24 px gaps. Centred for 2 series, left-aligned for 3+ |
+| Legend | Below the plot, 12–16 px above the card's bottom padding. 8 px round dots, 13 px muted labels, 20–24 px gaps. Centered for 2 series, left-aligned for 3+ |
 | Zero baseline | Implied by the lowest gridline; never drawn as a heavier rule |
 | Direct labels | Preferred over legends for ≤ 3 categories in composition bars |
 | Annotation | A single vertical marker line (1 px, `border/control`) with a dot is the only permitted in-plot annotation |
@@ -305,12 +305,12 @@ Full-width, 12 px radius, semantic tint background, no border. Leading 20 px ico
 - Stacked segments separated by a **2–3 px gap**, each segment carrying the radius.
 - Minimum bar width 10 px, maximum 64 px. **Cap the count before you thin the bars.**
 
-## A8. Chart type catalogue
+## A8. Chart type catalog
 
 **8.1 Paired grouped bars** — two series per category, same hue at two lightnesses. For
 generated-vs-converted / planned-vs-actual where both share a unit and one is a subset or
 successor of the other. Bar width 26–34 px, 4 px intra-pair gap, 6 px top radius, 3 gridlines, no
-y-axis, legend centred below. Light member always left. Never more than two members per group.
+y-axis, legend centered below. Light member always left. Never more than two members per group.
 
 **8.2 Target-vs-actual layered bars** — a pale ghost bar (target) behind a shorter saturated
 gradient bar (actual). Ghost = `track/ghost` or brand at 8 %, optionally hatched above the actual.
@@ -346,7 +346,7 @@ one hue. Category labels in a fixed 80–110 px gutter. **The correct chart when
 and labels are long** — it removes the rotated-label problem entirely.
 
 **8.8 Progress bar with hatched remainder** — label above, % right-aligned; a full-width bar whose
-filled portion is solid and whose remainder is a **hatched tint of the same hue** rather than grey.
+filled portion is solid and whose remainder is a **hatched tint of the same hue** rather than gray.
 For 3–6 *independent* percentages (each row its own 100 %). Height 12–14 px, fully rounded.
 
 **8.9 Ticked "equalizer" bar** — a progress bar rendered as ~50 discrete 2 px vertical ticks;
@@ -358,19 +358,19 @@ segments, each its own hue with a left→right gradient fading out and an inline
 breakdown of exactly one total, 3–5 parts. Height 28 px, radius 8 px, 8 px gaps. The gaps mean it
 is not a precise part-to-whole read — acceptable only because the % is printed on every segment.
 
-**8.11 Rounded-cell heatmap** — rows = category, columns = bucket, colour = sequential ramp. Cell
+**8.11 Rounded-cell heatmap** — rows = category, columns = bucket, color = sequential ramp. Cell
 56 × 44 px, radius 8 px, **6 px gap** (the gap is what makes it read as modern rather than as a
 spreadsheet). Lowest ramp step must still be visible against the card. **Always** ship a continuous
 gradient legend bar (6 px tall, fully rounded, 160–220 px wide) with `Low` / `High` labels.
 
-**8.12 Hexbin / honeycomb composition** — each hex = one countable unit, coloured by category,
+**8.12 Hexbin / honeycomb composition** — each hex = one countable unit, colored by category,
 arranged in an organic blob with pale empty hexes filling the field. 3–5 categories. Hex radius
 10–14 px, 2 px gutter, pointy-top. Sort so the largest category forms the outer ring. Expensive to
 read precisely — only use when an accompanying list carries the exact numbers.
 
 **8.13 Dot-matrix column chart** — each column is a stack of small dots on a background dot field;
-height quantised to the grid. For a countable metric over time. Dot 4–5 px, 3 px pitch, background
-grid at the hairline colour. Y labels only, 4 steps. **Quantisation error must be ≤ 1 dot at the
+height quantized to the grid. For a countable metric over time. Dot 4–5 px, 3 px pitch, background
+grid at the hairline color. Y labels only, 4 steps. **Quantization error must be ≤ 1 dot at the
 smallest column** — pick the dot value from the data range, not the pixel grid.
 
 **8.14 Podium bar chart** — three bars in 2nd–1st–3rd order with avatars above and a % pill at the
@@ -442,7 +442,7 @@ status pill, and a `···` menu.
 ## A11. Accessibility
 
 - Text on tint backgrounds clears **4.5:1**; chart hues clear **3:1** against the card as filled shapes. Re-verify after any dark-mode re-derivation.
-- **Never encode by colour alone**: pair with position (fixed legend order), direct labels, or shape.
+- **Never encode by color alone**: pair with position (fixed legend order), direct labels, or shape.
 - The 6-hue categorical set is distinguishable under deuteranopia **only if** live series are capped at 4 on a single chart. Beyond 4, add direct labels.
 - Every chart needs an accessible name and a text alternative — the card subtitle or a visually-hidden `<figcaption>` stating the takeaway.
 - Focus rings: 2 px brand outline with a 2 px surface offset, on every interactive chart element and control.
@@ -455,9 +455,9 @@ status pill, and a `···` menu.
 - Dual y-axes. Use §8.6 or stack two cards.
 - Rainbow / spectral scales for sequential data.
 - Rotated axis labels. Switch orientation instead.
-- Coloured card backgrounds. Only banners get a tint.
+- Colored card backgrounds. Only banners get a tint.
 - Gridlines heavier than 1 px, or vertical gridlines on a time series.
-- More than 6 categorical series, or re-ordering series colour by value between renders.
+- More than 6 categorical series, or re-ordering series color by value between renders.
 - Truncated y-axis on a bar chart. **Bars start at zero, always.** (Lines may not.)
 - The brand hue used simultaneously for a data series and a UI control inside the same card.
 
@@ -471,9 +471,9 @@ status pill, and a `···` menu.
 - [ ] One hue ramp for ordered data / fixed categorical order for unordered
 - [ ] Legend below, 8 px dots, 13 px muted labels
 - [ ] Tooltip: category title + dot/label/value rows, tabular figures
-- [ ] Delta = arrow + semantic % + grey context phrase
+- [ ] Delta = arrow + semantic % + gray context phrase
 - [ ] Dark mode: surfaces re-derived (not inverted), hues +10 L / −10 S, fades to `transparent`
-- [ ] `prefers-reduced-motion` honoured; focus rings present; `<figcaption>` written
+- [ ] `prefers-reduced-motion` honored; focus rings present; `<figcaption>` written
 
 ---
 
@@ -481,7 +481,7 @@ status pill, and a `···` menu.
 
 The site is a course portal, not a SaaS dashboard: the "product" is a set of six-plus engineering
 tools, each a two-column `input panel / results` layout. §A's shell, top bar, and nav rules apply
-to the tool chrome we actually have; the chart, card, KPI, table, colour, and motion rules apply
+to the tool chrome we actually have; the chart, card, KPI, table, color, and motion rules apply
 verbatim.
 
 ## B1. Token map
@@ -554,7 +554,7 @@ brand hue is always the primary series.
 | 6 | Pink | `#F0388B` | `#F5619F` |
 
 **Semantic series binding — the important part.** In this product the "series" are physical
-quantities that recur across tools. Bind them once so σz is the same colour in the Stress Explorer,
+quantities that recur across tools. Bind them once so σz is the same color in the Stress Explorer,
 the layered-elastic solver, and the Westergaard tool:
 
 | Quantity | Hue |
@@ -584,10 +584,10 @@ already does this ad-hoc; it moves into `chartTheme.ts` as the single source.
 **Deviation 1 — continuous magnitude fields do not reverse.** §A4.2's reversal is right for a
 *count*: a cell with nothing in it should sink into the card, which means pale on white and dark on
 navy. It is wrong for a *physical magnitude* drawn as a continuous field — a stress surface, a
-contact patch, a pressure bulb. There the colour **is** the quantity, and swapping the ends with the
+contact patch, a pressure bulb. There the color **is** the quantity, and swapping the ends with the
 site theme makes one figure say opposite things in the two themes. The Contact Stress Visualizer
 shipped that way: `rampScale('orange', 'dark')` put the deep 900 at `t=0`, so the near-zero haze
-around the tyre patch came out in strong burnt orange and the peak in pale 100, and anyone reading
+around the tire patch came out in strong burnt orange and the peak in pale 100, and anyone reading
 saturation as magnitude read the field inside out.
 
 So a field takes `fieldScale(theme)`, which runs **washed at zero → intense at the peak in both
@@ -635,7 +635,7 @@ legend:         showlegend: false — see below
 3. **No per-bar entrance stagger.** §A10's 24 ms stagger is not reachable through Plotly without
    hand-driving frames. We use a single 320 ms `cubic-bezier(0.22,1,0.36,1)` fade-and-rise on the
    chart container, once on mount, gated on `prefers-reduced-motion`. Hover, tooltip, and the
-   "no animation on filter change" rules are honoured as written.
+   "no animation on filter change" rules are honored as written.
 4. **Rounded stacked-segment gaps** (§A7, 3 px) are not expressible in Plotly stacked bars. Where a
    stack matters (LCA stages, ESAL contributions), use §8.10's *detached* multi-segment composition
    bar rendered as HTML/SVG rather than a Plotly stack.
@@ -657,12 +657,12 @@ construction, not by discipline:
 | A6.4 Buttons | `.cee-btn`, `.cee-btn--primary/ghost` | primary → brand pill 40 px 14/600; ghost icon → 32 px, `bg/hover` on hover |
 | A6.5 Table | `.cee-table`, `.cee-tablewrap` | header 12 px muted on `bg/sunken`; rows 56 px, bottom hairline only, no vertical rules; numerics right-aligned tabular |
 | A6.7 Tooltip | Plotly `hoverlabel` + `.cee-tip__pop` | both restyled to the one tooltip spec |
-| A6.8 Banner | `.cee-warn` | semantic tint bg, no border, 12 px radius, 20 px leading icon, bolded coloured spans |
+| A6.8 Banner | `.cee-warn` | semantic tint bg, no border, 12 px radius, 20 px leading icon, bolded colored spans |
 | A8.8 Progress | `.cee-share` | hatched remainder in the same hue, 12 px height, fully rounded |
 | A8.17 Object row | `.cee-axle-row` | inline progress + status pill in the row |
 | — | **new** `<Legend>`, `<RampBar>`, `<Card>`, `<KpiStrip>`, `<Figcaption>` | see §B6 |
 
-`.cee-flow` (the ESAL factor-by-factor strip) has no §A analogue; keep it, restyled to the
+`.cee-flow` (the ESAL factor-by-factor strip) has no §A analog; keep it, restyled to the
 stat-chip and hairline tokens.
 
 ## B8. Chart-type assignments for this site
@@ -701,6 +701,6 @@ KPI already states the magnitude.
 
 §A11 in full, plus the two rules this site already had, which stay:
 
-- Every chart keeps its **table view** — this is the §A11 "never encode by colour alone" escape hatch and it is also how students check hand calculations. It is not optional.
+- Every chart keeps its **table view** — this is the §A11 "never encode by color alone" escape hatch and it is also how students check hand calculations. It is not optional.
 - Every input keeps its `Tip` tooltip; every tool keeps its `<details class="cee-howto">` panel and `cee-warn` validation messages.
 - Palettes are re-validated with the **dataviz six-checks** per surface (light on `#FFFFFF`, dark on `#162033`) whenever a hue changes. §B4's values are derived from §A3.3 and **must be re-validated before they ship.**

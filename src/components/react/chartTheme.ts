@@ -1,9 +1,9 @@
 // Shared Plotly theming for CEE 406 tools.
 //
-// This file is the single source for every colour, axis, and hover default in
+// This file is the single source for every color, axis, and hover default in
 // the toolbox. It implements docs/chart-standards.md — §A is the visual
 // language, §B binds it to the CEE 406 navy/orange identity. Tools must not
-// set colours, gridlines, or axis chrome locally.
+// set colors, gridlines, or axis chrome locally.
 //
 // Palettes are validated (dataviz six-checks) per surface: light on #FFFFFF,
 // dark on #162033.
@@ -75,7 +75,7 @@ export const HUES: Record<Mode, Record<Hue, string>> = {
 
 /* Semantic binding (§B4). The "series" in this product are physical
  * quantities that recur across tools, so bind them once: sigma_z is the same
- * colour in the Stress Explorer, the layered-elastic solver, and Westergaard.
+ * color in the Stress Explorer, the layered-elastic solver, and Westergaard.
  * Totals and envelopes use `ink` — a neutral, not a seventh hue. */
 export type Quantity =
   | 'stress'       // sigma, load, pressure
@@ -94,7 +94,7 @@ export const QUANTITY_HUE: Record<Quantity, Hue> = {
   temperature: 'pink',
 };
 
-/** Colour for a physical quantity — the preferred way for a tool to pick one. */
+/** Color for a physical quantity — the preferred way for a tool to pick one. */
 export const hueFor = (q: Quantity, theme: Mode) => HUES[theme][QUANTITY_HUE[q]];
 
 /* ───────────────────────── Sequential ramps (§B5) ─────────────────────────
@@ -134,7 +134,7 @@ export function rampEnds(name: RampName, theme: Mode): [string, string] {
  * Three properties, and all three are what make it read in both themes:
  *
  *  - **Zero is the card.** The midpoint is `TOKENS[theme].surface`, so "none
- *    here" reads as bare surface rather than as a colour the eye has to learn.
+ *    here" reads as bare surface rather than as a color the eye has to learn.
  *    This is the one ramp that is *not* reversed between modes: it does not
  *    need to be, because its neutral is defined as the background itself.
  *  - **The arms are equal in lightness.** Neither sign is the important one,
@@ -168,7 +168,7 @@ export function divergingScale(
  * The reversal is right for a *count*: a heatmap cell with nothing in it
  * should sink into the card, so "empty" is pale on white and dark on navy.
  * It is wrong for a *physical magnitude* rendered as a continuous field —
- * a stress surface, a pressure bulb, a contact patch. There, colour is the
+ * a stress surface, a pressure bulb, a contact patch. There, color is the
  * quantity, and a scale whose ends swap with the site theme makes the same
  * figure say the opposite thing in dark mode: the near-zero haze around a
  * contact patch comes out in deep 900 orange while the peak is pale 100. A
@@ -235,7 +235,7 @@ export function useTheme(): Mode {
 }
 
 /**
- * Every colour a chart needs. `sky` and `green` are retained as aliases of the
+ * Every color a chart needs. `sky` and `green` are retained as aliases of the
  * blue and emerald hues so existing tools keep compiling during the retrofit.
  */
 export function chartColors(theme: Mode) {
@@ -298,7 +298,7 @@ export function gridAxis(theme: Mode, title?: string, overrides: Record<string, 
   });
 }
 
-/** Tooltip per §A6.7 — surface-coloured, hairline border, no arrow. */
+/** Tooltip per §A6.7 — surface-colored, hairline border, no arrow. */
 export function hoverLabel(theme: Mode) {
   const t = TOKENS[theme];
   return {
@@ -320,7 +320,7 @@ export const BAR_GEOMETRY = { bargap: 0.4, bargroupgap: 0.1 };
 
 /**
  * Vertical gradient area fill that fades to transparent (§A9). Because it
- * ends transparent rather than at a colour, the same spec is correct on the
+ * ends transparent rather than at a color, the same spec is correct on the
  * white card and on the navy one.
  */
 export function areaFill(color: string) {
@@ -356,7 +356,7 @@ export function withAlpha(hex: string, alpha: number): string {
  *
  * So: rgba() for anything drawn flat, `mixHex` for anything drawn in 3-D.
  * Passing the theme's own surface token as `bg` keeps the result mode-correct,
- * because the colour it fades into is the card it is actually drawn on.
+ * because the color it fades into is the card it is actually drawn on.
  */
 export function mixHex(fg: string, bg: string, t: number): string {
   const p = (h: string) => {

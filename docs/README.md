@@ -5,9 +5,9 @@ ad-hoc decision conflicts with one of them, the document wins.
 
 | Document | Scope | Status |
 |---|---|---|
-| [`dashboard-visual-language.md`](dashboard-visual-language.md) | Every dashboard, analytics, reporting, and data-visualisation surface. Tokens, layout, components, the 18-chart catalogue, `.elx` integration contract. | Authoritative, v1.0 |
+| [`dashboard-visual-language.md`](dashboard-visual-language.md) | Every dashboard, analytics, reporting, and data-visualization surface. Tokens, layout, components, the 18-chart catalog, `.elx` integration contract. | Authoritative, v1.0 |
 | [`loaders.md`](loaders.md) | Every loading, pending, streaming, and progress state. | Authoritative, v1.0 |
-| [`chart-standards.md`](chart-standards.md) | The CEE 406 **binding**: how the above is realised against this site's navy/orange identity and its existing `cee-*` component layer. | Authoritative for this repo |
+| [`chart-standards.md`](chart-standards.md) | The CEE 406 **binding**: how the above is realized against this site's navy/orange identity and its existing `cee-*` component layer. | Authoritative for this repo |
 
 ## Reading order
 

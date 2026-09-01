@@ -14,11 +14,11 @@
       along its bulge. Giving them one shared roughness is most of
       what makes a procedural tire look like a black doughnut.
 
-   2. EVERYTHING RECEIVES THE ENVIRONMENT MAP. Machined aluminium
+   2. EVERYTHING RECEIVES THE ENVIRONMENT MAP. Machined aluminum
       is defined by what it reflects; without image-based lighting
       no roughness value will make it read as metal.
 
-   Colours stay restrained. A publication figure is read for its
+   Colors stay restrained. A publication figure is read for its
    geometry, and saturated rubber or chrome-bright rims fight the
    dimension overlay for attention.
    ============================================================ */
@@ -55,13 +55,13 @@ export const MATERIAL_SPECS = Object.freeze({
         name: 'Sidewall rubber',
         color: 0x24282e, roughness: 0.74, metalness: 0.0, normalScale: 0.7, envIntensity: 0.8,
         description: 'Smoother and slightly glossier than the tread, with a soft sheen along the '
-            + 'bulge. Carries the moulded ribbing and lettering relief.'
+            + 'bulge. Carries the molded ribbing and lettering relief.'
     },
-    aluminium: {
-        name: 'Machined aluminium rim',
+    aluminum: {
+        name: 'Machined aluminum rim',
         color: 0xb9bfc6, roughness: 0.30, metalness: 0.92,
         clearcoat: 0.30, clearcoatRoughness: 0.24, envIntensity: 1.0,
-        description: 'Polished forged aluminium wheel disc — the face you actually see, with a '
+        description: 'Polished forged aluminum wheel disc — the face you actually see, with a '
             + 'light clearcoat for the lacquer.'
     },
     rimBarrel: {
@@ -86,10 +86,10 @@ export const MATERIAL_SPECS = Object.freeze({
     drum: {
         name: 'Cast brake drum',
         color: 0x59524c, roughness: 0.86, metalness: 0.40, envIntensity: 0.7,
-        description: 'Cast iron, lightly oxidised.'
+        description: 'Cast iron, lightly oxidized.'
     },
     axleBeam: {
-        name: 'Galvanised axle beam',
+        name: 'Galvanized axle beam',
         color: 0x7e858c, roughness: 0.66, metalness: 0.72, envIntensity: 0.95,
         description: 'Axle housing and spring pads.'
     },
@@ -233,7 +233,7 @@ export class MaterialLibrary {
         // dropped the rims and axle beams to a wet, plastic-looking gloss that
         // was plainly worse than the tuned values. Rubber gains from measured
         // micro-detail because rubber IS micro-detailed; a machined rim is
-        // characterised by what it reflects, which the studio environment map
+        // characterized by what it reflects, which the studio environment map
         // already supplies. Recorded in assets/textures/CREDITS.md.
         return m;
     }
@@ -287,7 +287,7 @@ export class MaterialLibrary {
         this._applyEnv(key, m);
         this._apply(key, family);
 
-        // Real physical tiling. The tyre's own UVs already repeat `uRepeat`
+        // Real physical tiling. The tire's own UVs already repeat `uRepeat`
         // times around the circumference (see geometry/tire.js), so the
         // texture repeat has to be divided by that or the grain would be
         // multiplied twice and turn to noise.

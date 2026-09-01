@@ -296,7 +296,7 @@ export function leaResponse(
  * Superpose the responses of several identical circular loads (dual wheels,
  * tandem axles). Valid because the system is linear elastic.
  *
- * @param wheels  centres of each load in the plan, relative to the point
+ * @param wheels  centers of each load in the plan, relative to the point
  */
 export function leaSuperpose(
   layers: Layer[], q: number, a: number,

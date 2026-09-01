@@ -15,7 +15,7 @@ export interface LegendItem {
 
 interface LegendProps {
   items: LegendItem[];
-  /** Centred for 2 series, left-aligned for 3+ (§A7). Auto by default. */
+  /** Centered for 2 series, left-aligned for 3+ (§A7). Auto by default. */
   align?: 'left' | 'center';
 }
 

@@ -1,8 +1,8 @@
 /* ============================================================
    Gear3D — procedural wheel rim
    ------------------------------------------------------------
-   Local frame matches the tire: origin at the wheel centre,
-   rotation axis +X, millimetres.
+   Local frame matches the tire: origin at the wheel center,
+   rotation axis +X, millimeters.
 
    The rim is built from two parts:
      - the barrel, a lathed surface of revolution from the inner
@@ -11,7 +11,7 @@
        central bore
 
    Truck wheels are dished: the disc sits offset from the barrel
-   centreline. That offset is what makes a dual pair's two wheels
+   centerline. That offset is what makes a dual pair's two wheels
    mount back-to-back with the correct spacing, so it is a real
    parameter, not decoration.
    ============================================================ */
@@ -23,13 +23,13 @@ import * as THREE from 'three';
 /**
  * @typedef {Object} RimOptions
  * @property {number} [widthRatio=0.72]   rim width as a fraction of tire section width
- * @property {number} [offsetRatio=0.0]   disc offset from barrel centre, fraction of rim width
+ * @property {number} [offsetRatio=0.0]   disc offset from barrel center, fraction of rim width
  * @property {number} [handHoles=5]       lightening holes in the disc
  * @property {number} [handHoleRatio=0.17] hole diameter, fraction of rim diameter
  * @property {number} [boreRatio=0.30]    central bore diameter, fraction of rim diameter
  * @property {number} [radialSegments]   overrides the quality preset
  * @property {'draft'|'standard'|'high'} [quality='standard']
- * @property {'steel'|'aluminium'} [style='aluminium']
+ * @property {'steel'|'aluminum'} [style='aluminum']
  */
 
 /** Circumferential segments per quality level. A rim is a wide, smooth,
@@ -45,7 +45,7 @@ function rimSegments(opts) {
 }
 
 /**
- * Meridian profile of the rim barrel, in (radius, axial) millimetres.
+ * Meridian profile of the rim barrel, in (radius, axial) millimeters.
  * @param {import('../core/tires.js').TireGeometry} g
  * @param {RimOptions} [opts]
  * @returns {THREE.Vector2[]}
@@ -55,7 +55,7 @@ export function rimProfile(g, opts = {}) {
     const half = width / 2;
     const r = g.rimRadius;
     const flange = r * 0.048;      // flange height above the bead seat
-    const drop = r * 0.062;        // drop-centre well depth
+    const drop = r * 0.062;        // drop-center well depth
 
     /** @type {THREE.Vector2[]} */
     const p = [];
@@ -68,7 +68,7 @@ export function rimProfile(g, opts = {}) {
     add(r + flange * 0.72, -half + flange * 0.72);
     add(r, -half + flange * 1.25);             // inner bead seat
     add(r - drop * 0.55, -half + width * 0.22);
-    add(r - drop, -half + width * 0.34);       // into the drop-centre well
+    add(r - drop, -half + width * 0.34);       // into the drop-center well
     add(r - drop, -half + width * 0.56);
     add(r - drop * 0.45, -half + width * 0.66);
     add(r, -half + width * 0.755);             // outer bead seat

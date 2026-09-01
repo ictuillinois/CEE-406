@@ -102,7 +102,7 @@ export interface PcaInput {
  * Stress scales linearly with axle load and the power of Eq. 12.8 scales with
  * its square, so both are projected from the standard-axle table values.
  */
-export function pcaAnalyse(groups: LoadGroup[], input: PcaInput) {
+export function pcaAnalyze(groups: LoadGroup[], input: PcaInput) {
   const rows: GroupResult[] = groups.map(g => {
     const std = STANDARD_LOAD[g.type];
     const factored = g.load * input.lsf;

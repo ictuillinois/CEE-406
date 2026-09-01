@@ -68,13 +68,13 @@ export default function Gear3DApp() {
           <ol>
             <li><strong>Pick a vehicle.</strong> Choose a domain — truck, aircraft, or a bare gear configuration — then a class and a model. Trucks are FHWA classes 1–13; aircraft come from FAA Order 5300.7 and the manufacturers' own airport planning documents. Every axle in the library carries a cited source, and every load carries the basis it was taken from.</li>
             <li><strong>Read the layout, not the picture.</strong> The tool opens in <strong>Quad</strong> — plan, 3D, side and front together — because a gear configuration is a plan first, and a single pictorial view is the one arrangement that hides the spacings you need. Click any pane to open it full size.</li>
-            <li><strong>Turn on the dimensions you need.</strong> Longitudinal spacings are on by default. Add transverse to get track widths and dual spacings. <strong>Measure</strong> (M) lets you take your own dimension between any two features — endpoints snap to tire centres and edges, contact patches, and axle centrelines.</li>
+            <li><strong>Turn on the dimensions you need.</strong> Longitudinal spacings are on by default. Add transverse to get track widths and dual spacings. <strong>Measure</strong> (M) lets you take your own dimension between any two features — endpoints snap to tire centers and edges, contact patches, and axle centerlines.</li>
             <li><strong>Draw the footprints.</strong> Under Contact patches, tick <em>Draw footprints</em>. Three models are offered because the literature offers three: a rectangle, Huang's rectangle with semicircular ends (Ch. 2), and an ellipse. They give different contact areas for the same load, which is the point — compare them before you trust one.</li>
-            <li><strong>Take the numbers out.</strong> <code>footprint.csv</code> gives you every patch corner in the engineering frame, in millimetres, ready for a finite-element pre-processor. <strong>FEM export</strong> writes the Abaqus form. The figure exports (PNG, SVG, PDF) keep the dimensions vector, so a figure stays sharp in a report at any size.</li>
+            <li><strong>Take the numbers out.</strong> <code>footprint.csv</code> gives you every patch corner in the engineering frame, in millimeters, ready for a finite-element pre-processor. <strong>FEM export</strong> writes the Abaqus form. The figure exports (PNG, SVG, PDF) keep the dimensions vector, so a figure stays sharp in a report at any size.</li>
           </ol>
           <p>
             Contact pressure is taken equal to inflation pressure and uniform over the patch.
-            Both are idealisations, and both are stated in full in the header of every export.
+            Both are idealizations, and both are stated in full in the header of every export.
             If you have <em>measured</em> footprint dimensions, enter them under Override — an
             overridden patch keeps its load and reports the contact pressure that implies, so it
             no longer equals inflation pressure, and every export says which patches were
@@ -96,7 +96,7 @@ export default function Gear3DApp() {
             {/* Originator block: mark, name, and the way back. */}
             <div className="g3-tb-mark">
               <span className="g3-tb-icon" aria-hidden="true">
-                {/* A wheel seen face on: tyre ring and hub, drawn for this app
+                {/* A wheel seen face on: tire ring and hub, drawn for this app
                     rather than borrowed from an icon font. */}
                 <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="3">
                   <circle cx="12" cy="12" r="9.4" />
@@ -157,8 +157,8 @@ export default function Gear3DApp() {
               <button type="button" className="g3-vtab" data-view="front" role="tab" aria-selected="false" title="Front view — locked (V then 5)">Front</button>
             </div>
             <span className="g3-tool-sep" />
-            <button type="button" id="g3-catalogue" className="g3-btn" title="FAA Order 5300.7 gear configuration catalogue (C)">
-              <Icon name="th" /> Gear catalogue
+            <button type="button" id="g3-catalog" className="g3-btn" title="FAA Order 5300.7 gear configuration catalog (C)">
+              <Icon name="th" /> Gear catalog
             </button>
             <span className="g3-tool-sep" />
             <button type="button" id="g3-annot" className="g3-btn is-on" title="Show or hide all dimensions, callouts and the scale bar (A)" aria-pressed="true">
@@ -177,7 +177,7 @@ export default function Gear3DApp() {
             <input type="file" id="g3-file-input" accept=".gear3d,.json,application/json" hidden />
             <span className="g3-spacer" />
             <div className="g3-unitsys" role="group" aria-label="Display units">
-              <button type="button" className="g3-uswitch is-active" data-units="SI" title="Millimetres, kilonewtons, kilopascals">SI</button>
+              <button type="button" className="g3-uswitch is-active" data-units="SI" title="Millimeters, kilonewtons, kilopascals">SI</button>
               <button type="button" className="g3-uswitch" data-units="US" title="Inches, kips, psi">US</button>
             </div>
             <button type="button" id="g3-reset" className="g3-btn g3-btn--danger" title="Revert to the cited reference configuration"><Icon name="rotate-left" /> Revert</button>
@@ -245,7 +245,7 @@ export default function Gear3DApp() {
 
                 <hr className="g3-rule" />
                 <div className="g3-mini-row">
-                  <button type="button" id="g3-gearcode-browse" className="g3-btn"><Icon name="th" /> Catalogue</button>
+                  <button type="button" id="g3-gearcode-browse" className="g3-btn"><Icon name="th" /> Catalog</button>
                   <button type="button" id="g3-gearcode-load" className="g3-btn" disabled><Icon name="download" /> Load this</button>
                 </div>
                 <p className="g3-note">
@@ -312,8 +312,8 @@ export default function Gear3DApp() {
                 </div>
                 <div id="g3-custom-list" className="g3-dimlist" />
                 <p className="g3-note" id="g3-measure-hint" hidden>
-                  Click two features to measure. Endpoints snap to tire centres and edges,
-                  contact patches and axle centrelines. <kbd>Esc</kbd> cancels.
+                  Click two features to measure. Endpoints snap to tire centers and edges,
+                  contact patches and axle centerlines. <kbd>Esc</kbd> cancels.
                 </p>
                 <hr className="g3-rule" />
                 <div className="g3-field">
@@ -382,7 +382,7 @@ export default function Gear3DApp() {
                   <button type="button" id="g3-exp-csv" className="g3-btn"><Icon name="file-csv" /> footprint.csv</button>
                   <button type="button" id="g3-exp-fem" className="g3-btn"><Icon name="cubes" /> FEM export</button>
                 </div>
-                <p className="g3-note">Contact pressure is taken equal to inflation pressure and uniform over the patch. Both are idealisations — the export header states them in full.</p>
+                <p className="g3-note">Contact pressure is taken equal to inflation pressure and uniform over the patch. Both are idealizations — the export header states them in full.</p>
               </div>
             </details>
 
@@ -423,9 +423,9 @@ export default function Gear3DApp() {
                   <span className="g3-resbar-n" id="g3-res-note" />
                 </div>
                 <div className="g3-field">
-                  <label htmlFor="g3-geometry">Tyre detail</label>
+                  <label htmlFor="g3-geometry">Tire detail</label>
                   <select id="g3-geometry" className="g3-select" defaultValue="auto">
-                    <option value="auto">Auto — by tyre count</option>
+                    <option value="auto">Auto — by tire count</option>
                     <option value="draft">Draft — 112 segments</option>
                     <option value="standard">Standard — 240</option>
                     <option value="high">High — 352</option>
@@ -529,12 +529,12 @@ export default function Gear3DApp() {
                   <label htmlFor="g3-bg-mode">Mode</label>
                   <select id="g3-bg-mode" className="g3-select" defaultValue="white">
                     <option value="white">Publication white</option>
-                    <option value="color">Custom colour</option>
+                    <option value="color">Custom color</option>
                     <option value="transparent">Transparent</option>
                   </select>
                 </div>
                 <div className="g3-field" id="g3-bg-color-field">
-                  <label htmlFor="g3-bg-color">Colour</label>
+                  <label htmlFor="g3-bg-color">Color</label>
                   <input type="color" id="g3-bg-color" className="g3-color" defaultValue="#eef1f4" />
                 </div>
               </div>
@@ -567,10 +567,10 @@ export default function Gear3DApp() {
                   <button type="button" id="g3-exp-matrix" className="g3-btn"><Icon name="th-large" /> Gear matrix</button>
                 </div>
                 <div className="g3-mini-row">
-                  <button type="button" id="g3-exp-glb" className="g3-btn" title="Binary glTF geometry, engineering frame, millimetres"><Icon name="cube" /> Geometry .glb</button>
-                  <button type="button" id="g3-exp-obj" className="g3-btn" title="Wavefront OBJ geometry, engineering frame, millimetres"><Icon name="cube" /> .obj</button>
+                  <button type="button" id="g3-exp-glb" className="g3-btn" title="Binary glTF geometry, engineering frame, millimeters"><Icon name="cube" /> Geometry .glb</button>
+                  <button type="button" id="g3-exp-obj" className="g3-btn" title="Wavefront OBJ geometry, engineering frame, millimeters"><Icon name="cube" /> .obj</button>
                 </div>
-                <p className="g3-note">Geometry exports carry the visible model in the <strong>engineering frame, in millimetres</strong> — the same coordinate system and scale as footprint.csv, so the two line up. Isolation applies.</p>
+                <p className="g3-note">Geometry exports carry the visible model in the <strong>engineering frame, in millimeters</strong> — the same coordinate system and scale as footprint.csv, so the two line up. Isolation applies.</p>
                 <p className="g3-note">Exports re-render at full resolution. Above the GPU's limit the render is tiled and composited. SVG and PDF keep dimensions and labels vector.</p>
               </div>
             </details>
@@ -631,21 +631,21 @@ export default function Gear3DApp() {
             <span className="g3-status-sep" />
             <span className="g3-status-item g3-mono" id="g3-status-view">—</span>
             <span className="g3-status-sep" />
-            <span className="g3-status-item g3-mono" id="g3-status-res" title="Drawing buffer — the resolution the viewport is rasterised at" />
+            <span className="g3-status-item g3-mono" id="g3-status-res" title="Drawing buffer — the resolution the viewport is rasterized at" />
           </div>
 
         </div>
 
-        {/* Gear configuration catalogue.
+        {/* Gear configuration catalog.
             Figure 2 and Table 3 of FAA Order 5300.7, as a browsable sheet. The
             thumbnails are drawn from the same wheel-plan function the app uses
             elsewhere, so a diagram here cannot disagree with the model it loads. */}
-        <div className="g3-modal" id="g3-catalogue-modal" hidden>
+        <div className="g3-modal" id="g3-catalog-modal" hidden>
           <div className="g3-modal-scrim" data-close />
           <div className="g3-modal-panel" role="dialog" aria-modal="true" aria-labelledby="g3-cat-title">
             <header className="g3-modal-head">
               <div>
-                <h2 id="g3-cat-title">Gear configuration catalogue</h2>
+                <h2 id="g3-cat-title">Gear configuration catalog</h2>
                 <p>
                   FAA Order 5300.7 — <span id="g3-cat-count">—</span> entries.
                   {' '}<span className="g3-cat-legend">
@@ -660,7 +660,7 @@ export default function Gear3DApp() {
                   placeholder="Filter by code or aircraft…"
                   spellCheck={false} autoComplete="off" aria-label="Filter configurations"
                 />
-                <button type="button" className="g3-icon-btn" data-close aria-label="Close catalogue"><Icon name="times" /></button>
+                <button type="button" className="g3-icon-btn" data-close aria-label="Close catalog"><Icon name="times" /></button>
               </div>
             </header>
             <div className="g3-cat-body">
@@ -693,7 +693,7 @@ export default function Gear3DApp() {
         <code>resolveLayout()</code> that the renderer, the dimension engine and the footprint
         export all read — so a spacing you measure on screen is the spacing that lands in the CSV.
         Every axle carries its source and every load its basis; see <code>SOURCES.md</code> in the
-        data library. Contact patches are idealisations, not measurements, unless you enter
+        data library. Contact patches are idealizations, not measurements, unless you enter
         measured dimensions yourself. Truck classes follow FHWA; gear designations follow FAA
         Order 5300.7 (6 October 2005). Ported from the Gear3D E-Lab.
       </p>

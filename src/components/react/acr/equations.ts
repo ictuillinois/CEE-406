@@ -4,19 +4,19 @@
 // system replaced ACN/PCN in November 2024. A runway is reported as a
 // five-part code:
 //
-//     PCR / type / subgrade / tyre pressure / evaluation method
+//     PCR / type / subgrade / tire pressure / evaluation method
 //     700  / R    / C        / Y             / T
 //
 // An aircraft may operate without restriction when its ACR — quoted for the
 // same pavement type and subgrade category — does not exceed the PCR, and
-// its tyre pressure is within the coded limit.
+// its tire pressure is within the coded limit.
 //
 // The ACR itself comes from the aircraft manufacturer's or ICAO's published
 // tables and is an input here: those tables are not reproduced.
 
 export type PavementType = 'R' | 'F';
 export type SubgradeCode = 'A' | 'B' | 'C' | 'D';
-export type TyreCode = 'W' | 'X' | 'Y' | 'Z';
+export type TireCode = 'W' | 'X' | 'Y' | 'Z';
 export type EvalMethod = 'T' | 'U';
 
 export const PAVEMENT_TYPE: Record<PavementType, string> = {
@@ -32,8 +32,8 @@ export const SUBGRADE: Record<SubgradeCode, { name: string; rigid: string; flexi
   D: { name: 'Ultra low', rigid: 'k = 20 MN/m³ (75 pci)',   flexible: 'CBR 3' },
 };
 
-/** Maximum allowable tyre pressure by code. */
-export const TYRE: Record<TyreCode, { name: string; mpa: number | null; psi: number | null }> = {
+/** Maximum allowable tire pressure by code. */
+export const TIRE: Record<TireCode, { name: string; mpa: number | null; psi: number | null }> = {
   W: { name: 'Unlimited', mpa: null, psi: null },
   X: { name: 'High',   mpa: 1.75, psi: 254 },
   Y: { name: 'Medium', mpa: 1.25, psi: 181 },
@@ -49,7 +49,7 @@ export interface RunwayCode {
   pcr: number;
   type: PavementType;
   subgrade: SubgradeCode;
-  tyre: TyreCode;
+  tire: TireCode;
   method: EvalMethod;
 }
 
@@ -64,19 +64,19 @@ export function parseRunwayCode(text: string): RunwayCode | null {
   if (!Number.isFinite(pcr) || pcr <= 0) return null;
   if (!(parts[1] in PAVEMENT_TYPE)) return null;
   if (!(parts[2] in SUBGRADE)) return null;
-  if (!(parts[3] in TYRE)) return null;
+  if (!(parts[3] in TIRE)) return null;
   if (!(parts[4] in EVALUATION)) return null;
   return {
     pcr,
     type: parts[1] as PavementType,
     subgrade: parts[2] as SubgradeCode,
-    tyre: parts[3] as TyreCode,
+    tire: parts[3] as TireCode,
     method: parts[4] as EvalMethod,
   };
 }
 
 export const formatRunwayCode = (c: RunwayCode) =>
-  `${c.pcr}/${c.type}/${c.subgrade}/${c.tyre}/${c.method}`;
+  `${c.pcr}/${c.type}/${c.subgrade}/${c.tire}/${c.method}`;
 
 export interface Verdict {
   /** Unrestricted operation permitted. */
@@ -94,9 +94,9 @@ export const OVERLOAD_ALLOWANCE = 0.10;
  * Decide whether an aircraft may use a runway.
  *
  * @param acr           the aircraft's ACR for THIS pavement type and subgrade
- * @param tyrePressure  aircraft tyre pressure (psi)
+ * @param tirePressure  aircraft tire pressure (psi)
  */
-export function evaluate(runway: RunwayCode, acr: number, tyrePressure: number): Verdict {
+export function evaluate(runway: RunwayCode, acr: number, tirePressure: number): Verdict {
   const reasons: string[] = [];
   const ratio = runway.pcr > 0 ? acr / runway.pcr : Infinity;
 
@@ -113,19 +113,19 @@ export function evaluate(runway: RunwayCode, acr: number, tyrePressure: number):
     reasons.push(`ACR ${acr} exceeds PCR ${runway.pcr} by ${((ratio - 1) * 100).toFixed(1)}% — beyond the overload allowance.`);
   }
 
-  const limit = TYRE[runway.tyre].psi;
-  const tyreOk = limit === null || tyrePressure <= limit;
+  const limit = TIRE[runway.tire].psi;
+  const tireOk = limit === null || tirePressure <= limit;
   reasons.push(
     limit === null
-      ? `Tyre pressure code ${runway.tyre} is unlimited.`
-      : tyreOk
-        ? `Tyre pressure ${tyrePressure} psi is within the ${runway.tyre} limit of ${limit} psi.`
-        : `Tyre pressure ${tyrePressure} psi exceeds the ${runway.tyre} limit of ${limit} psi.`
+      ? `Tire pressure code ${runway.tire} is unlimited.`
+      : tireOk
+        ? `Tire pressure ${tirePressure} psi is within the ${runway.tire} limit of ${limit} psi.`
+        : `Tire pressure ${tirePressure} psi exceeds the ${runway.tire} limit of ${limit} psi.`
   );
 
   return {
-    ok: strengthOk && tyreOk,
-    overload: !strengthOk && overloadOk && tyreOk,
+    ok: strengthOk && tireOk,
+    overload: !strengthOk && overloadOk && tireOk,
     ratio,
     reasons,
   };

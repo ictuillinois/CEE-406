@@ -75,7 +75,7 @@ one also needs scoping to the island root.
 - tokens moved off `:root` onto `.g3-app` (integration contract, §0.1);
 - the palette re-skinned from upstream teal-on-slate to the course
   orange-on-navy — but **not** `--g3-fig-*`, which are the exported figure's
-  colours and must not follow the site;
+  colors and must not follow the site;
 - `--g3-graphite` / `--g3-muted` deliberately kept: their comments record WCAG
   measurements, and the surfaces only moved lighter;
 - `body.Gear3D` rescoped to `.g3-app` (34 rules that stop the host stylesheet

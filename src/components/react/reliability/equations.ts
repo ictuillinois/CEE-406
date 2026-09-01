@@ -1,7 +1,7 @@
 // Reliability of an AASHTO flexible design — pure functions, no React.
 //
 // Huang (2004) Chapter 10. The chapter's argument in one line: a deterministic
-// design hides its factor of safety inside judgement, and a probabilistic one
+// design hides its factor of safety inside judgment, and a probabilistic one
 // makes it visible by giving every input a mean and a variance.
 //
 //   Traffic prediction      Eqs. 10.38-10.40  → mean and variance of log W_T
@@ -324,7 +324,7 @@ export interface MonteCarloResult {
  * push each sample set through the *full nonlinear* design equation, and
  * count how often the pavement outlives its traffic.
  *
- * This is the estimator with the fewest assumptions — no linearisation, no
+ * This is the estimator with the fewest assumptions — no linearization, no
  * lognormal assumption on the damage ratio — so it is the reference the other
  * two are judged against.
  */

@@ -10,7 +10,7 @@ import {
 import ChartFigure from '../ui/ChartFigure';
 import KpiStrip, { Kpi } from '../ui/KpiStrip';
 import ShareRows from '../ui/ShareRows';
-import { pcaAnalyse, type AxleType, type LoadGroup } from './equations.ts';
+import { pcaAnalyze, type AxleType, type LoadGroup } from './equations.ts';
 import '../tools.css';
 
 interface Row { id: number; load: string; type: AxleType; reps: string }
@@ -55,7 +55,7 @@ export default function PcaApp() {
       .map(r => ({ load: num(r.load, 0), type: r.type, reps: num(r.reps, 0) * (scale > 0 ? scale : 1) }))
       .filter(g => g.load > 0 && g.reps > 0);
     if (!groups.length || num(sc, 0) <= 0) return null;
-    return pcaAnalyse(groups, {
+    return pcaAnalyze(groups, {
       equivalentStress: { single: num(esSingle, 206), tandem: num(esTandem, 192) },
       erosionFactor: { single: num(efSingle, 2.82), tandem: num(efTandem, 2.99) },
       modulusOfRupture: num(sc, 650),
@@ -67,10 +67,10 @@ export default function PcaApp() {
 
   useEffect(() => {
     if (!res || !chartRef.current) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !chartRef.current) return;
+      if (canceled || !chartRef.current) return;
       // §A8.1 paired bars: two series sharing a unit (percent of allowable),
       // one criterion against the other, per load group.
       const labels = res.rows.map(r => `${r.load}${r.type === 'single' ? 'S' : 'T'}`);
@@ -93,7 +93,7 @@ export default function PcaApp() {
         hovermode: 'x unified' as const,
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [res, theme]);
 
   const update = (id: number, patch: Partial<Row>) =>

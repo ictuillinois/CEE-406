@@ -1,4 +1,4 @@
-// The tool catalogue — one source of truth for every surface that lists tools.
+// The tool catalog — one source of truth for every surface that lists tools.
 //
 // The landing page and the tools index both render from this. They used to
 // keep separate arrays, and the landing page drifted to showing 2 tools while
@@ -6,13 +6,13 @@
 //
 // `glyph` is a stroke-drawn SVG motif of what the tool computes. The path
 // carrying class "anim" redraws on hover. Keep them monochrome — the card
-// supplies the colour through `--tool-color`.
+// supplies the color through `--tool-color`.
 
 export interface Tool {
   name: string;
   /** Directory under /tools/. The href is built with BASE_URL at render. */
   slug: string;
-  /** Accent colour, from the categorical palette of docs/chart-standards.md §B4. */
+  /** Accent color, from the categorical palette of docs/chart-standards.md §B4. */
   color: string;
   /** Homework or chapter chips shown on the card. */
   hws: string[];
@@ -200,7 +200,7 @@ export const tools: Tool[] = [
     color: '#0ea5e9',
     hws: ['HW9'],
     ref: 'Westergaard · Huang Eqs. 4.9–4.31',
-    desc: 'Every published case in Huang Ch. 4 — interior, edge under both circular and semicircular contact, and corner by both the original and Ioannides formulas, which disagree. Plus Bradbury curling and the dual-tyre equivalent circle.',
+    desc: 'Every published case in Huang Ch. 4 — interior, edge under both circular and semicircular contact, and corner by both the original and Ioannides formulas, which disagree. Plus Bradbury curling and the dual-tire equivalent circle.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <rect class="anim" x="22" y="9" width="76" height="26" rx="2"/>
       <circle cx="60" cy="22" r="4" fill="currentColor" stroke="none" opacity="0.9"/>
@@ -273,7 +273,7 @@ export const tools: Tool[] = [
     color: '#8b5cf6',
     hws: ['HW10'],
     ref: 'ICAO Annex 14 · ACR/PCR',
-    desc: 'Parse runway rating codes and decide where an aircraft may operate — strength, subgrade category, tyre pressure, and the occasional-overload allowance.',
+    desc: 'Parse runway rating codes and decide where an aircraft may operate — strength, subgrade category, tire pressure, and the occasional-overload allowance.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
       <path d="M20 34 V28 M40 34 V28 M60 34 V28 M80 34 V28 M100 34 V28" opacity="0.4"/>
@@ -316,8 +316,8 @@ export const tools: Tool[] = [
     hws: ['HW3', 'HW4', 'Ch. 1'],
     ref: 'Lang et al. 2026 · phyContactGAN · Huang Eq. 1.1',
     image: 'contact-stress.webp',
-    imageAlt: 'The predicted contact patch of a truck tyre in plan view — five orange ribs of vertical stress — with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
-    desc: 'The 3-D contact stresses a truck tyre really applies — vertical, longitudinal and transverse — from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
+    imageAlt: 'The predicted contact patch of a truck tire in plan view — five orange ribs of vertical stress — with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
+    desc: 'The 3-D contact stresses a truck tire really applies — vertical, longitudinal and transverse — from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
       <path d="M26 34 V16 M38 34 V9 M50 34 V6 M62 34 V6 M74 34 V9 M86 34 V16" opacity="0.5"/>
@@ -332,8 +332,8 @@ export const tools: Tool[] = [
     hws: ['HW4', 'HW5', 'Ch. 6'],
     ref: 'FHWA classes 1–13 · FAA Order 5300.7',
     image: 'gear3d.webp',
-    imageAlt: 'A dual-tandem axle rendered in 3-D on a measurement grid, with the dual spacing, track width and axle spacing called out as dimension lines in millimetres.',
-    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions — and contact-patch corner coordinates exported in millimetres for a finite-element pre-processor.',
+    imageAlt: 'A dual-tandem axle rendered in 3-D on a measurement grid, with the dual spacing, track width and axle spacing called out as dimension lines in millimeters.',
+    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions — and contact-patch corner coordinates exported in millimeters for a finite-element pre-processor.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M18 12h74l10 9v8H18z" opacity="0.5"/>
       <circle class="anim" cx="34" cy="31" r="7"/>

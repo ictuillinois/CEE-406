@@ -605,7 +605,7 @@
     most of them is yes, and the reason is structural rather than a failure of design. Eight of the
     ten homeworks are built primarily on end-of-chapter problems from Huang. Those problems are
     published, their solutions circulate, and their setups are short enough to paste into a chat
-    window in full. A model does not need to have memorised Problem 12-7 to solve it; it needs only
+    window in full. A model does not need to have memorized Problem 12-7 to solve it; it needs only
     to be handed the two sentences that state it.
   </p>
 
@@ -686,7 +686,7 @@
       <strong>The course already contains its own answer.</strong> The two homeworks that resist a
       language model — HW8 and HW10 — are precisely the two that were written from scratch around a
       specific scenario and required real software. Nothing below is a new philosophy. It is the
-      generalisation of what is already the best work in this problem set, extended over the other
+      generalization of what is already the best work in this problem set, extended over the other
       eight, with the repository's tools doing the job WinJULEA and FAARFIELD do in HW8 and HW10.
     </p>
   </div>
@@ -718,7 +718,7 @@
     <div>
       <span class="grid__key">D1 — Per-student data</span>
       <h4>The dataset is generated from the student's UIN</h4>
-      <p>A model cannot solve a problem whose numbers it has never seen and cannot obtain. This single change neutralises the solution-manual problem entirely, and it costs one deterministic generator script.</p>
+      <p>A model cannot solve a problem whose numbers it has never seen and cannot obtain. This single change neutralizes the solution-manual problem entirely, and it costs one deterministic generator script.</p>
     </div>
     <div>
       <span class="grid__key">D2 — Prediction first</span>
@@ -842,7 +842,7 @@
         <span class="hw__id">HW 02</span>
       </div>
       <div>
-        <h3 class="hw__title">The fit that lies: material characterisation as an act of judgment</h3>
+        <h3 class="hw__title">The fit that lies: material characterization as an act of judgment</h3>
         <p class="hw__sub">
           Keeps the resilient-modulus and CBR work, but moves the grade from "did you get k₁, k₂, k₃"
           to "should anyone trust the model you just fitted, and what does it cost in asphalt if
@@ -860,15 +860,15 @@
     <div class="hw__body">
       <h4>Parts</h4>
       <ul class="parts">
-        <li><b>P1</b><span>Per-student triaxial dataset (30 points, realistic scatter, <em>two injected outliers</em>). Fit the generalised k₁–k₂–k₃ model in the M<sub>r</sub> Fitter. Report the parameters, R², and the parity plot.</span></li>
+        <li><b>P1</b><span>Per-student triaxial dataset (30 points, realistic scatter, <em>two injected outliers</em>). Fit the generalized k₁–k₂–k₃ model in the M<sub>r</sub> Fitter. Report the parameters, R², and the parity plot.</span></li>
         <li><b>P2</b><span>Identify the outliers from the <em>residual structure</em>, not from R². Refit without them. Decide whether their removal is defensible and say what physical event could have produced them. A student who removes points because it raises R² has failed this part even with a better R².</span></li>
-        <li><b>P3</b><span><em>Model competition.</em> Refit the same data with the simpler two-parameter k₁θ<sup>k₂</sup> form. R² will favour the three-parameter model — it always does. <strong>Report both R² values and the stress state at which the two models diverge most, in psi and in percent.</strong> Then argue which you would hand a designer, on grounds other than fit — and say whether the divergence you just measured is large enough to matter at the stresses your pavement will actually see.</span></li>
+        <li><b>P3</b><span><em>Model competition.</em> Refit the same data with the simpler two-parameter k₁θ<sup>k₂</sup> form. R² will favor the three-parameter model — it always does. <strong>Report both R² values and the stress state at which the two models diverge most, in psi and in percent.</strong> Then argue which you would hand a designer, on grounds other than fit — and say whether the divergence you just measured is large enough to matter at the stresses your pavement will actually see.</span></li>
         <li><b>P4</b><span>Use both models to predict M<sub>r</sub> at a bulk stress <strong>double the largest you tested</strong>. <strong>Report the two numbers and the percentage between them.</strong> The two fitted the same data and now disagree; explain what that gap is made of, and whether either is admissible evidence.</span></li>
         <li><b>P5</b><span>Per-student CBR penetration data with a concave-up toe. Reduce it in the CBR tool with and without the origin correction. Convert both to M<sub>r</sub>, run both through the AASHTO Design Studio, and report <em>the difference in inches of asphalt that the origin correction is worth</em>.</span></li>
         <li><b>P6</b><span>Select a PG binder for your assigned climate (App. D). State the pavement temperatures you designed for and what you would change for a 20-year-later climate.</span></li>
       </ul>
       <div class="immune">
-        <strong>The pedagogical centre is P5.</strong> A tangent construction in a lab standard becomes
+        <strong>The pedagogical center is P5.</strong> A tangent construction in a lab standard becomes
         a quantity of asphalt. Students routinely treat data reduction as bookkeeping; this makes the
         consequence structural and visible, and it requires three tools in sequence with the student's
         own numbers moving between them.
@@ -903,7 +903,7 @@
       <ul class="parts">
         <li><b>P1</b><span>By hand, from the printed charts: stresses, strain and deflection under a per-student two-circle load (Huang Ex. 2.1 pattern). Then the same case in the Stress Explorer. Reconcile the two, and attribute the residual difference to chart-reading error versus anything else.</span></li>
         <li><b>P2</b><span><em>The critical thickness hunt.</em> For your assigned modulus set, sweep the asphalt thickness in the LEA tool and find the thickness at which tensile strain at the bottom of the asphalt is <strong>maximum</strong>. Predict first (D2). Then explain, mechanically, why a thinner asphalt layer can crack less than a thicker one — and why that stops being true above the critical thickness.</span></li>
-        <li><b>P3</b><span>Single wheel versus dual wheels at equal total load and contact pressure. Find the asphalt thickness at which the dual-wheel case stops being more critical for ε<sub>t</sub>. State which tyre configuration you would specify on a thin pavement and why the answer flips on a thick one.</span></li>
+        <li><b>P3</b><span>Single wheel versus dual wheels at equal total load and contact pressure. Find the asphalt thickness at which the dual-wheel case stops being more critical for ε<sub>t</sub>. State which tire configuration you would specify on a thin pavement and why the answer flips on a thick one.</span></li>
         <li><b>P4</b><span><em>Break the model (D6).</em> Holding your assigned geometry fixed, sweep the modulus ratio E₁/E₂ and <strong>report the two values at which the one-layer Boussinesq solution crosses 5% and 50% disagreement with the layered solution</strong>. Huang states the rule qualitatively in §2.1; your job is the number. Then say whether your own assigned structure sits inside or outside it, and by how much.</span></li>
       </ul>
       <div class="immune">
@@ -928,7 +928,7 @@
         <p class="hw__sub">
           The four-layer analysis stays. What changes is that the critical locations are no longer
           given — the student has to find them — and that any sensitivity ranking must be tested for
-          whether it generalises.
+          whether it generalizes.
         </p>
         <div class="hw__rail">
           <span class="tag tag--low">Ch. 2 · 3 · App. C</span>
@@ -943,7 +943,7 @@
       <h4>Parts</h4>
       <ul class="parts">
         <li><b>P1</b><span>Per-student four-layer structure. Depth profiles of σ<sub>z</sub>, ε<sub>z</sub>, σ<sub>r</sub>, ε<sub>r</sub> and deflection, produced in <em>both</em> the LEA tool and WinJULEA. Where they disagree, diagnose it — interface bonding, unit handling, or integration tolerance — and say which you trust.</span></li>
-        <li><b>P2</b><span><em>Locate the critical points yourself.</em> Do not assume the maximum tensile strain is under a tyre. Search the (r, z) plane for a dual-wheel load and report where it actually occurs, with a contour supporting the claim.</span></li>
+        <li><b>P2</b><span><em>Locate the critical points yourself.</em> Do not assume the maximum tensile strain is under a tire. Search the (r, z) plane for a dual-wheel load and report where it actually occurs, with a contour supporting the claim.</span></li>
         <li><b>P3</b><span><em>Sensitivity tournament.</em> Rank E₁, E₂, E₃, h₁, h₂ by their influence on ε<sub>t</sub> and separately on ε<sub>c</sub>, using ±30% one-at-a-time perturbations. The two rankings differ; explain the mechanics.</span></li>
         <li><b>P4</b><span><em>Then break your own ranking.</em> Repeat P3 at a very different base thickness. Huang §3.4 warns that conclusions from a sensitivity study are valid only for the parameter set they were run at. Did your ranking survive? Report honestly.</span></li>
         <li><b>P5</b><span><em>Design inversion (D4).</em> For a target ε<sub>t</sub>, map the (h₁, E₁) combinations that achieve it. Choose one point on that iso-strain curve and defend it on cost, constructability and rutting grounds — not on strain, since every point on the curve is equal in strain.</span></li>
@@ -1070,7 +1070,7 @@
         <li><b>P5</b><span><em>The extrapolation audit.</em> Huang §11.3 states the conditions the AASHTO equations were calibrated under: <strong>1,114,000 axle load applications</strong> at one site near Ottawa, Illinois, between October 1958 and November 1960; a temperate climate averaging 34 in of precipitation; 28 in of frost penetration; and <strong>poorly drained A-6 and A-7-6 subgrades at CBR 2 to 4</strong>. Your design is twenty years and several million ESAL, on your own assigned subgrade and climate. Name the three extrapolations you are making. <strong>Quantify the most dangerous one against your own design</strong> — re-run your HW7 P3 reliability with that input moved to the edge of the Road Test's range and report how many points of reliability you lose. Then say what one measurement would close it, and roughly what that measurement costs.</span></li>
       </ul>
       <div class="immune">
-        <strong>P3 is the question a practising engineer actually faces</strong> and it has no
+        <strong>P3 is the question a practicing engineer actually faces</strong> and it has no
         retrievable answer — it depends entirely on which of the student's own inputs dominates their
         own variance. It is also the clearest possible demonstration that reliability is not a safety
         factor bolted on at the end but a statement about which of your inputs you know least well.
@@ -1418,7 +1418,7 @@
         </tr>
         <tr>
           <td class="mono">HW4</td><td><span class="tag tag--med">Moderate</span></td>
-          <td>Two independent solvers must be reconciled; P4 requires admitting a ranking failed to generalise.</td>
+          <td>Two independent solvers must be reconciled; P4 requires admitting a ranking failed to generalize.</td>
           <td>A model will happily produce both solver outputs. P4's honesty requirement is the part worth grading.</td>
         </tr>
         <tr>
@@ -1756,7 +1756,7 @@
           <td><strong>Drive</strong></td>
           <td class="mono">HW3–HW6</td>
           <td>The student poses the question, not the assignment. Sweep a parameter, hunt a maximum, search an iso-strain curve, size a layer to a target.</td>
-          <td>Turning a design question into a computable one — the step most students never practise.</td>
+          <td>Turning a design question into a computable one — the step most students never practice.</td>
         </tr>
         <tr>
           <td><strong>Doubt</strong></td>
@@ -2131,7 +2131,7 @@
     Both are now implemented, and rather than the tool choosing between them it shows a
     <em>"Two questions the literature answers twice"</em> panel with both answers and the spread
     between them. The disagreement moved out of the prose in §02 and into the instrument. The tool
-    also gained the dual-tyre equivalent circle (Eq. 4.31 — verified at 7.85 in against Example 4.5),
+    also gained the dual-tire equivalent circle (Eq. 4.31 — verified at 7.85 in against Example 4.5),
     which HW9's dual-tandem problems need, and three presets that load Examples 4.1, 4.2–4.4 and 4.5
     directly.
   </p>
@@ -2162,7 +2162,7 @@
       assignments quietly depend on one. <strong>Roughly half the class must get a filter gradation
       that fails at least one criterion</strong>, or HW6's "where they fail, propose a fix" is an
       empty instruction. <strong>Both fatigue and erosion must govern for somebody</strong>, or
-      HW9's "report which governs" has a single class-wide answer available from a neighbour. Every
+      HW9's "report which governs" has a single class-wide answer available from a neighbor. Every
       slab must land between σ/MR of 0.2 and 1.35, so no student gets a thickness question that is
       already answered. These are easy to break by adjusting a range and never notice.
     </p>
@@ -2174,7 +2174,7 @@
       a hand-written 4×4 solver containing the expression <code>row[i][i]</code>. In JavaScript
       <code>row</code> is an array of numbers, so <code>row[i]</code> is a number and
       <code>row[i][i]</code> is <code>undefined</code> — every solution came back <code>NaN</code>.
-      The optimiser dutifully rejected every step and returned its own starting guess.
+      The optimizer dutifully rejected every step and returned its own starting guess.
     </p>
     <p>
       Nothing looked wrong. The curves were smooth, the R² was 0.78, the numbers were the right

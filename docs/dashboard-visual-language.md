@@ -1,6 +1,6 @@
 # Dashboard Visual Language — Repository Instructions
 
-**Scope:** every dashboard, analytics, reporting, and data-visualisation surface.
+**Scope:** every dashboard, analytics, reporting, and data-visualization surface.
 **Status:** authoritative. When this document and an ad-hoc decision conflict, this document wins.
 **Companion:** `loaders.md`. The two share the `.elx` scope and the `--elx-*` token prefix, so they compose without conflict. This file is complete on its own.
 **Version:** 1.0
@@ -43,7 +43,7 @@ This system is **additive to an existing website**. It must never alter the appe
 | File | Contents | Section |
 |---|---|---|
 | `elx-dashboard.css` | Tokens (light + dark), layout, cards, KPI strip, chips, buttons, tables, chart chrome and mark primitives | §10.1 |
-| `elx-theme.js` | Palettes, ramps, colour utilities, chart-library defaults, SVG defs, formatters | §10.2 |
+| `elx-theme.js` | Palettes, ramps, color utilities, chart-library defaults, SVG defs, formatters | §10.2 |
 
 If your build prefers fewer modules, `elx-theme.js` may be merged into a components file. The CSS must stay a single file.
 
@@ -51,7 +51,7 @@ If your build prefers fewer modules, `elx-theme.js` may be merged into a compone
 
 ## 1. Design thesis
 
-Off-white page. White cards with a hairline border and near-zero shadow. Generous radii. A geometric-humanist sans with tight tracking on numerals. Charts stripped of every piece of chrome that is not load-bearing. **Colour does the semantic work.**
+Off-white page. White cards with a hairline border and near-zero shadow. Generous radii. A geometric-humanist sans with tight tracking on numerals. Charts stripped of every piece of chrome that is not load-bearing. **Color does the semantic work.**
 
 Each product picks **one brand hue** that owns the UI, then either expands it into a **monochrome ramp** for ordered data, or switches to a **fixed categorical set** for unordered data.
 
@@ -67,7 +67,7 @@ The distinguishing move — and the thing that separates this from a template �
 6. Drop the y-axis whenever the magnitude is already stated in the KPI above the chart.
 7. Legends go **below** the plot, 8 px round dots, 13 px muted labels.
 8. Every card header is `title` + a right-side affordance (`···`, a chip, or a select).
-9. Deltas are always `arrow + coloured % + grey context phrase`. Green up, red down, no coloured background.
+9. Deltas are always `arrow + colored % + gray context phrase`. Green up, red down, no colored background.
 10. Stacked segments carry a 2–3 px gap and their own corner radius.
 11. Bars start at zero. Always. (Lines need not.)
 12. Reading order is enforced: KPI strip → primary trend → distribution → tables last.
@@ -93,7 +93,7 @@ Never introduce a serif. Never introduce a mono face except for IDs, hashes, and
 | `metric-md` | 23 / 28 | 600 | −0.02em | Inline metric |
 | `title-page` | 26 / 32 | 600 | −0.02em | Page title |
 | `title-card` | 17 / 24 | 600 | −0.01em | Card header |
-| `subtitle` | 14 / 20 | 400 | 0 | Grey card sub-caption |
+| `subtitle` | 14 / 20 | 400 | 0 | Gray card sub-caption |
 | `body` | 15 / 22 | 400–500 | 0 | Rows, table cells |
 | `label` | 13 / 18 | 500 | 0 | Legends, KPI labels |
 | `caption` | 12 / 16 | 500 | 0 | Axis ticks, deltas, chips |
@@ -116,13 +116,13 @@ Never introduce a serif. Never introduce a mono face except for IDs, hashes, and
 | Shell | Sidebar | When |
 |---|---|---|
 | Left rail + content | 240–280 px | ≥ 8 destinations |
-| Top nav + content | — | ≤ 8 destinations; active item is a white pill with a soft shadow on a grey track |
+| Top nav + content | — | ≤ 8 destinations; active item is a white pill with a soft shadow on a gray track |
 
 **Left rail.** White or 1–2 % darker than the page, separated by a 1 px right border — never a shadow. Top: 32 px rounded-square logo tile + wordmark + a 32 px collapse button. Uppercase eyebrows group destinations. Item = 20 px outline icon + 15 px label, 40 px row, 10 px gap, 10 px horizontal padding.
 
-**Active state is a neutral 4 % tint pill (10–12 px radius), not brand-coloured** — brand colour is reserved for data and primary actions.
+**Active state is a neutral 4 % tint pill (10–12 px radius), not brand-colored** — brand color is reserved for data and primary actions.
 
-Sub-items indent 28 px on a 1 px vertical hairline with short horizontal ticks; the icon is dropped at sub-level. Badges right-aligned: brand-tinted for actionable counts, grey for informational. Footer block after a top hairline; destructive links in red.
+Sub-items indent 28 px on a 1 px vertical hairline with short horizontal ticks; the icon is dropped at sub-level. Badges right-aligned: brand-tinted for actionable counts, gray for informational. Footer block after a top hairline; destructive links in red.
 
 ### 3.2 Top bar
 
@@ -134,7 +134,7 @@ Directly under the title, 36–40 px tall, 8–12 px gaps.
 
 - **Select pill:** white, 1 px border, 999 px or 10 px radius, leading 16 px icon, label, trailing chevron.
 - **Add filter:** `+` glyph + label, same pill.
-- **Segmented control:** grey track; active = white pill with a 1 px border and a very soft shadow. A status dot may sit inside a segment.
+- **Segmented control:** gray track; active = white pill with a 1 px border and a very soft shadow. A status dot may sit inside a segment.
 - **Tabs:** text-only, 15 px, active = full-strength text with a 2 px underline flush to the row's bottom border; inactive muted.
 - **Use tabs for *views*, segmented controls for *filters*.**
 - Right-aligned secondary action with a leading icon.
@@ -150,7 +150,7 @@ Directly under the title, 36–40 px tall, 8–12 px gaps.
 
 ### 3.5 Responsive
 
-| Breakpoint | Behaviour |
+| Breakpoint | Behavior |
 |---|---|
 | ≥ 1100 px | Full 12-column grid, sidebar visible |
 | < 1100 px | Sidebar collapses to a drawer; `4/5/7/8` columns all become half-width |
@@ -160,7 +160,7 @@ Charts reflow rather than scroll horizontally. If a chart cannot survive the nar
 
 ---
 
-## 4. Colour
+## 4. Color
 
 ### 4.1 Neutrals — light
 
@@ -205,7 +205,7 @@ Set by overriding `--elx-brand`, `--elx-brand-wash`, `--elx-brand-deep` on the `
 | 5 | Pink | `#F0388B` | `#F5619F` |
 | 6 | Violet | `#8B5CF6` | `#A78BFA` |
 
-**Assign strictly by series index, 1 → 6 — never by data value.** A series must keep its colour across every chart in the product and across every re-render. Five hues is the practical ceiling before the legend becomes work; six only when unavoidable.
+**Assign strictly by series index, 1 → 6 — never by data value.** A series must keep its color across every chart in the product and across every re-render. Five hues is the practical ceiling before the legend becomes work; six only when unavoidable.
 
 ### 4.4 Sequential ramps — ordered, stacked, heatmap
 
@@ -262,7 +262,7 @@ Dark mode is **not an inversion** — it is a re-derivation with four transforma
 
 - **+8–12 % lightness, −8–12 % saturation.** Saturated mid-tones vibrate on black.
 - Minimum contrast against `bg-surface`: **3:1** for a filled shape, **4.5:1** for a 1–2 px line or a text label.
-- Sequential ramps keep the same hue and the same 5 stops, but **reverse which end reads as "low"**: light mode runs dark→light with light as empty; dark mode runs light→dark with dark as empty. `rampScale()` in §10.2 normalises this so `t=0` is always low in both themes.
+- Sequential ramps keep the same hue and the same 5 stops, but **reverse which end reads as "low"**: light mode runs dark→light with light as empty; dark mode runs light→dark with dark as empty. `rampScale()` in §10.2 normalizes this so `t=0` is always low in both themes.
 
 ### 5.3 Brand hue
 
@@ -276,7 +276,7 @@ Hover reverses direction. In light mode hover goes **darker**; in dark mode it g
 
 ### 5.4 Textures and fades
 
-- Gradient area fills fade to **`transparent`**, never to a colour. In light mode this lands on white, in dark on `#151719` — the same code, the correct result.
+- Gradient area fills fade to **`transparent`**, never to a color. In light mode this lands on white, in dark on `#151719` — the same code, the correct result.
 - Diagonal hatch always *removes* light from the fill, so it inverts: light `rgba(255,255,255,0.30)`, dark `rgba(0,0,0,0.30)`.
 - Ghost / target bars and dot grids move to low-alpha white.
 
@@ -343,22 +343,22 @@ Category title (13/600)
 ● Series label            value    ← 8px dot, label secondary, value primary right tabular
 ```
 
-Triggered by a **vertical hover line** in time series; the intersected point gets a 7 px filled dot with a 2 px surface-coloured ring.
+Triggered by a **vertical hover line** in time series; the intersected point gets a 7 px filled dot with a 2 px surface-colored ring.
 
 ### 6.8 Banner
 
-Full-width, 12 px radius, semantic wash background, **no border**. Leading 20 px icon, message with **bolded coloured spans** on the key nouns, trailing white outline button. One per page, maximum.
+Full-width, 12 px radius, semantic wash background, **no border**. Leading 20 px icon, message with **bolded colored spans** on the key nouns, trailing white outline button. One per page, maximum.
 
 ### 6.9 Iconography
 
 Outline / stroke, 1.5–1.75 px, rounded caps and joins, 24 px optical grid. **Lucide** is the reference set; Phosphor Regular is the alternative.
 
-Sizes: 16 px inline and chips, 18 px table rows, 20 px navigation, 24 px card-header feature icons. Icons inherit text colour — `text-secondary` at rest, `text-primary` when active. **A coloured icon means it encodes data**, not decoration.
+Sizes: 16 px inline and chips, 18 px table rows, 20 px navigation, 24 px card-header feature icons. Icons inherit text color — `text-secondary` at rest, `text-primary` when active. **A colored icon means it encodes data**, not decoration.
 
 - **Feature icon tile:** 36–40 px rounded-square (10 px radius), background = hue at 10–12 % wash, icon in the full hue. One per card header or status card.
 - **AI glyph:** a four-point sparkle marks every AI-driven affordance. Reserved — do not spend it elsewhere.
 - **Status dots:** 6–8 px filled circles. Legend dots 8 px with an 8 px gap to the label.
-- **Delta arrows:** either a bare `arrow-up`/`arrow-down` in the semantic colour, or a 16 px filled circle with a white arrow. Pick one treatment per product and keep it.
+- **Delta arrows:** either a bare `arrow-up`/`arrow-down` in the semantic color, or a 16 px filled circle with a white arrow. Pick one treatment per product and keep it.
 - **Avatars:** 28–36 px circles in lists, 32 px in tables, 48–56 px on a podium chart. Letter-mark fallback = 8 px rounded square, hue wash background, hue letter.
 
 ---
@@ -373,7 +373,7 @@ Sizes: 16 px inline and chips, 18 px table rows, 20 px navigation, 24 px card-he
 | X gridlines | Only on matrix / cell grids, as dashed cell separators |
 | Y axis labels | Omit when the magnitude appears in a KPI or on the marks. When kept: 12 px muted, 3–5 values, unit on the top label only or in the subtitle |
 | X axis labels | 12 px muted, horizontal, abbreviated (`Jan`, `Sun`, `6AM`). Thin to every 2nd or 3rd rather than rotating |
-| Legend | Below the plot, 16 px above the card's bottom padding, 8 px dots, 13 px muted, 20 px gaps. Centred for 2 series, left-aligned for 3+ |
+| Legend | Below the plot, 16 px above the card's bottom padding, 8 px dots, 13 px muted, 20 px gaps. Centered for 2 series, left-aligned for 3+ |
 | Zero baseline | Implied by the lowest gridline; never a heavier rule |
 | Direct labels | Preferred over a legend for ≤ 3 categories in composition bars |
 | Annotation | A single vertical `now` line (1 px `border-control`) with a dot marker is the **only** permitted in-plot annotation |
@@ -404,14 +404,14 @@ Sizes: 16 px inline and chips, 18 px table rows, 20 px navigation, 24 px card-he
 
 ---
 
-## 8. Chart catalogue
+## 8. Chart catalog
 
 Eighteen encodings. Each: what it is → when → spec.
 
 ### 8.1 Paired grouped bars
 Two series per category, side by side, same hue at two lightnesses.
 **Use for** generated vs. converted, planned vs. actual, this year vs. last — where both series share a unit and one is a subset or successor of the other.
-**Spec** bar width 26–34 px, 4 px intra-pair gap, 6 px top radius, 3 gridlines, **no y-axis**, legend centred below. Light member always left.
+**Spec** bar width 26–34 px, 4 px intra-pair gap, 6 px top radius, 3 gridlines, **no y-axis**, legend centered below. Light member always left.
 **Not for** more than two members per group — use stacked or small multiples.
 
 ### 8.2 Target-vs-actual layered bars
@@ -450,7 +450,7 @@ Per category, a floating two-tone horizontal bar (saturated = current, pale = ra
 **This is the correct chart when categories are few and labels are long** — it eliminates the rotated-label problem outright.
 
 ### 8.8 Progress bar with hatched remainder
-Label above, % right-aligned; a bar whose filled portion is solid and whose remainder is a **hatched tint of the same hue** rather than grey.
+Label above, % right-aligned; a bar whose filled portion is solid and whose remainder is a **hatched tint of the same hue** rather than gray.
 **Use for** 3–6 *independent* percentages, where each row is its own 100 %.
 **Spec** height 12–14 px, fully rounded. Fill = brand base. Remainder = brand at 12 % with 45° hatch at 20 %. 20 px row gap. Value 15/600 right, label 14/500 left.
 
@@ -466,21 +466,21 @@ A single horizontal bar broken into 3–5 **detached** rounded segments, each it
 **Note** the gaps mean this is not a precise part-to-whole read — acceptable only because the % is printed on every segment.
 
 ### 8.11 Rounded-cell heatmap
-Matrix of rounded rectangles, rows = category, columns = bucket, colour = sequential ramp.
+Matrix of rounded rectangles, rows = category, columns = bucket, color = sequential ramp.
 **Use for** two categorical dimensions against one intensity measure.
 **Spec** cell ~56 × 44 px or fluid, 8 px radius, **6 px gap** — the gap is what stops it reading as a spreadsheet. Ramp interpolated continuously; the lowest step must remain visible against the card, never pure white. Row labels left 14/500 secondary; column labels below 12 px muted, thinned to every other. **Always** ship a continuous gradient legend bar (6 px tall, fully rounded, 160–220 px wide) with `Low` / `High` labels.
 
 ### 8.12 Hexbin / honeycomb composition
-A cluster of hexagons, each one unit of contribution, coloured by category, arranged in an organic blob with pale empty hexes filling the field.
+A cluster of hexagons, each one unit of contribution, colored by category, arranged in an organic blob with pale empty hexes filling the field.
 **Use for** part-to-whole with a **countable unit** — one hex = $X, or 1 person, or 1 % — across 3–5 categories, where the composition should feel physical and roughly countable.
 **Spec** hex radius 10–14 px, 2 px gutter, pointy-top. Categorical hues at 100 %; empty cells `hex-empty`. Sort so the largest category forms the outer ring and smaller ones cluster centrally — this reads as nested rather than random. Below the plot: a legend **list**, one row per category with dot + label + share chip + value with a semantic delta arrow.
 **Cost** expensive to read precisely. Only use when the adjacent list carries the exact numbers.
 
 ### 8.13 Dot-matrix column chart
-Each column is a stack of small filled dots on a background field of pale dots; column height is quantised to the dot grid.
+Each column is a stack of small filled dots on a background field of pale dots; column height is quantized to the dot grid.
 **Use for** a daily or weekly series where the metric is countable and the visual should feel unit-based — sessions, posts, orders, dollars in fixed increments.
 **Spec** dot 4–5 px, 3 px pitch on both axes. Background dot grid covers the full plot in `dot-grid`. Filled dots in a single hue, no gradient. Y-axis labels only, 4 steps, unit on every label since the grid replaces gridlines. X shows a single anchor label rather than a full tick set.
-**Constraint** quantisation error must be ≤ 1 dot at the smallest column — pick the dot's value from the data range, not from the pixel grid.
+**Constraint** quantization error must be ≤ 1 dot at the smallest column — pick the dot's value from the data range, not from the pixel grid.
 
 ### 8.14 Podium bar chart
 Three bars in 2nd–1st–3rd order, an avatar floating above each, the rank word inside the bar, a white % pill at the foot. Distinct vertical gradients with diagonal hatch.
@@ -524,7 +524,7 @@ Name + meta chips, owner avatar + name, an inline progress bar, a status pill, a
 
 1. Text on wash backgrounds clears **4.5:1**. Every semantic wash/text pair in §4.5 does.
 2. Chart hues clear **3:1** against the card surface as filled shapes. Re-verify after any dark-mode change.
-3. **Never encode by colour alone.** Pair with position (fixed legend order), direct labels, or shape.
+3. **Never encode by color alone.** Pair with position (fixed legend order), direct labels, or shape.
 4. The 6-hue categorical set is distinguishable under deuteranopia **only if live series are capped at 4** in a single chart. Beyond 4, add direct labels.
 5. Every chart needs an accessible name and a text alternative — the card subtitle, or a visually-hidden caption stating the takeaway ("Delivery density peaks 11AM–3PM across all regions").
 6. Focus rings: 2 px brand outline with a 2 px offset, on every interactive chart element and control.
@@ -538,9 +538,9 @@ Name + meta chips, owner avatar + name, an inline progress bar, a status pill, a
 - Dual y-axes. Use 8.6, or stack two cards.
 - Rainbow or spectral scales for sequential data.
 - Rotated axis labels — switch orientation instead.
-- Coloured card backgrounds. Only banners get a wash.
+- Colored card backgrounds. Only banners get a wash.
 - Gridlines heavier than 1 px, or vertical gridlines on a time series.
-- More than 6 categorical series, or re-ordering series colour by value between renders.
+- More than 6 categorical series, or re-ordering series color by value between renders.
 - Truncated y-axis on a bar chart.
 - The brand hue used simultaneously for a data series and a UI control inside the same card.
 - Zebra striping in tables.
@@ -586,7 +586,7 @@ naming and the `.elx` scope wholesale.
 - [ ] Card header: 17/600 title, optional 14 px subtitle, right-side affordance
 - [ ] Reading order: KPI strip → trend → distribution → tables
 - [ ] Card heights and plot heights within the §3.4 ranges
-- [ ] Responsive behaviour verified at 1100 px and 720 px
+- [ ] Responsive behavior verified at 1100 px and 720 px
 
 **Charts**
 - [ ] No plot border, no axis lines, ≤ 5 horizontal gridlines
@@ -594,15 +594,15 @@ naming and the `.elx` scope wholesale.
 - [ ] No rotated axis labels anywhere
 - [ ] Bars rounded, ≥ 10 px wide, start at zero, stacked segments gapped 3 px
 - [ ] One hue ramp for ordered data; fixed categorical index order for unordered
-- [ ] Series colour stable across charts and across re-renders
+- [ ] Series color stable across charts and across re-renders
 - [ ] Legend below, 8 px dots, 13 px muted labels
 - [ ] Tooltip: category title + dot/label/value rows, tabular figures
 - [ ] Gradients fade toward the baseline and to `transparent`
 - [ ] Hatch used only to mean "projected / remaining", one texture per card
 - [ ] Card subtitle carries the encoding explanation where chrome was removed
 
-**Typography & colour**
-- [ ] Delta = arrow + semantic % + grey context phrase
+**Typography & color**
+- [ ] Delta = arrow + semantic % + gray context phrase
 - [ ] Tabular figures in every table, legend, and KPI
 - [ ] Sentence case titles, uppercase eyebrows, no title case
 - [ ] Brand hue absent from nav active states and body text
@@ -616,7 +616,7 @@ naming and the `.elx` scope wholesale.
 
 **Accessibility**
 - [ ] Chart hues clear 3:1 as fills; wash/text pairs clear 4.5:1
-- [ ] Nothing encoded by colour alone; ≤ 4 live series without direct labels
+- [ ] Nothing encoded by color alone; ≤ 4 live series without direct labels
 - [ ] Every chart has an accessible name and a text alternative
 - [ ] Focus rings present; hit targets ≥ 24 × 24 px
 - [ ] `prefers-reduced-motion` disables entrance and draw animations

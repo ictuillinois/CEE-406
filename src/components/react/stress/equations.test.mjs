@@ -16,7 +16,7 @@ const near = (a, e, tol, what) =>
 
 /* Example 2.1: two 10-in-diameter circles at 50 psi, 20 in apart, on a
  * half-space with E = 10,000 psi and ν = 0.5. Point A is 10 in below the
- * centre of one circle. So a = 5, q = 50, z = 10, i.e. z/a = 2. */
+ * center of one circle. So a = 5, q = 50, z = 10, i.e. z/a = 2. */
 const EX = { q: 50, a: 5, E: 10000, nu: 0.5, z: 10 };
 
 test('Example 2.1 — vertical stress under one load at z/a = 2', () => {

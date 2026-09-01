@@ -63,7 +63,7 @@ export default function CrossSectionApp() {
         <div className="cee-howto__body">
           <ol>
             <li><strong>Start from a template.</strong> Thirteen sections ship with the tool — FAA flexible and rigid, conventional and deep-strength highway, JPCP, CRCP, composite, permeable, FDR. Pick the nearest one and edit it rather than building from scratch.</li>
-            <li><strong>Set the layer structure.</strong> Every thickness in the bottom strip is the real engineering thickness in millimetres, drawn to scale. The subgrade is the exception: it is infinite in the analysis, so it carries a display thickness set under Section Geometry and is marked with an asterisk.</li>
+            <li><strong>Set the layer structure.</strong> Every thickness in the bottom strip is the real engineering thickness in millimeters, drawn to scale. The subgrade is the exception: it is infinite in the analysis, so it carries a display thickness set under Section Geometry and is marked with an asterisk.</li>
             <li><strong>Pick materials.</strong> Click a layer to select it, then a tile in the Material Library. The eighteen textures are procedural and seeded, so the same settings always produce the same figure — a section rendered today matches the one in a report from last term.</li>
             <li><strong>Frame it.</strong> Drag to orbit, wheel to zoom, right-drag to pan, or use the Isometric / Front / Fit buttons. Orthographic projection is the honest one for a dimensioned figure; perspective reads better in a presentation.</li>
             <li><strong>Take the image.</strong> <strong>Copy</strong> puts the PNG straight on your clipboard — paste it into Word, PowerPoint, LaTeX-adjacent editors, or a lab notebook without ever touching a file. <strong>Copy transparent</strong> does the same with no background, so the section sits on whatever the slide is already using. <strong>Export</strong> downloads the file instead.</li>
@@ -211,7 +211,7 @@ export default function CrossSectionApp() {
                   <input type="range" id="xs-light-el" className="xs-range" min="10" max="85" step="1" />
                 </div>
                 <div className="xs-field">
-                  <label htmlFor="xs-shadow-op" title="Darkness of the shadow cast onto the ground plane. Set to zero for a figure that has to sit on a coloured slide.">Shadow opacity</label>
+                  <label htmlFor="xs-shadow-op" title="Darkness of the shadow cast onto the ground plane. Set to zero for a figure that has to sit on a colored slide.">Shadow opacity</label>
                   <input type="range" id="xs-shadow-op" className="xs-range" min="0" max="1" step="0.05" />
                 </div>
                 <div className="xs-field">
@@ -238,7 +238,7 @@ export default function CrossSectionApp() {
                   </select>
                 </div>
                 <div className="xs-field" id="xs-bg-color-field">
-                  <label htmlFor="xs-bg-color" title="Background colour when Mode is Custom color.">Color</label>
+                  <label htmlFor="xs-bg-color" title="Background color when Mode is Custom color.">Color</label>
                   <input type="color" id="xs-bg-color" className="xs-color" defaultValue="#f1f5f9" />
                 </div>
               </div>
@@ -345,7 +345,7 @@ export default function CrossSectionApp() {
               <summary><Icon name="sliders" /> Material Properties</summary>
               <div className="xs-group">
                 <div className="xs-field">
-                  <label htmlFor="xs-mat-tint" title="Multiplies the texture colour. Use it sparingly — a tinted P-401 stops looking like P-401.">Tint</label>
+                  <label htmlFor="xs-mat-tint" title="Multiplies the texture color. Use it sparingly — a tinted P-401 stops looking like P-401.">Tint</label>
                   <input type="color" id="xs-mat-tint" className="xs-color" defaultValue="#ffffff" />
                   <button type="button" className="xs-icon-btn" id="xs-mat-tint-reset" title="Reset tint" aria-label="Reset tint"><Icon name="eraser" /></button>
                 </div>

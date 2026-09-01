@@ -58,10 +58,10 @@ sub('header',
         re-skin inherits an upstream contrast result.
 
      3. THE FIGURE TOKENS ARE UNTOUCHED. --g3-fig-* on .g3-viewport
-        are the colours of the DRAWING, not of the app, and they
+        are the colors of the DRAWING, not of the app, and they
         end up in exported PNGs, SVGs and PDFs that go into
         reports. A student's figure must not change because the
-        course site changed its accent colour.
+        course site changed its accent color.
 
    The site-button overrides kept their !important: they are
    scoped inside .g3-app, so nothing leaks outward, and they are
@@ -88,7 +88,7 @@ sub('datum-hover dark',   '--g3-datum-hover: #18a9a8;',  '--g3-datum-hover: #f6b
 /* Signal. Upstream reserves this for the live measurement and the current
    selection — never decoration — so it MUST stay separable from the accent.
    Orange is now the accent, so the old instrument red-orange would read as a
-   second brand colour. The course's secondary navy takes it in light, and the
+   second brand color. The course's secondary navy takes it in light, and the
    dark-mode accent blue in dark, where navy on navy is invisible. */
 sub('signal light',       '--g3-signal: #c8452a;',       '--g3-signal: #1b2d4a;');
 sub('signal-soft light',  '--g3-signal-soft: rgba(200, 69, 42, 0.12);',
@@ -158,7 +158,7 @@ sub('shell width',
     padding: 0 1rem 2rem;
     font-family: var(--g3-sans);
 }`,
-`/* Upstream this centred itself in the browser window at 1620px. Here the
+`/* Upstream this centered itself in the browser window at 1620px. Here the
    Astro page owns the measure (.tool-page--gear3d), so the app fills what it
    is given and adds no padding of its own — the container already has some. */
 .g3-app {

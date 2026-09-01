@@ -44,14 +44,14 @@ export const equivalentRadius = (a: number, h: number) =>
  *
  *   πa² = 0.8521 Pd/q + (Sd/π)·√(Pd/0.5227q)   … then solved for a
  *
- * The equivalent circle covers both tyre imprints AND the gap between them,
- * because for a rigid slab the load spreads across the gap. Using the tyre
+ * The equivalent circle covers both tire imprints AND the gap between them,
+ * because for a rigid slab the load spreads across the gap. Using the tire
  * contact area alone (the flexible-pavement convention) gives too small a
  * radius and therefore too large a stress.
  *
- * @param Pd load on ONE tyre (lb)
+ * @param Pd load on ONE tire (lb)
  * @param q  contact pressure (psi)
- * @param Sd centre-to-centre dual spacing (in)
+ * @param Sd center-to-center dual spacing (in)
  */
 export const dualEquivalentRadius = (Pd: number, q: number, Sd: number) =>
   Math.sqrt((0.8521 * Pd) / (q * Math.PI) + (Sd / Math.PI) * Math.sqrt(Pd / (0.5227 * q)));
@@ -119,7 +119,7 @@ export function edgeDeflectionSemicircle(P: number, E: number, h: number, nu: nu
 
 /**
  * Corner stress, ORIGINAL — Huang Eq. 4.13 (Goldbeck 1919 / Older 1924, as
- * refined by Westergaard). Uses the diagonal distance a√2 to the load centre.
+ * refined by Westergaard). Uses the diagonal distance a√2 to the load center.
  */
 export const cornerStressOriginal = (P: number, h: number, a: number, ell: number) =>
   ((3 * P) / (h * h)) * (1 - Math.pow((a * Math.SQRT2) / ell, 0.6));

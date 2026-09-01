@@ -2,7 +2,7 @@
 //
 // One row per part: label left, percentage right, and a full-width track whose
 // filled portion is the share. The remainder is a hatched tint of the same
-// hue rather than grey, per §A8.8.
+// hue rather than gray, per §A8.8.
 //
 // Why not §A8.10's composition bar for parts of one total: that chart requires
 // the percentage printed *inside* every segment, which is impossible once one

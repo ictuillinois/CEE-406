@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   powerFromPressure, powerFromErosionFactor, erosionAllowable,
-  fatigueAllowable, pcaAnalyse,
+  fatigueAllowable, pcaAnalyze,
 } from './equations.ts';
 
 const near = (a, e, tol, what) =>
@@ -69,7 +69,7 @@ test('an axle at the standard load reproduces the table value directly', () => {
     c1: 1.0,
     c2: 0.06,
   };
-  const { rows } = pcaAnalyse([{ load: 18, type: 'single', reps: 1000 }], input);
+  const { rows } = pcaAnalyze([{ load: 18, type: 'single', reps: 1000 }], input);
   near(rows[0].stress, 206, 1e-9, 'stress equals the table value at 18 kip');
   near(rows[0].stressRatio, 206 / 650, 1e-9, 'stress ratio factor');
 });
@@ -81,8 +81,8 @@ test('the load safety factor scales the load, not the ratio', () => {
     modulusOfRupture: 650, lsf: 1.0, c1: 1.0, c2: 0.06,
   };
   const g = [{ load: 18, type: 'single', reps: 1000 }];
-  const a = pcaAnalyse(g, base);
-  const b = pcaAnalyse(g, { ...base, lsf: 1.2 });
+  const a = pcaAnalyze(g, base);
+  const b = pcaAnalyze(g, { ...base, lsf: 1.2 });
   near(b.rows[0].stress / a.rows[0].stress, 1.2, 1e-9, 'stress scales with LSF');
   // Power goes as load squared.
   near(b.rows[0].power / a.rows[0].power, 1.44, 1e-9, 'power scales with LSF squared');
@@ -94,14 +94,14 @@ test('both analyses must pass for the section to be adequate', () => {
     erosionFactor: { single: 2.82, tandem: 2.99 },
     modulusOfRupture: 650, lsf: 1.2, c1: 1.0, c2: 0.06,
   };
-  const heavy = pcaAnalyse([
+  const heavy = pcaAnalyze([
     { load: 30, type: 'single', reps: 500000 },
     { load: 50, type: 'tandem', reps: 900000 },
   ], input);
   assert.equal(heavy.adequate, false, 'a heavy spectrum should fail');
   assert.ok(['fatigue', 'erosion'].includes(heavy.governing));
 
-  const light = pcaAnalyse([{ load: 10, type: 'single', reps: 1000 }], input);
+  const light = pcaAnalyze([{ load: 10, type: 'single', reps: 1000 }], input);
   assert.equal(light.adequate, true, 'a light spectrum should pass');
   assert.equal(light.fatigueTotal, 0, 'below the endurance limit there is no fatigue damage');
 });

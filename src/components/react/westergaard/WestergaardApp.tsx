@@ -3,7 +3,7 @@
 // Huang (2004) Ch. 4: interior, edge under BOTH circular and semicircular
 // contact, and corner by BOTH the original and the Ioannides formulas — which
 // disagree, and are shown side by side for that reason. Plus Bradbury curling
-// and the dual-tyre equivalent circle. US customary units, as in Huang Ch. 4.
+// and the dual-tire equivalent circle. US customary units, as in Huang Ch. 4.
 //
 // The physics lives in equations.ts and is pinned to the printed answers of
 // Examples 4.1-4.5 by equations.test.mjs.
@@ -37,7 +37,7 @@ export default function WestergaardApp() {
   const [pStr, setP] = useState('10000');
   const [aStr, setA] = useState('6');
   const [mrStr, setMr] = useState('650');
-  // Dual tyres → equivalent circle (Eq. 4.31)
+  // Dual tires → equivalent circle (Eq. 4.31)
   const [useDuals, setUseDuals] = useState(false);
   const [sdStr, setSd] = useState('14');
   const [qStr, setQ] = useState('88.42');
@@ -63,7 +63,7 @@ export default function WestergaardApp() {
 
   // Effective contact radius: either entered directly, or derived from a set
   // of duals via Huang Eq. 4.31. For a rigid slab the equivalent circle spans
-  // the gap between the tyres, so it is always larger than a single imprint.
+  // the gap between the tires, so it is always larger than a single imprint.
   const aEff = useMemo(() => {
     if (!useDuals) return a;
     const q = num(qStr, 0), Pd = P / 2, Sd = num(sdStr, 0);
@@ -87,10 +87,10 @@ export default function WestergaardApp() {
 
   useEffect(() => {
     if (!res) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
       const c = chartColors(theme);
 
       if (sensRef.current) {
@@ -175,7 +175,7 @@ export default function WestergaardApp() {
         }), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [res, theme, E, nu, k, P, aEff, h, MR]);
 
   return (
@@ -257,8 +257,8 @@ export default function WestergaardApp() {
         <label className="cee-field__label" style={{ marginTop: '0.25rem' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <input type="checkbox" checked={useDuals} onChange={e => setUseDuals(e.target.checked)} />
-            Load is on dual tyres
-            <Tip text="For a rigid slab the equivalent circle covers both tyre imprints AND the gap between them, because the slab spreads load across the gap (Huang Eq. 4.31). Using the tyre contact area alone would overstate every stress." />
+            Load is on dual tires
+            <Tip text="For a rigid slab the equivalent circle covers both tire imprints AND the gap between them, because the slab spreads load across the gap (Huang Eq. 4.31). Using the tire contact area alone would overstate every stress." />
           </span>
         </label>
 
@@ -340,7 +340,7 @@ export default function WestergaardApp() {
             <ol>
               <li><strong>Describe slab and foundation</strong>: E, ν, h, and the subgrade reaction k — ℓ is computed first, every formula consumes it.</li>
               <li><strong>Set the load</strong>: P and contact radius a. The tool evaluates all three Westergaard cases at once.</li>
-              <li><strong>Check the critical fibre</strong>: interior and edge stresses are bottom tension; the corner stress is <em>top</em> tension.</li>
+              <li><strong>Check the critical fiber</strong>: interior and edge stresses are bottom tension; the corner stress is <em>top</em> tension.</li>
               <li><strong>Add curling</strong>: Δt &gt; 0 is daytime (bottom tension at interior — adds to load stress); night reverses the sign.</li>
             </ol>
             The h-sensitivity chart shows why edge loading governs rigid design — compare each curve against the modulus of rupture line.
@@ -432,7 +432,7 @@ export default function WestergaardApp() {
                 <thead>
                   <tr>
                     <th>Case</th>
-                    <th>Tension fibre</th>
+                    <th>Tension fiber</th>
                     <th>σ load (psi)</th>
                     <th>Δ (in)</th>
                     <th>σ curl (psi)</th>
@@ -518,7 +518,7 @@ export default function WestergaardApp() {
                 straight side lies along the edge, so its centroid sits nearer to it and the stress
                 comes out higher. That makes the semicircle the realistic and the conservative
                 choice, and it is the one this tool treats as governing. The corner pair is a
-                different kind of disagreement: the original formulas measure to the load centre
+                different kind of disagreement: the original formulas measure to the load center
                 along the diagonal, the Ioannides forms replace the circle with an equivalent square
                 of side 1.772a. Neither is wrong. <strong>Say which you used.</strong>
               </p>
@@ -554,7 +554,7 @@ export default function WestergaardApp() {
               </ChartFigure>
               <ChartFigure
                 title={`Load stress by case — h = ${h} in`}
-                subtitle="Coloured bar is the bending stress; the pale bar behind it is the modulus of rupture"
+                subtitle="Colored bar is the bending stress; the pale bar behind it is the modulus of rupture"
                 plotRef={barRef}
                 legend={[
                   { label: 'Bending stress', color: CASE_HUE.edge(theme) },

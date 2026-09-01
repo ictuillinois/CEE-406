@@ -114,10 +114,10 @@ export default function MasterCurveApp() {
   /* ── Isotherms, before shifting ── */
   useEffect(() => {
     if (!isoRef.current || !valid) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !isoRef.current) return;
+      if (canceled || !isoRef.current) return;
       const traces = TEMPS.map((T, i) => ({
         x: FREQS,
         y: FREQS.map(f => dynamicModulusAI({ ...base, f, T })?.eStar ?? null),
@@ -133,16 +133,16 @@ export default function MasterCurveApp() {
         hovermode: 'closest',
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [base, valid, theme]);
 
   /* ── The master curve, after shifting ── */
   useEffect(() => {
     if (!masterRef.current || !points.length) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !masterRef.current) return;
+      if (canceled || !masterRef.current) return;
       const c = chartColors(theme);
 
       // One trace per isotherm so the student can see which temperature landed
@@ -175,7 +175,7 @@ export default function MasterCurveApp() {
         hovermode: 'closest',
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [points, fit, T0, theme]);
 
   // Judged on the residual in modulus terms rather than R2, because R2 stays
@@ -247,7 +247,7 @@ export default function MasterCurveApp() {
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="mc-penr">
-              <span>Pen, recovered<Tip text="Penetration of the binder recovered from the mix — always lower than the original, because mixing and ageing stiffen it." /></span>
+              <span>Pen, recovered<Tip text="Penetration of the binder recovered from the mix — always lower than the original, because mixing and aging stiffen it." /></span>
             </label>
             <input id="mc-penr" className="cee-input" type="number" min="1" step="1" value={penRec}
               onChange={e => setPenRec(e.target.value)} />
@@ -269,7 +269,7 @@ export default function MasterCurveApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="mc-sb">
-            <span>Bitumen stiffness S<sub>b</sub><Tip text="Read off the Van der Poel nomograph (Huang Fig. 7.19) from the penetration index, the loading time, and the temperature below the ring-and-ball point. The nomograph is not digitised here — this is a chart read you supply." /></span>
+            <span>Bitumen stiffness S<sub>b</sub><Tip text="Read off the Van der Poel nomograph (Huang Fig. 7.19) from the penetration index, the loading time, and the temperature below the ring-and-ball point. The nomograph is not digitized here — this is a chart read you supply." /></span>
             <span className="cee-field__unit">N/m²</span>
           </label>
           <input id="mc-sb" className="cee-input" type="text" value={sbStr}
@@ -326,7 +326,7 @@ export default function MasterCurveApp() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Calibrate first.</strong> Load the Huang Ex. 7.10 preset and confirm |E*| = 5.07 × 10⁵ psi at 77°F and 8 Hz before trusting anything else.</li>
-              <li><strong>Look at the isotherms.</strong> Each curve is one temperature. Asphalt is stiffer when cold and stiffer under a faster load — the two axes of the same underlying behaviour.</li>
+              <li><strong>Look at the isotherms.</strong> Each curve is one temperature. Asphalt is stiffer when cold and stiffer under a faster load — the two axes of the same underlying behavior.</li>
               <li><strong>Shift them.</strong> Time–temperature superposition says a hot slow test and a cold fast test are the same test. If that is true, every isotherm lands on one curve.</li>
               <li><strong>Read the collapse, not just the curve.</strong> The R² tells you whether superposition actually held. A poor collapse means the model you shifted does not obey it, and no amount of curve-fitting fixes that.</li>
               <li><strong>Compare the two methods.</strong> The Asphalt Institute and Shell routes answer the same question and disagree. Decide which you would hand a designer, and on what grounds.</li>
@@ -406,7 +406,7 @@ export default function MasterCurveApp() {
                 ? `The shifted isotherms fall on one sigmoid with R² = ${fmt(fit.r2, 3)} and an RMS residual of ${fmt(fit.rmsLog, 3)} log units.`
                 : 'Not enough points to fit a master curve.'}
             >
-              <strong>The question this chart asks is whether the coloured points overlap.</strong>
+              <strong>The question this chart asks is whether the colored points overlap.</strong>
               Superposition claims a measurement at 115°F and 25 Hz contains the same information as
               one at 40°F and a much lower frequency — so shifted onto a common reference, every
               temperature should trace out one curve. Where the points separate into visible bands,
@@ -466,7 +466,7 @@ export default function MasterCurveApp() {
                     <tr>
                       <td>Asphalt Institute<br/><span className="cee-field__unit">Eq. 7.27</span></td>
                       <td>ORIGINAL binder viscosity, fines content, air voids, bitumen volume, T and f directly</td>
-                      <td>the binder actually in the mix after ageing</td>
+                      <td>the binder actually in the mix after aging</td>
                       <td>{ai ? `${fmt(ai.eStar / 1000, 0)} ksi` : '—'}</td>
                     </tr>
                     <tr>
@@ -480,7 +480,7 @@ export default function MasterCurveApp() {
               </div>
               <p className="cee-note" style={{ marginTop: '0.75rem' }}>
                 They disagree because they are asking slightly different questions of slightly
-                different materials — one characterises the binder as delivered, the other as it
+                different materials — one characterizes the binder as delivered, the other as it
                 ends up in the road. Huang's own comment is that the Shell nomograph is accurate to
                 "a factor of 1.5 to 2", which is worth holding next to any modulus quoted to three
                 significant figures. <strong>Say which route you used, and why.</strong>

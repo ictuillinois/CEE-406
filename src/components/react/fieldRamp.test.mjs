@@ -6,7 +6,7 @@
 // reverses which end of a sequential ramp reads as "empty" between themes. On
 // a *count* that is correct. On a continuous physical field it inverts the
 // picture — the contact-stress tool shipped with the near-zero haze around the
-// tyre patch painted in the deep 900 orange and the peak in the pale 100, and
+// tire patch painted in the deep 900 orange and the peak in the pale 100, and
 // a reader who takes saturation for magnitude read it exactly backwards.
 //
 // `fieldScale` is the fix, and what makes it a fix is not the hexes but three

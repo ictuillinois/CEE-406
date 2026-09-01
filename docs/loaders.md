@@ -38,7 +38,7 @@ This system is **additive to an existing website**. It must never alter the appe
 
 The timing constants, the bounded-stagger rule, and the announcement model are derived from a study of **`generative-loaders` v0.1.1** (MIT, Kasturi Khanke), measured directly from the published package. Four ideas were adopted; its 46 variants were not.
 
-1. **The three-state taxonomy** (§2.1) — generalises past text and images to charts, tables, and 3D.
+1. **The three-state taxonomy** (§2.1) — generalizes past text and images to charts, tables, and 3D.
 2. **Bounded stagger** (§3) — the rule almost everyone gets wrong hand-rolling streamed reveal.
 3. **`currentColor` + `color-mix` derivation** (§5) — one property themes the whole component.
 4. **The announcement model** (§6) — one announcement per activity, not one per element.
@@ -70,7 +70,7 @@ Is there content on screen yet?
 
 ### 2.3 The two rules violated most often
 
-1. **Never replace rendered content with a skeleton on refetch.** Stale data at 60 % opacity plus a small header indicator beats a wall of grey rectangles. This is the single most common loading-state error in data products.
+1. **Never replace rendered content with a skeleton on refetch.** Stale data at 60 % opacity plus a small header indicator beats a wall of gray rectangles. This is the single most common loading-state error in data products.
 2. **The moment content becomes available, stop looping.** A looping animation beside real streaming content asserts two contradictory things.
 
 ### 2.4 Duration bands
@@ -82,7 +82,7 @@ Is there content on screen yet?
 | 1 – 4 s | Inline indicator, 1.0–1.4 s cycle | |
 | 4 – 10 s | Skeleton of the real layout, 1.4–2.4 s shimmer | Long cycles read as calm; short cycles read as frantic |
 | > 10 s | Determinate progress **and** a stage label | Indeterminate motion past 10 s reads as *stuck* |
-| Unknown, long | Stage labels without a bar, plus elapsed time | Never fake a bar you cannot honour |
+| Unknown, long | Stage labels without a bar, plus elapsed time | Never fake a bar you cannot honor |
 
 ---
 
@@ -129,9 +129,9 @@ A `speed` multiplier divides duration (`d / speed`). Invalid, zero, or negative 
 
 ---
 
-## 5. Colour
+## 5. Color
 
-Derive every loader tint from `currentColor` via `color-mix` — **never a fixed grey**. One `color` property then themes the entire component, and dark mode requires no second rule set.
+Derive every loader tint from `currentColor` via `color-mix` — **never a fixed gray**. One `color` property then themes the entire component, and dark mode requires no second rule set.
 
 | Layer | Light | Dark |
 |---|---|---|
@@ -142,7 +142,7 @@ Derive every loader tint from `currentColor` via `color-mix` — **never a fixed
 - Dark mode bumps the resting fill because **additive light on a dark surface reads weaker** than subtractive dark on a light one. This is the only dark-mode adjustment the loader system needs.
 - Skeletons must be visible but subordinate: **1.2–1.5:1** against the surface.
 - The shimmer travels `-140% → 240%` so it fully clears both edges. Anything less shows a seam on loop.
-- **Never colour a loader with a semantic hue.** A loader is not a status.
+- **Never color a loader with a semantic hue.** A loader is not a status.
 
 ---
 
@@ -183,12 +183,12 @@ Non-negotiable, in priority order:
 
 ### 7.3 Skeletons must be shape-matched
 
-A grey rectangle where a chart goes is the dashboard equivalent of a spinner.
+A gray rectangle where a chart goes is the dashboard equivalent of a spinner.
 
 | Content | Skeleton |
 |---|---|
 | KPI metric | Three bars matching the hierarchy: label ~40 % × 14 px, value ~55 % × 36 px, delta ~65 % × 13 px |
-| Bar chart | Grey bars at plausible **varied** heights, rounded caps, correct category count |
+| Bar chart | Gray bars at plausible **varied** heights, rounded caps, correct category count |
 | Paired bars | Two bars per band with the correct 4 px inner gap |
 | Stacked columns | Stacked segments with the same 3 px gaps and segment count |
 | Capsule/pill columns | The capsule grid at resting opacity, stems omitted |
@@ -201,10 +201,10 @@ A grey rectangle where a chart goes is the dashboard equivalent of a spinner.
 | Table | Correct row count and height, one shimmer bar per cell at realistic column widths |
 | Canvas / 3D | Reserved box at final aspect ratio |
 
-Two consequences worth internalising:
+Two consequences worth internalizing:
 
 - **When a chart already contains an "empty cell" layer — heatmap, hexbin, dot matrix — the skeleton *is* that layer.** Zero layout shift by construction.
-- **Varied bar heights matter.** A row of equal-height grey bars reads as a placeholder grid; varied heights read as data about to arrive.
+- **Varied bar heights matter.** A row of equal-height gray bars reads as a placeholder grid; varied heights read as data about to arrive.
 
 > **The one case in this repo that earns a loader today.** The layered elastic solver
 > (`src/components/react/lea/lea.ts`) solves a dense linear system at every quadrature node,
@@ -257,9 +257,9 @@ Reserve the canvas box at its final aspect ratio from first paint.
 - More than one motion family visible at once.
 - Loaders on operations under 300 ms.
 - Replacing rendered content with skeletons on refetch.
-- Semantic colour on a loader.
+- Semantic color on a loader.
 - Full-screen blocking overlays for partial updates.
-- Equal-height grey bars as a chart skeleton.
+- Equal-height gray bars as a chart skeleton.
 
 ---
 
@@ -292,7 +292,7 @@ rather than styling:
 - [ ] Every token reference has a fallback value
 - [ ] Still one stylesheet
 
-**Behaviour**
+**Behavior**
 - [ ] Loader chosen by state (pending / streaming / deferred), not by look
 - [ ] Nothing shown under 300 ms; 300 ms entry delay on maybe-unneeded loaders
 - [ ] Skeleton geometry equals content geometry — verify zero CLS at the handoff
@@ -306,7 +306,7 @@ rather than styling:
 - [ ] Exit crossfade 160–220 ms, overlapping
 - [ ] One motion family per surface
 
-**Colour & motion**
+**Color & motion**
 - [ ] All loader tints derived from `currentColor` via `color-mix`
 - [ ] No semantic hue on any loader
 - [ ] Skeleton contrast 1.2–1.5:1 against its surface

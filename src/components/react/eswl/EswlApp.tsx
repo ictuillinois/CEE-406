@@ -65,10 +65,10 @@ export default function EswlApp() {
   /* ── How the criteria diverge with pavement thickness ── */
   useEffect(() => {
     if (!depthRef.current || !valid) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !depthRef.current) return;
+      if (canceled || !depthRef.current) return;
       const c = chartColors(theme);
       const zs: number[] = [];
       for (let t = Math.max(1, clearance / 2); t <= 2.2 * Sd; t += Math.max(0.5, Sd / 30)) zs.push(t);
@@ -118,16 +118,16 @@ export default function EswlApp() {
         ],
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [valid, Pd, Sd, a, z, C, useStrain, clearance, theme]);
 
   /* ── The four answers at the design thickness ── */
   useEffect(() => {
     if (!barRef.current || !cmp) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !barRef.current) return;
+      if (canceled || !barRef.current) return;
       const c = chartColors(theme);
       const rows = [
         ['Boyd & Foster', cmp.boydFoster, CRIT_HUE.boyd(theme)],
@@ -157,7 +157,7 @@ export default function EswlApp() {
         ],
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [cmp, Pd, theme]);
 
   const pts = candidatePoints(Sd);
@@ -169,7 +169,7 @@ export default function EswlApp() {
 
         <div className="cee-presets">
           <button type="button" className="cee-chip"
-            title="Huang Examples 6.1-6.3 and 6.5, pp. 246-254: 9000 lb total on duals at 13.5 in centres, 4.5 in contact radius, 13.5 in pavement. The four criteria should give 7410, 5630, 7340 and 6750 lb."
+            title="Huang Examples 6.1-6.3 and 6.5, pp. 246-254: 9000 lb total on duals at 13.5 in centers, 4.5 in contact radius, 13.5 in pavement. The four criteria should give 7410, 5630, 7340 and 6750 lb."
             onClick={() => {
               setPd('4500'); setA('4.5'); setSd('13.5'); setZ('13.5');
               setH1('8'); setC('1.50'); setUseStrain(true);
@@ -179,7 +179,7 @@ export default function EswlApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="e-pd">
-              <span>Load per tyre P<sub>d</sub><Tip text="Load on ONE of the dual tyres. The total on the pair is twice this — and every criterion returns something between the two." /></span>
+              <span>Load per tire P<sub>d</sub><Tip text="Load on ONE of the dual tires. The total on the pair is twice this — and every criterion returns something between the two." /></span>
               <span className="cee-field__unit">lb</span>
             </label>
             <input id="e-pd" className="cee-input" type="number" step="250" value={pdStr}
@@ -197,7 +197,7 @@ export default function EswlApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="e-sd">
-              <span>Dual spacing S<sub>d</sub><Tip text="Centre to centre. The clearance between the tyres is this less two contact radii, and Boyd and Foster's construction is built on that clearance." /></span>
+              <span>Dual spacing S<sub>d</sub><Tip text="Center to center. The clearance between the tires is this less two contact radii, and Boyd and Foster's construction is built on that clearance." /></span>
               <span className="cee-field__unit">in</span>
             </label>
             <input id="e-sd" className="cee-input" type="number" step="0.5" value={sdStr}
@@ -265,7 +265,7 @@ export default function EswlApp() {
             <ol>
               <li><strong>Calibrate.</strong> Load the Huang preset and confirm 7410, 5630, 7340 and 6750 lb — four published answers to one question.</li>
               <li><strong>Read the divergence chart, not the number.</strong> The criteria agree at the extremes and disagree in the middle, which is exactly where real pavements sit.</li>
-              <li><strong>Notice which response governs where.</strong> Stress peaks midway between the tyres; deflection peaks at the centre of the pair, because deflection spreads further than stress.</li>
+              <li><strong>Notice which response governs where.</strong> Stress peaks midway between the tires; deflection peaks at the center of the pair, because deflection spreads further than stress.</li>
               <li><strong>Then choose</strong> — and know that the choice is not free. Each criterion was built to feed a particular set of design curves.</li>
             </ol>
             HW5 P3 asks which you would use for a thin pavement, a thick pavement, and an airfield.
@@ -276,7 +276,7 @@ export default function EswlApp() {
         {!valid ? (
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
             Enter a positive load, radius, spacing and thickness. The dual spacing must exceed twice
-            the contact radius, or the tyres overlap and there is no clearance for Boyd and Foster's
+            the contact radius, or the tires overlap and there is no clearance for Boyd and Foster's
             construction to use.
           </span></p>
         ) : cmp && (
@@ -316,7 +316,7 @@ export default function EswlApp() {
               All the criteria have to agree at the two extremes — a very thin pavement feels two
               separate wheels, a very thick one feels a single blur — so <strong>they can only
               disagree in between</strong>. That is not a defect of the theory; it is where the
-              physics stops being obvious and a modelling choice has to be made. Highway pavements
+              physics stops being obvious and a modeling choice has to be made. Highway pavements
               sit squarely in that band. Note also that the equal-strain criterion does not vary with
               thickness here: its conversion factor is a single chart read at one geometry, so it is
               a point, not a curve.
@@ -343,12 +343,12 @@ export default function EswlApp() {
                   <table className="cee-table">
                     <thead>
                       <tr>
-                        <th>Point</th><th>Offset from one tyre</th>
+                        <th>Point</th><th>Offset from one tire</th>
                         <th>σ<sub>z</sub> factor</th><th>Deflection factor</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {['Under one tyre', 'Quarter of the spacing', 'Centre of the pair'].map((label, i) => (
+                      {['Under one tire', 'Quarter of the spacing', 'Center of the pair'].map((label, i) => (
                         <tr key={label}>
                           <td>
                             {label}
@@ -365,7 +365,7 @@ export default function EswlApp() {
                 </div>
                 <p className="cee-note" style={{ marginTop: '0.75rem' }}>
                   <strong>Stress and deflection peak in different places.</strong> Stress is the more
-                  local of the two, so it is largest near a tyre; deflection spreads much further, so
+                  local of the two, so it is largest near a tire; deflection spreads much further, so
                   the two bowls add up most in the middle. That single difference is why the two
                   criteria give different ESWLs — and why the answer to "where is the critical point"
                   depends on which response you are designing against.

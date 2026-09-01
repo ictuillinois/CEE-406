@@ -6,7 +6,7 @@
 // regression on 74 sections, which is worth remembering every time a design
 // hangs on a terminal serviceability of 2.5 rather than 2.4.
 //
-// The centrepiece is Problem 9.2: fit the equation yourself to five sections
+// The centerpiece is Problem 9.2: fit the equation yourself to five sections
 // and watch the rut coefficient come out 27x the published value with an R²
 // above 0.98. That is the most honest introduction to regression a pavement
 // course can offer.
@@ -90,10 +90,10 @@ export default function PsiApp() {
   /* ── Panel rating against fitted PSI ── */
   useEffect(() => {
     if (!fitRef.current || !fit || obs.length < 2) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !fitRef.current) return;
+      if (canceled || !fitRef.current) return;
       const c = chartColors(theme);
       const lo = Math.min(...obs.map(o => o.psr), ...fit.predicted) - 0.3;
       const hi = Math.max(...obs.map(o => o.psr), ...fit.predicted) + 0.3;
@@ -123,16 +123,16 @@ export default function PsiApp() {
         hovermode: 'closest',
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [fit, obs, rigid, theme]);
 
   /* ── Skid number against speed ── */
   useEffect(() => {
     if (!skidRef.current || !Number.isFinite(sn0) || !Number.isFinite(png)) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !skidRef.current) return;
+      if (canceled || !skidRef.current) return;
       const c = chartColors(theme);
       const vs = Array.from({ length: 61 }, (_, i) => i * 1.5);
       Plotly.react(skidRef.current, [
@@ -162,7 +162,7 @@ export default function PsiApp() {
         }],
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [sn0, png, snStr, vStr, theme]);
 
   const update = (id: number, patch: Partial<Row>) =>
@@ -385,7 +385,7 @@ export default function PsiApp() {
               takeaway={`Your equation reproduces its own training data to ${fmt(fit.rms, 3)} RMS; the published one, fitted elsewhere, will not sit as close.`}
             >
               Your fitted points hug the 1:1 line because they were fitted to it. The AASHO points do
-              not, and that is the correct behaviour — those coefficients came from 74 different
+              not, and that is the correct behavior — those coefficients came from 74 different
               sections in three states. <strong>A model always looks best on the data that made
               it.</strong> The only honest test of a PSI equation is a section it has never seen,
               which is exactly what neither you nor Carey and Irick can offer from a single dataset.
@@ -401,7 +401,7 @@ export default function PsiApp() {
                 Two independent properties set this curve. <strong>SN₀</strong> — the intercept — is
                 microtexture: the fine grit of the aggregate, which is what grips at low speed and
                 what polishing destroys. <strong>PNG</strong> — the slope — is macrotexture: the
-                coarse channels that let water escape, which is what keeps the tyre in contact at
+                coarse channels that let water escape, which is what keeps the tire in contact at
                 speed. A surface can be resurfaced to fix one and leave the other untouched, and a
                 skid number quoted without its test speed says almost nothing.
               </ChartFigure>
@@ -422,7 +422,7 @@ export default function PsiApp() {
 
             <p className="cee-note">
               PSI: Huang Eqs. 9.14 (flexible, 74 sections) and 9.15 (rigid, 49 sections), with the
-              linearising transformations of Eqs. 9.3–9.5 and the least-squares derivation of
+              linearizing transformations of Eqs. 9.3–9.5 and the least-squares derivation of
               Eqs. 9.8–9.9. Skid resistance: Eqs. 9.31–9.34 (Leu and Henry 1978; Meyer 1991), which
               Huang notes are "based on limited data" with different regressions published elsewhere.
               Validated against Problems 9.2 and 9.4.

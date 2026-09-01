@@ -107,7 +107,7 @@ test('the two corner solutions disagree by the margins Huang quotes', () => {
   near(dIoan / dOrig - 1, 0.11, 0.20, 'deflection disagreement');
 });
 
-/* ──────────────────── Example 4.5 — dual tyre conversion ────────────────── */
+/* ──────────────────── Example 4.5 — dual tire conversion ────────────────── */
 
 test('Example 4.5 — duals converted to an equivalent circle', () => {
   const q = 10000 / (36 * Math.PI);

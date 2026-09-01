@@ -214,10 +214,10 @@ export default function AashtoApp() {
   const REL_SHOWN = [50, 90, 95, 99];
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
       const c = chartColors(theme);
       const hues = [HUES[theme].orange, HUES[theme].blue, HUES[theme].emerald, HUES[theme].amber];
 
@@ -286,7 +286,7 @@ export default function AashtoApp() {
         }), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [tab, flex, rigid, effk, theme, fMR, s0, gK, gEc, gSc, gJ, gCd, gPt]);
 
   const setEk = (i: number, v: string) =>

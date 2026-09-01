@@ -38,7 +38,7 @@ const FIT_CYCLES = 30;
  * @param layers  top to bottom; the last is the half-space
  * @param q       plate pressure
  * @param a       plate radius
- * @param offsets sensor distances from the load centre
+ * @param offsets sensor distances from the load center
  */
 export function basin(
   layers: Layer[], q: number, a: number, offsets: number[], cycles = FIT_CYCLES
@@ -61,7 +61,7 @@ export interface BasinIndices {
   bdi: number | null;
   /** Base curvature index d24 − d36: the subgrade. */
   bci: number | null;
-  /** AASHTO area of the normalised basin, in. A stiff structure gives a
+  /** AASHTO area of the normalized basin, in. A stiff structure gives a
    *  larger area; 36 in is the theoretical maximum for a rigid basin. */
   area: number | null;
 }
@@ -132,7 +132,7 @@ export const minSensorOffset = (a: number, D: number, epOverMr: number) =>
   0.7 * Math.sqrt(a * a + Math.pow(D * Math.cbrt(epOverMr), 2));
 
 /**
- * Centre deflection predicted by Odemark's two-layer approximation —
+ * Center deflection predicted by Odemark's two-layer approximation —
  * Huang Eq. 13.25, at ν = 0.5:
  *
  *   d0 = 1.5 q a { 1 / (M_R sqrt(1 + (D/a · (E_p/M_R)^(1/3))²))
@@ -148,7 +148,7 @@ export function d0Odemark(q: number, a: number, D: number, MR: number, Ep: numbe
  * Effective modulus of everything above the subgrade, by inverting Eq. 13.25
  * for E_p. Monotone in E_p, so bisection is safe and needs no seed.
  *
- * @param d0 centre deflection, already adjusted to 68°F (in)
+ * @param d0 center deflection, already adjusted to 68°F (in)
  */
 export function effectiveEp(
   d0: number, q: number, a: number, D: number, MR: number
@@ -191,7 +191,7 @@ export interface AashtoNdtResult {
  *
  * @param P    total plate load (lb)
  * @param a    plate radius (in)
- * @param d0   centre deflection, temperature-adjusted (in)
+ * @param d0   center deflection, temperature-adjusted (in)
  * @param dr   deflection at the outer sensor (in)
  * @param r    offset of that outer sensor (in)
  * @param D    total thickness above the subgrade (in)

@@ -7,9 +7,9 @@
    Every control has a numeric field beside its slider in the UI —
    a reproducible-views requirement, not a nicety.
 
-   Scene units are METRES (the renderer scales millimetre geometry
+   Scene units are METERS (the renderer scales millimeter geometry
    by 1/1000 once, at the root), so light distances and shadow
-   camera extents below are in metres.
+   camera extents below are in meters.
    ============================================================ */
 
 'use strict';
@@ -82,7 +82,7 @@ export class LightingRig {
     /**
      * Size the rig to the scene so shadows stay crisp on a motorcycle and
      * still cover a nine-axle turnpike double.
-     * @param {THREE.Box3} box scene bounds in metres
+     * @param {THREE.Box3} box scene bounds in meters
      */
     fit(box) {
         const size = box.getSize(new THREE.Vector3());
@@ -213,10 +213,10 @@ export class LightingRig {
      * shadow map, the depth lookup clamps to the border texel, and if that
      * texel reads as occluded the entire overhanging area renders fully
      * shadowed — a plane larger than the shadow frustum turns the whole
-     * background into a grey slab. The shadow camera spans +/- 1.6 r, so the
+     * background into a gray slab. The shadow camera spans +/- 1.6 r, so the
      * plane is capped at a half-extent of 1.4 r with margin to spare.
      *
-     * @param {number} [size] metres; clamped to the shadow camera's coverage
+     * @param {number} [size] meters; clamped to the shadow camera's coverage
      * @returns {THREE.Mesh}
      */
     makeGround(size) {

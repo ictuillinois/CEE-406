@@ -207,10 +207,10 @@ export default function BackcalcApp() {
   /* ── Basin chart: measured vs computed ── */
   useEffect(() => {
     if (!basinRef.current || sensorData.offsets.length < 2) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !basinRef.current) return;
+      if (canceled || !basinRef.current) return;
       const c = chartColors(theme);
       const measuredHue = hueFor('deflection', theme);
       const computedHue = hueFor('stress', theme);
@@ -247,22 +247,22 @@ export default function BackcalcApp() {
 
       Plotly.react(basinRef.current, traces, baseLayout(theme, {
         height: 320,
-        xaxis: axis(theme, 'Distance from load centre (in)'),
+        xaxis: axis(theme, 'Distance from load center (in)'),
         // The basin is drawn the way it deflects: down is more deflection.
         yaxis: gridAxis(theme, 'Deflection (mils)', { autorange: 'reversed' as const }),
         hovermode: 'x unified',
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [fit, sensorData, seedLayers, q, plateA, valid, theme]);
 
   /* ── Sensitivity chart: which moduli the basin can actually see ── */
   useEffect(() => {
     if (!sensRef.current || !fit) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !sensRef.current) return;
+      if (canceled || !sensRef.current) return;
       const hues = LAYER_HUES(theme);
       Plotly.react(sensRef.current, [{
         type: 'bar', orientation: 'h',
@@ -277,7 +277,7 @@ export default function BackcalcApp() {
         bargap: 0.4,
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [fit, layers, theme]);
 
   const updateSensor = (id: number, patch: Partial<SensorRow>) =>
@@ -351,7 +351,7 @@ export default function BackcalcApp() {
 
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>Deflection basin<Tip text="Sensor offset from the load centre, and the peak deflection that sensor recorded. Enter deflections in mils (0.001 in), the way an FWD reports them." /></span>
+            <span>Deflection basin<Tip text="Sensor offset from the load center, and the peak deflection that sensor recorded. Enter deflections in mils (0.001 in), the way an FWD reports them." /></span>
             <span className="cee-field__unit">in · mils</span>
           </span>
           {sensors.map(s => (
@@ -466,7 +466,7 @@ export default function BackcalcApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Enter the basin and the load.</strong> Offsets in inches from the plate centre, deflections in mils. The plate pressure follows from load and radius.</li>
+              <li><strong>Enter the basin and the load.</strong> Offsets in inches from the plate center, deflections in mils. The plate pressure follows from load and radius.</li>
               <li><strong>Enter the structure you believe is down there</strong> — thicknesses from cores, and a rough guess at each modulus. The guess only has to be within a factor of a few.</li>
               <li><strong>Fit.</strong> The solver adjusts the moduli until the computed basin matches the measured one, then reports how well it matched.</li>
               <li><strong>Read the sensitivity chart before you believe the moduli.</strong> A layer with low sensitivity is one the basin cannot see — its backcalculated modulus is close to arbitrary, and a different seed will give a different answer that fits just as well.</li>

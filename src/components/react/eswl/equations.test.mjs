@@ -54,7 +54,7 @@ test('Example 6.2 — the equal-stress ESWL', () => {
   // Book reads the factors off Figure 2.2 and gets 0.179/0.143 x 4500 = 5630 lb.
   // Integrating the kernel instead lands within chart-reading precision.
   near(r.eswl, 5630, 0.03, 'ESWL');
-  assert.ok(r.dualFactor > r.singleFactor, 'the duals do more than one tyre');
+  assert.ok(r.dualFactor > r.singleFactor, 'the duals do more than one tire');
 });
 
 test('Example 6.2 — the three candidate points are nearly equal in stress', () => {
@@ -66,7 +66,7 @@ test('Example 6.2 — the three candidate points are nearly equal in stress', ()
   assert.equal(r.governingPoint, 1, 'the midway point governs, as in the book');
 });
 
-test('candidate points are under a tyre, midway, and between those', () => {
+test('candidate points are under a tire, midway, and between those', () => {
   assert.deepEqual(candidatePoints(13.5), [0, 3.375, 6.75]);
 });
 
@@ -78,12 +78,12 @@ test('Example 6.3 — the equal-deflection ESWL', () => {
   near(r.eswl, 7340, 0.03, 'ESWL');
 });
 
-test('Example 6.3 — deflection is governed by the point BETWEEN the tyres', () => {
+test('Example 6.3 — deflection is governed by the point BETWEEN the tires', () => {
   const r = eswlEqualDeflection(EX.Pd, EX.z, EX.Sd, EX.a, 0.5);
   // Unlike stress, which peaked at the midway point, deflection peaks at the
-  // centre of the pair — deflection spreads further, so the two bowls add up
+  // center of the pair — deflection spreads further, so the two bowls add up
   // most where they meet.
-  assert.equal(r.governingPoint, 2, 'the centre between the tyres governs');
+  assert.equal(r.governingPoint, 2, 'the center between the tires governs');
 });
 
 test('deflection interacts more than stress, so its ESWL is larger', () => {
@@ -134,10 +134,10 @@ test('the strain criterion is skipped when no chart factor is supplied', () => {
   near(withC.equalStrain, 6750, 1e-9, 'and is included when it is supplied');
 });
 
-/* ───────────────────────────── Behaviour ───────────────────────────────── */
+/* ───────────────────────────── Behavior ───────────────────────────────── */
 
 test('every criterion returns Pd for a very thin pavement', () => {
-  // With almost no cover the two tyres act independently.
+  // With almost no cover the two tires act independently.
   const thin = compareEswl(EX.Pd, 1.0, EX.Sd, EX.a);
   near(thin.boydFoster, 4500, 1e-9, 'Boyd and Foster at z < d/2');
   assert.ok(thin.equalStress.eswl < 1.15 * EX.Pd,
@@ -155,12 +155,12 @@ test('wider spacing lowers the ESWL at a given depth', () => {
   const tight = compareEswl(EX.Pd, EX.z, 12, EX.a);
   const wide = compareEswl(EX.Pd, EX.z, 20, EX.a);
   assert.ok(wide.equalStress.eswl < tight.equalStress.eswl,
-    'tyres further apart interact less');
+    'tires further apart interact less');
 });
 
 test('invalid geometry returns null rather than a number', () => {
   assert.equal(compareEswl(0, 13.5, 13.5, 4.5), null);
   assert.equal(compareEswl(4500, 13.5, 13.5, 0), null);
-  // Tyres that overlap have no clearance, so Boyd and Foster is undefined.
+  // Tires that overlap have no clearance, so Boyd and Foster is undefined.
   assert.ok(Number.isNaN(eswlBoydFoster(4500, 13.5, 8, 4.5)));
 });

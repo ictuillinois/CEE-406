@@ -178,10 +178,10 @@ export default function ReliabilityApp() {
   /* ── Variance contributions ── */
   useEffect(() => {
     if (!varRef.current || !allTerms.length) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !varRef.current) return;
+      if (canceled || !varRef.current) return;
       Plotly.react(varRef.current, [{
         type: 'bar', orientation: 'h',
         x: allTerms.map(t => 100 * t.share),
@@ -199,16 +199,16 @@ export default function ReliabilityApp() {
         bargap: 0.4,
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [allTerms, theme, trafficHue, perfHue]);
 
   /* ── The two distributions, and the overlap that is the failure probability ── */
   useEffect(() => {
     if (!distRef.current || !tRes || !pRes) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !distRef.current) return;
+      if (canceled || !distRef.current) return;
       const lo = Math.min(tRes.logWT - 4 * tRes.sdLogWT, pRes.logWt - 4 * pRes.sdLogWt);
       const hi = Math.max(tRes.logWT + 4 * tRes.sdLogWT, pRes.logWt + 4 * pRes.sdLogWt);
       const xs = Array.from({ length: 240 }, (_, i) => lo + ((hi - lo) * i) / 239);
@@ -239,16 +239,16 @@ export default function ReliabilityApp() {
         ],
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [tRes, pRes, theme, trafficHue, perfHue]);
 
   /* ── What does thickness buy? ── */
   useEffect(() => {
     if (!snRef.current || curve.length < 2 || !pRes) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !snRef.current) return;
+      if (canceled || !snRef.current) return;
       const c = chartColors(theme);
       const hue = hueFor('stress', theme);
       Plotly.react(snRef.current, [
@@ -277,16 +277,16 @@ export default function ReliabilityApp() {
         })),
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [curve, pRes, rel, theme]);
 
   /* ── Monte Carlo histogram ── */
   useEffect(() => {
     if (!mcRef.current || !mc) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !mcRef.current) return;
+      if (canceled || !mcRef.current) return;
       const c = chartColors(theme);
       Plotly.react(mcRef.current, [{
         type: 'histogram', x: mc.samples, nbinsx: 48,
@@ -307,7 +307,7 @@ export default function ReliabilityApp() {
         }],
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [mc, theme, perfHue]);
 
   const updateLayer = (id: number, patch: Partial<LayerRow>) =>
@@ -431,7 +431,7 @@ export default function ReliabilityApp() {
               <li><strong>So does the pavement.</strong> Layer coefficients, thicknesses, drainage coefficients, p₀ and M<sub>R</sub> all vary, giving a mean and variance of log W<sub>t</sub> — the capacity.</li>
               <li><strong>Reliability is the overlap.</strong> It is the probability that demand stays below capacity: P(log W<sub>T</sub> − log W<sub>t</sub> &lt; 0).</li>
               <li><strong>Read the variance chart first.</strong> It ranks every input by how much of the total uncertainty it owns. That ranking, not the reliability number, is what tells you where to spend money — on better traffic counts, tighter construction, or more asphalt.</li>
-              <li><strong>Run Monte Carlo and compare.</strong> Taylor's expansion linearises the design equation; sampling does not. When they disagree, the equation is curved over the range your inputs actually span.</li>
+              <li><strong>Run Monte Carlo and compare.</strong> Taylor's expansion linearizes the design equation; sampling does not. When they disagree, the equation is curved over the range your inputs actually span.</li>
             </ol>
             The design equation itself never changes here. What changes is your honesty about the inputs.
           </div>

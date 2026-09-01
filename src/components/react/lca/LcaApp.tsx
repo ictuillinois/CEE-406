@@ -106,10 +106,10 @@ export default function LcaApp() {
   );
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
       const c = chartColors(theme);
 
       if (iriRef.current) {
@@ -145,7 +145,7 @@ export default function LcaApp() {
       // it replaced a log-scale bar chart, which cannot satisfy §A12's "bars
       // start at zero, always" because a log axis has no zero.
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [res, theme, years, trig]);
 
   const field = (id: string, label: React.ReactNode, unit: string, val: string, set: (v: string) => void, step = '1') => (
@@ -231,7 +231,7 @@ export default function LcaApp() {
             label={`Total GHG · ${years} yr`}
             value={(res.total / 1000).toLocaleString('en-US', { maximumFractionDigits: 0 })}
             unit="t CO₂e"
-            tip="Sum of all six life-cycle stages for the functional unit: one lane-mile over the analysis period. Reported in metric tonnes (1 t = 1000 kg CO₂e)."
+            tip="Sum of all six life-cycle stages for the functional unit: one lane-mile over the analysis period. Reported in metric tons (1 t = 1000 kg CO₂e)."
           />
           <Kpi
             compact

@@ -151,10 +151,10 @@ export default function JointsApp() {
   /* ── Load carried by each dowel, both conventions ── */
   useEffect(() => {
     if (!forceRef.current || !byReach?.friberg || !byReach?.heinrichs) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !forceRef.current) return;
+      if (canceled || !forceRef.current) return;
       Plotly.react(forceRef.current, [
         {
           x: positions, y: byReach.friberg.per, type: 'bar',
@@ -177,16 +177,16 @@ export default function JointsApp() {
         hovermode: 'x unified',
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [byReach, positions, theme]);
 
   /* ── Faulting against bearing stress, Huang Figure 12.5 ── */
   useEffect(() => {
     if (!faultRef.current || !fault) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled || !faultRef.current) return;
+      if (canceled || !faultRef.current) return;
       const c = chartColors(theme);
       const hue = hueFor('damage', theme);
       const xs = Array.from({ length: 60 }, (_, i) => 1000 + (i * 2500) / 59);
@@ -218,7 +218,7 @@ export default function JointsApp() {
         }],
       }), plotConfig);
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [fault, n18Str, JS, k, theme]);
 
   const updateLoad = (id: number, patch: Partial<LoadRow>) =>
@@ -233,14 +233,14 @@ export default function JointsApp() {
 
         <div className="cee-presets">
           <button type="button" className="cee-chip"
-            title="Huang Example 4.12, p. 174: 8 in slab, k = 100 pci, 0.75 in dowels at 12 in centres, 0.2 in joint, K = 1.5e6 pci, one 9000 lb load over the outermost dowel. Should give 3.27 effective dowels, 1376 lb, and 3556 psi against an allowable 3250."
+            title="Huang Example 4.12, p. 174: 8 in slab, k = 100 pci, 0.75 in dowels at 12 in centers, 0.2 in joint, K = 1.5e6 pci, one 9000 lb load over the outermost dowel. Should give 3.27 effective dowels, 1376 lb, and 3556 psi against an allowable 3250."
             onClick={() => {
               setH('8'); setK('100'); setE('4000000'); setFc('3000');
               setD('0.75'); setSpacing('12'); setEdge('6'); setLane('84'); setZ('0.2'); setKd('1500000');
               setLoads([{ id: nextId++, pos: '6', W: '9000' }]);
             }}>Huang Ex. 4.12</button>
           <button type="button" className="cee-chip"
-            title="Huang Example 4.13, p. 176: 9.5 in slab on k = 50 pci, twelve dowels at 12 in centres across a 12 ft lane, two 9000 lb loads 72 in apart. The edge dowel should carry 1191 lb."
+            title="Huang Example 4.13, p. 176: 9.5 in slab on k = 50 pci, twelve dowels at 12 in centers across a 12 ft lane, two 9000 lb loads 72 in apart. The edge dowel should carry 1191 lb."
             onClick={() => {
               setH('9.5'); setK('50'); setE('4000000'); setFc('3000');
               setD('0.75'); setSpacing('12'); setEdge('6'); setLane('144'); setZ('0.2'); setKd('1500000');
@@ -304,7 +304,7 @@ export default function JointsApp() {
         </div>
         <p className="cee-hint">
           PCA rule of thumb for h = {fmt(h, 1)} in: {fmt(sug.diameter, 2)} in diameter,
-          {' '}{sug.length} in long, {sug.spacing} in centres.
+          {' '}{sug.length} in long, {sug.spacing} in centers.
         </p>
 
         <div className="cee-row">
@@ -400,7 +400,7 @@ export default function JointsApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="j-c">
-              <span>Base factor C<Tip text="0.65 for a stabilised base, 0.80 for granular." /></span>
+              <span>Base factor C<Tip text="0.65 for a stabilized base, 0.80 for granular." /></span>
             </label>
             <input id="j-c" className="cee-input" type="number" step="0.05" value={cStr}
               onChange={e => setC(e.target.value)} />
@@ -641,7 +641,7 @@ export default function JointsApp() {
                   Tie bars are <strong>not</strong> load transfer devices. They hold the longitudinal
                   joint closed so that aggregate interlock can do the load transfer; sizing them is a
                   friction problem, not a wheel-load problem. Most agencies use a standard detail —
-                  0.5 in bars, 36 in long, at 30 to 40 in centres — rather than designing each one.
+                  0.5 in bars, 36 in long, at 30 to 40 in centers — rather than designing each one.
                 </p>
               </Card>
             )}

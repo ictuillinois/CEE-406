@@ -1,4 +1,4 @@
-// Reader for the precomputed 3-D tyre-pavement contact-stress fields.
+// Reader for the precomputed 3-D tire-pavement contact-stress fields.
 //
 // The fields come from phyContactGAN, the physics-informed conditional GAN of
 //
@@ -7,9 +7,9 @@
 //   Pavement Engineering, 27(1), 2621970. doi:10.1080/10298436.2026.2621970
 //
 // trained at the Illinois Center for Transportation on 1,852 validated FE cases
-// for a 275/80R22.5 truck tyre. The network is NOT shipped. What ships is a
+// for a 275/80R22.5 truck tire. The network is NOT shipped. What ships is a
 // precomputed sample of its output over the whole of its training domain,
-// compressed to a shared PCA basis per tyre and stress component:
+// compressed to a shared PCA basis per tire and stress component:
 //
 //     sigma(x, y | load, pressure, slip, speed, condition)
 //         = mean(x, y) + SUM_k  c_k(load, pressure, slip) * phi_k(x, y)
@@ -48,7 +48,7 @@ export interface TireSpec {
   width: number;
   nativeHeight: number;
   nativeWidth: number;
-  /** Millimetres per stored pixel, transverse (rows) and longitudinal (cols). */
+  /** Millimeters per stored pixel, transverse (rows) and longitudinal (cols). */
   mmPerPixelY: number;
   mmPerPixelX: number;
   loads: number[];
@@ -71,7 +71,7 @@ export interface Manifest {
   tires: Record<TireType, TireSpec>;
 }
 
-/** One tyre's decoded, dequantised tables — held for the life of the page. */
+/** One tire's decoded, dequantized tables — held for the life of the page. */
 export interface TirePack {
   tire: TireType;
   spec: TireSpec;
@@ -85,7 +85,7 @@ export interface TirePack {
 
 export interface Inputs {
   tire: TireType;
-  /** Wheel load on the tyre, newtons. */
+  /** Wheel load on the tire, newtons. */
   load: number;
   /** Inflation pressure, MPa. */
   pressure: number;
@@ -234,7 +234,7 @@ export function cubicWeights(axis: number[], x: number): { i: number; w: number 
   return out;
 }
 
-/** Is this (speed, condition) pair present in the baked grid for this tyre? */
+/** Is this (speed, condition) pair present in the baked grid for this tire? */
 export const hasGroup = (spec: TireSpec, speed: Speed, condition: Condition) =>
   spec.groups.some((g) => g.speed === speed && g.condition === condition);
 

@@ -79,13 +79,13 @@ const heading = entry.kind === 'chapter' ? `Chapter ${entry.num}` : `Appendix ${
         <p class="reader-source__body">
           The course does not host the text. {heading} is part of a copyrighted
           commercial book, and redistributing it is not something this site can do.
-          The University Library holds it — use the catalogue record below to borrow a
+          The University Library holds it — use the catalog record below to borrow a
           physical copy, check for an electronic edition, or place a request through
           I-Share if every copy is out.
         </p>
         <p class="reader-source__actions">
           <a href={TEXTBOOK_LIBRARY_URL} target="_blank" rel="noopener" class="reader-source__link">
-            University of Illinois Library catalogue &rarr;
+            University of Illinois Library catalog &rarr;
           </a>
         </p>
         {entry.relatedHws.length > 0 && (
@@ -299,7 +299,7 @@ const heading = entry.kind === 'chapter' ? `Chapter ${entry.num}` : `Appendix ${
   /* ── Where to get the book ──────────────────────────────────────────────
      This block replaces the PDF iframe. It is deliberately a calm, ordinary
      content card and not a warning banner: a student arriving here has done
-     nothing wrong, and the useful information is the catalogue link, not an
+     nothing wrong, and the useful information is the catalog link, not an
      apology. */
   .reader-source {
     border: 1px solid var(--color-border);

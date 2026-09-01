@@ -20,7 +20,7 @@ import {
   groundwaterAboveDrain, groundwaterInflow, timeToDrain,
 } from '../src/components/react/drainage/equations.ts';
 import { slabResponses, curlingStresses } from '../src/components/react/westergaard/equations.ts';
-import { pcaAnalyse } from '../src/components/react/pca/equations.ts';
+import { pcaAnalyze } from '../src/components/react/pca/equations.ts';
 
 const SALT = 'test-salt-not-a-real-one';
 const near = (a, e, tol, what) =>
@@ -254,9 +254,9 @@ test('student files carry no truth values', () => {
     assert.ok(!cbrCells.has(String(b.hw2.cbr.offset)),
       `${uin}: the origin correction (${b.hw2.cbr.offset}) is printed in the CBR handout`);
 
-    // Nothing anywhere may be *labelled* as truth.
+    // Nothing anywhere may be *labeled* as truth.
     const blob = Object.values(files).join('\n');
-    assert.ok(!/outlier/i.test(blob), `${uin}: outliers must not be labelled`);
+    assert.ok(!/outlier/i.test(blob), `${uin}: outliers must not be labeled`);
     assert.ok(!/\btruth\b/i.test(blob), `${uin}: no truth column anywhere`);
     assert.ok(!/\bbreak\b/i.test(blob), `${uin}: the section break must not be marked`);
     assert.ok(!/\bk[123]\b/i.test(blob), `${uin}: no k-value column anywhere`);
@@ -390,7 +390,7 @@ test('the seasonal moduli have the right physics', () => {
   }
 });
 
-test('the trial section is analysable by the layered-elastic solver', () => {
+test('the trial section is analyzable by the layered-elastic solver', () => {
   const b = studentBundle('990000001', SALT, basin);
   const q = b.hw8.trial.wheelLoad / (Math.PI * b.hw8.trial.contactRadius ** 2);
   const layers = [
@@ -442,7 +442,7 @@ test('the axle spectrum drives a meaningful PCA damage summation', () => {
     const groups = b.hw9.axles.map(g => ({
       load: g.load, type: g.type, reps: (g.reps / 1000) * trucks,
     }));
-    const res = pcaAnalyse(groups, {
+    const res = pcaAnalyze(groups, {
       // Representative table reads; the student supplies their own.
       equivalentStress: { single: 210, tandem: 190 },
       erosionFactor: { single: 2.62, tandem: 2.75 },
@@ -462,7 +462,7 @@ test('the axle spectrum drives a meaningful PCA damage summation', () => {
   assert.ok(dmg.some(x => x.f > 0.01 || x.e > 0.01), 'some spectra do real damage');
   // HW9 P4 asks which criterion governs. If the generator made one of them win
   // every time, that question would have a single class-wide answer a student
-  // could get from a neighbour without doing the work.
+  // could get from a neighbor without doing the work.
   const govs = dmg.map(x => x.gov);
   assert.ok(govs.includes('fatigue'), 'fatigue governs for somebody');
   assert.ok(govs.includes('erosion'), 'erosion governs for somebody');

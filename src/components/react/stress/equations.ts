@@ -22,7 +22,7 @@ export interface AxisResponse {
 }
 
 /**
- * Response beneath the centre of a flexible circular plate — Huang Eqs. 2.2-2.6.
+ * Response beneath the center of a flexible circular plate — Huang Eqs. 2.2-2.6.
  *
  *   σz = q[1 − z³/(a²+z²)^1.5]
  *   σr = (q/2)[1 + 2ν − 2(1+ν)z/(a²+z²)^0.5 + z³/(a²+z²)^1.5]
@@ -61,7 +61,7 @@ export const deflectionFactor = (z: number, a: number, nu: number) => {
 };
 
 /**
- * Surface deflection under the centre of a flexible plate — Huang Eq. 2.8.
+ * Surface deflection under the center of a flexible plate — Huang Eq. 2.8.
  *
  *   w0 = 2(1 − ν²) q a / E
  *

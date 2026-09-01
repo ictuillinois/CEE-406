@@ -37,7 +37,7 @@ export const psiFlexible = (sv: number, rd: number, cp: number) =>
 export const psiRigid = (sv: number, cp: number) =>
   5.41 - 1.71 * Math.log10(1 + sv) - 0.09 * Math.sqrt(Math.max(0, cp));
 
-/** The three linearising transformations of Eqs. 9.3-9.5. */
+/** The three linearizing transformations of Eqs. 9.3-9.5. */
 export const R1 = (sv: number) => Math.log10(1 + sv);
 export const R2 = (rd: number) => rd * rd;
 export const D1 = (cp: number) => Math.sqrt(Math.max(0, cp));

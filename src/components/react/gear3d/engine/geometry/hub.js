@@ -2,17 +2,17 @@
    Gear3D — hub, brake drum and lug nuts
    ------------------------------------------------------------
    Local frame matches the tire and rim: origin at the wheel
-   centre, rotation axis +X, millimetres.
+   center, rotation axis +X, millimeters.
 
    Emitted as ONE merged geometry rather than a Group, so the hub
    can be instanced alongside the tire and rim. A class 13 unit
    has 34 wheels; a Group per wheel would be 34 separate draw
    calls for the smallest part in the frame.
 
-   This is not decoration. Without a hub the wheel disc's centre
+   This is not decoration. Without a hub the wheel disc's center
    bore is an open hole, and a viewer looking into an isolated
    wheel sees straight through it to the axle beam and the
-   differential behind — which reads as a modelling error even to
+   differential behind — which reads as a modeling error even to
    someone who could not say what is missing.
    ============================================================ */
 
@@ -28,7 +28,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
  * @property {number} [drumRatio=0.48]    brake drum diameter, fraction of rim diameter.
  *           Kept well inside the wheel disc's hand-hole circle: at 0.62 the
  *           drum sits exactly behind the holes and blocks every one of them,
- *           which quietly removes the most recognisable feature of a truck
+ *           which quietly removes the most recognizable feature of a truck
  *           wheel and leaves the disc looking like a blank plate.
  * @property {boolean} [drum=true]        include a brake drum
  * @property {'draft'|'standard'|'high'} [quality='standard']
@@ -62,7 +62,7 @@ export function buildHubGeometry(g, opts = {}) {
     /** @type {THREE.BufferGeometry[]} */
     const parts = [];
 
-    // Centre boss — closes the wheel's bore.
+    // Center boss — closes the wheel's bore.
     const boss = new THREE.CylinderGeometry(bossR, bossR * 1.08, bossLen, seg);
     boss.rotateZ(s * Math.PI / 2);
     parts.push(boss);

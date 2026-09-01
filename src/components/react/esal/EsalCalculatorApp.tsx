@@ -167,10 +167,10 @@ export default function EsalCalculatorApp() {
   const cumRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
 
       const c = chartColors(theme);
       const colors = AXLE_HUE(theme);
@@ -226,7 +226,7 @@ export default function EsalCalculatorApp() {
         }), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [SN, ptv, computed, theme, years]);
 
   const updateRow = (id: number, patch: Partial<AxleRow>) =>

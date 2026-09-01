@@ -2,9 +2,9 @@
    Gear3D — procedural tire geometry
    ------------------------------------------------------------
    LOCAL FRAME (matches the asset-slot contract in ASSETS.md):
-     origin        wheel centre, on the rotation axis
+     origin        wheel center, on the rotation axis
      rotation axis local +X
-     units         millimetres; the scene applies one 1/1000 scale
+     units         millimeters; the scene applies one 1/1000 scale
 
    WHY THIS IS NOT A LATHE
    A surface of revolution gives a perfectly circular outline, and
@@ -16,7 +16,7 @@
    the key light on their edges, and they self-shadow.
 
    Tread textures still exist, but their job is now the fine
-   detail the geometry cannot afford — rubber grain, siping, mould
+   detail the geometry cannot afford — rubber grain, siping, mold
    flash — rather than the pattern itself.
 
    The meridian is a Catmull-Rom through hand-placed control
@@ -49,7 +49,7 @@ export const SIDEWALL_TEX = 1024;
  *
  * Geometry is instanced, so the cost is one upload per tire SIZE regardless
  * of how many wheels use it; what scales with wheel count is triangles
- * rasterised, which is why `pickQuality` steps down for large units.
+ * rasterized, which is why `pickQuality` steps down for large units.
  */
 export const QUALITY = Object.freeze({
     draft: { radialSegments: 112, profileDetail: 0.7 },
@@ -79,7 +79,7 @@ export function pickQuality(tireCount, override, minLevel) {
     // A render tier can raise the floor. Resolution and geometry have to move
     // together: a 4K drawing buffer does not hide a 112-segment silhouette,
     // it resolves the faceting more clearly than 1x ever did, so asking for
-    // UHD and getting draft tyres is worse than not asking.
+    // UHD and getting draft tires is worse than not asking.
     if (minLevel && QUALITY[minLevel]
         && QUALITY_ORDER.indexOf(minLevel) > QUALITY_ORDER.indexOf(level)) {
         level = minLevel;
@@ -113,7 +113,7 @@ export const GROUP_TREAD = 1;
 
 /**
  * @typedef {Object} MeridianPoint
- * @property {number} a  axial position, mm (0 = tire centreline)
+ * @property {number} a  axial position, mm (0 = tire centerline)
  * @property {number} r  base radius, mm
  * @property {number} v  across-tread parameter 0..1, or -1 outside the tread
  * @property {number} taper 0..1, how strongly tread relief applies here
@@ -137,7 +137,7 @@ export function tireMeridian(g, opts = {}) {
     const crownDrop = g.sectionWidth * 0.014;
     const shoulderR = g.sectionWidth * 0.17;
 
-    // Half profile, from the crown centreline outward to the bead seat.
+    // Half profile, from the crown centerline outward to the bead seat.
     // Axial rises to maximum section width then comes back in to the rim,
     // so this is a polyline, not a function of `a`.
     //
@@ -177,13 +177,13 @@ export function tireMeridian(g, opts = {}) {
         return { v: a < 0 ? 0 : 1, taper: Math.max(0, 1 - t) };
     };
 
-    // Inner side: mirror of the half, walked from bead to centreline.
+    // Inner side: mirror of the half, walked from bead to centerline.
     for (let i = half.length - 1; i >= 0; i--) {
         const [a, r] = half[i];
         const c = classify(-a, r);
         pts.push({ a: -a, r, v: c.v, taper: c.taper });
     }
-    // Outer side: the half itself, skipping the duplicated centreline point.
+    // Outer side: the half itself, skipping the duplicated centerline point.
     for (let i = 1; i < half.length; i++) {
         const [a, r] = half[i];
         const c = classify(a, r);
@@ -282,7 +282,7 @@ export function treadSpec(pattern, g, opts = {}) {
 }
 
 /**
- * Depth cut into the tread at a point, in millimetres.
+ * Depth cut into the tread at a point, in millimeters.
  *
  * @param {TreadSpec} s
  * @param {number} theta01 position around the circumference, 0..1
@@ -318,8 +318,8 @@ export function treadDepthAt(s, theta01, v) {
 }
 
 /**
- * Groove cross-section: 1 at the centre, easing to 0 at the wall.
- * @param {number} x 0 at centre, 1 at the edge
+ * Groove cross-section: 1 at the center, easing to 0 at the wall.
+ * @param {number} x 0 at center, 1 at the edge
  * @returns {number}
  */
 function grooveProfile(x) {
@@ -422,7 +422,7 @@ export function buildTireGeometry(g, opts = {}) {
  * radius, so without this it either floats or sinks. Rather than scale the
  * whole tire — which would misreport its diameter — the vertices below the
  * loaded radius are pushed up onto the contact plane and the displacement is
- * blended out over the neighbouring arc. Overall diameter therefore stays
+ * blended out over the neighboring arc. Overall diameter therefore stays
  * exactly the published value everywhere except inside the contact patch,
  * which is the physically correct thing to show.
  *
@@ -452,9 +452,9 @@ export function applyFlatSpot(geo, g, softness = 0.55) {
    ============================================================ */
 
 /**
- * Tread detail maps — grain and mould texture, NOT the pattern (which is
+ * Tread detail maps — grain and mold texture, NOT the pattern (which is
  * now geometry). Deliberately subtle: doubling up a painted pattern on top
- * of a modelled one produces a moiré that looks like a rendering error.
+ * of a modeled one produces a moiré that looks like a rendering error.
  *
  * @param {TreadPattern} pattern
  * @param {import('../core/tires.js').TireGeometry} g
@@ -470,7 +470,7 @@ export function buildTreadMaps(pattern, g, opts = {}) {
     ctx.fillStyle = '#808080';
     ctx.fillRect(0, 0, size, size);
 
-    // Fine radial mould lines left by the tread mould.
+    // Fine radial mold lines left by the tread mold.
     ctx.strokeStyle = 'rgba(140,140,140,0.35)';
     ctx.lineWidth = 1;
     for (let i = 0; i < 220; i++) {
@@ -490,7 +490,7 @@ export function buildTreadMaps(pattern, g, opts = {}) {
 }
 
 /**
- * Sidewall maps: concentric ribbing, a moulded lettering ring and rubber
+ * Sidewall maps: concentric ribbing, a molded lettering ring and rubber
  * grain. The lettering is deliberately abstract — legible as text at a
  * glance, never a specific manufacturer's mark, because this app renders
  * generic engineering configurations and should not appear to endorse or
@@ -525,7 +525,7 @@ export function buildSidewallMaps(g, opts = {}) {
         ctx.stroke();
     }
 
-    // Moulded lettering ring: raised glyph-like marks on a smooth band.
+    // Molded lettering ring: raised glyph-like marks on a smooth band.
     for (const band of [0.16, 0.84]) {
         const y = band * size;
         ctx.save();

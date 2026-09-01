@@ -58,8 +58,8 @@ test('joint opening and maximum spacing are inverses of each other', () => {
   near(jointOpening(L, EX49.dT, EX49.alphaT, EX49.eps, EX49.C), 0.05, 1e-9, 'round trip');
 });
 
-test('a stabilised base allows longer slabs than a granular one', () => {
-  // C = 0.65 stabilised, 0.80 granular: less restraint means less opening.
+test('a stabilized base allows longer slabs than a granular one', () => {
+  // C = 0.65 stabilized, 0.80 granular: less restraint means less opening.
   const stab = maxJointSpacing(0.05, EX49.dT, EX49.alphaT, EX49.eps, 0.65);
   const gran = maxJointSpacing(0.05, EX49.dT, EX49.alphaT, EX49.eps, 0.80);
   assert.ok(stab > gran, 'the lower friction factor permits a longer slab');
@@ -99,7 +99,7 @@ test('Example 4.12 — radius of relative stiffness and the effective group', ()
   near(ell, 36.35, 0.005, 'ell');                     // book: 36.35 in
   near(1.8 * ell, 66, 0.01, '1.8 ell');               // book: 66 in
 
-  // Dowels at 12 in centres, load over the outermost one.
+  // Dowels at 12 in centers, load over the outermost one.
   const positions = [0, 12, 24, 36, 48, 60, 72];
   const g = dowelGroup(0, positions, ell, EX412.W, 1.8, 0.5);
   near(g.effectiveDowels, 3.27, 0.01, 'effective dowels');   // book: 3.27
@@ -138,7 +138,7 @@ test('Example 4.13 — effective dowels under each of the two loads', () => {
   near(ell, 49.17, 0.005, 'ell');            // book: 49.17 in
   near(1.8 * ell, 88, 0.01, '1.8 ell');      // book: 88 in
 
-  // Twelve dowels at 12 in centres across a 12 ft lane, first 6 in from edge.
+  // Twelve dowels at 12 in centers across a 12 ft lane, first 6 in from edge.
   const positions = dowelPositions(144, 12, 6);
   assert.equal(positions.length, 12, 'twelve dowels');
 

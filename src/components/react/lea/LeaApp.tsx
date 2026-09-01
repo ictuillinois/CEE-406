@@ -52,8 +52,8 @@ const PRESETS: { label: string; tip: string; rows: Omit<LayerRow, 'id'>[]; q: st
 
 type WheelSet = 'single' | 'dual' | 'tandem';
 
-/** Wheel centres for each configuration, in plan. */
-function wheelCentres(kind: WheelSet, dualSpacing: number, tandemSpacing: number) {
+/** Wheel centers for each configuration, in plan. */
+function wheelCenters(kind: WheelSet, dualSpacing: number, tandemSpacing: number) {
   if (kind === 'single') return [{ x: 0, y: 0 }];
   if (kind === 'dual') return [{ x: 0, y: 0 }, { x: dualSpacing, y: 0 }];
   return [
@@ -93,17 +93,17 @@ export default function LeaApp() {
   const valid = layers.length >= 2 && q > 0 && a > 0 &&
     layers.slice(0, -1).every(l => l.h > 0) && layers.every(l => l.E > 0);
 
-  const centres = useMemo(
-    () => wheelCentres(wheels, num(dualSp, 28), num(tandemSp, 60)),
+  const centers = useMemo(
+    () => wheelCenters(wheels, num(dualSp, 28), num(tandemSp, 60)),
     [wheels, dualSp, tandemSp]
   );
 
-  /** Response at one depth, honouring the wheel configuration. */
+  /** Response at one depth, honoring the wheel configuration. */
   const at = useMemo(() => (z: number): Response | null => {
     if (!valid) return null;
     if (wheels === 'single') return leaResponse(layers, q, a, rOff, z);
-    return leaSuperpose(layers, q, a, centres, { x: rOff, y: 0, z });
-  }, [valid, layers, q, a, rOff, wheels, centres]);
+    return leaSuperpose(layers, q, a, centers, { x: rOff, y: 0, z });
+  }, [valid, layers, q, a, rOff, wheels, centers]);
 
   /** Depth profile — denser near interfaces, where the response kinks. */
   const profile = useMemo(() => {
@@ -136,10 +136,10 @@ export default function LeaApp() {
 
   useEffect(() => {
     if (!profile) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
       const c = chartColors(theme);
       // Interfaces are the one permitted in-plot annotation (§A7).
       const shapes = interfaces.map(zi => ({
@@ -185,7 +185,7 @@ export default function LeaApp() {
         ], layout('Strain (µε) — compression positive'), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [profile, theme, interfaces]);
 
   const update = (id: number, patch: Partial<LayerRow>) =>
@@ -209,7 +209,7 @@ export default function LeaApp() {
 
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>Layers<Tip text="Top to bottom. The last layer is the half-space and its thickness is ignored. Use consistent units: psi with inches, or kPa with millimetres." /></span>
+            <span>Layers<Tip text="Top to bottom. The last layer is the half-space and its thickness is ignored. Use consistent units: psi with inches, or kPa with millimeters." /></span>
             <span className="cee-field__unit">h · E · ν</span>
           </span>
           {rows.map((r, i) => (
@@ -269,7 +269,7 @@ export default function LeaApp() {
           <div className="cee-row">
             <div className="cee-field">
               <label className="cee-field__label" htmlFor="lea-ds">
-                <span>Dual spacing<Tip text="Centre-to-centre spacing of the two wheels in a dual." /></span>
+                <span>Dual spacing<Tip text="Center-to-center spacing of the two wheels in a dual." /></span>
                 <span className="cee-field__unit">in / mm</span>
               </label>
               <input id="lea-ds" className="cee-input" type="number" min="0" step="1" value={dualSp}
@@ -278,7 +278,7 @@ export default function LeaApp() {
             {wheels === 'tandem' && (
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="lea-ts">
-                  <span>Tandem spacing<Tip text="Centre-to-centre spacing between the two axles of a tandem." /></span>
+                  <span>Tandem spacing<Tip text="Center-to-center spacing between the two axles of a tandem." /></span>
                   <span className="cee-field__unit">in / mm</span>
                 </label>
                 <input id="lea-ts" className="cee-input" type="number" min="0" step="1" value={tandemSp}
@@ -290,7 +290,7 @@ export default function LeaApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="lea-r">
-            <span>Radial offset r<Tip text="Horizontal distance from the first load's centre to the point analysed. Zero is under the load centre, where the critical responses usually are for a single wheel." /></span>
+            <span>Radial offset r<Tip text="Horizontal distance from the first load's center to the point analyzed. Zero is under the load center, where the critical responses usually are for a single wheel." /></span>
             <span className="cee-field__unit">in / mm</span>
           </label>
           <input id="lea-r" className="cee-input" type="number" min="0" step="1" value={rStr}

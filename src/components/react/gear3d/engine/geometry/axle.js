@@ -23,8 +23,8 @@ const DIFF_DIA_RATIO = 0.66;
 
 /**
  * @typedef {Object} AxleBeamOptions
- * @property {boolean} [differential=false] drive axles carry a centre housing
- * @property {number}  [innerLimit]         beam stops this far from the centreline (mm)
+ * @property {boolean} [differential=false] drive axles carry a center housing
+ * @property {number}  [innerLimit]         beam stops this far from the centerline (mm)
  * @property {number}  [radialSegments=20]
  */
 
@@ -32,9 +32,9 @@ const DIFF_DIA_RATIO = 0.66;
  * Build an axle beam spanning the track, in the RENDER frame.
  *
  * The beam runs along engineering y, which is render x. It sits at the
- * axle centre height, which is the tire's static loaded radius.
+ * axle center height, which is the tire's static loaded radius.
  *
- * @param {number} trackWidth mm, centre to centre of the wheel positions
+ * @param {number} trackWidth mm, center to center of the wheel positions
  * @param {import('../core/tires.js').TireGeometry} g tire geometry, for scale
  * @param {THREE.Material} material
  * @param {AxleBeamOptions} [opts]
@@ -110,7 +110,7 @@ export function buildGearStrut(spec, g, material, opts = {}) {
     const grp = new THREE.Group();
     grp.name = 'gear-strut';
 
-    // A widebody oleo is a substantial forging — roughly half a metre across
+    // A widebody oleo is a substantial forging — roughly half a meter across
     // on a 777. At 0.16 it rendered as a thin rod that read as a support pin
     // rather than the structural member carrying the aircraft.
     const legR = g.rimDiameter * 0.26;

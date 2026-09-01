@@ -132,7 +132,7 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
         <h2>Huang — <em>Pavement Analysis and Design</em></h2>
         <p>
           The reading map for the course — {chapters.length} chapters and
-          {' '}{appendices.length} appendices, each summarised and linked to the homework it
+          {' '}{appendices.length} appendices, each summarized and linked to the homework it
           backs. The book is a copyrighted commercial text and is not hosted here; the
           University Library is where you borrow it.
         </p>
@@ -413,7 +413,7 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
   }
 
   /* The phase rule. Always present at low opacity so the grid reads as five
-     coloured groups at a glance; full strength on hover. */
+     colored groups at a glance; full strength on hover. */
   .hw-card::before {
     content: '';
     position: absolute;
@@ -443,7 +443,7 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
   }
 
   /* Not released yet. Rendered as a <div>, so it is already unclickable and
-     out of the tab order; this only makes that visible. The phase colour is
+     out of the tab order; this only makes that visible. The phase color is
      kept on the rail so the semester still reads as a sequence of phases. */
   /* Same GSAP caveat as the homeworks index: these carry .gsap-stagger, which
      animates inline opacity, so the locked state must not be expressed with
@@ -623,7 +623,7 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
   }
 
   /* The accent bar is always visible here, at low opacity — it is the only
-     colour a miniature carries, so it doubles as the category marker. */
+     color a miniature carries, so it doubles as the category marker. */
   .tool-mini::before {
     content: '';
     position: absolute;

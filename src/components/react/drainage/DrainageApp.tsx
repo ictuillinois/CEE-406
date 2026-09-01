@@ -139,10 +139,10 @@ export default function DrainageApp() {
   ), [f15, f50, f85, s15, s50, s85]);
 
   useEffect(() => {
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
       const c = chartColors(theme);
 
       if (tab === 'inflow' && inflowRef.current && inflow) {
@@ -200,7 +200,7 @@ export default function DrainageApp() {
         }), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [tab, inflow, capacity, theme, precip, kDrain, slope, lDrain]);
 
   const field = (id: string, label: React.ReactNode, unit: string, val: string,

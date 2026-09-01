@@ -154,10 +154,10 @@ export default function MrFitterApp() {
 
   useEffect(() => {
     if (!fit) return;
-    let cancelled = false;
+    let canceled = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (cancelled) return;
+      if (canceled) return;
       const c = chartColors(theme);
       // Confining-stress groups are unordered series: fixed hue order (§B4).
       const seriesColors = HUE_ORDER.map(h => HUES[theme][h]);
@@ -217,7 +217,7 @@ export default function MrFitterApp() {
         }), plotConfig);
       }
     })();
-    return () => { cancelled = true; };
+    return () => { canceled = true; };
   }, [fit, points, theme, units]);
 
   const updateRow = (id: number, patch: Partial<DataRow>) =>
@@ -396,8 +396,8 @@ export default function MrFitterApp() {
                 }))}
                 takeaway={
                   fit.k2 + fit.k3 >= 0
-                    ? 'Modulus rises with bulk stress, so stress hardening dominates — granular behaviour.'
-                    : 'Modulus falls as bulk stress rises, so shear softening dominates — fine-grained behaviour.'
+                    ? 'Modulus rises with bulk stress, so stress hardening dominates — granular behavior.'
+                    : 'Modulus falls as bulk stress rises, so shear softening dominates — fine-grained behavior.'
                 }
               >
                 The fitted surface sliced at each confining stress: along one curve, rising θ comes with

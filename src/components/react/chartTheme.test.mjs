@@ -1,6 +1,6 @@
 /* chartTheme — the light/dark contract.
  *
- * Every colour in the toolbox comes from this file, and every one of them has
+ * Every color in the toolbox comes from this file, and every one of them has
  * to work on TWO backgrounds: the white card (#FFFFFF) and the navy one
  * (#162033). A palette that is only ever checked in the mode the author had
  * open is a palette that is half unchecked, and the failure is invisible to
@@ -29,7 +29,7 @@ const MODES = /** @type {const} */ (['light', 'dark']);
 /** @param {string} h */
 function rgb(h) {
   const m = /^#([0-9a-f]{6})$/i.exec(h.trim());
-  if (!m) throw new Error(`not an opaque hex colour: ${h}`);
+  if (!m) throw new Error(`not an opaque hex color: ${h}`);
   const n = parseInt(m[1], 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
@@ -61,7 +61,7 @@ test('every token and hue exists in both modes', () => {
 
   for (const hue of HUE_ORDER) {
     for (const m of MODES) {
-      assert.match(HUES[m][hue], /^#[0-9a-f]{6}$/i, `${m}.${hue} is not a hex colour`);
+      assert.match(HUES[m][hue], /^#[0-9a-f]{6}$/i, `${m}.${hue} is not a hex color`);
     }
   }
 });
@@ -77,7 +77,7 @@ test('every categorical hue stands off the card it is drawn on', () => {
    * graphic. That is tolerated, deliberately: Illini Orange is 2.96:1 on white
    * and cannot move — it is the brand — and the hue is never the only channel
    * anyway, because <Legend> pairs every swatch with a text label in an
-   * AA-passing ink. The colour is redundant coding, not the sole cue.
+   * AA-passing ink. The color is redundant coding, not the sole cue.
    *
    * The bound is the real floor rather than a round number, so a NEW hue
    * cannot quietly land below what we already accepted. `amber` is excluded
@@ -136,7 +136,7 @@ test('adjacent hues in the assignment order are distinguishable from each other'
 test('a ramp always puts its HIGH end furthest from the card', () => {
   /* This is the whole reason rampScale reverses by mode. If it ever stops
    * reversing, one of the two themes silently renders peak values in the
-   * colour that reads as "empty", and the chart inverts its meaning. */
+   * color that reads as "empty", and the chart inverts its meaning. */
   for (const m of MODES) {
     for (const name of /** @type {const} */ (['orange', 'blue', 'emerald', 'neutral'])) {
       const s = rampScale(name, m);
@@ -176,7 +176,7 @@ test('diverging scale is anchored to the card in both modes', () => {
   }
 });
 
-test('diverging arms are equally loud, and neither sign is favoured', () => {
+test('diverging arms are equally loud, and neither sign is favored', () => {
   /* A diverging scale that is brighter on one arm tells the reader that sign
    * matters more, which for a shear field is simply false. */
   for (const m of MODES) {
@@ -197,7 +197,7 @@ test('diverging scale fades monotonically toward zero from each end', () => {
   }
 });
 
-test('diverging ends stay distinguishable under red-green colour blindness', () => {
+test('diverging ends stay distinguishable under red-green color blindness', () => {
   /* Blue↔orange is chosen over red↔green precisely so the sign survives
    * deuteranopia and protanopia. Simulate both and require the ends stay far
    * apart in the simulated space. (Brettel/Viénot-style reduction: collapse
@@ -232,10 +232,10 @@ test('no colorscale stop is translucent', () => {
     scales.push([`divergingScale(${m})`, divergingScale(m)]);
   }
   for (const [label, scale] of scales) {
-    for (const [pos, colour] of scale) {
+    for (const [pos, color] of scale) {
       assert.match(
-        colour, /^#[0-9a-f]{6}$/i,
-        `${label} stop ${pos} is "${colour}" — colorscale stops must be opaque hex`
+        color, /^#[0-9a-f]{6}$/i,
+        `${label} stop ${pos} is "${color}" — colorscale stops must be opaque hex`
       );
     }
   }

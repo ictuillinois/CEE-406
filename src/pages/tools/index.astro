@@ -193,8 +193,8 @@ const locked = tools.filter(t => !toolLock(t.slug).released);
   }
 
   /* A locked tool card is a <div>: not focusable, not clickable. The dim is
-     what carries the state; the glyph keeps its colour so the card still
-     reads as that particular tool rather than as a grey placeholder. */
+     what carries the state; the glyph keeps its color so the card still
+     reads as that particular tool rather than as a gray placeholder. */
   /* .gsap-stagger animates inline opacity on these, so the locked state uses
      filter + muted text instead — see the note on .hw-row--locked. */
   .tl-card--locked {

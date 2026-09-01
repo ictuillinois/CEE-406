@@ -15,7 +15,7 @@
 // US customary: in, lb, psi.
 import { sigZAt, deflectionFactorAt } from '../stress/equations.ts';
 
-/** Clearance between dual tyres: centre spacing less two contact radii. */
+/** Clearance between dual tires: center spacing less two contact radii. */
 export const dualClearance = (Sd: number, a: number) => Sd - 2 * a;
 
 /* ─────────────── 1. Boyd and Foster, equal vertical stress ─────────────── */
@@ -30,10 +30,10 @@ export const dualClearance = (Sd: number, a: number) => Sd - 2 * a;
  * z = 2Sd they have merged completely, so ESWL = 2Pd. Everything between is
  * interpolation.
  *
- * @param Pd load on ONE of the dual tyres, lb
+ * @param Pd load on ONE of the dual tires, lb
  * @param z  pavement thickness, in
- * @param Sd centre-to-centre dual spacing, in
- * @param a  contact radius of one tyre, in
+ * @param Sd center-to-center dual spacing, in
+ * @param a  contact radius of one tire, in
  */
 export function eswlBoydFoster(Pd: number, z: number, Sd: number, a: number): number {
   const d = dualClearance(Sd, a);
@@ -48,8 +48,8 @@ export function eswlBoydFoster(Pd: number, z: number, Sd: number, a: number): nu
 
 /**
  * Huang Figure 6.3: the maximum response under duals is not known in advance,
- * so it is found by comparing three points — under one tyre, midway between
- * the tyres, and halfway between those two.
+ * so it is found by comparing three points — under one tire, midway between
+ * the tires, and halfway between those two.
  */
 export const candidatePoints = (Sd: number) => [0, Sd / 4, Sd / 2];
 
@@ -73,7 +73,7 @@ export interface CriterionResult {
  *
  *   ESWL / Pd = (σz/q)_dual / (σz/q)_single
  *
- * Superposes the two tyres at each candidate point and takes the worst.
+ * Superposes the two tires at each candidate point and takes the worst.
  * Huang's Example 6.2 reads the factors off Figure 2.2; this integrates the
  * Boussinesq kernel instead, so no chart is involved.
  */
@@ -100,7 +100,7 @@ export function eswlEqualStress(Pd: number, z: number, Sd: number, a: number): C
  *
  * Foster and Ahlvin (1958) introduced this after accelerated traffic tests
  * showed Boyd and Foster's method was "not very safe". Deflection spreads
- * wider than stress, so the two tyres interact more and the ESWL is larger.
+ * wider than stress, so the two tires interact more and the ESWL is larger.
  */
 export function eswlEqualDeflection(
   Pd: number, z: number, Sd: number, a: number, nu = 0.5
@@ -128,7 +128,7 @@ export function eswlEqualDeflection(
  *   ESWL = C · Pd
  *
  * where C is the conversion factor read from Figures 2.23, 2.25-2.27 for a
- * two-layer system. Those charts are not digitised here, so C is an input —
+ * two-layer system. Those charts are not digitized here, so C is an input —
  * the student reads it, as they would in practice.
  *
  * This is the only one of the four that knows the pavement is layered rather

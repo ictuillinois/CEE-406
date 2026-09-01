@@ -47,7 +47,7 @@ export default function RampBar({
           className="cee-rampbar__track"
           style={{ background: `linear-gradient(to right, ${css})` }}
           role="img"
-          aria-label={`Colour scale from ${lowLabel} to ${highLabel}, ${stops ? scale.length : RAMPS[ramp].length} steps`}
+          aria-label={`Color scale from ${lowLabel} to ${highLabel}, ${stops ? scale.length : RAMPS[ramp].length} steps`}
         />
         <span className="cee-rampbar__end">{highLabel}</span>
       </div>

@@ -328,7 +328,7 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Westergaard’s three cases',
-        body: '<strong>Interior</strong>: max stress at the slab bottom. <strong>Edge</strong>: the critical highway case — roughly 50% higher. <strong>Corner</strong>: max stress on <em>top</em>, away from the corner — why corner cracks break downward. Know the tension fibre before plugging numbers — the <a href="../../tools/westergaard/">Westergaard tool</a> computes all three cases live.',
+        body: '<strong>Interior</strong>: max stress at the slab bottom. <strong>Edge</strong>: the critical highway case — roughly 50% higher. <strong>Corner</strong>: max stress on <em>top</em>, away from the corner — why corner cracks break downward. Know the tension fiber before plugging numbers — the <a href="../../tools/westergaard/">Westergaard tool</a> computes all three cases live.',
       },
       {
         kind: 'equation',
@@ -339,7 +339,7 @@ export const hwGuides: Record<string, HwGuide> = {
     ],
     steps: [
       'Compute ℓ first — everything consumes it.',
-      'Identify each problem’s case (interior/edge/corner, day/night) and critical fibre.',
+      'Identify each problem’s case (interior/edge/corner, day/night) and critical fiber.',
       'Evaluate the stresses, superposing load + curling when asked.',
       'Compare against the modulus of rupture to interpret.',
     ],

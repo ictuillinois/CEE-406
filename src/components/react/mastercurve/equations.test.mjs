@@ -231,11 +231,11 @@ test('the fitter recovers a sigmoid it did not generate', () => {
   // indexed row[i][i] — indexing into a NUMBER, which yields undefined and
   // turned every solution into NaN. Every Levenberg-Marquardt step was then
   // rejected and the fit silently returned its own seed, looking plausible
-  // while optimising nothing. Synthetic data with a known answer is the only
+  // while optimizing nothing. Synthetic data with a known answer is the only
   // thing that catches that.
   // delta = 2.9 puts the lower asymptote at ~800 psi, inside the physical
   // range the fitter constrains to. A synthetic truth outside those bounds
-  // would be testing the clamp, not the optimiser.
+  // would be testing the clamp, not the optimizer.
   const truth = { delta: 2.9, alpha: 3.3, beta: 0.5, gamma: -0.8 };
   const pts = [];
   for (let k = -8; k <= 8; k += 0.4) {
@@ -342,7 +342,7 @@ test('an asymptote sitting on its bound is flagged as undetermined', () => {
   const fit = fitSigmoid(buildMasterCurve(BASE, TEMPS, FREQS, 70, 0.113));
   assert.ok(typeof fit.atBound.upper === 'boolean');
   assert.ok(typeof fit.atBound.lower === 'boolean');
-  // This mix does not reach its glassy plateau over the modelled range, so the
+  // This mix does not reach its glassy plateau over the modeled range, so the
   // upper asymptote is a bound rather than a measurement — and says so.
   assert.equal(fit.atBound.upper, true, 'the upper asymptote is pinned here');
 });

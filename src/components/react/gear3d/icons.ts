@@ -31,7 +31,7 @@ export const G3_PATHS = {
   'expand': '<path d="M9 3.5H3.5V9M15 3.5h5.5V9M9 20.5H3.5V15M15 20.5h5.5V15"/>',
   'arrow-left': '<path d="M20 12H4"/><path d="m10 6-6 6 6 6"/>',
 
-  /* The four-pane composite view, and the catalogue sheet: the same nine-up
+  /* The four-pane composite view, and the catalog sheet: the same nine-up
      grid at two densities, which is the distinction FA drew with th / th-large. */
   'th':
     '<rect x="3.5" y="3.5" width="5" height="5" rx="1"/><rect x="9.5" y="3.5" width="5" height="5" rx="1"/><rect x="15.5" y="3.5" width="5" height="5" rx="1"/>' +

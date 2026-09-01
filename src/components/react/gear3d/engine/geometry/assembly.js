@@ -3,12 +3,12 @@
    ------------------------------------------------------------
    Turns a resolved Layout into a three.js scene graph.
 
-   SCENE UNITS ARE METRES. Geometry is authored in millimetres, so
+   SCENE UNITS ARE METERS. Geometry is authored in millimeters, so
    the assembly root carries a single 1/1000 scale. Nothing below
-   the root ever thinks about metres, and nothing above it ever
-   thinks about millimetres.
+   the root ever thinks about meters, and nothing above it ever
+   thinks about millimeters.
 
-   INSTANCING is mandatory here, not an optimisation: a class 13
+   INSTANCING is mandatory here, not an optimization: a class 13
    turnpike double carries 34 tires and the gear-matrix sheet
    renders four assemblies at once. Tires, rims and hubs are each
    drawn with one InstancedMesh per distinct tire designation.
@@ -31,7 +31,7 @@ import { buildHubGeometry } from './hub.js';
 import { chassisEnvelope } from './chassis.js';
 import { buildAxleBeam, buildGearStrut } from './axle.js';
 
-/** Millimetres to scene metres. */
+/** Millimeters to scene meters. */
 export const MM_TO_SCENE = 0.001;
 
 /**
@@ -77,7 +77,7 @@ export function buildAssembly(layout, materials, opts = {}) {
 
     /* ---------- group wheels by what they can share ---------- */
 
-    // Detail is chosen from how many tires actually have to be rasterised,
+    // Detail is chosen from how many tires actually have to be rasterized,
     // so a single isolated axle gets the full treatment and a 34-tire
     // turnpike double stays interactive.
     const quality = pickQuality(layout.wheels.length, opts.quality, opts.minQuality);
@@ -110,8 +110,8 @@ export function buildAssembly(layout, materials, opts = {}) {
             designation
         });
         const barrelGeo = buildRimBarrel(g, { quality });
-        // The disc sits near the OUTBOARD face of the rim, not at its centre.
-        // Left at the centre it is buried behind a section-width of sidewall
+        // The disc sits near the OUTBOARD face of the rim, not at its center.
+        // Left at the center it is buried behind a section-width of sidewall
         // and the wheel reads as a hollow ring.
         const discGeo = buildRimDisc(g, { quality, offsetRatio: 0.30 * sign });
         const hubGeo = buildHubGeometry(g, { quality, sign });
@@ -122,7 +122,7 @@ export function buildAssembly(layout, materials, opts = {}) {
         // Barrel and disc get DIFFERENT metals on purpose — see the rimBarrel
         // material note.
         const barrelMat = materials.get('rimBarrel');
-        const discMat = materials.get('aluminium');
+        const discMat = materials.get('aluminum');
 
         const tireMesh = makeInstanced(tireGeo, rubber, wheels.length, `tires:${key}`);
         const barrelMesh = makeInstanced(barrelGeo, barrelMat, wheels.length, `rim-barrel:${key}`);
@@ -172,7 +172,7 @@ export function buildAssembly(layout, materials, opts = {}) {
                 );
 
             // Place at the axle's engineering position.
-            const p = engToRender({ x: a.x, y: gearCentreY(layout, a.id), z: a.axleHeight });
+            const p = engToRender({ x: a.x, y: gearCenterY(layout, a.id), z: a.axleHeight });
             node.position.set(p.x, layout.domain === 'aircraft' ? 0 : p.y, p.z);
             node.userData = { kind: 'axle', axleId: a.id, groupId: a.groupId };
             node.name = `axle:${a.id}`;
@@ -185,7 +185,7 @@ export function buildAssembly(layout, materials, opts = {}) {
     // Built once and hidden; the isolation level toggles it. Drawn as
     // translucent panels with picked-out edges so it reads unmistakably as a
     // schematic envelope rather than as measured bodywork — see chassis.js
-    // for why it must not look like a modelled vehicle.
+    // for why it must not look like a modeled vehicle.
     const envelope = chassisEnvelope(layout, layout.unit || opts.unit);
     if (envelope) {
         const panel = new THREE.MeshStandardMaterial({
@@ -211,12 +211,12 @@ export function buildAssembly(layout, materials, opts = {}) {
             // Engineering (x,y,z) -> render (y,z,x).
             const geo = new THREE.BoxGeometry(w, h, d);
             ownedGeometries.push(geo);
-            const centre = engToRender({
+            const center = engToRender({
                 x: (b.x0 + b.x1) / 2, y: (b.y0 + b.y1) / 2, z: (b.z0 + b.z1) / 2
             });
 
             const mesh = new THREE.Mesh(geo, panel);
-            mesh.position.set(centre.x, centre.y, centre.z);
+            mesh.position.set(center.x, center.y, center.z);
             mesh.name = `chassis:${b.id}`;
             mesh.userData.pickable = false;
             mesh.castShadow = false;
@@ -360,7 +360,7 @@ function tandemSpacingForGear(l, gearId) {
 }
 
 /** @param {import('../core/layout.js').Layout} l @param {string} axleId @returns {number} */
-function gearCentreY(l, axleId) {
+function gearCenterY(l, axleId) {
     const ws = l.wheels.filter((w) => w.axleId === axleId);
     if (!ws.length) return 0;
     return ws.reduce((s, w) => s + w.y, 0) / ws.length;

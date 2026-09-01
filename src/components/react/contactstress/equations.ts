@@ -2,7 +2,7 @@
 // taken off a predicted field. No React import — see equations.test.mjs.
 //
 // Everything here exists to answer one question the course keeps asking:
-// *how wrong is the uniform-circle idealisation?* Huang states the assumption
+// *how wrong is the uniform-circle idealization?* Huang states the assumption
 // and its justification in §1.3 (Figure 1.13):
 //
 //   "the contact pressure is greater than the tire pressure for low-pressure
@@ -11,17 +11,17 @@
 //    because the wall of tires is in tension. However, in pavement design, the
 //    contact pressure is generally assumed to be equal to the tire pressure."
 //
-// and gives the footprint idealisation as a rectangle capped by two
+// and gives the footprint idealization as a rectangle capped by two
 // semicircles of length L and width 0.6L (Figure 1.14a, Eq. 1.1):
 //
 //   Ac = pi(0.3L)^2 + (0.4L)(0.6L) = 0.5227 L^2,   L = sqrt(Ac / 0.5227)
 //
-// with Ac = load on the tyre / tyre pressure. PCA (1984) replaces that outline
+// with Ac = load on the tire / tire pressure. PCA (1984) replaces that outline
 // with a rectangle of 0.8712L x 0.6L of the same area (Figure 1.14b), and
 // layered-elastic theory (Huang Ch. 2, and the Stress Explorer and LEA tools
 // here) replaces it again with a circle of the same area.
 //
-// Units are SI throughout — newtons, megapascals, millimetres — because that
+// Units are SI throughout — newtons, megapascals, millimeters — because that
 // is what the model was trained in. Conversions to the course's customary
 // units are at the bottom and are display-only.
 
@@ -36,7 +36,7 @@ export type ConditionKey = 'FR' | 'Brake' | 'Acc';
 
 export interface PresetInputs {
   tire: TireKey;
-  /** Wheel load on the tyre, newtons. */
+  /** Wheel load on the tire, newtons. */
   load: number;
   /** Inflation pressure, MPa. */
   pressure: number;
@@ -86,7 +86,7 @@ export function idealizedContact(load: number, pressure: number): Idealization {
 }
 
 /**
- * Outline of Huang Figure 1.14a in millimetres, centred on the origin, as a
+ * Outline of Huang Figure 1.14a in millimeters, centered on the origin, as a
  * closed polyline: a rectangle 0.4L long and 0.6L wide capped by semicircles
  * of radius 0.3L. `x` runs along the direction of travel.
  */
@@ -96,7 +96,7 @@ export function huangOutline(ideal: Idealization, steps = 48): { x: number[]; y:
   const x: number[] = [];
   const y: number[] = [];
   for (let i = 0; i <= steps; i++) {
-    // Right cap, -90° to +90°, centred at (+0.2L, 0).
+    // Right cap, -90° to +90°, centered at (+0.2L, 0).
     const t = -Math.PI / 2 + (Math.PI * i) / steps;
     x.push(half + r * Math.cos(t));
     y.push(r * Math.sin(t));
@@ -113,7 +113,7 @@ export function huangOutline(ideal: Idealization, steps = 48): { x: number[]; y:
   return { x, y };
 }
 
-/** Equal-area circle, centred on the origin, as a closed polyline. */
+/** Equal-area circle, centered on the origin, as a closed polyline. */
 export function circleOutline(radius: number, steps = 96): { x: number[]; y: number[] } {
   const x: number[] = [];
   const y: number[] = [];
@@ -125,7 +125,7 @@ export function circleOutline(radius: number, steps = 96): { x: number[]; y: num
   return { x, y };
 }
 
-/** PCA equivalent rectangle, centred on the origin, as a closed polyline. */
+/** PCA equivalent rectangle, centered on the origin, as a closed polyline. */
 export function rectOutline(len: number, wid: number): { x: number[]; y: number[] } {
   const a = len / 2;
   const b = wid / 2;
@@ -242,7 +242,7 @@ export function fieldMetrics(
 }
 
 /**
- * How the prediction stands against the idealisation, and against the physics
+ * How the prediction stands against the idealization, and against the physics
  * the surrogate is supposed to obey. Ratios above 1 mean the real field
  * exceeds what the textbook assumption gives.
  */
@@ -255,7 +255,7 @@ export interface Comparison {
   areaOverIdeal: number;
   /** Resultant of sigma_z divided by the applied wheel load — should be 1. */
   equilibrium: number;
-  /** |most tensile sigma_z| / peak sigma_z — should be ~0; a tyre cannot pull. */
+  /** |most tensile sigma_z| / peak sigma_z — should be ~0; a tire cannot pull. */
   tension: number;
 }
 
@@ -307,8 +307,8 @@ export const PRESETS: Preset[] = [
     inp: { tire: 'DTA', load: 45430, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
   },
   {
-    name: 'Standard axle · one tyre',
-    note: '80 kN (18 kip) single axle on dual tyres: 20 kN per tyre at 0.69 MPa (100 psi).',
+    name: 'Standard axle · one tire',
+    note: '80 kN (18 kip) single axle on dual tires: 20 kN per tire at 0.69 MPa (100 psi).',
     inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '5mph', condition: 'FR' },
   },
   {
@@ -317,8 +317,8 @@ export const PRESETS: Preset[] = [
     inp: { tire: 'DTA', load: 20000, pressure: 0.69, slip: 0, speed: '70mph', condition: 'FR' },
   },
   {
-    name: 'Wide-base tyre',
-    note: 'One wide-base tyre carrying what a dual assembly would, free rolling.',
+    name: 'Wide-base tire',
+    note: 'One wide-base tire carrying what a dual assembly would, free rolling.',
     inp: { tire: 'WBT', load: 25000, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
   },
 ];
@@ -327,7 +327,7 @@ export const PRESETS: Preset[] = [
  * Two of the residuals above have thresholds, and in the corners of the
  * training domain a prediction crosses them: at very light load the vertical
  * resultant overshoots the applied load by tens of percent, at heavy load on a
- * soft tyre it undershoots it, and the wide-base branch turns tensile over
+ * soft tire it undershoots it, and the wide-base branch turns tensile over
  * whole bands. None of that is a bug — Eq. 5 of Lang et al. trains equilibrium
  * as a *soft* penalty, so a residual is expected — but a slider that walks a
  * student into a field which is not a statically admissible answer teaches
@@ -340,8 +340,8 @@ export const PRESETS: Preset[] = [
  * jumped when you pressed "Braking" would read as a broken slider.
  *
  * These are the largest such rectangles, found by sweeping the shipped
- * artefact; equations.test.mjs is not able to re-derive them (it has no
- * artefact), so predictor.test.mjs owns that check and fails if any corner or
+ * artifact; equations.test.mjs is not able to re-derive them (it has no
+ * artifact), so predictor.test.mjs owns that check and fails if any corner or
  * interior sample ever leaves the band.
  *
  * The residual KPIs stay on the page. Narrowing the range is not hiding the
@@ -360,7 +360,7 @@ export interface SafeRange {
 export const SAFE_RANGE: Record<TireKey, SafeRange> = {
   /* Trained over 0.99-60.1 kN x 0.50-1.00 MPa. Equilibrium overshoots 1.15
      below ~13 kN and falls back through 0.85 above ~46 kN — the softer the
-     tyre the earlier, which is why the pressure floor is what buys the load
+     tire the earlier, which is why the pressure floor is what buys the load
      ceiling. The box still holds every published-figure preset (20-45.4 kN at
      0.69-0.70 MPa), which is the binding constraint on it: the whole point of
      those presets is that the tool reproduces a printed case, and a preset
@@ -398,7 +398,7 @@ export function colProfile(field: Float32Array, h: number, w: number, col: numbe
   return out;
 }
 
-/** Index of the row carrying the largest value — the centre of the peak rib. */
+/** Index of the row carrying the largest value — the center of the peak rib. */
 export function peakRow(field: Float32Array, h: number, w: number): number {
   let best = -Infinity;
   let idx = 0;

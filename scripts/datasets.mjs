@@ -9,7 +9,7 @@
 //
 // The salt matters. This file is in a public repository, so without a secret
 // salt a student could read the source, recover the truth parameters used to
-// synthesise their own data, and skip the work entirely. Keep the salt out of
+// synthesize their own data, and skip the work entirely. Keep the salt out of
 // version control and change it every semester. See generate-datasets.mjs.
 //
 // Everything here is pure and deterministic: the same (uin, salt) always
@@ -77,7 +77,7 @@ const T307 = [
 
 const PA = 14.696; // atmospheric pressure, psi
 
-/** The generalised (MEPDG) model the students are asked to fit. */
+/** The generalized (MEPDG) model the students are asked to fit. */
 export function mrModel(k1, k2, k3, s3, sd) {
   const theta = sd + 3 * s3;                 // bulk stress
   const tauOct = (Math.SQRT2 * sd) / 3;      // octahedral shear
@@ -128,7 +128,7 @@ export function resilientModulusSet(d) {
  * A piston penetration curve with a concave-up toe, so the origin correction
  * of AASHTO T 193 actually changes the answer.
  *
- * The toe is modelled as the piston seating against surface irregularities:
+ * The toe is modeled as the piston seating against surface irregularities:
  * below the corrected origin the response is quadratic and soft, above it the
  * curve is the real material response.
  */
@@ -163,7 +163,7 @@ const TANDEM_GROUPS = [16, 20, 24, 28, 32, 36, 40, 44];
  * other, which is the step students most often skip.
  */
 export function w4Table(d) {
-  // A lognormal-ish spread centred on a legal-ish load.
+  // A lognormal-ish spread centered on a legal-ish load.
   const peakS = d.uniform(3.5, 5.5);       // index into SINGLE_GROUPS
   const peakT = d.uniform(2.5, 4.5);
   const spread = d.uniform(1.3, 2.2);
@@ -437,7 +437,7 @@ export function rigidSlab(d) {
     design: {
       lsf: d.pick([1.0, 1.1, 1.1, 1.2]),
       c1: d.pick([1.0, 1.0, 0.9]),
-      dowelled: d.next() < 0.7,
+      doweled: d.next() < 0.7,
       tiedShoulder: d.next() < 0.4,
       trucksPerDay: 100 * d.int(4, 30),
       designPeriod: d.pick([20, 20, 30]),
@@ -605,7 +605,7 @@ export function studentFiles(bundle) {
     ['contact_pressure', b.hw9.load.contactPressure, 'psi'],
     ['load_safety_factor', b.hw9.design.lsf, '-'],
     ['C1_subbase', b.hw9.design.c1, '-'],
-    ['dowelled_joints', b.hw9.design.dowelled ? 'yes' : 'no', '-'],
+    ['doweled_joints', b.hw9.design.doweled ? 'yes' : 'no', '-'],
     ['tied_concrete_shoulder', b.hw9.design.tiedShoulder ? 'yes' : 'no', '-'],
     ['trucks_per_day', b.hw9.design.trucksPerDay, 'trucks/day'],
     ['design_period', b.hw9.design.designPeriod, 'years'],

@@ -669,7 +669,7 @@ export function initStudio(root: HTMLElement): () => void {
 
     /* Selected-layer outline (viewport feedback; hidden during export).
        Deliberately NOT the site's Illini orange: this line is drawn over
-       asphalt, tan aggregate, grey concrete and brown subgrade, and orange
+       asphalt, tan aggregate, gray concrete and brown subgrade, and orange
        vanishes into three of the four. Cyan is the one hue legible on every
        material in the library, and it never reaches an exported figure. */
     const selOutline = new THREE.LineSegments(
@@ -743,7 +743,7 @@ export function initStudio(root: HTMLElement): () => void {
         sectionGroup = group;
 
         const s = state.section;
-        const mm = 0.001;                        // mm -> world (metres)
+        const mm = 0.001;                        // mm -> world (meters)
         const layers = state.layers;             // 0 = top ... last = subgrade
         const stack = [...layers].reverse();     // 0 = bottom (subgrade)
 
@@ -1334,7 +1334,7 @@ export function initStudio(root: HTMLElement): () => void {
                 <div class="xs-layer-thick">
                     ${layer.subgrade
                         ? `<span class="xs-inf" title="Infinite — display thickness set in Section Geometry">${iconHtml('infinity')}</span> <span>${state.section.subgradeDisplay} mm*</span>`
-                        : `<input type="number" class="xs-num" aria-label="Layer thickness in millimetres" data-act="thickness" value="${layer.thickness}" min="5" max="3000" step="5" ${lockAttr}> mm`}
+                        : `<input type="number" class="xs-num" aria-label="Layer thickness in millimeters" data-act="thickness" value="${layer.thickness}" min="5" max="3000" step="5" ${lockAttr}> mm`}
                 </div>
                 <div class="xs-layer-actions">
                     <button type="button" class="xs-icon-btn ${layer.visible ? 'is-active' : ''}" data-act="visible" title="${layer.visible ? 'Hide layer' : 'Show layer'}" aria-label="${layer.visible ? 'Hide layer' : 'Show layer'}">${iconHtml(layer.visible ? 'eye' : 'eyeOff')}</button>
