@@ -26,7 +26,7 @@ import Legend from '../ui/Legend';
 import RampBar from '../ui/RampBar';
 import {
   useTheme, chartColors, baseLayout, plotConfig, axis, gridAxis, fieldScale,
-  divergingScale, num,
+  divergingScale, withAlpha, num,
 } from '../chartTheme';
 import {
   loadManifest, loadTire, predict, CHANNELS,
@@ -240,8 +240,36 @@ export default function ContactStressApp() {
     // so give it a solid equivalent of the hairline on each surface.
     const grid3d = theme === 'dark' ? '#2A3A55' : '#E4E7EA';
     const { fields, metrics, ideal, h, w, dy, dx } = result;
+
+    /* Everything PLOTTED is converted to the unit the toggle is on, not just
+       the KPIs. The toggle promises "kip - psi - in"; a colorbar reading psi
+       beside a heatmap whose hover reads MPa is the kind of quiet
+       contradiction that makes a teaching instrument untrustworthy.
+       Both helpers are the identity in SI, and the FIELD itself stays MPa —
+       only what is handed to Plotly is converted, so CONTACT_THRESHOLD and
+       every metric go on comparing in the unit they were computed in. */
+    const pOut = (mpa: number) => pressureOut(mpa, unit);
+    const lOut = (mm: number) => lengthOut(mm, unit);
+    const pu = pressureUnit(unit);
+    const lu = lengthUnit(unit);
+    // Three decimals is precision in MPa and noise in psi; inches need one
+    // where millimetres need none.
+    const zfmt = unit === 'SI' ? '.3f' : '.1f';
+    const xyfmt = unit === 'SI' ? '.0f' : '.1f';
+
     const xs = Array.from({ length: w }, (_, i) => (i + 0.5) * dx);
     const ys = Array.from({ length: h }, (_, i) => (i + 0.5) * dy);
+
+    /* The center of the patch, and the two cuts the profile cards take
+       through it. Hoisted out of the plan view because the plan view now
+       DRAWS them: nothing else on the page said where Figures 9 and 10 are
+       sliced, so the three charts read as unrelated pictures of one field. */
+    const cx = center?.x ?? (w * dx) / 2;
+    const cy = center?.y ?? (h * dy) / 2;
+    const rowIdx = peakRow(fields.vertical, h, w);
+    const colIdx = metrics.vertical.bounds
+      ? Math.round((metrics.vertical.bounds[2] + metrics.vertical.bounds[3]) / 2)
+      : Math.floor(w / 2);
 
     /* 1. the three 3-D windows. Decimated anisotropically: the ribs run
        longitudinally, so transverse resolution is what carries them and is
@@ -255,18 +283,19 @@ export default function ContactStressApp() {
       const d = decimate(fields[ch], h, w, h, Math.ceil(w / 2));
       const dxs = Array.from({ length: d.w }, (_, i) => (i * d.fx + d.fx / 2) * dx);
       const dys = Array.from({ length: d.h }, (_, i) => (i * d.fy + d.fy / 2) * dy);
-      const lim = Math.max(Math.abs(metrics[ch].peak), Math.abs(metrics[ch].min), 1e-6);
+      const lim = pOut(Math.max(Math.abs(metrics[ch].peak), Math.abs(metrics[ch].min), 1e-6));
       const signed = ch !== 'vertical';
       await Plotly.react(el, [{
         type: 'surface' as const,
-        x: dxs, y: dys, z: d.data,
+        x: dxs.map(lOut), y: dys.map(lOut),
+        z: d.data.map((row) => row.map(pOut)),
         colorscale: signed ? divergingScale(theme) : fieldScale(theme),
         cmin: signed ? -lim : 0,
         cmax: lim,
         showscale: false,
         contours: { z: { show: false } },
         lighting: { ambient: 0.78, diffuse: 0.45, specular: 0.06, roughness: 0.9 },
-        hovertemplate: 'x %{x:.0f} mm · y %{y:.0f} mm<br><b>%{z:.3f} MPa</b><extra></extra>',
+        hovertemplate: `x %{x:${xyfmt}} ${lu} · y %{y:${xyfmt}} ${lu}<br><b>%{z:${zfmt}} ${pu}</b><extra></extra>`,
       }], baseLayout(theme, {
         height: three ? 300 : 480,
         margin: three ? { l: 6, r: 6, t: 6, b: 6 } : { l: 26, r: 26, t: 10, b: 22 },
@@ -279,9 +308,9 @@ export default function ContactStressApp() {
           // margin for them, so in the three-up layout they are dropped
           // altogether — the card subtitle names the axes instead — and only
           // the focused window, which has room, carries them.
-          xaxis: { title: { text: three ? '' : 'Longitudinal (mm)' }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
-          yaxis: { title: { text: three ? '' : 'Transverse (mm)' }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
-          zaxis: { title: { text: three ? '' : 'σ (MPa)' }, nticks: three ? 3 : 6, color: c.fg, gridcolor: grid3d, zeroline: true, zerolinecolor: c.hairline, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
+          xaxis: { title: { text: three ? '' : `Longitudinal (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
+          yaxis: { title: { text: three ? '' : `Transverse (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
+          zaxis: { title: { text: three ? '' : `σ (${pu})` }, nticks: three ? 3 : 6, color: c.fg, gridcolor: grid3d, zeroline: true, zerolinecolor: c.hairline, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
           camera: { eye: three ? { x: 1.7, y: -1.45, z: 1.0 } : { x: 1.55, y: -1.35, z: 0.95 } },
         },
       }), { ...plotConfig, displayModeBar: false });
@@ -289,8 +318,11 @@ export default function ContactStressApp() {
 
     /* 2. plan view: the predicted patch with the textbook outlines on top. */
     if (planRef.current) {
-      const cy = center?.y ?? (h * dy) / 2;
-      const cx = center?.x ?? (w * dx) / 2;
+      // Equal aspect, but `constrain: 'domain'` shrinks the plotting box to
+      // fit rather than padding the x range out to the width of the card —
+      // without it the footprint occupies a third of the figure.
+      const halfX = lOut(Math.max((w * dx) / 2, ideal.length / 2) * 1.06);
+      const halfY = lOut(Math.max((h * dy) / 2, ideal.width / 2) * 1.06);
       /* Cells below the contact threshold are left blank rather than painted
          at the pale end of the ramp. The generator lays a low positive haze
          over the whole raster, and coloring it makes the footprint look like
@@ -298,80 +330,166 @@ export default function ContactStressApp() {
          area is measured on, so the figure and the KPI agree. */
       const traces: Record<string, unknown>[] = [{
         type: 'heatmap' as const,
-        x: xs.map((v) => v - cx), y: ys.map((v) => v - cy),
+        x: xs.map((v) => lOut(v - cx)), y: ys.map((v) => lOut(v - cy)),
         z: Array.from({ length: h }, (_, r) =>
           Array.from({ length: w }, (_, k) => {
             const v = fields.vertical[r * w + k];
-            return v >= CONTACT_THRESHOLD ? v : null;
+            // Thresholded on the FIELD, in MPa; only what is drawn converts.
+            return v >= CONTACT_THRESHOLD ? pOut(v) : null;
           })),
         colorscale: fieldScale(theme),
-        zmin: 0, zmax: Math.max(metrics.vertical.peak, 1e-6),
+        zmin: 0, zmax: pOut(Math.max(metrics.vertical.peak, 1e-6)),
         showscale: false,
         hoverongaps: false,
-        hovertemplate: '%{x:.0f}, %{y:.0f} mm<br><b>%{z:.3f} MPa</b><extra></extra>',
+        hovertemplate: `%{x:${xyfmt}}, %{y:${xyfmt}} ${lu}<br><b>%{z:${zfmt}} ${pu}</b><extra></extra>`,
       }];
+
+      /* Where the two profile cards cut. Drawn beneath the idealizations and
+         deliberately quiet — 1px, muted, finely dashed — because they are
+         wayfinding between three figures, not a result of their own. Nothing
+         on the page said where Figures 9 and 10 are sliced. */
+      const cutY = lOut(ys[rowIdx] - cy);
+      const cutX = lOut(xs[colIdx] - cx);
+      const cutLine = { color: c.fg, width: 1, dash: 'dot' as const };
+      traces.push(
+        { x: [-halfX, halfX], y: [cutY, cutY], mode: 'lines' as const, line: cutLine, hoverinfo: 'skip' as const, showlegend: false },
+        { x: [cutX, cutX], y: [-halfY, halfY], mode: 'lines' as const, line: cutLine, hoverinfo: 'skip' as const, showlegend: false }
+      );
+
       if (overlay) {
+        // The idealizations are posed with the tire width across the axle, so
+        // their "length" runs along travel — the x axis here.
         const circ = circleOutline(ideal.circleRadius);
         const hu = huangOutline(ideal);
         const rc = rectOutline(ideal.rectLength, ideal.width);
-        // The idealizations are posed with the tire width across the axle, so
-        // their "length" runs along travel — the x axis here.
-        traces.push(
-          { x: circ.x, y: circ.y, mode: 'lines' as const, line: { color: c.blue, width: 2 }, name: 'Equal-area circle', hoverinfo: 'skip' as const },
-          { x: hu.x, y: hu.y, mode: 'lines' as const, line: { color: c.emerald, width: 2, dash: 'dash' as const }, name: 'Huang Fig. 1.14a', hoverinfo: 'skip' as const },
-          { x: rc.x, y: rc.y, mode: 'lines' as const, line: { color: c.violet, width: 1.5, dash: 'dot' as const }, name: 'PCA rectangle', hoverinfo: 'skip' as const }
-        );
+        /* Casing. Three thin strokes over a saturated field are close to
+           unreadable: the dashed emerald sank into the orange and the 1.5px
+           violet all but vanished. Each outline is therefore drawn TWICE —
+           once in the card's own surface color at +2.6px underneath, which
+           punches a halo of quiet through the heatmap, then the hue on top.
+           The casing carries the same dash, so every dash gets its own halo
+           rather than sitting in a solid ghost tube. Ordinary cartographic
+           casing; three extra traces buy the whole overlay back.
+
+           The order is a hierarchy, not an accident. The equal-area circle is
+           the one every method in this course actually assumes, so it is
+           solid, heaviest, and drawn last — over both alternates.
+
+           The halo is kept to +1.5px, not more. Huang's shape and the PCA
+           rectangle share the SAME width (both 0.6L), so their top and bottom
+           edges are exactly collinear over the middle third of the patch; at
+           +2.6px the two casings merged there into one white band with dashes
+           floating inside it, which read as a fourth thing on the figure.
+           Nothing can un-overlap two collinear lines — the dash patterns have
+           to carry that — but a thin halo lets them overlap quietly. */
+        const outlines = [
+          { d: rc, color: c.violet, width: 1.8, dash: 'dot' as const },
+          { d: hu, color: c.emerald, width: 2, dash: 'dash' as const },
+          { d: circ, color: c.blue, width: 2.6, dash: 'solid' as const },
+        ];
+        const plotted = outlines.map((o) => ({ ...o, x: o.d.x.map(lOut), y: o.d.y.map(lOut) }));
+        for (const o of plotted) {
+          traces.push({ x: o.x, y: o.y, mode: 'lines' as const, line: { color: c.surface, width: o.width + 1.5, dash: o.dash }, hoverinfo: 'skip' as const, showlegend: false });
+        }
+        for (const o of plotted) {
+          traces.push({ x: o.x, y: o.y, mode: 'lines' as const, line: { color: o.color, width: o.width, dash: o.dash }, hoverinfo: 'skip' as const, showlegend: false });
+        }
       }
-      // Equal aspect, but `constrain: 'domain'` shrinks the plotting box to
-      // fit rather than padding the x range out to the width of the card —
-      // without it the footprint occupies a third of the figure.
-      const halfX = Math.max((w * dx) / 2, ideal.length / 2) * 1.06;
-      const halfY = Math.max((h * dy) / 2, ideal.width / 2) * 1.06;
+
+      /* Fit the CARD to the figure, not the figure to the card. The plan view
+         is equal-aspect, so Plotly shrinks its drawing box to whichever
+         dimension binds and centres what is left — at a fixed height that
+         left the patch floating in a lake of slack, worst on the wide-base
+         branch, whose window is half as wide as it is tall. Measuring the
+         column and solving for the height the data actually needs removes it,
+         and the scale bar beside it then sits against a real edge. */
+      const M = { l: 56, r: 8, t: 8, b: 46 };
+      const boxW = Math.max(240, (planRef.current.clientWidth || 560) - M.l - M.r);
+      const planH = Math.round(
+        Math.min(560, Math.max(300, (boxW * halfY) / halfX + M.t + M.b))
+      );
       await Plotly.react(planRef.current, traces, baseLayout(theme, {
-        height: 360,
-        margin: { l: 56, r: 12, t: 8, b: 46 },
-        xaxis: axis(theme, 'Longitudinal, from patch center (mm)', {
+        height: planH,
+        margin: M,
+        xaxis: axis(theme, `Longitudinal, from patch center (${lu})`, {
           scaleanchor: 'y' as const, scaleratio: 1, constrain: 'domain' as const,
           range: [-halfX, halfX], zeroline: false,
         }),
-        yaxis: axis(theme, 'Transverse (mm)', {
+        yaxis: axis(theme, `Transverse, from patch center (${lu})`, {
           range: [-halfY, halfY], constrain: 'domain' as const, zeroline: false,
         }),
       }), plotConfig);
     }
 
-    /* 3. profiles — the same two cuts as Figures 9 and 10 of the paper. */
-    const rowIdx = peakRow(fields.vertical, h, w);
-    const colIdx = result.metrics.vertical.bounds
-      ? Math.round((result.metrics.vertical.bounds[2] + result.metrics.vertical.bounds[3]) / 2)
-      : Math.floor(w / 2);
+    /* 3. profiles — the same two cuts as Figures 9 and 10 of the paper, and
+       the two lines just drawn across the plan view.
+
+       Three things changed together, and they only work together:
+
+       1. Both x axes are measured FROM THE PATCH CENTER, the origin the plan
+          view uses. They used to run 0-321 mm off the corner of the solution
+          window, so the same rib sat at x = 150 in one figure and x = -10 in
+          the other and nothing could be read across.
+       2. Both y axes share one range, computed over all six series. Two cuts
+          of one field on two autoscaled axes invite a comparison that is not
+          there — the across-tire peak looked equal to the along-travel peak
+          because each chart had rescaled itself to its own maximum.
+       3. Vertical stress carries an area fill to the baseline. It is the
+          one-signed channel and the textbook parabola; the two shears cross
+          zero inside the patch and stay as lines, so the sign change is still
+          the thing the eye lands on. Flat mark, so withAlpha (never mixHex).
+    */
     const hues = { vertical: c.orange, longitudinal: c.blue, transverse: c.emerald };
+    const longSeries = CHANNELS.map((ch) => Array.from(rowProfile(fields[ch], h, w, rowIdx), pOut));
+    const tranSeries = CHANNELS.map((ch) => Array.from(colProfile(fields[ch], h, w, colIdx), pOut));
+    let lo = 0;
+    let hi = 0;
+    for (const s of [...longSeries, ...tranSeries]) {
+      for (const v of s) {
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+    }
+    const pad = (hi - lo) * 0.08 || pOut(0.05);
+    const yRange = [lo - pad, hi + pad];
+    const profileTrace = (ch: Channel, x: number[], y: number[]) => ({
+      x, y, mode: 'lines' as const, name: LABEL[ch],
+      line: { color: hues[ch], width: ch === 'vertical' ? 2.6 : 2 },
+      ...(ch === 'vertical'
+        ? { fill: 'tozeroy' as const, fillcolor: withAlpha(hues.vertical, 0.13) }
+        : {}),
+    });
+    const profileLayout = (title: string) => baseLayout(theme, {
+      height: 300,
+      margin: { l: 58, r: 12, t: 8, b: 46 },
+      xaxis: gridAxis(theme, title, { showgrid: false, zeroline: true, zerolinecolor: c.hairline }),
+      yaxis: gridAxis(theme, `Contact stress (${pu})`, {
+        // gridAxis defaults to nticks 4, which over a fixed 0-to-peak range
+        // Plotly rounds down to two lines. §A7 wants three to five.
+        range: yRange, nticks: 6, zeroline: true, zerolinecolor: c.hairline,
+      }),
+      hovermode: 'x unified' as const,
+    });
 
     if (longRef.current) {
-      await Plotly.react(longRef.current, CHANNELS.map((ch) => ({
-        x: xs, y: Array.from(rowProfile(fields[ch], h, w, rowIdx)),
-        mode: 'lines' as const, name: LABEL[ch],
-        line: { color: hues[ch], width: 2.2 },
-      })), baseLayout(theme, {
-        height: 260,
-        xaxis: axis(theme, 'Longitudinal distance (mm)'),
-        yaxis: gridAxis(theme, 'Contact stress (MPa)', { zeroline: true, zerolinecolor: c.hairline }),
-        hovermode: 'x unified' as const,
-      }), plotConfig);
+      const x = xs.map((v) => lOut(v - cx));
+      await Plotly.react(
+        longRef.current,
+        CHANNELS.map((ch, i) => profileTrace(ch, x, longSeries[i])),
+        profileLayout(`Longitudinal, from patch center (${lu})`),
+        plotConfig
+      );
     }
     if (tranRef.current) {
-      await Plotly.react(tranRef.current, CHANNELS.map((ch) => ({
-        x: ys, y: Array.from(colProfile(fields[ch], h, w, colIdx)),
-        mode: 'lines' as const, name: LABEL[ch],
-        line: { color: hues[ch], width: 2.2 },
-      })), baseLayout(theme, {
-        height: 260,
-        xaxis: axis(theme, 'Transverse distance (mm)'),
-        yaxis: gridAxis(theme, 'Contact stress (MPa)', { zeroline: true, zerolinecolor: c.hairline }),
-        hovermode: 'x unified' as const,
-      }), plotConfig);
+      const x = ys.map((v) => lOut(v - cy));
+      await Plotly.react(
+        tranRef.current,
+        CHANNELS.map((ch, i) => profileTrace(ch, x, tranSeries[i])),
+        profileLayout(`Transverse, from patch center (${lu})`),
+        plotConfig
+      );
     }
-  }, [result, spec, theme, view, overlay, center]);
+  }, [result, spec, theme, view, overlay, center, unit]);
 
   useEffect(() => {
     // Coalesce a slider drag into one redraw per animation frame.
@@ -661,42 +779,53 @@ export default function ContactStressApp() {
 
                   <div className="cs-foot__main">
                     <div className="cee-figure__plot" ref={planRef} role="img"
-                      aria-label={`Plan view of vertical contact stress. The predicted patch is ${result.metrics.vertical.extentLongitudinal.toFixed(0)} by ${result.metrics.vertical.extentTransverse.toFixed(0)} millimeters, ${result.cmp.areaOverIdeal.toFixed(2)} times the idealized area. Vertical stress runs from 0 to ${result.metrics.vertical.peak.toFixed(3)} megapascals.`} />
-                    {/* Same stops, same limits as the heatmap above — §B6
-                        deviation 2: Plotly's own colorbar cannot be styled to
-                        the house ramp, so the plot hides it and this carries
-                        the magnitude instead. */}
-                    <RampBar
-                      theme={theme}
-                      stops={fieldScale(theme)}
-                      caption={`Vertical stress σz, ${pressureUnit(unit)}`}
-                      lowLabel="0"
-                      highLabel={P(result.metrics.vertical.peak)}
-                    />
-                    {overlay && (
-                      <Legend
-                        items={[
-                          { label: 'Equal-area circle (layered theory)', color: chartColors(theme).blue, shape: 'line' },
-                          { label: 'Huang Fig. 1.14a · L × 0.6L', color: chartColors(theme).emerald, shape: 'dash' },
-                          { label: 'PCA equivalent rectangle', color: chartColors(theme).violet, shape: 'dash' },
-                        ]}
-                      />
-                    )}
+                      aria-label={`Plan view of vertical contact stress. The predicted patch is ${L(result.metrics.vertical.extentLongitudinal)} by ${L(result.metrics.vertical.extentTransverse)} ${lengthUnit(unit)}, ${result.cmp.areaOverIdeal.toFixed(2)} times the idealized area. Vertical stress runs from 0 to ${P(result.metrics.vertical.peak)} ${pressureUnit(unit)}. Dotted lines mark where the two profiles below are cut.`} />
                   </div>
+
+                  {/* Same stops, same limits as the heatmap it stands against
+                      — §B6 deviation 2: Plotly's own colorbar cannot be styled
+                      to the house ramp, so the plot hides it and this carries
+                      the magnitude instead. Vertical and to the right, because
+                      the patch is a tall figure and a bar under it reads as a
+                      third thing on the card rather than as its scale. */}
+                  <RampBar
+                    orientation="vertical"
+                    theme={theme}
+                    stops={fieldScale(theme)}
+                    caption={`Vertical stress σz (${pressureUnit(unit)})`}
+                    lowLabel="0"
+                    highLabel={P(result.metrics.vertical.peak)}
+                  />
                 </div>
+
+                {/* The legend carries each idealization's defining dimension.
+                    All three enclose the same area P/p — naming them is not
+                    the interesting part, and the numbers are what a student
+                    would otherwise have to work out to compare the shapes. */}
+                <Legend
+                  items={[
+                    ...(overlay ? [
+                      { label: `Equal-area circle · r = ${L(result.ideal.circleRadius)} ${lengthUnit(unit)}`, color: chartColors(theme).blue, shape: 'line' as const },
+                      { label: `Huang L × 0.6L · ${L(result.ideal.length)} × ${L(result.ideal.width)} ${lengthUnit(unit)}`, color: chartColors(theme).emerald, shape: 'dash' as const },
+                      { label: `PCA rectangle · ${L(result.ideal.rectLength)} × ${L(result.ideal.width)} ${lengthUnit(unit)}`, color: chartColors(theme).violet, shape: 'dash' as const },
+                    ] : []),
+                    { label: 'Profile cuts (below)', color: chartColors(theme).fg, shape: 'dash' as const },
+                  ]}
+                />
                 <figcaption className="cee-figcaption">
-                  Idealized <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}; real patch{' '}
-                  {A(result.metrics.vertical.contactArea)} {areaUnit(unit)} — a factor of{' '}
-                  {result.cmp.areaOverIdeal.toFixed(2)}.
+                  All three outlines enclose the same area — idealized{' '}
+                  <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}. The real patch is{' '}
+                  {A(result.metrics.vertical.contactArea)} {areaUnit(unit)}, a factor of{' '}
+                  {result.cmp.areaOverIdeal.toFixed(2)}, and it is not that shape.
                   {result.metrics.vertical.bounds &&
                     (result.metrics.vertical.bounds[0] === 0 ||
                       result.metrics.vertical.bounds[1] === result.h - 1 ||
                       result.metrics.vertical.bounds[2] === 0 ||
                       result.metrics.vertical.bounds[3] === result.w - 1) && (
                       <>
-                        {' '}The patch reaches the edge of the {Math.round(result.w * result.dx)} ×{' '}
-                        {Math.round(result.h * result.dy)} mm solution window, so the extent is a
-                        lower bound here.
+                        {' '}It reaches the edge of the {L(result.w * result.dx)} ×{' '}
+                        {L(result.h * result.dy)} {lengthUnit(unit)} solution window, so the
+                        extent is a lower bound here.
                       </>
                     )}
                 </figcaption>
@@ -732,7 +861,7 @@ export default function ContactStressApp() {
                       <span className="cs-window__sub">{SUBLABEL[ch]}</span>
                     </figcaption>
                     <div className="cee-figure__plot" ref={surfRefs[ch]} role="img"
-                      aria-label={`${LABEL[ch]} surface, ${SUBLABEL[ch]}, ranging from ${result.metrics[ch].min.toFixed(3)} to ${result.metrics[ch].peak.toFixed(3)} megapascals`} />
+                      aria-label={`${LABEL[ch]} surface, ${SUBLABEL[ch]}, ranging from ${P(result.metrics[ch].min)} to ${P(result.metrics[ch].peak)} ${pressureUnit(unit)}`} />
                     {ch === 'vertical' ? (
                       <RampBar theme={theme} stops={fieldScale(theme)} caption="σz" lowLabel="0" highLabel={`${P(result.metrics.vertical.peak)} ${pressureUnit(unit)}`} />
                     ) : (
@@ -766,7 +895,7 @@ export default function ContactStressApp() {
             <div className="cee-chart-grid cee-chart-grid--2">
               <Card
                 title="Profile along travel"
-                subtitle="Through the most heavily loaded rib (paper, Fig. 9)."
+                subtitle="Through the most heavily loaded rib — the horizontal cut above (paper, Fig. 9). Both profiles share one stress scale."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={longRef} role="img"
@@ -781,7 +910,7 @@ export default function ContactStressApp() {
 
               <Card
                 title="Profile across the tire"
-                subtitle="Across the middle of the patch (paper, Fig. 10)."
+                subtitle="Across the middle of the patch — the vertical cut above (paper, Fig. 10). Both profiles share one stress scale."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={tranRef} role="img"

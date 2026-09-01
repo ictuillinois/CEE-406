@@ -632,6 +632,15 @@ legend:         showlegend: false — see below
 2. **Heatmap/contour legends are HTML.** Plotly's `colorbar` cannot be a 6 px fully-rounded
    gradient bar with `Low`/`High` end labels (§8.11), so a `<RampBar>` component renders it and the
    colorbar is hidden.
+
+   `<RampBar orientation="vertical">` stands the same bar on end — 6 px wide instead of 6 px tall,
+   still fully rounded, still 160–220 px long, **low at the bottom** so it runs the same way as the
+   y axis it sits against, with the caption rotated like an axis title. §8.11 fixes the geometry,
+   not which way up it is. Use it beside a tall, equal-aspect plot, where a horizontal bar
+   underneath reads as a third object on the card rather than as the plot's scale; contact-stress's
+   plan view is the case. It reverts to horizontal below 720 px, where a 200 px vertical bar beside
+   a phone-width figure costs more room than it explains. Everywhere else the horizontal bar below
+   the plot remains the default.
 3. **No per-bar entrance stagger.** §A10's 24 ms stagger is not reachable through Plotly without
    hand-driving frames. We use a single 320 ms `cubic-bezier(0.22,1,0.36,1)` fade-and-rise on the
    chart container, once on mount, gated on `prefers-reduced-motion`. Hover, tooltip, and the

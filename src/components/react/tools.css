@@ -513,6 +513,40 @@
   color: var(--cee-muted);
 }
 
+/* Vertical: the same 6px fully-rounded track stood on end beside a tall plot,
+   low at the BOTTOM so it runs the same way as the y axis it sits against.
+   The caption rotates like an axis title rather than wrapping to three lines
+   in a 60px column. §A8.11 fixes the geometry, not which way up it is. */
+.cee-rampbar--vertical {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0;
+  align-self: center;
+}
+
+.cee-rampbar--vertical .cee-rampbar__caption {
+  margin-bottom: 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+.cee-rampbar--vertical .cee-rampbar__row {
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cee-rampbar--vertical .cee-rampbar__track {
+  width: 6px;
+  height: clamp(140px, 42vw, 200px);
+}
+
+.cee-rampbar--vertical .cee-rampbar__end {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+}
+
 /* ───────── Multi-segment composition bar (§A8.10) ─────────
  * Replaces a pie: detached rounded segments, each its own hue with a
  * left→right fade, each carrying an inline % chip.
@@ -1181,8 +1215,45 @@
 
 .cs-foot__main { min-width: 0; }
 
+/* tire rail | plot | scale. The scale is `auto` and centred on the plot's own
+   height, because the plan view is equal-aspect and `constrain: 'domain'`
+   shrinks its drawing box to fit — there is no edge to align a colorbar to,
+   so it is centred rather than stretched. */
 @media (min-width: 720px) {
-  .cs-foot { grid-template-columns: 8.25rem minmax(0, 1fr); gap: 1.1rem; }
+  .cs-foot {
+    grid-template-columns: 8.25rem minmax(0, 1fr) auto;
+    gap: 1.1rem;
+    align-items: center;
+  }
+
+  .cs-foot > .cs-tirekey { align-self: start; }
+}
+
+/* Below the breakpoint the rail sits above the plot and the scale below it,
+   back to horizontal — a 200px vertical bar beside a phone-width heatmap
+   costs more than it explains. */
+@media (max-width: 719px) {
+  .cs-foot .cee-rampbar--vertical {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+
+  .cs-foot .cee-rampbar--vertical .cee-rampbar__caption {
+    writing-mode: horizontal-tb;
+    transform: none;
+  }
+
+  .cs-foot .cee-rampbar--vertical .cee-rampbar__row {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 0.55rem;
+  }
+
+  .cs-foot .cee-rampbar--vertical .cee-rampbar__track {
+    width: min(220px, 100%);
+    height: 6px;
+  }
 }
 
 .cs-tirekey {
