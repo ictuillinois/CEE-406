@@ -1,14 +1,14 @@
-// Contact Stress Visualizer — the 3-D tyre–pavement contact stress field a
-// truck tyre actually applies, against the uniform circle every design method
+// Contact Stress Visualizer — the 3-D tire–pavement contact stress field a
+// truck tire actually applies, against the uniform circle every design method
 // assumes it applies.
 //
 // The prediction is phyContactGAN (Lang, Villamil & Al-Qadi 2026, ICT), a
 // physics-informed cGAN trained on 1,852 validated FE simulations of a
-// 275/80R22.5 truck tyre. The network is not shipped; predictor.ts explains
-// what is. The idealisations it is measured against are Huang §1.3 —
+// 275/80R22.5 truck tire. The network is not shipped; predictor.ts explains
+// what is. The idealizations it is measured against are Huang §1.3 —
 // Eq. 1.1 and Figures 1.13/1.14 — and live in equations.ts.
 //
-// Colour: vertical stress is one-signed, so it takes `fieldScale` — the
+// Color: vertical stress is one-signed, so it takes `fieldScale` — the
 // magnitude ramp of docs/chart-standards.md §B5 deviation 1, still the stress
 // hue of §B4 but washed at zero and intense at the peak in *both* themes. The
 // named §B5 ramps reverse their ends in dark mode (§A4.2), which is right for
@@ -53,7 +53,56 @@ const LABEL: Record<Channel, string> = {
 const SUBLABEL: Record<Channel, string> = {
   vertical: 'normal to the pavement',
   longitudinal: 'along the direction of travel',
-  transverse: 'across the tyre',
+  transverse: 'across the tire',
+};
+
+/* What the two branches of the checkpoint actually are.
+ *
+ * The plan view is the only place in the tool where a student sees the tire at
+ * all — everywhere else it is already a field — so the footprint card carries
+ * the photograph and the finite-element mesh the field was computed on, beside
+ * the patch they produce. A dual assembly is two tires straddling a gap; a
+ * wide-base is one. That is the whole reason the two footprints look nothing
+ * alike, and it is much faster seen than read.
+ *
+ * Both files are square with a transparent ground, so the proportions on the
+ * page are the tire's own: the pair reads wide and short, the single tall and
+ * narrow. Only the DTA designation is on record in the manifest, so the
+ * wide-base tile does not claim one.
+ */
+const TIRE_ART: Record<TireType, {
+  name: string;
+  size: string | null;
+  /** Only where the picture and the field are not the same object. */
+  note: string | null;
+  real: string;
+  realAlt: string;
+  model: string;
+  modelAlt: string;
+}> = {
+  DTA: {
+    name: 'Dual tire assembly',
+    size: '275/80R22.5',
+    // The photograph is the pair, because the pair is what distinguishes this
+    // branch from the wide-base one. The solution window is 321 x 224 mm and
+    // the load slider is per tire (see the preset note in equations.ts: "20 kN
+    // per tire"), so the field beside it is ONE tire of that pair. Say so —
+    // without this line the picture claims a footprint the plot is not.
+    note: 'Field shown is one tire of the pair.',
+    real: 'dta-real.webp',
+    realAlt: 'Photograph of a dual tire assembly: two identical truck tires mounted side by side on one hub, separated by a narrow gap.',
+    model: 'dta-model.webp',
+    modelAlt: 'Finite-element mesh of the same dual assembly, tread in red over the blue belt package and the yellow carcass.',
+  },
+  WBT: {
+    name: 'Wide-base tire',
+    size: null,
+    note: null,
+    real: 'wbt-real.webp',
+    realAlt: 'Photograph of a wide-base single truck tire: one tread about as wide as a dual assembly, on a single rim.',
+    model: 'wbt-model.webp',
+    modelAlt: 'Finite-element mesh of the same wide-base tire, tread in red over the blue belt package and the yellow carcass.',
+  },
 };
 
 /* The signed shear components take the shared diverging scale (blue ← 0 →
@@ -80,7 +129,7 @@ export default function ContactStressApp() {
   const [view, setView] = useState<View>('all');
   const [overlay, setOverlay] = useState(true);
 
-  /* ── artefact loading ─────────────────────────────────────────────── */
+  /* ── artifact loading ─────────────────────────────────────────────── */
 
   useEffect(() => {
     let dead = false;
@@ -121,7 +170,7 @@ export default function ContactStressApp() {
   const spec = manifest?.tires[tire];
 
   /* The WBT branch of the checkpoint was trained free-rolling at one speed —
-     its slip normalisation has zero standard deviation — so those controls are
+     its slip normalization has zero standard deviation — so those controls are
      not offered for it rather than silently extrapolated. */
   const wbtOnlyFR = tire === 'WBT';
   useEffect(() => {
@@ -133,7 +182,7 @@ export default function ContactStressApp() {
 
   /* Keep the wheel load and pressure inside the admissible box of whichever
      branch is selected — the two boxes differ, and the wide-base one is much
-     the smaller, so switching tyre has to pull the sliders in with it. */
+     the smaller, so switching tire has to pull the sliders in with it. */
   const safe = SAFE_RANGE[tire];
   useEffect(() => {
     setLoad((L) => clampTo(L, safe.load));
@@ -162,9 +211,9 @@ export default function ContactStressApp() {
     return { fields, metrics, ideal, cmp: compare(vert, ideal, inputs.load), h, w, dy, dx };
   }, [pack, spec, inputs]);
 
-  /* Centre of the predicted patch, so the idealised outlines are compared
+  /* Center of the predicted patch, so the idealized outlines are compared
      against it rather than against the corner of the raster. */
-  const centre = useMemo(() => {
+  const center = useMemo(() => {
     if (!result?.metrics.vertical.bounds) return null;
     const [r0, r1, c0, c1] = result.metrics.vertical.bounds;
     return { y: ((r0 + r1 + 1) / 2) * result.dy, x: ((c0 + c1 + 1) / 2) * result.dx };
@@ -240,11 +289,11 @@ export default function ContactStressApp() {
 
     /* 2. plan view: the predicted patch with the textbook outlines on top. */
     if (planRef.current) {
-      const cy = centre?.y ?? (h * dy) / 2;
-      const cx = centre?.x ?? (w * dx) / 2;
+      const cy = center?.y ?? (h * dy) / 2;
+      const cx = center?.x ?? (w * dx) / 2;
       /* Cells below the contact threshold are left blank rather than painted
          at the pale end of the ramp. The generator lays a low positive haze
-         over the whole raster, and colouring it makes the footprint look like
+         over the whole raster, and coloring it makes the footprint look like
          it fills the window; blanking it draws the same boundary the contact
          area is measured on, so the figure and the KPI agree. */
       const traces: Record<string, unknown>[] = [{
@@ -265,7 +314,7 @@ export default function ContactStressApp() {
         const circ = circleOutline(ideal.circleRadius);
         const hu = huangOutline(ideal);
         const rc = rectOutline(ideal.rectLength, ideal.width);
-        // The idealisations are posed with the tyre width across the axle, so
+        // The idealizations are posed with the tire width across the axle, so
         // their "length" runs along travel — the x axis here.
         traces.push(
           { x: circ.x, y: circ.y, mode: 'lines' as const, line: { color: c.blue, width: 2 }, name: 'Equal-area circle', hoverinfo: 'skip' as const },
@@ -281,7 +330,7 @@ export default function ContactStressApp() {
       await Plotly.react(planRef.current, traces, baseLayout(theme, {
         height: 360,
         margin: { l: 56, r: 12, t: 8, b: 46 },
-        xaxis: axis(theme, 'Longitudinal, from patch centre (mm)', {
+        xaxis: axis(theme, 'Longitudinal, from patch center (mm)', {
           scaleanchor: 'y' as const, scaleratio: 1, constrain: 'domain' as const,
           range: [-halfX, halfX], zeroline: false,
         }),
@@ -322,7 +371,7 @@ export default function ContactStressApp() {
         hovermode: 'x unified' as const,
       }), plotConfig);
     }
-  }, [result, spec, theme, view, overlay, centre]);
+  }, [result, spec, theme, view, overlay, center]);
 
   useEffect(() => {
     // Coalesce a slider drag into one redraw per animation frame.
@@ -355,21 +404,21 @@ export default function ContactStressApp() {
   /* A backstop, not an expected path. SAFE_RANGE is chosen so that neither of
      these can fire anywhere the sliders reach, and predictor.test.mjs asserts
      that over the whole box for every rolling condition — so if one ever shows
-     up, the artefact has been re-baked and the box has not been re-swept. */
+     up, the artifact has been re-baked and the box has not been re-swept. */
   const warnings: string[] = [];
   if (result) {
     const eq = result.cmp.equilibrium;
     if (eq < EQUILIBRIUM_BAND[0] || eq > EQUILIBRIUM_BAND[1]) {
       warnings.push(
         `The predicted vertical stresses integrate to ${(eq * 100).toFixed(0)}% of the applied wheel ` +
-        `load. Equation 5 of the paper penalises exactly this residual during training, but it is a ` +
+        `load. Equation 5 of the paper penalizes exactly this residual during training, but it is a ` +
         `soft constraint: the network is not required to satisfy equilibrium and here it does not.`
       );
     }
     if (result.cmp.tension > TENSION_LIMIT) {
       warnings.push(
         `${(result.cmp.tension * 100).toFixed(0)}% of the peak appears as tensile (negative) vertical ` +
-        `stress. A tyre cannot pull on a pavement, so that is prediction error, not physics — it is ` +
+        `stress. A tire cannot pull on a pavement, so that is prediction error, not physics — it is ` +
         `largest for the wide-base branch, which the published paper does not cover.`
       );
     }
@@ -384,9 +433,9 @@ export default function ContactStressApp() {
     <div className="cee-tool">
       {/* ─────────────────────────── controls ─────────────────────────── */}
       <aside className="cee-panel">
-        <h2 className="cee-panel__title">Tyre and loading</h2>
+        <h2 className="cee-panel__title">Tire and loading</h2>
 
-        <div className="cee-seg" role="group" aria-label="Tyre configuration">
+        <div className="cee-seg" role="group" aria-label="Tire configuration">
           <button type="button" className={tire === 'DTA' ? 'is-active' : ''} onClick={() => setTire('DTA')}>
             Dual assembly
           </button>
@@ -404,7 +453,7 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-load">
             <span>
               Wheel load
-              <Tip text={`Load carried by this tyre, not by the axle. An 80 kN (18 kip) single axle on dual tyres puts about 20 kN on each. The training set runs from ${F(trained.load[0], 2)} to ${F(trained.load[1], 2)} ${forceUnit(unit)}; the slider spans ${F(safe.load[0], 0)}–${F(safe.load[1], 0)} ${forceUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
+              <Tip text={`Load carried by this tire, not by the axle. An 80 kN (18 kip) single axle on dual tires puts about 20 kN on each. The training set runs from ${F(trained.load[0], 2)} to ${F(trained.load[1], 2)} ${forceUnit(unit)}; the slider spans ${F(safe.load[0], 0)}–${F(safe.load[1], 0)} ${forceUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
             </span>
             <span className="cee-field__unit">{F(load, 2)} {forceUnit(unit)}</span>
           </label>
@@ -419,7 +468,7 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-press">
             <span>
               Inflation pressure
-              <Tip text={`Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Trained range ${P(trained.pressure[0])}–${P(trained.pressure[1])} ${pressureUnit(unit)} for this tyre; the slider spans ${P(safe.pressure[0])}–${P(safe.pressure[1])} ${pressureUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
+              <Tip text={`Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Trained range ${P(trained.pressure[0])}–${P(trained.pressure[1])} ${pressureUnit(unit)} for this tire; the slider spans ${P(safe.pressure[0])}–${P(safe.pressure[1])} ${pressureUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
             </span>
             <span className="cee-field__unit">{P(pressure)} {pressureUnit(unit)}</span>
           </label>
@@ -448,7 +497,7 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-slip">
             <span>
               Slip ratio
-              <Tip text="Difference between tyre circumferential speed and vehicle speed, over vehicle speed. Free rolling is slip = 0 by definition — the FE dataset enforces it — so the slider only applies to braking and acceleration." />
+              <Tip text="Difference between tire circumferential speed and vehicle speed, over vehicle speed. Free rolling is slip = 0 by definition — the FE dataset enforces it — so the slider only applies to braking and acceleration." />
             </span>
             <span className="cee-field__unit">{(inputs.slip * 100).toFixed(1)}%</span>
           </label>
@@ -512,10 +561,10 @@ export default function ContactStressApp() {
         {result && (
           <>
             <Card
-              title="What this tyre is actually doing to the pavement"
+              title="What this tire is actually doing to the pavement"
               subtitle={
                 <>
-                  Measured on the predicted field; the idealised column is what{' '}
+                  Measured on the predicted field; the idealized column is what{' '}
                   <em>P/p</em> and a uniform pressure would give.
                 </>
               }
@@ -537,7 +586,7 @@ export default function ContactStressApp() {
                   label="Contact area"
                   value={A(result.metrics.vertical.contactArea)}
                   unit={areaUnit(unit)}
-                  tip={`Area carrying σz above ${CONTACT_THRESHOLD} MPa. The idealisations all use Ac = P/p instead.`}
+                  tip={`Area carrying σz above ${CONTACT_THRESHOLD} MPa. The idealizations all use Ac = P/p instead.`}
                   delta={{
                     direction: result.cmp.areaOverIdeal >= 1 ? 'up' : 'down',
                     text: `${result.cmp.areaOverIdeal.toFixed(2)}×`,
@@ -560,7 +609,7 @@ export default function ContactStressApp() {
                   value={`${L(result.metrics.vertical.extentLongitudinal)} × ${L(result.metrics.vertical.extentTransverse)}`}
                   unit={lengthUnit(unit)}
                   compact
-                  tip="Bounding box of the contact patch: along travel × across the tyre. Huang's idealisation would give L × 0.6L."
+                  tip="Bounding box of the contact patch: along travel × across the tire. Huang's idealization would give L × 0.6L."
                 />
               </KpiStrip>
             </Card>
@@ -573,28 +622,70 @@ export default function ContactStressApp() {
             ))}
 
             <Card
-              title="Footprint against the design idealisation"
+              title="Footprint against the design idealization"
               subtitle={
                 <>
-                  Plan view of σz. Blank cells carry under {CONTACT_THRESHOLD} MPa; each textbook
-                  outline encloses <em>P/p</em>.
+                  Plan view of σz. Blank cells carry under {P(CONTACT_THRESHOLD)}{' '}
+                  {pressureUnit(unit)}; each textbook outline encloses <em>P/p</em>.
                 </>
               }
             >
               <figure className="cee-figure">
-                <div className="cee-figure__plot" ref={planRef} role="img"
-                  aria-label={`Plan view of vertical contact stress. The predicted patch is ${result.metrics.vertical.extentLongitudinal.toFixed(0)} by ${result.metrics.vertical.extentTransverse.toFixed(0)} millimetres, ${result.cmp.areaOverIdeal.toFixed(2)} times the idealised area.`} />
-                {overlay && (
-                  <Legend
-                    items={[
-                      { label: 'Equal-area circle (layered theory)', color: chartColors(theme).blue, shape: 'line' },
-                      { label: 'Huang Fig. 1.14a · L × 0.6L', color: chartColors(theme).emerald, shape: 'dash' },
-                      { label: 'PCA equivalent rectangle', color: chartColors(theme).violet, shape: 'dash' },
-                    ]}
-                  />
-                )}
+                <div className="cs-foot">
+                  {/* The tire that made the patch, beside the patch. */}
+                  <aside className="cs-tirekey" aria-label={`${TIRE_ART[tire].name} reference`}>
+                    <div className="cs-tirekey__item">
+                      <img
+                        className="cs-tirekey__img"
+                        src={`${BASE}tools/contact-stress/tires/${TIRE_ART[tire].real}`}
+                        alt={TIRE_ART[tire].realAlt}
+                        width={440} height={440} loading="lazy" decoding="async"
+                      />
+                      <span className="cs-tirekey__label">The tire</span>
+                    </div>
+                    <div className="cs-tirekey__item">
+                      <img
+                        className="cs-tirekey__img"
+                        src={`${BASE}tools/contact-stress/tires/${TIRE_ART[tire].model}`}
+                        alt={TIRE_ART[tire].modelAlt}
+                        width={440} height={440} loading="lazy" decoding="async"
+                      />
+                      <span className="cs-tirekey__label">The FE model</span>
+                    </div>
+                    <p className="cs-tirekey__name">
+                      {TIRE_ART[tire].name}
+                      {TIRE_ART[tire].size && <><br /><span className="cs-tirekey__size">{TIRE_ART[tire].size}</span></>}
+                      {TIRE_ART[tire].note && <><br /><span className="cs-tirekey__note">{TIRE_ART[tire].note}</span></>}
+                    </p>
+                  </aside>
+
+                  <div className="cs-foot__main">
+                    <div className="cee-figure__plot" ref={planRef} role="img"
+                      aria-label={`Plan view of vertical contact stress. The predicted patch is ${result.metrics.vertical.extentLongitudinal.toFixed(0)} by ${result.metrics.vertical.extentTransverse.toFixed(0)} millimeters, ${result.cmp.areaOverIdeal.toFixed(2)} times the idealized area. Vertical stress runs from 0 to ${result.metrics.vertical.peak.toFixed(3)} megapascals.`} />
+                    {/* Same stops, same limits as the heatmap above — §B6
+                        deviation 2: Plotly's own colorbar cannot be styled to
+                        the house ramp, so the plot hides it and this carries
+                        the magnitude instead. */}
+                    <RampBar
+                      theme={theme}
+                      stops={fieldScale(theme)}
+                      caption={`Vertical stress σz, ${pressureUnit(unit)}`}
+                      lowLabel="0"
+                      highLabel={P(result.metrics.vertical.peak)}
+                    />
+                    {overlay && (
+                      <Legend
+                        items={[
+                          { label: 'Equal-area circle (layered theory)', color: chartColors(theme).blue, shape: 'line' },
+                          { label: 'Huang Fig. 1.14a · L × 0.6L', color: chartColors(theme).emerald, shape: 'dash' },
+                          { label: 'PCA equivalent rectangle', color: chartColors(theme).violet, shape: 'dash' },
+                        ]}
+                      />
+                    )}
+                  </div>
+                </div>
                 <figcaption className="cee-figcaption">
-                  Idealised <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}; real patch{' '}
+                  Idealized <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}; real patch{' '}
                   {A(result.metrics.vertical.contactArea)} {areaUnit(unit)} — a factor of{' '}
                   {result.cmp.areaOverIdeal.toFixed(2)}.
                   {result.metrics.vertical.bounds &&
@@ -656,7 +747,7 @@ export default function ContactStressApp() {
                                 .map(([p, col]) => `${col} ${(p * 100).toFixed(0)}%`).join(', ')})`,
                             }}
                             role="img"
-                            aria-label="Diverging colour scale, negative to positive through zero"
+                            aria-label="Diverging color scale, negative to positive through zero"
                           />
                           <span className="cee-rampbar__end">+</span>
                         </div>
@@ -689,7 +780,7 @@ export default function ContactStressApp() {
               </Card>
 
               <Card
-                title="Profile across the tyre"
+                title="Profile across the tire"
                 subtitle="Across the middle of the patch (paper, Fig. 10)."
               >
                 <figure className="cee-figure">
@@ -716,16 +807,16 @@ export default function ContactStressApp() {
                   <li>
                     Read the first strip. <strong>Peak vertical stress</strong> against inflation
                     pressure is the number that breaks the uniform-pressure assumption; on a heavily
-                    loaded tyre it is two to three times the inflation pressure, concentrated on the
+                    loaded tire it is two to three times the inflation pressure, concentrated on the
                     shoulder ribs.
                   </li>
                   <li>
                     Sweep the wheel load from one end of the slider to the other and watch{' '}
                     <strong>contact area</strong> against <em>P/p</em>. The ratio falls the whole
                     way — the real patch grows more slowly than <em>P/p</em> does — and on a softly
-                    inflated tyre it drops through 1.0 near 40 kN. Now raise the inflation pressure
+                    inflated tire it drops through 1.0 near 40 kN. Now raise the inflation pressure
                     and sweep again: it never gets there. The real patch stays larger than the
-                    idealisation everywhere else the slider reaches.
+                    idealization everywhere else the slider reaches.
                   </li>
                   <li>
                     Switch to braking, then acceleration, and watch the longitudinal window. Most of
@@ -741,7 +832,7 @@ export default function ContactStressApp() {
                 <p>
                   <strong>What this is not.</strong> The stresses are computed on a rigid, flat,
                   smooth surface. There is no pavement compliance, no surface texture, and no layered
-                  structure: this is the load a tyre applies, not the response a pavement gives. Take
+                  structure: this is the load a tire applies, not the response a pavement gives. Take
                   the field from here into the{' '}
                   <a href={`${BASE}tools/lea/`}>Layered Elastic Analysis</a> or{' '}
                   <a href={`${BASE}tools/stress-explorer/`}>Stress Explorer</a> tool for the second
@@ -758,11 +849,11 @@ export default function ContactStressApp() {
                 <a href="https://doi.org/10.1080/10298436.2026.2621970" target="_blank" rel="noreferrer">
                   Lang, Villamil and Al-Qadi (2026)
                 </a>, trained at the Illinois Center for Transportation on 1,852 validated
-                finite-element simulations of a 275/80R22.5 truck tyre on a rigid flat surface.
+                finite-element simulations of a 275/80R22.5 truck tire on a rigid flat surface.
                 Reported accuracy against FEA: 0.0086 MPa RMSE, 0.0036 MPa MAE, 0.17% MAPE.
               </p>
               <p className="cee-note">
-                Idealised footprints follow Huang, <em>Pavement Analysis and Design</em> (2nd ed.)
+                Idealized footprints follow Huang, <em>Pavement Analysis and Design</em> (2nd ed.)
                 §1.3: Eq. 1.1, <em>Ac</em> = π(0.3<em>L</em>)² + (0.4<em>L</em>)(0.6<em>L</em>) =
                 0.5227<em>L</em>², with <em>Ac</em> = <em>P</em>/<em>p</em>; Figure 1.14b for the PCA
                 equivalent rectangle; and the equal-area circle that layered-elastic theory requires.

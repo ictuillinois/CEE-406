@@ -355,7 +355,7 @@
 .cee-kpi--accent .cee-kpi__value,
 .cee-key--accent .cee-key__value { color: var(--cee-brand); }
 
-/* delta: arrow + semantic % + grey context phrase (§A6.2) */
+/* delta: arrow + semantic % + gray context phrase (§A6.2) */
 .cee-kpi__delta {
   display: flex;
   align-items: baseline;
@@ -588,7 +588,7 @@
   height: 13px;
   border-radius: 999px;
   overflow: hidden;
-  /* remainder is a hatched tint of the same hue, not grey */
+  /* remainder is a hatched tint of the same hue, not gray */
   background-image: repeating-linear-gradient(
     45deg,
     transparent 0 3px,
@@ -953,7 +953,7 @@
   cursor: pointer;
 }
 
-/* ── Traffic flow strip (ESAL) — no §A analogue; stat-chip tokens ── */
+/* ── Traffic flow strip (ESAL) — no §A analog; stat-chip tokens ── */
 .cee-flow {
   display: flex;
   flex-wrap: wrap;
@@ -1020,7 +1020,7 @@
 }
 
 /* ─────────────────── Segmented control (§A1.3) ───────────────────
- * Grey track; active is a surface pill with a hairline and a soft shadow.
+ * Gray track; active is a surface pill with a hairline and a soft shadow.
  */
 .cee-seg {
   display: inline-flex;
@@ -1164,3 +1164,102 @@
 /* Section headings inside the Contact Stress control rail: the panel title
    carries a rule above it, which collides with a preceding hint paragraph. */
 .cee-panel__title.cs-section { margin-top: 1.5rem; }
+
+/* ── Contact Stress Visualizer: the tire beside its footprint ──────────
+ * The plan view is where the abstraction is cashed in, so it is the one card
+ * that shows the tire itself: the photograph and the finite-element mesh the
+ * field was computed on, in a narrow rail to the left of the patch. The rail
+ * moves above the plot below 720px, where the card is the width of the phone
+ * and a side rail would leave the heatmap unreadable.
+ */
+.cs-foot {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.cs-foot__main { min-width: 0; }
+
+@media (min-width: 720px) {
+  .cs-foot { grid-template-columns: 8.25rem minmax(0, 1fr); gap: 1.1rem; }
+}
+
+.cs-tirekey {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  min-width: 0;
+}
+
+@media (min-width: 720px) {
+  .cs-tirekey { grid-template-columns: 1fr; }
+}
+
+.cs-tirekey__item {
+  display: grid;
+  gap: 0.3rem;
+  justify-items: center;
+  min-width: 0;
+}
+
+/* Both tires are near-black rubber and the mesh is dark red, so the tile keeps
+   a light neutral plate in BOTH themes rather than following --cee-sunken: on
+   the dark navy card a photograph of a black tire is a black rectangle. It is
+   held off pure white so it does not glare beside a dark surface. */
+.cs-tirekey__img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  display: block;
+  padding: 0.3rem;
+  border-radius: var(--cee-radius-inner);
+  background: #f1f3f6;
+  border: 1px solid var(--cee-hairline);
+}
+
+[data-theme='dark'] .cs-tirekey__img {
+  background: #e6eaef;
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.cs-tirekey__label {
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  color: var(--cee-muted);
+  text-align: center;
+}
+
+.cs-tirekey__name {
+  grid-column: 1 / -1;
+  margin: 0.1rem 0 0;
+  font-family: var(--font-heading);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--cee-secondary);
+  text-align: center;
+}
+
+.cs-tirekey__size {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--cee-muted);
+}
+
+/* Set apart from the name: it is a caveat about what the plot beside it
+   covers, not part of the tire's designation. */
+.cs-tirekey__note {
+  display: inline-block;
+  margin-top: 0.25rem;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.3;
+  color: var(--cee-muted);
+}
