@@ -1221,12 +1221,20 @@
    so it is centred rather than stretched. */
 @media (min-width: 720px) {
   .cs-foot {
-    grid-template-columns: 8.25rem minmax(0, 1fr) auto;
+    /* The scale column is a FIXED width, not `auto`. On `auto` it tracked its
+       own widest label — "1.80" against "0.91", "87" against "261" — so the
+       plot column moved a few pixels whenever the peak changed, and the plan
+       view was re-laid-out for a reason that has nothing to do with the
+       figure. Everything about this card's geometry has to be a function of
+       the tire, never of the load. */
+    grid-template-columns: 8.25rem minmax(0, 1fr) 4.5rem;
     gap: 1.1rem;
     align-items: center;
   }
 
   .cs-foot > .cs-tirekey { align-self: start; }
+
+  .cs-foot .cee-rampbar--vertical { justify-content: center; }
 }
 
 /* Below the breakpoint the rail sits above the plot and the scale below it,

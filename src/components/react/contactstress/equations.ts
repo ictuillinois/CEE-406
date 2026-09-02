@@ -126,6 +126,44 @@ export function circleOutline(radius: number, steps = 96): { x: number[]; y: num
 }
 
 /** PCA equivalent rectangle, centered on the origin, as a closed polyline. */
+/**
+ * The half-extents of the plan view's axes, in mm.
+ *
+ * It takes NO load and NO pressure, and that is the whole point of it. The
+ * frame used to be sized to the current idealization, which grows with P/p —
+ * so the axis range moved every time the load slider moved, and with it the
+ * aspect ratio the card solves its height from. The canvas breathed while the
+ * student was trying to compare two states of the field, which is motion they
+ * have to subtract before they can see the thing the figure is for.
+ *
+ * Instead: the solution window, or the largest idealization the sliders can
+ * REACH, whichever is bigger. The widest case is the top of the load range
+ * against the bottom of the pressure range, because area is P/p.
+ *
+ * `length / 2` bounds all three outlines horizontally — the equal-area radius
+ * is 0.564*sqrt(A) against 0.692*sqrt(A) for L/2, and the PCA rectangle is
+ * shorter again — which `equations.test.mjs` re-checks over the whole box.
+ * Vertically it bounds Huang and PCA, both of which are 0.6L wide; the
+ * equal-area circle is taller than that and its cap runs past the top and
+ * bottom of the DTA frame, as it always has. Framing to the circle instead
+ * would cost about a fifth of the figure's height to show two arcs of an
+ * outline whose radius the legend already prints.
+ */
+export function planFrame(
+  tire: TireKey,
+  w: number,
+  h: number,
+  dx: number,
+  dy: number
+): { halfX: number; halfY: number } {
+  const reach = SAFE_RANGE[tire];
+  const widest = idealizedContact(reach.load[1], reach.pressure[0]);
+  return {
+    halfX: Math.max((w * dx) / 2, widest.length / 2) * 1.06,
+    halfY: Math.max((h * dy) / 2, widest.width / 2) * 1.06,
+  };
+}
+
 export function rectOutline(len: number, wid: number): { x: number[]; y: number[] } {
   const a = len / 2;
   const b = wid / 2;

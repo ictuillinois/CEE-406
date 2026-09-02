@@ -13,6 +13,8 @@ import assert from 'node:assert/strict';
 import {
   HUANG_SHAPE_FACTOR,
   idealizedContact,
+  planFrame,
+  SAFE_RANGE,
   huangOutline,
   circleOutline,
   rectOutline,
@@ -153,4 +155,86 @@ test('a heavier tire at the same pressure needs proportionally more area', () =>
   // ...and a higher pressure shrinks it, which is the whole point of Fig. 1.13.
   const c = idealizedContact(20000, 1.0);
   close(c.area / a.area, 0.7, 1e-12, 'area scales inversely with pressure');
+});
+
+/* ── The plan view's frame ────────────────────────────────────────────────
+ * The card solves its canvas height from the aspect ratio of these two
+ * numbers, so anything that moves them moves the figure under the reader.
+ * The frame was once sized to the current idealization and the canvas
+ * breathed with the load slider — 39 distinct heights across the DTA box,
+ * 383px to 421px, all of it motion that has nothing to do with the field.
+ * planFrame takes no load and no pressure, which is the guarantee; these
+ * tests are here for the other half of it, that freezing the frame did not
+ * quietly start clipping an outline.
+ */
+
+// The two shipped solution windows, from public/tools/contact-stress/manifest.json.
+const WINDOWS = {
+  DTA: { w: 161, h: 112, dx: 1.9937888198757765, dy: 2 },
+  WBT: { w: 161, h: 196, dx: 1.9937888198757765, dy: 1.9948979591836735 },
+};
+
+test('the plan-view frame holds still across the whole admissible box', () => {
+  for (const [tire, win] of Object.entries(WINDOWS)) {
+    const f = planFrame(tire, win.w, win.h, win.dx, win.dy);
+    const r = SAFE_RANGE[tire];
+    // Sweep far finer than any slider step. Nothing here may move the frame:
+    // planFrame cannot see the load, and this asserts nobody reintroduced it.
+    for (let i = 0; i <= 60; i++) {
+      const load = r.load[0] + ((r.load[1] - r.load[0]) * i) / 60;
+      for (let j = 0; j <= 60; j++) {
+        const p = r.pressure[0] + ((r.pressure[1] - r.pressure[0]) * j) / 60;
+        idealizedContact(load, p);
+        const g = planFrame(tire, win.w, win.h, win.dx, win.dy);
+        assert.equal(g.halfX, f.halfX, `${tire} halfX moved at ${load} N, ${p} MPa`);
+        assert.equal(g.halfY, f.halfY, `${tire} halfY moved at ${load} N, ${p} MPa`);
+      }
+    }
+  }
+});
+
+test('every outline the sliders can reach fits the frame horizontally', () => {
+  for (const [tire, win] of Object.entries(WINDOWS)) {
+    const f = planFrame(tire, win.w, win.h, win.dx, win.dy);
+    const r = SAFE_RANGE[tire];
+    for (let i = 0; i <= 60; i++) {
+      const load = r.load[0] + ((r.load[1] - r.load[0]) * i) / 60;
+      for (let j = 0; j <= 60; j++) {
+        const p = r.pressure[0] + ((r.pressure[1] - r.pressure[0]) * j) / 60;
+        const d = idealizedContact(load, p);
+        const where = `${tire} at ${Math.round(load)} N, ${p.toFixed(3)} MPa`;
+        assert.ok(d.length / 2 <= f.halfX, `Huang outline clips: ${where}`);
+        assert.ok(d.rectLength / 2 <= f.halfX, `PCA rectangle clips: ${where}`);
+        assert.ok(d.circleRadius <= f.halfX, `equal-area circle clips in x: ${where}`);
+        assert.ok(d.width / 2 <= f.halfY, `Huang and PCA clip in y: ${where}`);
+      }
+    }
+  }
+});
+
+test('the frame also holds the solution window it is drawn over', () => {
+  for (const [tire, win] of Object.entries(WINDOWS)) {
+    const f = planFrame(tire, win.w, win.h, win.dx, win.dy);
+    assert.ok(f.halfX >= (win.w * win.dx) / 2, `${tire} crops its own field in x`);
+    assert.ok(f.halfY >= (win.h * win.dy) / 2, `${tire} crops its own field in y`);
+  }
+});
+
+/* Recorded, not asserted as desirable: on DTA the equal-area circle is TALLER
+   than the frame — r reaches 146 mm against a half-height of 119 — so its cap
+   runs off the top and bottom, as it did before the frame was frozen. Framing
+   to the circle would cost about a fifth of the figure's height to show two
+   arcs of an outline whose radius the legend already prints. If that trade is
+   ever reversed, planFrame's halfY is the one line to change. */
+test('the DTA circle is known to overrun the frame vertically', () => {
+  const win = WINDOWS.DTA;
+  const f = planFrame('DTA', win.w, win.h, win.dx, win.dy);
+  const r = SAFE_RANGE.DTA;
+  const widest = idealizedContact(r.load[1], r.pressure[0]);
+  assert.ok(widest.circleRadius > f.halfY, 'if this now fits, delete this test');
+  // The wide-base frame is tall enough that it never does.
+  const wb = WINDOWS.WBT;
+  const fw = planFrame('WBT', wb.w, wb.h, wb.dx, wb.dy);
+  const wbWidest = idealizedContact(SAFE_RANGE.WBT.load[1], SAFE_RANGE.WBT.pressure[0]);
+  assert.ok(wbWidest.circleRadius <= fw.halfY, 'the wide-base circle should fit');
 });

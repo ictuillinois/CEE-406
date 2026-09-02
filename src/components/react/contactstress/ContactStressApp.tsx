@@ -34,7 +34,7 @@ import {
   type TirePack, type TireType,
 } from './predictor.ts';
 import {
-  idealizedContact, huangOutline, circleOutline, rectOutline,
+  idealizedContact, planFrame, huangOutline, circleOutline, rectOutline,
   fieldMetrics, compare, decimate, peakRow, rowProfile, colProfile,
   CONTACT_THRESHOLD, SPEED_KMH, SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, clampTo,
   forceOut, forceUnit, pressureOut, pressureUnit, lengthOut, lengthUnit,
@@ -318,11 +318,30 @@ export default function ContactStressApp() {
 
     /* 2. plan view: the predicted patch with the textbook outlines on top. */
     if (planRef.current) {
+      /* THE FRAME IS FIXED FOR THE WHOLE REACH OF THE SLIDERS, and is a
+         function of the tire alone — never of the current load.
+
+         It used to be sized to `ideal`, which grows with P/p. So every time
+         the load moved, the axis range moved with it, and because the height
+         below is solved from the range's aspect ratio, the canvas itself
+         breathed. That is motion the student has to subtract before they can
+         see the only thing the card is for: how the distribution changes.
+         A figure that resizes while you compare two states of it is worse
+         than a figure that wastes a little room.
+
+         So: worst case over SAFE_RANGE — the largest idealization the sliders
+         can reach, at the top of the load range and the bottom of the
+         pressure range. `ideal.length` bounds all three outlines, since the
+         equal-area radius is 0.564*sqrt(A) against 0.692*sqrt(A) for L/2 and
+         the PCA rectangle is shorter still. Nothing clips that did not clip
+         before, and the outlines now grow and shrink inside a frame that
+         holds still. */
       // Equal aspect, but `constrain: 'domain'` shrinks the plotting box to
       // fit rather than padding the x range out to the width of the card —
       // without it the footprint occupies a third of the figure.
-      const halfX = lOut(Math.max((w * dx) / 2, ideal.length / 2) * 1.06);
-      const halfY = lOut(Math.max((h * dy) / 2, ideal.width / 2) * 1.06);
+      const frame = planFrame(tire, w, h, dx, dy);
+      const halfX = lOut(frame.halfX);
+      const halfY = lOut(frame.halfY);
       /* Cells below the contact threshold are left blank rather than painted
          at the pale end of the ramp. The generator lays a low positive haze
          over the whole raster, and coloring it makes the footprint look like
@@ -489,7 +508,7 @@ export default function ContactStressApp() {
         plotConfig
       );
     }
-  }, [result, spec, theme, view, overlay, center, unit]);
+  }, [result, spec, theme, view, overlay, center, unit, tire]);
 
   useEffect(() => {
     // Coalesce a slider drag into one redraw per animation frame.
