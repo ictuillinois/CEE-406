@@ -1605,3 +1605,47 @@ select.cee-input {
   background-repeat: no-repeat;
   padding-right: 1.9rem;
 }
+
+/* ── A module the course has not reached yet ───────────────────────────────
+ * Dimmed, inert, and still in the strip. The tab stays because the ladder is
+ * the teaching content — a student should see that Boussinesq, Burmister and
+ * Jones are rungs of one thing before the rungs open — and because a strip
+ * that grows a tab a week reads as a site under construction.
+ *
+ * `aria-disabled` rather than `disabled`: a disabled button fires no pointer
+ * events in most browsers, so its `title` never appears, and the title is
+ * where the chapter reference goes once the ref line is carrying the lock
+ * label instead.
+ */
+.cee-modules__tab[aria-disabled='true'] {
+  cursor: not-allowed;
+  color: var(--cee-muted);
+  opacity: 0.55;
+}
+
+.cee-modules__tab[aria-disabled='true']:hover {
+  background: none;
+  color: var(--cee-muted);
+}
+
+.cee-modules__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cee-modules__lock {
+  flex: none;
+  opacity: 0.85;
+}
+
+/* A locked tab is out of the tab order, so it is never reached by keyboard
+   and the global :focus-visible ring on it can only come from a mouse click
+   landing on it. A ring on a dimmed, inert control reads as "this is
+   interactive after all", so it is suppressed here — and only here, where
+   aria-disabled and tabindex="-1" guarantee no keyboard user loses an
+   indicator they could have used. */
+.cee-modules__tab[aria-disabled='true']:focus,
+.cee-modules__tab[aria-disabled='true']:focus-visible {
+  outline: none;
+}

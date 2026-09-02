@@ -46,6 +46,7 @@ async function bundle() {
     "export { default as ChartsModule } from '../../src/components/react/lea/modules/ChartsModule';",
     "export { default as ChartReader } from '../../src/components/react/lea/modules/ChartReader';",
     "export { CHARTS } from '../../src/components/react/lea/charts.ts';",
+    "export { moduleLock } from '../../src/data/release.ts';",
   ].join('\n'));
 
   await build({
@@ -90,6 +91,64 @@ test('every chart in the catalog renders in the reader', () => {
     assert.ok(html.length > 500, `${spec.id} rendered only ${html.length} characters`);
     assert.ok(html.includes(spec.figure), `${spec.id} does not name its figure`);
   }
+});
+
+/* ── The module gate ─────────────────────────────────────────────────────
+ * Which modules of a tab-shell tool are open is `release.ts`'s decision, and
+ * on a client island it is enforced nowhere else — there is no route to
+ * remove and no file to rename, so if the shell stops honouring the gate a
+ * locked module is simply live again and nothing else notices. The failure
+ * mode that actually costs something is subtler than that, though: the tool
+ * opening on a tab that is locked, which leaves a student on a dimmed,
+ * unreachable panel with no way to see what they came for.
+ */
+test('lea opens on a released module and renders only that one', () => {
+    const html = renderToString(React.createElement(mod.LeaApp));
+
+    // The charts module's own control, so this is the panel that rendered.
+    assert.ok(html.includes('chart-pick'),
+        'lea did not open on "Solutions by chart"');
+
+    // And no locked module's panel came with it.
+    for (const [id, marker] of [
+        ['one', 'ol-q'], ['two', 'tl-e1'], ['three', 'tr-h1'], ['multi', 'ml-q'],
+    ]) {
+        if (mod.moduleLock('lea', id).released) continue;
+        assert.ok(!html.includes(`id="${marker}"`),
+            `the ${id} module is locked but its panel rendered`);
+    }
+});
+
+test('every module keeps a tab, and a locked one is inert', () => {
+    const html = renderToString(React.createElement(mod.LeaApp));
+
+    // The ladder is the teaching content: the tabs stay in the strip whether
+    // or not the course has reached them.
+    for (const label of [
+        'Solutions by chart', 'One layer', 'Two layers', 'Three layers', 'N layers',
+    ]) {
+        assert.ok(html.includes(label), `the ${label} tab is missing from the strip`);
+    }
+
+    const locked = ['one', 'two', 'three', 'multi'].filter(
+        id => !mod.moduleLock('lea', id).released);
+    assert.ok(locked.length > 0, 'expected the solver modules to be locked for now');
+
+    for (const id of locked) {
+        const tab = new RegExp(`<button[^>]*id="lea-tab-${id}"[^>]*>`).exec(html);
+        assert.ok(tab, `no tab rendered for the locked ${id} module`);
+        assert.match(tab[0], /aria-disabled="true"/,
+            `the ${id} tab is locked but not marked aria-disabled`);
+        assert.match(tab[0], /is-locked/, `the ${id} tab carries no locked styling`);
+        assert.doesNotMatch(tab[0], /aria-selected="true"/,
+            `the ${id} tab is locked but selected`);
+    }
+
+    // The open one is the selected one.
+    const open = new RegExp('<button[^>]*id="lea-tab-charts"[^>]*>').exec(html);
+    assert.ok(open && /aria-selected="true"/.test(open[0]),
+        'the charts tab should be the selected one');
+    assert.doesNotMatch(open[0], /aria-disabled/, 'the open tab must not be disabled');
 });
 
 test('a chart with no anchors still renders its reader', () => {

@@ -68,6 +68,36 @@ export const TOOL_WEEK: Record<string, number> = {
   // e.g.  'stress-explorer': 5,
 };
 
+/* ── 2b. Tool modules ─────────────────────────────────────────────────────
+   A tool can be a tab shell over several modules, and the modules unlock on
+   their own schedule: `lea` opens on the chapter's design charts, and its
+   four solver modules wait for the homeworks that need them.
+
+   A module has only ONE of the three meanings of hidden — no tab. It is not
+   a route and not a file, so there is nothing to rename and nothing to keep
+   out of public/, and the module's code ships inside the island's bundle
+   whether or not its tab is shown. That is deliberate rather than an
+   oversight, but it is also the limit of what this can do: these are solvers
+   for equations printed in a textbook, in a public repository, so a dimmed
+   tab is a sequencing decision and not a way of keeping anything back.
+   **Never gate anything here that would matter if it were read.** A homework
+   handout or a key belongs in RELEASED_HOMEWORKS, which does remove the file.
+
+   A tool with no entry has every module released, so this costs the other
+   twenty tools nothing.                                                    */
+
+export const RELEASED_TOOL_MODULES: Record<string, Record<string, true>> = {
+  lea: {
+    charts: true,
+    // one, two, three, multi — the solver modules, unlocking with HW3/HW4.
+  },
+};
+
+/** Planned release week per module, for the locked label. Optional. */
+export const TOOL_MODULE_WEEK: Record<string, Record<string, number>> = {
+  // e.g.  lea: { one: 5 },
+};
+
 /* ── 3. Textbook ──────────────────────────────────────────────────────────
    Read this before changing it.
 
@@ -119,8 +149,21 @@ export function toolLock(slug: string): LockState {
   return { released, label: released ? '' : lockLabel(TOOL_WEEK[slug]) };
 }
 
+/**
+ * One module of a multi-module tool. A tool absent from RELEASED_TOOL_MODULES
+ * has all of its modules open, so callers do not have to know which tools are
+ * gated.
+ */
+export function moduleLock(slug: string, moduleId: string): LockState {
+  const gate = RELEASED_TOOL_MODULES[slug];
+  const released = gate === undefined || gate[moduleId] === true;
+  return { released, label: released ? '' : lockLabel(TOOL_MODULE_WEEK[slug]?.[moduleId]) };
+}
+
 export const isHomeworkReleased = (id: string) => RELEASED_HOMEWORKS[id] === true;
 export const isToolReleased = (slug: string) => RELEASED_TOOLS[slug] === true;
+export const isModuleReleased = (slug: string, moduleId: string) =>
+  moduleLock(slug, moduleId).released;
 
 /** Counts for the copy on the landing page, so it can never overstate. */
 export const releasedToolCount = () => Object.keys(RELEASED_TOOLS).length;
