@@ -26,8 +26,18 @@ export interface Tool {
    * thing working sells it better than a 120x44 motif ever will. The glyph is
    * still required: it is what the compact lists and locked cards use.
    *
-   * These are the same captures the E-Labs site uses, so a tool looks the same
-   * wherever a student meets it.
+   * REQUIRED ON EVERY RELEASED TOOL, and release.test.mjs enforces it. A live
+   * tool without one shows a stroke glyph next to three tools showing real
+   * screenshots, and reads on the index as the unfinished card in the row —
+   * which is exactly what happened to `lea` for a week after it shipped. A
+   * locked tool has no shot, because there is nothing to photograph yet.
+   *
+   * House style, so the four read as one set: the tool at 1312x788 in LIGHT
+   * mode with the nav bar at the top, its own control panel down the left,
+   * and its principal output filling the rest — the frame a student sees a
+   * few seconds after opening it. Encode with sharp at webp quality ~80; the
+   * cards crop to 16:9, so nothing essential belongs in the top or bottom
+   * eighth.
    */
   image?: string;
   /** Alt text for `image`. Required whenever image is set. */
@@ -70,6 +80,10 @@ export const tools: Tool[] = [
     color: '#0ea5e9',
     hws: ['HW3', 'HW4'],
     ref: 'Huang Ch. 2 · Boussinesq to Burmister',
+    image: 'lea.webp',
+    imageAlt: 'Figure 2.2 redrawn as log paper: seventeen curves of vertical stress against depth ' +
+      'in a boxed frame with tick values on all four sides, each curve numbered in a gap in its ' +
+      'own ink, and a dashed curve for an r/a the book never printed.',
     desc: "The whole of Chapter 2 in five modules — Boussinesq's half-space, Burmister's two layers, Jones' three, the general N-layer solve, and every design chart in the chapter redrawn from the equations behind it and readable backwards as well as forwards.",
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M10 10 H110" opacity="0.5" stroke-width="3"/>

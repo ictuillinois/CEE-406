@@ -22,7 +22,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   TOKENS, HUES, HUE_ORDER, RAMPS, rampScale, divergingScale, mixHex, withAlpha,
-  rampSeries,
+  rampSeries, axis, paperAxis, paperFrame,
 } from './chartTheme.ts';
 
 const MODES = /** @type {const} */ (['light', 'dark']);
@@ -318,5 +318,116 @@ test('rampSeries spans the ramp rather than crowding one end', () => {
     const last = relLuminance(rgb(s[s.length - 1]));
     assert.ok(Math.abs(first - last) > 0.15,
       `${theme}: the family spans only ${Math.abs(first - last).toFixed(3)} in luminance`);
+  }
+});
+
+/* ── The paper frame (§B6 deviation 5) ───────────────────────────────────
+ * `paperAxis` is the one axis vocabulary in this file that deliberately
+ * breaks §A7, and `paperFrame` exists because Plotly has no switch for what
+ * it does. Both fail silently: a twin that loses its `overlaying` becomes a
+ * second, unrelated pair of axes and the figure quietly rescales; a twin that
+ * keeps its `showgrid` doubles every gridline at half opacity; and a twin
+ * with no trace pointing at it is dropped, taking the top and right tick
+ * values with it. None of that throws.
+ */
+
+test('the paper frame is closed on all four sides', () => {
+  for (const m of MODES) {
+    const x = paperAxis(m, { title: 'σz/q × 100 (%)', type: 'log', range: [-1, 2], minorDtick: 'D1' });
+    const y = paperAxis(m, { title: 'z/a', range: [10, 0], tickvals: [0, 5, 10], minorDtick: 0.5 });
+    const { axes, anchor } = paperFrame(m, x, y);
+
+    // The primaries draw the box; the twins must not draw it again.
+    assert.equal(axes.xaxis.showline, true, `${m}: the x axis draws no frame line`);
+    assert.equal(axes.xaxis.mirror, true, `${m}: the frame is not mirrored to the far side`);
+    assert.equal(axes.yaxis.mirror, true);
+    assert.equal(axes.xaxis2.showline, false, `${m}: the twin would double the top border`);
+    assert.equal(axes.yaxis2.showline, false);
+
+    // Tick VALUES on all four sides — the whole point of the twins.
+    assert.equal(axes.xaxis2.showticklabels, true);
+    assert.equal(axes.yaxis2.showticklabels, true);
+    assert.equal(axes.xaxis2.side, 'top');
+    assert.equal(axes.yaxis2.side, 'right');
+    assert.equal(axes.xaxis2.overlaying, 'x',
+      `${m}: without overlaying, the twin is a second axis and the figure rescales`);
+    assert.equal(axes.yaxis2.overlaying, 'y');
+
+    // Same scale, or the two sides of the frame disagree about the data.
+    assert.deepEqual(axes.xaxis2.range, axes.xaxis.range);
+    assert.deepEqual(axes.yaxis2.range, axes.yaxis.range);
+    assert.equal(axes.xaxis2.type, axes.xaxis.type);
+    assert.deepEqual(axes.yaxis2.tickvals, axes.yaxis.tickvals);
+
+    // One grid, one title.
+    assert.equal(axes.xaxis2.showgrid, false, `${m}: the twin would double every gridline`);
+    assert.equal(axes.xaxis2.minor.showgrid, false);
+    assert.equal(axes.xaxis2.title, undefined, `${m}: the axis title would be printed twice`);
+    assert.equal(axes.yaxis2.title, undefined);
+
+    // Plotly only lays out an axis some trace lives on.
+    assert.equal(anchor.xaxis, 'x2');
+    assert.equal(anchor.yaxis, 'y2');
+    assert.equal(anchor.hoverinfo, 'skip', 'the anchor must never answer a hover');
+    assert.equal(anchor.opacity, 0);
+
+    // A trace carries DATA even where the axis range is log10. Handing the
+    // anchor the range value itself would put it at 10^-1 of where it goes,
+    // and on a log axis a non-positive point is dropped outright.
+    assert.equal(anchor.x[0], 0.1, `${m}: the anchor is not in data units on a log axis`);
+    assert.equal(anchor.y[0], 10);
+  }
+});
+
+test('a paper axis is ruled, and an ordinary axis still is not', () => {
+  for (const m of MODES) {
+    const paper = paperAxis(m, { title: 'z/a', range: [0, 10], minorDtick: 0.5 });
+    assert.equal(paper.showgrid, true);
+    assert.equal(paper.minor.showgrid, true);
+    assert.equal(paper.ticks, 'outside');
+    assert.equal(paper.minor.dtick, 0.5);
+    // Two weights, so the labelled divisions read as the labelled ones.
+    assert.notEqual(paper.gridcolor, paper.minor.gridcolor,
+      `${m}: major and minor divisions must not be the same weight`);
+    assert.equal(paper.gridcolor, TOKENS[m].gridStrong);
+    assert.equal(paper.minor.gridcolor, TOKENS[m].gridFaint);
+    assert.equal(paper.linecolor, TOKENS[m].frame);
+
+    // §A7 is still the default for every other chart in the toolbox.
+    const ordinary = axis(m, 'z/a');
+    assert.equal(ordinary.showline, false);
+    assert.equal(ordinary.showgrid, false);
+    assert.equal(ordinary.ticks, '');
+
+    // Omitting the minor division must mean no minor grid, not a default one.
+    assert.equal(paperAxis(m, { range: [0, 10] }).minor.showgrid, false);
+  }
+});
+
+test('the graph-paper chrome stays behind the data in both modes', () => {
+  // Ruled paper that is louder than the curves drawn on it is worse than no
+  // ruling at all — §A7's actual argument, honoured inside the deviation.
+  for (const m of MODES) {
+    const surface = card(m);
+    const frame = contrast(TOKENS[m].frame, surface);
+    const major = contrast(TOKENS[m].gridStrong, surface);
+    const minor = contrast(TOKENS[m].gridFaint, surface);
+    // Measured against rampSeries, not the categorical six: an ordered family
+    // of curves is what a reproduced design chart draws, and its pale end is
+    // the faintest thing that will ever sit on this paper.
+    const faintestCurve = Math.min(
+      ...['orange', 'blue', 'emerald', 'neutral'].flatMap(
+        r => rampSeries(r, m, 17).map(c => contrast(c, surface))
+      )
+    );
+
+    assert.ok(frame > major && major > minor,
+      `${m}: the frame, the major grid and the minor grid must read as three weights ` +
+      `(got ${frame.toFixed(2)}, ${major.toFixed(2)}, ${minor.toFixed(2)})`);
+    assert.ok(frame < faintestCurve,
+      `${m}: the frame at ${frame.toFixed(2)}:1 is louder than the faintest curve it ` +
+      `carries at ${faintestCurve.toFixed(2)}:1 — ruled paper must sit behind the data`);
+    assert.ok(minor > 1.02,
+      `${m}: the minor grid at ${minor.toFixed(3)}:1 is invisible, so the paper is not ruled`);
   }
 });

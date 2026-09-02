@@ -649,8 +649,89 @@ legend:         showlegend: false — see below
    stack matters (LCA stages, ESAL contributions), use §8.10's *detached* multi-segment composition
    bar rendered as HTML/SVG rather than a Plotly stack.
 
+5. **Reproduced design charts get log paper, not stripped chrome.** §A7 removes the border, the axis
+   lines, the ticks and all but three to five gridlines. That is right for a dashboard, where the
+   reader wants a trend and the precision lives in a KPI beside the chart. It is wrong for a figure
+   that **is** the instrument: Huang's Chapter 2 charts are read by measurement — put a ruler on the
+   page, run it to an axis, interpolate between two printed values — and stripped of the frame there
+   is nothing to run the ruler to on three of the four sides, while a five-line grid removes the
+   interpolation the chart exists for. So `chartTheme.ts` carries a second, narrower axis
+   vocabulary, used only by figures of this kind and never by an ordinary chart:
+
+   ```
+   paperAxis(theme, {title, type, range, tickvals, minorDtick})
+       showline + mirror (a boxed frame), ticks 'outside',
+       major grid at every printed tick in `frame/gridStrong`,
+       minor grid at `minorDtick` in `frame/gridFaint`
+       — 'D1'/'D2' on a log axis, a number on a linear one
+   paperFrame(theme, xaxis, yaxis) -> {axes, anchor}
+       the two axes plus their label twins on the top and the right,
+       plus the invisible trace that makes Plotly lay the twins out
+   ```
+
+   **Tick values on all four sides is the point of the deviation**, and Plotly has no switch for it:
+   an axis draws its labels on one side only, so the opposite side is a second axis `overlaying` the
+   first with `showline: false` and `showgrid: false`. Plotly also only lays out an axis that some
+   trace lives on, so `paperFrame` returns a transparent, hover-skipping two-coordinate trace that
+   must be pushed onto the trace list. Omit it and the top and right labels silently do not appear.
+
+   Three tokens exist for this and nothing else — `frame`, `gridStrong`, `gridFaint` — and they are
+   opaque rather than `rgba()` like `grid` and `hairline`, because `chartTheme.test.mjs` gates them:
+   the frame must read louder than the major grid and the major louder than the minor, and the frame
+   must stay **quieter than the faintest curve it carries** (measured against `rampSeries`, which is
+   what an ordered family of design curves is drawn with). Light is the tight side — the frame is
+   1.94:1 on white against a faintest ramp stop of 2.14:1. Ruled paper louder than the ink on it is
+   worse than no ruling, which is §A7's own argument, honoured inside the deviation.
+
+   Two more rules travel with the frame, both in `lea/charts.ts` and both testable:
+
+   - **Curve labels are contour labels, not a legend.** Seventeen r/a curves is far past what a
+     legend can carry, so each curve is named in a gap in its own ink — an annotation with the
+     surface as its `bgcolor`, which breaks the line exactly as an engraver would have left a gap
+     for it — and a caption in the emptiest corner says what the numbers mean. Placement is solved
+     in *frame* coordinates by `curveLabelSpots`, weighted by the figure's aspect ratio, because
+     clearance is a question about the drawing and asking it in data units gets the wrong answer on
+     any log axis.
+   - **The printed curves are a sample, and the chart says so.** A family value the book never drew
+     is computed and drawn dashed between the ones it did. This is the whole difference between the
+     redraw and the page it redraws, and it is worth a trace.
+
+6. **A nomograph is drawn as a nomograph.** Figures 2.21 and 2.31 are not plots: each is a lattice
+   of two families crossing over an abscissa that carries no variable, no ticks and no title. They
+   were first *rectified* here — one family put on a real axis — on the reasoning that a blank
+   abscissa cannot be reproduced. That threw away the figure. The mesh **is** the figure, and the
+   abscissa turns out not to be arbitrary:
+
+   ```
+   x = (the family value's position along its own family)
+     + (the sweep value's position along its own family)     // each 0…1, log or linear as spaced
+   ```
+
+   Everything on both printed plates follows from that one line: the four corners of Figure 2.21's
+   rhombus, the run of H labels down the left of Figure 2.31 and A labels down its right, and
+   "A = 0.1  H = 8" printed together at the bottom apex — because those two curve ends land on the
+   same x. `sampleLattice` builds it, `latticeLabels` names each curve at the end the plate names it
+   at, and every crossing carries the true computed value.
+
+   The abscissa is still drawn blank, because there is still nothing on it to read; a tick there
+   would be an invitation to read one. The **inverse survives, though**: x fixes one combination of
+   the two parameters and the ordinate fixes another, so a point in the mesh solves to a
+   (family, sweep) pair — a question the printed page cannot answer at all. `invertLattice` does it,
+   and three of its cases are edges a sign-change scan does not reach on its own: a root on the end
+   of the reachable slice (the whole left and bottom edge of the mesh), a root at a corner where the
+   slice is a single point, and a **tangency**, where the response turns over exactly at a printed
+   crossing so the residual touches zero and retreats without changing sign. All three are printed
+   crossings — the points a student actually types — and all three are pinned in `charts.test.mjs`.
+
 Anything Plotly cannot express to standard gets rendered as inline SVG/HTML instead of being
 downgraded. The standard wins; the library does not.
+
+**One Plotly trap, verified against the rendered SVG rather than the reference docs.** On a **log**
+axis, an axis `range` and an **annotation** position are given in log10; a **trace** and a **shape**
+are given in data units. Getting it wrong never errors: the mark is placed at `10^value`, three
+decades off the page, or at `log10(value)`, which on Figure 2.2 is about 1.5%. The `lea` reader
+carried both mistakes at once — every curve label off the right edge, every crosshair in the wrong
+place — and nothing in the console said so.
 
 ## B7. Component binding
 

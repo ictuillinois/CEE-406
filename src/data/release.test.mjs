@@ -84,6 +84,64 @@ test('every released slug actually names something that exists', () => {
     }
 });
 
+/* ── The miniature ───────────────────────────────────────────────────────
+ * Every card on the landing page and the tools index leads with a screenshot
+ * of the tool running, and falls back to a 120x44 stroke glyph when there is
+ * none. The fallback is right for a LOCKED tool — there is nothing to
+ * photograph yet — and wrong for a live one: it sits in a row beside real
+ * screenshots and reads as the unfinished card. `lea` shipped that way and
+ * looked half-built next to the other three for a week.
+ *
+ * So a released tool must ship its shot, and the file must exist: the catalog
+ * builds the src from the slug, and a missing file is a broken image on the
+ * front page rather than a build error.
+ */
+test('every released tool ships a miniature, and no locked one does', () => {
+    const src = readFileSync(join(ROOT, 'src', 'data', 'tools.ts'), 'utf8');
+
+    // One entry per tool, split on the slug line so alt text with braces in
+    // it cannot confuse a brace-counting parse.
+    const entries = new Map();
+    const parts = src.split(/\n\s*\{\n/);
+    for (const part of parts) {
+        const slug = /^\s*slug:\s*'([^']+)'/m.exec(part);
+        if (!slug) continue;
+        entries.set(slug[1], part);
+    }
+    assert.ok(entries.size >= 20, `only parsed ${entries.size} tools out of tools.ts`);
+
+    for (const slug of toolDirs) {
+        const entry = entries.get(slug);
+        assert.ok(entry, `src/pages/tools/${slug}/ has no entry in tools.ts`);
+        const image = /^\s*image:\s*'([^']+)'/m.exec(entry);
+
+        if (!releasedTools.has(slug)) {
+            assert.equal(image, null,
+                `${slug} is locked but carries a screenshot — a locked card renders the glyph, ` +
+                `so the file would ship unreferenced`);
+            continue;
+        }
+
+        assert.ok(image,
+            `${slug} is released but has no \`image\`, so its card falls back to the stroke ` +
+            `glyph and reads as unfinished beside the tools that have one. Capture it at ` +
+            `1312x788 in light mode and add image + imageAlt.`);
+        assert.match(image[1], /^[a-z0-9-]+\.webp$/,
+            `${slug}: the screenshot should be a webp named for the tool`);
+        assert.ok(/^\s*imageAlt:/m.test(entry),
+            `${slug} sets image without imageAlt — the card renders an <img> with no alt text`);
+
+        const file = join(PUBLIC, 'tools', image[1]);
+        assert.ok(existsSync(file),
+            `${slug} points at public/tools/${image[1]}, which does not exist — the card would ` +
+            `render a broken image on the landing page`);
+        const kb = statSync(file).size / 1024;
+        assert.ok(kb > 8 && kb < 400,
+            `${slug}: public/tools/${image[1]} is ${kb.toFixed(0)} kB, outside the 8-400 kB the ` +
+            `other cards sit in`);
+    }
+});
+
 /* ── The copyright rule ────────────────────────────────────────────────── */
 
 test('no textbook material is served from public/', () => {

@@ -20,12 +20,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../../Tip';
 import {
-  useTheme, chartColors, baseLayout, plotConfig, axis, gridAxis,
+  useTheme, chartColors, baseLayout, plotConfig, paperAxis, paperFrame,
   rampSeries, hoverLabel, fmt, TOKENS,
 } from '../../chartTheme';
 import ChartFigure from '../../ui/ChartFigure';
-import type { ChartSpec } from '../charts.ts';
-import { sampleCurve, invertFamily, nearestCurve } from '../charts.ts';
+import type { AxisSpec, ChartSpec, CurvePoint, LatticeCurve } from '../charts.ts';
+import {
+  sampleCurve, invertFamily, nearestCurve,
+  curveLabelSpots, emptiestCorner, CORNER_XY,
+  sampleLattice, latticeLabels, latticeX, invertLattice, latticeCorner, LATTICE_RANGE,
+} from '../charts.ts';
 
 /** Which ramp carries which chart, per the §B4 semantic binding. */
 function rampFor(spec: ChartSpec) {
@@ -34,6 +38,19 @@ function rampFor(spec: ChartSpec) {
   if (/factor C/i.test(spec.value.label)) return 'neutral' as const;
   return 'orange' as const;
 }
+
+/**
+ * The second family of a lattice.
+ *
+ * §B4 binds a hue to the physical quantity, and on every other chart the
+ * quantity is the value axis — one ramp, ordered along the family. A
+ * nomograph draws TWO families at once and the reader's first job is telling
+ * them apart, so the second gets its own ramp. It is still ordered and still
+ * a ramp; the pair is the §B4 orange/blue adjacency, which the palette test
+ * already gates as distinguishable.
+ */
+const secondRamp = (first: ReturnType<typeof rampFor>) =>
+  (first === 'blue' ? 'orange' : 'blue') as 'orange' | 'blue';
 
 const fmtParam = (v: number) =>
   Math.abs(v) >= 100 || (v !== 0 && Math.abs(v) < 0.01) ? v.toPrecision(3) : String(+v.toFixed(3));
@@ -66,11 +83,19 @@ function pointerData(gd: any, evt: MouseEvent): { x: number; y: number } | null 
 interface Reading {
   /** Where on the chart, in (value, sweep). */
   value: number;
+  /** The sweep coordinate — or, on a nomograph, the lattice abscissa. */
   sweep: number;
   /** Family values whose curve passes through it; null when not solved yet. */
   roots: number[] | null;
   /** The nearest printed curve. */
   nearest: { familyValue: number; sweep: number; value: number } | null;
+  /**
+   * Nomographs only: the (family, sweep) pairs whose curves cross here. A
+   * point on a lattice looks like it carries less than a point on a plot,
+   * because the abscissa means nothing — but x fixes one combination of the
+   * two parameters and the ordinate fixes another, so the pair is determined.
+   */
+  pairs: { family: number; sweep: number }[] | null;
 }
 
 export default function ChartReader({ spec }: { spec: ChartSpec }) {
@@ -84,6 +109,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
   const [pinned, setPinned] = useState<Reading | null>(null);
   const [busy, setBusy] = useState(false);
   const [curves, setCurves] = useState<{ fv: number; pts: { sweep: number; value: number }[] }[]>([]);
+  const [lattice, setLattice] = useState<LatticeCurve[] | null>(null);
 
   // A fresh chart starts on its first anchor when it has one, so the tool
   // opens on a case the book has already worked out.
@@ -112,8 +138,22 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
     let dead = false;
     setBusy(true);
     const build = () => {
+      if (spec.nomograph) {
+        // The mesh already carries the family curves, sampled the same way,
+        // so the reading machinery below takes them from it rather than
+        // solving the whole family a second time.
+        const mesh = sampleLattice(spec, panelValue);
+        if (dead) return;
+        setLattice(mesh);
+        setCurves(mesh.filter(c => c.kind === 'family').map(c => ({
+          fv: c.label,
+          pts: c.pts.map(pt => ({ sweep: pt.sweep, value: pt.value })),
+        })));
+        setBusy(false);
+        return;
+      }
       const out = spec.family.values.map(fv => ({ fv, pts: sampleCurve(spec, fv, panelValue) }));
-      if (!dead) { setCurves(out); setBusy(false); }
+      if (!dead) { setLattice(null); setCurves(out); setBusy(false); }
     };
     const t = window.setTimeout(build, spec.heavy ? 40 : 0);
     return () => { dead = true; window.clearTimeout(t); };
@@ -134,16 +174,57 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
    * fine on a click, impossible on a mousemove. Heavy charts therefore snap
    * while the pointer moves and solve when it is clicked.
    */
-  const read = useMemo(() => (valueAt: number, sweepAt: number, solve: boolean): Reading => ({
-    value: valueAt,
-    sweep: sweepAt,
-    roots: solve ? invertFamily(spec, valueAt, sweepAt, panelValue) : null,
-    nearest: nearestCurve(spec, valueAt, sweepAt, curves),
-  }), [spec, panelValue, curves]);
+  const read = useMemo(() => (valueAt: number, sweepAt: number, solve: boolean): Reading => {
+    if (spec.nomograph) {
+      // `sweepAt` is the lattice abscissa here, and no nearest curve is
+      // offered: nearestCurve measures in the value/sweep frame, which is not
+      // the frame this chart is drawn in.
+      return {
+        value: valueAt, sweep: sweepAt, roots: null, nearest: null,
+        pairs: solve ? invertLattice(spec, sweepAt, valueAt, panelValue) : null,
+      };
+    }
+    return {
+      value: valueAt,
+      sweep: sweepAt,
+      roots: solve ? invertFamily(spec, valueAt, sweepAt, panelValue) : null,
+      nearest: nearestCurve(spec, valueAt, sweepAt, curves),
+      pairs: null,
+    };
+  }, [spec, panelValue, curves]);
+
+  /* ── The curve you asked for ──────────────────────────────────────────
+   * The whole difference between this and the page it redraws. Foster and
+   * Ahlvin drew seventeen values of r/a because seventeen is what fits on a
+   * sheet of paper; the function underneath is continuous, and a reader who
+   * needs r/a = 3.4 is meant to interpolate by eye between the 3 and the 4.
+   * Here that curve is simply computed and drawn through the gap, dashed so
+   * it cannot be mistaken for one the book printed.
+   *
+   * It is deferred and debounced for the same reason the family is: on the
+   * conversion-factor chart every point is a critical-strain search, and this
+   * would otherwise run one per keystroke.
+   */
+  const [userCurve, setUserCurve] = useState<CurvePoint[] | null>(null);
+  useEffect(() => {
+    const [lo, hi] = spec.family.range;
+    const printed = spec.family.values.some(v => Math.abs(v - familyValue) < 1e-9);
+    if (!Number.isFinite(familyValue) || printed || familyValue < lo || familyValue > hi) {
+      setUserCurve(null);
+      return;
+    }
+    let dead = false;
+    const t = window.setTimeout(() => {
+      const pts = sampleCurve(spec, familyValue, panelValue);
+      if (!dead) setUserCurve(pts);
+    }, spec.heavy ? 320 : 140);
+    return () => { dead = true; window.clearTimeout(t); };
+  }, [spec, familyValue, panelValue]);
 
   /* ── Draw ─────────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (!curves.length || !plotRef.current) return;
+    if (spec.nomograph && !lattice) return;
     let dead = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
@@ -151,44 +232,198 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       const c = chartColors(theme);
       const t = TOKENS[theme];
 
+      // A nomograph is a lattice over an abscissa that carries no variable,
+      // so the value/sweep plane the other charts are drawn in does not exist
+      // here: x is the mesh coordinate and y is always the value.
+      const nomo = spec.nomograph === true && lattice !== null;
       const onX = spec.valueOnX;
       const putX = (v: number, s: number) => (onX ? v : s);
       const putY = (v: number, s: number) => (onX ? s : v);
 
-      const traces: any[] = curves.map((cv, i) => ({
-        x: cv.pts.map(p => putX(p.value, p.sweep)),
-        y: cv.pts.map(p => putY(p.value, p.sweep)),
-        mode: 'lines',
-        name: `${spec.family.symbol} = ${cv.fv}`,
-        line: { color: colors[i], width: 1.9, shape: 'spline', smoothing: 0.6 },
-        hovertemplate:
-          `${spec.family.symbol} = ${cv.fv}<br>${spec.sweep.label} = %{${onX ? 'y' : 'x'}:.3g}` +
-          `<br>${spec.value.label} = %{${onX ? 'x' : 'y'}:.4g}<extra></extra>`,
-      }));
+      /* Plotly is asymmetric about log axes and silent about it. On a log
+         axis an axis `range` and an ANNOTATION position are given in log10;
+         a trace and a SHAPE are given in data units. Getting it wrong never
+         errors — the mark is simply placed at 10^value, three decades off
+         the page, or at log10(value), which on this chart is somewhere
+         around 1.5%. Both were verified against the rendered SVG rather
+         than against the reference docs, which describe shapes as log too. */
+      const toAx = (a: AxisSpec, v: number) => (a.log ? Math.log10(Math.max(v, 1e-12)) : v);
+      const LATTICE_AXIS: AxisSpec = {
+        label: '', log: false, min: LATTICE_RANGE[0], max: LATTICE_RANGE[1],
+      };
+      const xAxis = nomo ? LATTICE_AXIS : (onX ? spec.value : spec.sweep);
+      const yAxis = nomo ? spec.value : (onX ? spec.sweep : spec.value);
+      const annX = (x: number) => toAx(xAxis, x);
+      const annY = (y: number) => toAx(yAxis, y);
+      // Where a point of the TYPED family value lands: the marker and the
+      // interpolated curve are both at familyValue, and on a lattice their
+      // abscissa is the mesh coordinate rather than one of the two variables.
+      const ownX = (v: number, s: number) => (nomo ? latticeX(spec, familyValue, s) : putX(v, s));
+      const ownY = (v: number, s: number) => (nomo ? v : putY(v, s));
 
-      /* Curve labels, the way the book does them. Seventeen series is far past
-         what a legend can carry, so each curve is named where it runs; the
-         label positions march along the family so they never collide. */
+      // Enough samples to draw the function honestly means drawing it
+      // straight between them; only the charts that cost seconds a panel are
+      // sampled too coarsely for that and get a spline through the points.
+      const shape = (spec.samples ?? 70) < 60 ? ('spline' as const) : ('linear' as const);
+
+      const traces: any[] = [];
       const annotations: any[] = [];
-      curves.forEach((cv, i) => {
-        const on = cv.pts.filter(p => Number.isFinite(p.value));
-        if (!on.length) return;
-        const frac = curves.length === 1 ? 0.5 : 0.1 + 0.8 * (i / (curves.length - 1));
-        const p = on[Math.min(on.length - 1, Math.round(frac * (on.length - 1)))];
-        annotations.push({
-          x: putX(p.value, p.sweep), y: putY(p.value, p.sweep),
-          text: String(cv.fv),
-          showarrow: false,
-          font: { family: 'IBM Plex Mono, monospace', size: 10.5, color: colors[i] },
-          bgcolor: t.surface, borderpad: 1.5,
-          xshift: onX ? 0 : 0, yshift: onX ? -9 : 9,
-        });
-      });
 
-      // The solved point, plus crosshairs to both axes.
+      const plotW = plotRef.current.clientWidth || 900;
+      const height = 560;
+      const aspect = Math.max(0.6, Math.min(3, (plotW - 110) / (height - 90)));
+
+      if (nomo) {
+        /* ── The mesh ───────────────────────────────────────────────────
+           Both families at once, each on its own ramp so the reader can
+           tell which of the two crossing sets a curve belongs to — see
+           secondRamp. Every crossing carries the true computed value; the
+           abscissa is the spreading coordinate the plate was drawn on. */
+        const fam = lattice!.filter(cv => cv.kind === 'family');
+        const swp = lattice!.filter(cv => cv.kind === 'sweep');
+        const famRamp = rampSeries(rampFor(spec), theme, fam.length);
+        const swpRamp = rampSeries(secondRamp(rampFor(spec)), theme, swp.length);
+        const inkOf = (kind: LatticeCurve['kind'], i: number) =>
+          (kind === 'family' ? famRamp : swpRamp)[i];
+
+        for (const [group, ramp] of [[fam, famRamp], [swp, swpRamp]] as const) {
+          group.forEach((cv, i) => {
+            const symbol = cv.kind === 'family' ? spec.family.symbol : spec.sweep.label;
+            const other = cv.kind === 'family' ? spec.sweep.label : spec.family.symbol;
+            traces.push({
+              x: cv.pts.map(p => p.x),
+              y: cv.pts.map(p => p.value),
+              mode: 'lines',
+              name: `${symbol} = ${cv.label}`,
+              line: { color: ramp[i], width: 1.7, shape, smoothing: 0.6 },
+              customdata: cv.pts.map(p => (cv.kind === 'family' ? p.sweep : p.family)),
+              hovertemplate:
+                `${symbol} = ${cv.label}<br>${other} = %{customdata:.3g}` +
+                `<br>${spec.value.label} = %{y:.4g}<extra></extra>`,
+            });
+          });
+        }
+
+        /* Both plates name every curve at ONE end, outside the mesh: the
+           first family at its sweep-min end, which runs down the left of the
+           figure, the second at its family-max end, down the right. That is
+           not a stylistic choice — it is why "A = 0.1  H = 8" is printed
+           together at the bottom apex of Figure 2.31, because those two ends
+           land on the same abscissa. They do here too. */
+        for (const l of latticeLabels(spec, lattice!)) {
+          const group = l.kind === 'family' ? fam : swp;
+          const i = group.findIndex(cv => cv.label === l.label);
+          annotations.push({
+            x: annX(l.x), y: annY(l.value),
+            text: fmtParam(l.label),
+            showarrow: false,
+            xanchor: l.kind === 'family' ? 'right' : 'left',
+            yanchor: 'middle',
+            xshift: l.kind === 'family' ? -3 : 3,
+            font: { family: 'IBM Plex Mono, monospace', size: 10.5, color: inkOf(l.kind, i) },
+            bgcolor: t.surface, borderpad: 2,
+          });
+        }
+
+        // The caption has to name both families, and which side each is on —
+        // and it has to keep off the bottom centre, where both plates print
+        // their two extreme labels together at the apex of the mesh.
+        const nomoCorner = CORNER_XY[latticeCorner(spec, lattice!, { w: 0.46, h: 0.13 })];
+        annotations.push({
+          xref: 'x domain', yref: 'y domain',
+          x: nomoCorner.x, y: nomoCorner.y,
+          xanchor: nomoCorner.xanchor, yanchor: nomoCorner.yanchor,
+          text:
+            `Numbers on curves indicate <span style="color:${famRamp[famRamp.length - 1]}">` +
+            `${spec.family.symbol}</span> (left) and ` +
+            `<span style="color:${swpRamp[swpRamp.length - 1]}">${spec.sweep.label}</span> (right)`,
+          showarrow: false, align: 'left',
+          font: { family: 'IBM Plex Sans, system-ui, sans-serif', size: 11.5, color: t.secondary },
+          bgcolor: t.surface, bordercolor: t.frame, borderwidth: 1, borderpad: 6,
+        });
+      } else {
+        curves.forEach((cv, i) => {
+          traces.push({
+            x: cv.pts.map(p => putX(p.value, p.sweep)),
+            y: cv.pts.map(p => putY(p.value, p.sweep)),
+            mode: 'lines',
+            name: `${spec.family.symbol} = ${cv.fv}`,
+            line: { color: colors[i], width: 1.7, shape, smoothing: 0.6 },
+            hovertemplate:
+              `${spec.family.symbol} = ${cv.fv}<br>${spec.sweep.label} = %{${onX ? 'y' : 'x'}:.3g}` +
+              `<br>${spec.value.label} = %{${onX ? 'x' : 'y'}:.4g}<extra></extra>`,
+          });
+        });
+
+        /* ── Labels on the curves, the way the book does them ────────────
+           Seventeen series is far past what a legend can carry, so each
+           curve is named in a gap in its own ink and a caption in the
+           emptiest corner says what the numbers mean. The placement is
+           solved in frame coordinates — see curveLabelSpots — using the
+           figure's real aspect ratio, because a horizontal gap between two
+           numbers is worth more pixels than a vertical one. */
+        for (const spot of curveLabelSpots(spec, curves, { aspect })) {
+          const i = curves.findIndex(cv => cv.fv === spot.fv);
+          annotations.push({
+            x: annX(putX(spot.value, spot.sweep)),
+            y: annY(putY(spot.value, spot.sweep)),
+            text: fmtParam(spot.fv),
+            showarrow: false,
+            // A number centred on a curve that runs along the frame edge
+            // would hang half outside it; near an edge the label pushes in.
+            xanchor: spot.sx < 0.09 ? 'left' : spot.sx > 0.91 ? 'right' : 'center',
+            yanchor: spot.sy < 0.07 ? 'top' : spot.sy > 0.93 ? 'bottom' : 'middle',
+            font: { family: 'IBM Plex Mono, monospace', size: 10.5, color: colors[i] ?? c.ink },
+            // The opaque patch IS the contour label: it breaks the line it
+            // sits on, exactly as an engraver would have left a gap for it.
+            bgcolor: t.surface,
+            borderpad: 2,
+          });
+        }
+
+        // The caption the printed chart carries instead of a legend.
+        const corner = CORNER_XY[emptiestCorner(spec, curves)];
+        annotations.push({
+          xref: 'x domain', yref: 'y domain',
+          x: corner.x, y: corner.y, xanchor: corner.xanchor, yanchor: corner.yanchor,
+          text: spec.family.label,
+          showarrow: false, align: 'left',
+          font: { family: 'IBM Plex Sans, system-ui, sans-serif', size: 11.5, color: t.secondary },
+          bgcolor: t.surface, bordercolor: t.frame, borderwidth: 1, borderpad: 6,
+        });
+      }
+
+      // The interpolated curve, between the printed ones. On a lattice it
+      // threads the mesh, which is the clearest possible statement that the
+      // printed curves are a sample and not the function.
+      if (userCurve?.some(p => Number.isFinite(p.value))) {
+        traces.push({
+          x: userCurve.map(p => ownX(p.value, p.sweep)),
+          y: userCurve.map(p => ownY(p.value, p.sweep)),
+          mode: 'lines',
+          name: `${spec.family.symbol} = ${fmtParam(familyValue)}`,
+          line: { color: c.orange, width: 2.4, dash: 'dash', shape, smoothing: 0.6 },
+          customdata: userCurve.map(p => p.sweep),
+          hovertemplate:
+            `${spec.family.symbol} = ${fmtParam(familyValue)} (interpolated)<br>` +
+            `${spec.sweep.label} = %{customdata:.3g}` +
+            `<br>${spec.value.label} = %{${nomo || !onX ? 'y' : 'x'}:.4g}<extra></extra>`,
+        });
+        const on = userCurve.filter(p => Number.isFinite(p.value));
+        const p = on[Math.round(0.42 * (on.length - 1))];
+        annotations.push({
+          x: annX(ownX(p.value, p.sweep)), y: annY(ownY(p.value, p.sweep)),
+          text: fmtParam(familyValue),
+          showarrow: false, xanchor: 'center', yanchor: 'middle',
+          font: { family: 'IBM Plex Mono, monospace', size: 10.5, color: c.orange },
+          bgcolor: t.surface, bordercolor: c.orange, borderwidth: 1, borderpad: 2,
+        });
+      }
+
+      // The solved point, plus crosshairs to the frame.
       const shapes: any[] = [];
       if (Number.isFinite(markerValue)) {
-        const mx = putX(markerValue, sweepValue), my = putY(markerValue, sweepValue);
+        const mx = ownX(markerValue, sweepValue), my = ownY(markerValue, sweepValue);
         traces.push({
           x: [mx], y: [my], mode: 'markers', name: 'Your point',
           marker: { size: 13, color: 'rgba(0,0,0,0)', line: { color: c.orange, width: 2.5 } },
@@ -197,53 +432,64 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
             `${spec.sweep.label} = ${fmtParam(sweepValue)}<br>` +
             `${spec.value.label} = ${fmt(markerValue, 4)}<extra></extra>`,
         });
-        shapes.push(
-          { type: 'line', xref: onX ? 'paper' : 'x', x0: onX ? 0 : mx, x1: onX ? 1 : mx,
-            y0: my, y1: my, line: { color: c.orange, width: 1, dash: 'dot' }, layer: 'below' },
-          { type: 'line', yref: onX ? 'y' : 'paper', x0: mx, x1: mx,
-            y0: onX ? my : 0, y1: onX ? my : 1, line: { color: c.orange, width: 1, dash: 'dot' }, layer: 'below' }
-        );
+        // Crosshairs run to the frame, which is now a real edge to read
+        // against — that is what the border is for. A lattice gets only the
+        // one to the ordinate: there is nothing on its abscissa to reach.
+        shapes.push({
+          type: 'line', xref: 'x domain', x0: 0, x1: 1, yref: 'y', y0: my, y1: my,
+          line: { color: c.orange, width: 1, dash: 'dot' }, layer: 'below',
+        });
+        if (!nomo) {
+          shapes.push({
+            type: 'line', yref: 'y domain', y0: 0, y1: 1, xref: 'x', x0: mx, x1: mx,
+            line: { color: c.orange, width: 1, dash: 'dot' }, layer: 'below',
+          });
+        }
       }
 
       // A ghost marker while the pointer is in the frame.
       const ghost = hover ?? pinned;
       if (ghost) {
         traces.push({
-          x: [putX(ghost.value, ghost.sweep)], y: [putY(ghost.value, ghost.sweep)],
+          x: [nomo ? ghost.sweep : putX(ghost.value, ghost.sweep)],
+          y: [nomo ? ghost.value : putY(ghost.value, ghost.sweep)],
           mode: 'markers', name: 'Reading',
           marker: { size: 9, color: c.secondary, symbol: 'x-thin', line: { color: c.secondary, width: 2 } },
           hoverinfo: 'skip',
         });
       }
 
-      const valueAxis = (title: string) => ({
-        ...(onX ? axis(theme, title) : gridAxis(theme, title)),
-        type: spec.value.log ? ('log' as const) : ('linear' as const),
-        range: spec.value.log
-          ? [Math.log10(spec.value.min), Math.log10(spec.value.max)]
-          : [spec.value.min, spec.value.max],
-        ...(spec.value.ticks
-          ? { tickmode: 'array' as const, tickvals: spec.value.ticks, ticktext: spec.value.ticks.map(String) }
-          : {}),
-      });
-      const sweepAxis = (title: string) => ({
-        ...(onX ? gridAxis(theme, title) : axis(theme, title)),
-        type: spec.sweep.log ? ('log' as const) : ('linear' as const),
+      /* ── The frame ─────────────────────────────────────────────────────
+         Log paper, not dashboard chrome: a boxed border, major and minor
+         divisions, and tick VALUES on all four sides so a point in the
+         middle of the chart can be run out to a number in whichever
+         direction is shorter. §B6 deviation 5 says why these figures get a
+         different axis vocabulary from every other chart in the toolbox. */
+      const paperFor = (a: AxisSpec, title: string) => paperAxis(theme, {
+        title,
+        type: a.log ? 'log' : 'linear',
         range: (() => {
-          const lo = spec.sweep.log ? Math.log10(spec.sweep.min) : spec.sweep.min;
-          const hi = spec.sweep.log ? Math.log10(spec.sweep.max) : spec.sweep.max;
-          return spec.sweep.reversed ? [hi, lo] : [lo, hi];
+          const lo = a.log ? Math.log10(a.min) : a.min;
+          const hi = a.log ? Math.log10(a.max) : a.max;
+          return (a.reversed ? [hi, lo] : [lo, hi]) as [number, number];
         })(),
-        ...(spec.sweep.ticks
-          ? { tickmode: 'array' as const, tickvals: spec.sweep.ticks, ticktext: spec.sweep.ticks.map(String) }
-          : {}),
+        tickvals: a.ticks,
+        minorDtick: a.minorDtick,
       });
 
+      // The lattice abscissa keeps the frame line and nothing else. It is
+      // blank on the page because there is nothing on it to read, and a tick
+      // here would be an invitation to read one.
+      const xa = nomo
+        ? paperAxis(theme, { range: LATTICE_RANGE, tickvals: [] })
+        : paperFor(xAxis, xAxis.label);
+      const frame = paperFrame(theme, xa, paperFor(yAxis, yAxis.label));
+      traces.push(frame.anchor);
+
       await Plotly.react(plotRef.current, traces, baseLayout(theme, {
-        height: 520,
-        margin: { l: 58, r: 22, t: 10, b: 54 },
-        xaxis: onX ? valueAxis(spec.value.label) : sweepAxis(spec.sweep.label),
-        yaxis: onX ? sweepAxis(spec.sweep.label) : valueAxis(spec.value.label),
+        height,
+        margin: { l: 34, r: 34, t: 26, b: 34 },
+        ...frame.axes,
         showlegend: false,
         hovermode: 'closest',
         hoverlabel: hoverLabel(theme),
@@ -252,15 +498,17 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       }), plotConfig);
     })();
     return () => { dead = true; };
-  }, [curves, colors, theme, spec, markerValue, sweepValue, familyValue, hover, pinned]);
+  }, [curves, lattice, userCurve, colors, theme, spec, markerValue, sweepValue, familyValue, hover, pinned]);
 
   /* ── The pointer, which is the whole backwards half ───────────────────── */
   useEffect(() => {
     const gd = plotRef.current as any;
     if (!gd) return;
     let frame = 0;
+    // Returns [value, sweep] — and on a nomograph the second slot is the
+    // lattice abscissa, which is what invertLattice takes.
     const split = (d: { x: number; y: number }) =>
-      (spec.valueOnX ? [d.x, d.y] : [d.y, d.x]) as [number, number];
+      (spec.nomograph || !spec.valueOnX ? [d.y, d.x] : [d.x, d.y]) as [number, number];
 
     const onMove = (e: MouseEvent) => {
       // One reading per animation frame. Without this the handler fires on
@@ -296,7 +544,9 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
   const reading = hover ?? pinned;
   const inFrame = (r: Reading) =>
     r.value >= spec.value.min && r.value <= spec.value.max &&
-    r.sweep >= spec.sweep.min && r.sweep <= spec.sweep.max;
+    (spec.nomograph
+      ? r.sweep >= LATTICE_RANGE[0] && r.sweep <= LATTICE_RANGE[1]
+      : r.sweep >= spec.sweep.min && r.sweep <= spec.sweep.max);
 
   /* ── Table view (§B9 — not optional) ──────────────────────────────────── */
   const tableRows = useMemo(() => {
@@ -326,7 +576,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         )}
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="cr-family">
-            <span>{spec.family.symbol}<Tip text={`${spec.family.label}. Any value in [${spec.family.range[0]}, ${spec.family.range[1]}] works — you are not restricted to the curves the book drew.`} /></span>
+            <span>{spec.family.symbol}<Tip text={`${spec.family.label}. Any value in [${spec.family.range[0]}, ${spec.family.range[1]}] works — you are not restricted to the ${spec.family.values.length} the book drew. Type one it did not print and that curve is computed and drawn dashed, through the gap.`} /></span>
           </label>
           <input id="cr-family" className="cee-input" type="number" step="0.25" value={familyStr}
             onChange={e => setFamilyStr(e.target.value)} />
@@ -365,8 +615,10 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         title={`${spec.figure} — ${spec.title}`}
         subtitle={
           <>
-            {spec.source}. {spec.family.label}.
-            {spec.rectified && ' Redrawn on real axes — see the note below.'}
+            {spec.source}.{' '}
+            {spec.nomograph
+              ? `A lattice of ${spec.family.symbol} against ${spec.sweep.label}, as printed.`
+              : `${spec.family.label}.`}
           </>
         }
         plotRef={plotRef}
@@ -378,13 +630,29 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           wherever the cursor is, not from the nearest data point — which is the half of a chart
           a printed page cannot do. Click to pin a reading.
         </p>
+        <p>
+          <strong>Read it like the page.</strong>{' '}
+          {spec.nomograph
+            ? `Find where your ${spec.family.symbol} curve crosses your ${spec.sweep.label} curve, and run left to the ordinate. The frame is boxed and the ordinate is repeated on the right, so the shorter run is always available; the faint divisions between the labelled ticks are the ruled paper the figure was printed on.`
+            : 'The frame is boxed and the tick values are repeated on all four sides, so a point in the middle can be run out to a number in whichever direction is shorter; the faint divisions between the labelled ticks are the ruled paper the figure was printed on, and they are what makes a value between two labels readable rather than guessable. Each curve is named in a gap in its own ink, the way a contour is.'}
+        </p>
+        <p>
+          <strong>Nothing here is restricted to the {spec.family.values.length} curves that
+          fitted on the sheet.</strong> Type any {spec.family.symbol} in
+          [{spec.family.range[0]}, {spec.family.range[1]}] and it is computed and drawn dashed
+          {spec.nomograph ? ', threading the mesh between the printed ones' : ', between the printed ones'}
+          {' '}— the interpolation the book asks you to do by eye.
+        </p>
         {spec.notes?.map(n => <p key={n}>{n}</p>)}
-        {spec.rectified && (
+        {spec.nomograph && (
           <p>
-            <strong>This figure is a nomograph in the book</strong> — two families of curves
-            crossing over an abscissa that carries no variable at all, read by finding an
-            intersection. There is nothing to reproduce on that axis, so it is redrawn here with{' '}
-            {spec.sweep.label} on a real scale. Same families, same values, same anchors.
+            <strong>The abscissa is blank because it is blank in the book.</strong> This figure is
+            a nomograph: two families crossing in a mesh over an axis that carries no variable at
+            all. That axis is not arbitrary, though — a point's place on it is its position
+            along one family plus its position along the other, which is why {spec.figure}'s
+            corners, its label runs down the left and the right, and the apex where the two
+            extreme curves meet all land where the plate puts them. Every crossing here carries
+            the computed value, so this is the book's mesh rather than a picture of it.
           </p>
         )}
       </ChartFigure>
@@ -393,19 +661,55 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         <h3 className="cee-card__title">Reading the chart backwards</h3>
         {!reading ? (
           <p className="cee-hint">
-            Move the pointer into the chart. Whatever point it lands on, this panel solves for the{' '}
-            {spec.family.symbol} whose curve passes through it — the question a printed chart
-            cannot answer without a ruler and a guess.
+            Move the pointer into the chart.{' '}
+            {spec.nomograph
+              ? `Whatever point it lands on, this panel solves for the ${spec.family.symbol} and ${spec.sweep.label} whose curves cross there. A point on a nomograph looks like it carries less than a point on a plot, because the abscissa means nothing — but the pair is determined, and the printed page cannot recover it.`
+              : `Whatever point it lands on, this panel solves for the ${spec.family.symbol} whose curve passes through it — the question a printed chart cannot answer without a ruler and a guess.`}
           </p>
         ) : !inFrame(reading) ? (
           <p className="cee-hint">Pointer is outside the chart frame.</p>
         ) : (
           <>
             <p className="cee-reading__at">
-              At <strong>{spec.value.label} = {fmt(reading.value, 4)}</strong> and{' '}
-              <strong>{spec.sweep.label} = {fmt(reading.sweep, 3)}</strong>:
+              At <strong>{spec.value.label} = {fmt(reading.value, 4)}</strong>
+              {spec.nomograph
+                ? ', this point of the mesh is:'
+                : <> and <strong>{spec.sweep.label} = {fmt(reading.sweep, 3)}</strong>:</>}
             </p>
-            {reading.roots === null ? (
+            {spec.nomograph ? (
+              reading.pairs === null ? (
+                <p className="cee-hint">
+                  <strong>Click to solve for {spec.family.symbol} and {spec.sweep.label}.</strong>{' '}
+                  Every point of this mesh costs a full layered solve, so the inverse waits for a
+                  click rather than running a few hundred of them per frame.
+                </p>
+              ) : reading.pairs.length === 0 ? (
+                <p className="cee-warn cee-warn--inline">
+                  <span className="cee-warn__icon">⚠️</span>
+                  <span>
+                    No pair of {spec.family.symbol} and {spec.sweep.label} lands here. That is a
+                    real answer: the point is outside the mesh, and the section it would describe
+                    is not one this chart covers.
+                  </span>
+                </p>
+              ) : (
+                <ul className="cee-reading__roots">
+                  {reading.pairs.map((r, i) => (
+                    <li key={i}>
+                      <code>
+                        {spec.family.symbol} = {fmtParam(r.family)}, {spec.sweep.label} ={' '}
+                        {fmtParam(r.sweep)}
+                      </code>
+                      {reading.pairs!.length > 1 && i === 0 && (
+                        <span className="cee-reading__note">
+                          {' '}— more than one, because these families turn back on themselves
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : reading.roots === null ? (
               <p className="cee-hint">
                 <strong>Click to solve for {spec.family.symbol}.</strong> Every point on this chart
                 is a critical-strain search over a whole wheel group, so the inverse does not run
@@ -442,8 +746,13 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
             )}
             <button type="button" className="cee-btn cee-btn--ghost cee-btn--sm"
               onClick={() => {
-                if (reading.roots?.length) setFamilyStr(fmtParam(reading.roots[0]));
-                setSweepStr(fmtParam(reading.sweep));
+                if (reading.pairs?.length) {
+                  setFamilyStr(fmtParam(reading.pairs[0].family));
+                  setSweepStr(fmtParam(reading.pairs[0].sweep));
+                } else {
+                  if (reading.roots?.length) setFamilyStr(fmtParam(reading.roots[0]));
+                  setSweepStr(fmtParam(reading.sweep));
+                }
                 setPinned(null);
               }}>
               Use this reading as the input

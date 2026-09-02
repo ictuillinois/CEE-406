@@ -8,6 +8,11 @@
 // asks for the equivalent modulus that makes a three-layer section behave like
 // a two-layer one — so they are modules of one tool rather than four tools.
 //
+// The charts lead the strip and are the tab a first visit opens on. They are
+// the rung a student meets first in the chapter and the one that needs no
+// setup: a figure is already on screen, where every other module wants a
+// section typed in before it shows anything.
+//
 // Every module computes from the same Appendix B solver, which is what lets
 // them be checked against each other: two identical layers must give
 // Boussinesq, two layers must give Burmister's charts, three must give Jones'
@@ -31,6 +36,15 @@ interface ModuleDef {
 }
 
 const MODULES: ModuleDef[] = [
+  {
+    id: 'charts',
+    label: 'Solutions by chart',
+    ref: 'Figures 2.2 – 2.31',
+    lead:
+      'Every empirical chart in the chapter, redrawn from the equations behind it and readable ' +
+      'in both directions — including backwards, which a printed page cannot do.',
+    render: () => <ChartsModule />,
+  },
   {
     id: 'one',
     label: 'One layer',
@@ -67,21 +81,12 @@ const MODULES: ModuleDef[] = [
       'superposed. The same equations WinJULEA and KENLAYER solve.',
     render: () => <MultiLayerModule />,
   },
-  {
-    id: 'charts',
-    label: 'Solutions by chart',
-    ref: 'Figures 2.2 – 2.31',
-    lead:
-      'Every empirical chart in the chapter, redrawn from the equations behind it and readable ' +
-      'in both directions — including backwards, which a printed page cannot do.',
-    render: () => <ChartsModule />,
-  },
 ];
 
 const STORAGE_KEY = 'cee406-lea-module';
 
 export default function LeaApp() {
-  const [active, setActive] = useState('one');
+  const [active, setActive] = useState(MODULES[0].id);
 
   // Which module you were last in survives a reload, because a student
   // working through one homework returns to the same rung of the ladder.

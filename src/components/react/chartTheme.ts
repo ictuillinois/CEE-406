@@ -25,6 +25,16 @@ export const TOKENS: Record<Mode, Record<string, string>> = {
     hairline: '#ECEDEF',
     control: '#D1D5DB',
     grid: '#F0F1F3',
+    /* Graph-paper chrome, used only by paperAxis (§B6 deviation 5). Opaque
+       rather than rgba like `grid` and `hairline`, because these three are
+       under a contrast gate — the frame has to stay quieter than the faintest
+       curve it carries and louder than the grid, and a translucent token
+       cannot be measured without first knowing what it is drawn on. They are
+       already composited against `surface`, which is the only thing a chart
+       card is ever drawn on. */
+    frame: '#B4BBC3',
+    gridStrong: '#DEE3E9',
+    gridFaint: '#F0F2F4',
     ink: '#1A1A2E',
     secondary: '#5B6670',
     muted: '#98A2AC',
@@ -38,6 +48,9 @@ export const TOKENS: Record<Mode, Record<string, string>> = {
     hairline: 'rgba(255,255,255,0.07)',
     control: '#2D3F59',
     grid: 'rgba(255,255,255,0.06)',
+    frame: '#575E6C',
+    gridStrong: '#373F50',
+    gridFaint: '#232C3E',
     ink: '#F1F5F9',
     secondary: '#9BA4AC',
     muted: '#7C8CA5',
@@ -334,6 +347,151 @@ export function gridAxis(theme: Mode, title?: string, overrides: Record<string, 
     nticks: 4,
     ...overrides,
   });
+}
+
+/* ───────── Reproduced design charts — the paper frame (§B6 deviation 5) ────
+ * §A7 strips a chart to its data: no border, no axis line, no ticks, three to
+ * five gridlines. That is the right instrument for a dashboard, where the
+ * reader wants a trend and the precision lives in a KPI beside it.
+ *
+ * It is the wrong instrument for a REPRODUCED DESIGN CHART. Huang's Chapter 2
+ * figures are not illustrations of a result — they ARE the result, and the
+ * whole operation the reader performs on one is metric: put a ruler on the
+ * page, run it to the axis, read a number between two printed values. Take
+ * away the frame and the reader has nothing to run the ruler to on three of
+ * the four sides; thin the grid to five lines and the interpolation the chart
+ * exists for stops being possible. The stripped chrome would not be a cleaner
+ * version of Figure 2.2, it would be a broken one.
+ *
+ * So this is a second, narrower axis vocabulary, and it is deliberately not
+ * the default: `axis`/`gridAxis` remain what every ordinary chart uses.
+ * `paperAxis` is for a figure that is a redraw of a printed engineering chart
+ * and is read by measurement. It gives that figure log-paper chrome — a boxed
+ * frame, outside major and minor ticks, and a two-weight grid — and
+ * `paperFrame` completes it by mirroring the TICK LABELS onto the top and the
+ * right, which Plotly has no switch for: an axis draws its labels on one side
+ * only, so the opposite side is a second axis overlaying the first.
+ */
+export interface PaperAxisOptions {
+  title?: string;
+  type?: 'linear' | 'log';
+  /** In the axis's own units — so log10 values on a log axis, as Plotly wants. */
+  range?: [number, number];
+  /** The values the printed page labels. */
+  tickvals?: number[];
+  ticktext?: string[];
+  /**
+   * The minor division between labelled ticks: a number on a linear axis,
+   * 'D1' (every mantissa) or 'D2' (2 and 5) on a log one. Omit for no minor
+   * grid — an axis whose labelled ticks are already dense does not want one.
+   */
+  minorDtick?: number | string;
+}
+
+export function paperAxis(theme: Mode, o: PaperAxisOptions = {}): Record<string, unknown> {
+  const t = TOKENS[theme];
+  const hasMinor = o.minorDtick !== undefined;
+  return {
+    title: o.title ? { text: o.title, font: AXIS_TITLE_FONT(theme), standoff: 10 } : undefined,
+    type: o.type ?? 'linear',
+    ...(o.range ? { range: o.range, autorange: false } : {}),
+    ...(o.tickvals
+      ? {
+          tickmode: 'array' as const,
+          tickvals: o.tickvals,
+          ticktext: o.ticktext ?? o.tickvals.map(String),
+        }
+      : {}),
+    showline: true,
+    linecolor: t.frame,
+    linewidth: 1,
+    // The box. Only the LINE is mirrored, not the ticks — the twin axis from
+    // paperFrame draws those, and two sets in the same place read as one
+    // slightly-too-thick set.
+    mirror: true,
+    ticks: 'outside' as const,
+    ticklen: 5,
+    tickwidth: 1,
+    tickcolor: t.frame,
+    tickfont: TICK_FONT(theme),
+    zeroline: false,
+    showgrid: true,
+    gridcolor: t.gridStrong,
+    gridwidth: 1,
+    griddash: 'solid' as const,
+    minor: {
+      ...(hasMinor ? { tickmode: 'linear' as const, dtick: o.minorDtick } : {}),
+      showgrid: hasMinor,
+      gridcolor: t.gridFaint,
+      gridwidth: 1,
+      ticks: 'outside' as const,
+      ticklen: 2.5,
+      tickcolor: t.frame,
+    },
+    automargin: true,
+  };
+}
+
+/**
+ * The four-sided frame: the two axes you built, plus their label twins on the
+ * top and the right, plus the invisible trace that makes Plotly draw them.
+ *
+ * The trace is not optional. Plotly only lays out an axis some trace lives on,
+ * so an overlaying axis with nothing pointing at it is silently dropped and
+ * the top and right labels never appear. One two-coordinate point carries
+ * both twins; it is transparent and skips hover, so it is inert.
+ *
+ * Spread the result into the layout and push the trace onto the trace list:
+ *
+ *     const frame = paperFrame(theme, xa, ya);
+ *     traces.push(frame.anchor);
+ *     Plotly.react(el, traces, baseLayout(theme, { ...frame.axes, ... }));
+ */
+export function paperFrame(
+  theme: Mode,
+  xaxis: Record<string, unknown>,
+  yaxis: Record<string, unknown>,
+) {
+  const twin = (a: Record<string, unknown>, over: 'x' | 'y', side: 'top' | 'right') => ({
+    ...a,
+    title: undefined,
+    overlaying: over,
+    side,
+    // The primary already drew the box line and the grid; the twin adds only
+    // ticks and labels, or the chart gets two of everything.
+    showline: false,
+    showgrid: false,
+    mirror: false,
+    showticklabels: true,
+    minor: { ...(a.minor as Record<string, unknown>), showgrid: false },
+  });
+
+  // Trace data is in DATA units even on a log axis, where `range` is log10.
+  const anchorAt = (a: Record<string, unknown>) => {
+    const r = a.range as [number, number] | undefined;
+    if (!r) return 0;
+    return a.type === 'log' ? Math.pow(10, r[0]) : r[0];
+  };
+
+  return {
+    axes: {
+      xaxis,
+      yaxis,
+      xaxis2: twin(xaxis, 'x', 'top'),
+      yaxis2: twin(yaxis, 'y', 'right'),
+    },
+    anchor: {
+      x: [anchorAt(xaxis)],
+      y: [anchorAt(yaxis)],
+      xaxis: 'x2',
+      yaxis: 'y2',
+      mode: 'markers' as const,
+      marker: { size: 0.1, color: 'rgba(0,0,0,0)' },
+      opacity: 0,
+      hoverinfo: 'skip' as const,
+      showlegend: false,
+    },
+  };
 }
 
 /** Tooltip per §A6.7 — surface-colored, hairline border, no arrow. */

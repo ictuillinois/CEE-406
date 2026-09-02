@@ -52,9 +52,13 @@ export default function ChartsModule() {
           <p className="cee-chartmeta__purpose">{spec.purpose}</p>
           <dl className="cee-chartmeta__list">
             <dt>Source</dt><dd>{spec.source}</dd>
-            <dt>Curves</dt><dd>{spec.family.label}</dd>
+            <dt>Curves</dt>
+            <dd>
+              {spec.family.values.length} printed values of <code>{spec.family.symbol}</code>;
+              any value in [{spec.family.range[0]}, {spec.family.range[1]}] can be drawn
+            </dd>
             <dt>Applies as</dt><dd><code>{spec.equation}</code></dd>
-            {spec.rectified && (<><dt>Note</dt><dd>Nomograph, redrawn on real axes</dd></>)}
+            {spec.nomograph && (<><dt>Note</dt><dd>Nomograph — a lattice of two crossing families, drawn as printed</dd></>)}
           </dl>
         </div>
 
@@ -76,7 +80,8 @@ export default function ChartsModule() {
                 Foster–Ahlvin half-space charts, the Burmister two-layer design charts, and
                 Peattie's three-layer lattice.</li>
               <li><strong>Read it forwards.</strong> Type the two parameters; the marker lands on
-                the chart and the readout applies the equation printed beside it.</li>
+                the chart and the readout applies the equation printed beside it. A curve the book
+                never drew is computed and drawn dashed between the ones it did.</li>
               <li><strong>Read it backwards.</strong> Move the pointer anywhere in the frame. The
                 panel under the chart solves for the curve that passes through that point —
                 including when there are two such curves, and when there are none.</li>
