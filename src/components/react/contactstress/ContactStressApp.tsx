@@ -17,7 +17,9 @@
 // two shear components change sign inside the footprint, and any sequential
 // ramp on signed data hides exactly the thing the student is looking for, so
 // they take a diverging blue–orange scale from the same tokens, symmetric
-// about zero.
+// about zero — and, alone in this tool, one whose half-extent follows the case
+// rather than the slider's whole reach. equations.ts, at shearLimit(), is
+// where that exception is argued.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../Tip';
 import Card from '../ui/Card';
@@ -36,8 +38,9 @@ import {
 import {
   idealizedContact, planFrame, huangOutline, circleOutline, rectOutline,
   fieldMetrics, compare, decimate, peakRow, rowProfile, colProfile,
-  CONTACT_THRESHOLD, SPEED_KMH, SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, clampTo,
-  FIELD_RANGE, profileRange, divergingLimit,
+  CONTACT_THRESHOLD, SPEED_KMH, SAFE_RANGE, SLIP_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT,
+  clampTo, trainedBox,
+  FIELD_RANGE, profileRange, divergingLimit, shearLimit,
   forceOut, forceUnit, pressureOut, pressureUnit, lengthOut, lengthUnit,
   areaOut, areaUnit, N_PER_LBF, PSI_PER_MPA,
   type UnitSystem,
@@ -191,7 +194,10 @@ export default function ContactStressApp() {
   }, [safe]);
 
   const inputs: Inputs = useMemo(
-    () => ({ tire, load, pressure, slip: condition === 'FR' ? 0 : slip, speed, condition }),
+    () => ({
+      tire, load, pressure, speed, condition,
+      slip: condition === 'FR' ? 0 : clampTo(slip, SLIP_RANGE),
+    }),
     [tire, load, pressure, slip, speed, condition]
   );
 
@@ -221,6 +227,19 @@ export default function ContactStressApp() {
   }, [result]);
 
   /* ── plots ────────────────────────────────────────────────────────── */
+
+  /* The half-extent the two shear windows are drawn on: symmetric, snapped to
+     a round number, and fitted to THIS case rather than to the whole reach of
+     the sliders. sigma_z is not in here — it keeps FIELD_RANGE, which is the
+     whole point of the split. Computed once, because the surface, its z axis
+     and the ramp bar under it must not be able to disagree. */
+  const shearLim = useMemo(() => {
+    const m = result?.metrics;
+    return {
+      longitudinal: shearLimit(m?.longitudinal.min ?? 0, m?.longitudinal.peak ?? 0),
+      transverse: shearLimit(m?.transverse.min ?? 0, m?.transverse.peak ?? 0),
+    };
+  }, [result]);
 
   const surfRefs = {
     vertical: useRef<HTMLDivElement>(null),
@@ -284,17 +303,23 @@ export default function ContactStressApp() {
       const d = decimate(fields[ch], h, w, h, Math.ceil(w / 2));
       const dxs = Array.from({ length: d.w }, (_, i) => (i * d.fx + d.fx / 2) * dx);
       const dys = Array.from({ length: d.h }, (_, i) => (i * d.fy + d.fy / 2) * dy);
-      /* Fixed, not fitted. Both the colorscale and the z AXIS are pinned to
-         FIELD_RANGE, because height and hue encode the same quantity here and
-         freezing one without the other would have them disagree — a low-load
-         field would stand as tall as a high-load one while being paler. Per
-         channel still, as the card's subtitle says: sigma_z runs to 2.4 MPa
-         and the shears to a fraction of that, and one scale across all three
-         would erase both shears. */
+      /* The colorscale and the z AXIS always take the SAME limit, because
+         height and hue encode the same quantity here and freezing one without
+         the other would have them disagree — a low-load field would stand as
+         tall as a high-load one while being paler.
+
+         WHICH limit differs by channel, and that is deliberate. sigma_z keeps
+         the fixed FIELD_RANGE top it has everywhere else in the tool, so its
+         color and its height are the magnitude and the load slider moves the
+         picture rather than the legend. The two shears take shearLim, fitted
+         to this case: their fixed limits are set by a hard braking case at
+         high slip, and a free-rolling wheel reaches 5% of that — flat sheet,
+         neutral color, no height. See shearLimit() in equations.ts. */
       const signed = ch !== 'vertical';
-      const lim = pOut(divergingLimit(tire, ch));
-      const zLo = pOut(signed ? -divergingLimit(tire, ch) : 0);
-      const zHi = pOut(FIELD_RANGE[tire][ch].hi);
+      const limMPa = signed ? shearLim[ch] : FIELD_RANGE[tire].vertical.hi;
+      const lim = pOut(limMPa);
+      const zLo = pOut(signed ? -limMPa : 0);
+      const zHi = lim;
       await Plotly.react(el, [{
         type: 'surface' as const,
         x: dxs.map(lOut), y: dys.map(lOut),
@@ -521,7 +546,7 @@ export default function ContactStressApp() {
         plotConfig
       );
     }
-  }, [result, spec, theme, view, overlay, center, unit, tire]);
+  }, [result, spec, theme, view, overlay, center, unit, tire, shearLim]);
 
   useEffect(() => {
     // Coalesce a slider drag into one redraw per animation frame.
@@ -575,9 +600,17 @@ export default function ContactStressApp() {
   }
 
   /* What the model was trained on, for the tooltips to set against what the
-     slider offers. Null until the manifest lands; the sliders are live before
-     then, so fall back to the range they are actually spanning. */
-  const trained = spec?.domain ?? safe;
+     slider offers.
+
+     NOT spec.domain, which is what this used to be. That field is the union
+     over the whole branch — the min and max columns of the checkpoint's own
+     normalization table — so on the DTA branch it reports 0.99-60.08 kN and
+     0.5-1.0 MPa, which is true of free rolling at 8 km/h and of nothing else.
+     Quoting it made the tooltip claim coverage for a braking case at 1.0 MPa
+     that the FE database has not one example of. trainedBox is the rectangle
+     every block actually shares; TRAINED_ENVELOPE in equations.ts has the
+     block-by-block table it comes from. */
+  const trained = trainedBox(tire);
 
   return (
     <div className="cee-tool">
@@ -603,7 +636,7 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-load">
             <span>
               Wheel load
-              <Tip text={`Load carried by this tire, not by the axle. An 80 kN (18 kip) single axle on dual tires puts about 20 kN on each. The training set runs from ${F(trained.load[0], 2)} to ${F(trained.load[1], 2)} ${forceUnit(unit)}; the slider spans ${F(safe.load[0], 0)}–${F(safe.load[1], 0)} ${forceUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
+              <Tip text={`Load carried by this tire, not by the axle. An 80 kN (18 kip) single axle on dual tires puts about 20 kN on each. Every rolling condition and speed this tool offers was simulated over ${F(trained.load[0], 1)}–${F(trained.load[1], 1)} ${forceUnit(unit)} (free rolling at 8 km/h alone goes wider, to ${F(spec?.domain.load[1] ?? trained.load[1], 1)}); the slider spans ${F(safe.load[0], 0)}–${F(safe.load[1], 0)} ${forceUnit(unit)}, the part of that where the prediction also closes on the load you applied.`} />
             </span>
             <span className="cee-field__unit">{F(load, 2)} {forceUnit(unit)}</span>
           </label>
@@ -618,7 +651,7 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-press">
             <span>
               Inflation pressure
-              <Tip text={`Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Trained range ${P(trained.pressure[0])}–${P(trained.pressure[1])} ${pressureUnit(unit)} for this tire; the slider spans ${P(safe.pressure[0])}–${P(safe.pressure[1])} ${pressureUnit(unit)}, the part of it where the prediction closes on the load you applied.`} />
+              <Tip text={`Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Every rolling condition and speed was simulated over ${P(trained.pressure[0])}–${P(trained.pressure[1])} ${pressureUnit(unit)}${tire === 'DTA' ? ' — above 0.9 MPa the database has free-rolling cases only, which is why the slider stops there rather than at the 1.0 MPa the free-rolling branch reaches' : ''}. The slider spans ${P(safe.pressure[0])}–${P(safe.pressure[1])} ${pressureUnit(unit)}, the part of that where the prediction also closes on the load you applied.`} />
             </span>
             <span className="cee-field__unit">{P(pressure)} {pressureUnit(unit)}</span>
           </label>
@@ -647,13 +680,13 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-slip">
             <span>
               Slip ratio
-              <Tip text="Difference between tire circumferential speed and vehicle speed, over vehicle speed. Free rolling is slip = 0 by definition — the FE dataset enforces it — so the slider only applies to braking and acceleration." />
+              <Tip text={`Difference between tire circumferential speed and vehicle speed, over vehicle speed. Free rolling is slip = 0 by definition — the FE dataset enforces it — so the slider only applies to braking and acceleration. Slip is a continuous input in the training set, sampled from 1% up to ${(SLIP_RANGE[1] * 100).toFixed(0)}%: the slider spans all of it because a locked wheel is in the data, not because 99% is a design case. Nearly all of the change is below 10%, and past about 25% the field barely moves.`} />
             </span>
             <span className="cee-field__unit">{(inputs.slip * 100).toFixed(1)}%</span>
           </label>
           <input
             id="cs-slip" className="cee-slider" type="range"
-            min={0} max={1} step={0.005}
+            min={SLIP_RANGE[0]} max={SLIP_RANGE[1]} step={0.005}
             value={slip} disabled={condition === 'FR'}
             onChange={(e) => setSlip(num(e.target.value, slip))}
           />
@@ -869,7 +902,17 @@ export default function ContactStressApp() {
 
             <Card
               title="Three-dimensional contact stress"
-              subtitle="One window per direction, each on its own fixed scale — σz and the two shears differ by more than a decade, so one scale across all three would erase both shears. Drag to orbit, scroll to zoom."
+              subtitle={
+                <>
+                  One window per direction, and they are not scaled the same way. σz keeps the
+                  fixed 0–{P(FIELD_RANGE[tire].vertical.hi)} {pressureUnit(unit)} scale it has
+                  everywhere else here, so its color and its height are the magnitude. The two
+                  shears are more than a decade smaller and would lie flat on any scale wide
+                  enough for hard braking, so each one fits itself to the case — read its limits
+                  off the bar beneath it, and the exact extremes off the header. Drag to orbit,
+                  scroll to zoom.
+                </>
+              }
               affordance={
                 <div className="cee-seg" style={{ marginBottom: 0 }} role="group" aria-label="Which window">
                   <button type="button" className={view === 'all' ? 'is-active' : ''} onClick={() => setView('all')}>All three</button>
@@ -900,12 +943,13 @@ export default function ContactStressApp() {
                     {ch === 'vertical' ? (
                       <RampBar theme={theme} stops={fieldScale(theme)} caption="σz" lowLabel="0" highLabel={`${P(FIELD_RANGE[tire].vertical.hi)} ${pressureUnit(unit)}`} />
                     ) : (
-                      /* Now that the diverging scale is fixed too, its ends
-                         can carry numbers instead of a bare − and +. */
+                      /* This is the one scale in the tool that moves, so its
+                         ends have to carry numbers — a bare − and + would say
+                         nothing about a limit that is not constant. */
                       <div className="cee-rampbar">
                         <span className="cee-rampbar__caption">{ch === 'longitudinal' ? 'σx' : 'σy'}</span>
                         <div className="cee-rampbar__row">
-                          <span className="cee-rampbar__end">−{P(divergingLimit(tire, ch))}</span>
+                          <span className="cee-rampbar__end">−{P(shearLim[ch])}</span>
                           <span
                             className="cee-rampbar__track"
                             style={{
@@ -913,9 +957,9 @@ export default function ContactStressApp() {
                                 .map(([p, col]) => `${col} ${(p * 100).toFixed(0)}%`).join(', ')})`,
                             }}
                             role="img"
-                            aria-label={`Diverging color scale, minus to plus ${P(divergingLimit(tire, ch))} ${pressureUnit(unit)} through zero`}
+                            aria-label={`Diverging color scale, minus to plus ${P(shearLim[ch])} ${pressureUnit(unit)} through zero, fitted to this case`}
                           />
-                          <span className="cee-rampbar__end">+{P(divergingLimit(tire, ch))}</span>
+                          <span className="cee-rampbar__end">+{P(shearLim[ch])}</span>
                         </div>
                       </div>
                     )}
@@ -926,6 +970,10 @@ export default function ContactStressApp() {
                 The ribs carry the load and stand well above the inflation pressure; the grooves
                 carry nothing. Braking drives σx entirely positive, acceleration entirely
                 negative — the friction force, which a uniform vertical pressure cannot represent.
+                The two shear scales follow the case, so compare them by their numbers rather
+                than by their color: σx is drawn here on ±{P(shearLim.longitudinal)}{' '}
+                {pressureUnit(unit)}, against ±{P(divergingLimit(tire, 'longitudinal'))} for the
+                widest field these controls can reach.
               </p>
             </Card>
 
@@ -987,12 +1035,22 @@ export default function ContactStressApp() {
                   <li>
                     Switch to braking, then acceleration, and watch the longitudinal window. Most of
                     the change happens in the first 5–10% of slip; beyond ~25% the field barely moves.
+                    The slider still runs to 99% because the FE database contains a locked wheel,
+                    not because 99% is a case anyone designs for.
                   </li>
                   <li>
-                    The load and pressure sliders stop short of the training domain on purpose:
-                    they span only the part of it where the predicted field still sums back to the
-                    load you applied, within ±15%. It is a surrogate, so treat the third decimal
-                    place with care.
+                    The two shear windows rescale themselves to whatever case is loaded, and σz
+                    never does. So the numbers on their color bars are part of the reading: a
+                    free-rolling wheel and the same wheel braking hard can look alike and be an
+                    order of magnitude apart. Compare σz by eye, σx and σy by the bar.
+                  </li>
+                  <li>
+                    The load and pressure sliders stop short of what the manifest calls the
+                    training domain, for two separate reasons. They span only the part where the
+                    predicted field still sums back to the load you applied within ±15%; and only
+                    the part every rolling condition was actually simulated over — above 0.9 MPa,
+                    and below 18 kN, the database has free-rolling cases and nothing else. It is a
+                    surrogate, so treat the third decimal place with care.
                   </li>
                 </ol>
                 <p>

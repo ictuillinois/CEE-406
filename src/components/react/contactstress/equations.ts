@@ -361,6 +361,98 @@ export const PRESETS: Preset[] = [
     inp: { tire: 'WBT', load: 25000, pressure: 0.7, slip: 0, speed: '5mph', condition: 'FR' },
   },
 ];
+/* ───────── what the FE database actually covers, block by block ─────────
+ *
+ * THE TRAINING DOMAIN IS NOT A BOX, and the manifest is not able to say so.
+ * Its `domain` field is one rectangle per tire, read off the min/max columns
+ * of the normalization table shipped with the checkpoint — and those are the
+ * extremes over the WHOLE branch, so they describe the union of the blocks
+ * below and not any one of them. Taken as a box, the DTA branch reads
+ * 0.99-60.08 kN x 0.5-1.0 MPa x 0-99.78% slip, and the pressure slider used to
+ * run to 1.0 MPa with "Braking" selected on the strength of it.
+ *
+ * It does not. Only free rolling at 8 km/h was simulated over the full
+ * rectangle. Table 1 of Lang et al. (2026) splits the 1,852 cases into a
+ * baseline DTA database (n = 922; 8 km/h; free rolling and braking) and 930
+ * new cases (18-50 kN, 0.5-0.9 MPa, both speeds, all three rolling
+ * conditions), and the feature matrix that ships beside the weights confirms
+ * it case by case:
+ *
+ *     block               wheel load (N)    pressure (MPa)   slip ratio
+ *     FR     8 km/h          990 - 60,078     0.50 - 1.00    0
+ *     Brake  8 km/h       10,001 - 50,000     0.50 - 0.90    0.010 - 0.9978
+ *     Acc    8 km/h       18,000 - 50,000     0.50 - 0.90    0.010 - 0.99
+ *     FR     112.65 km/h  18,000 - 50,000     0.50 - 0.90    0
+ *     Brake  112.65 km/h  18,000 - 50,000     0.50 - 0.90    0.010 - 0.99
+ *     Acc    112.65 km/h  18,000 - 50,000     0.50 - 0.90    0.010 - 0.99
+ *
+ * Above 0.9 MPa there is not one braking or accelerating case in the set, at
+ * either speed, at any load; and only the 8 km/h blocks reach below 18 kN.
+ * Nothing in the network refuses to answer outside that — it interpolates its
+ * conditioning vector and hands back a plausible field whose equilibrium
+ * residual stays inside the band, which is exactly why this went unnoticed for
+ * a while. It is still extrapolation, and the tool must not quote it.
+ *
+ * SLIP IS THE ONE AXIS THAT IS NOT THE PROBLEM. It is a continuous input
+ * sampled from 1% to 99% in the FE database, so a slider that runs to 99% is
+ * inside the data everywhere; what is thin up there is not slip itself but the
+ * load/pressure coverage that goes with it. Zero is included because slip -> 0
+ * is the free-rolling limit and the baked grid carries a node there, even
+ * though the database enforces "slip = 0 implies free rolling" and so contains
+ * no braking case below 1%.
+ */
+
+export interface Envelope {
+  /** Wheel load, N. */
+  load: [number, number];
+  /** Inflation pressure, MPa. */
+  pressure: [number, number];
+  /** Slip ratio, 0-1. */
+  slip: [number, number];
+}
+
+/** Keyed `${speed}|${condition}`, the same key predictor.ts blocks under. */
+export const TRAINED_ENVELOPE: Record<TireKey, Record<string, Envelope>> = {
+  DTA: {
+    '5mph|FR': { load: [989.7295, 60077.4648], pressure: [0.5, 1.0], slip: [0, 0] },
+    '5mph|Brake': { load: [10001, 50000], pressure: [0.5, 0.9], slip: [0.01, 0.9978] },
+    '5mph|Acc': { load: [18000, 50000], pressure: [0.5, 0.9], slip: [0.01, 0.99] },
+    '70mph|FR': { load: [18000, 50000], pressure: [0.5, 0.9], slip: [0, 0] },
+    '70mph|Brake': { load: [18000, 50000], pressure: [0.5, 0.9], slip: [0.01, 0.99] },
+    '70mph|Acc': { load: [18000, 50000], pressure: [0.5, 0.9], slip: [0.01, 0.99] },
+  },
+  /* The wide-base branch was trained free rolling at one speed — its slip
+     normalization has std = 0 — so it is one block and the UI disables the
+     rest of the row for it. */
+  WBT: {
+    '5mph|FR': { load: [1000, 56000], pressure: [0.4, 1.0], slip: [0, 0] },
+  },
+};
+
+/**
+ * The largest load/pressure rectangle covered by EVERY block this tire offers,
+ * and the smallest slip ceiling among the blocks that carry slip at all.
+ *
+ * This is what the sliders are allowed to span, and it is deliberately the
+ * intersection rather than a per-block rectangle: bounds that jumped when you
+ * pressed "Braking" — or, worse, when you switched speed — would read as a
+ * broken slider. It costs the free-rolling case the corner above 0.9 MPa,
+ * which is real data; that is the price of a control that holds still.
+ */
+export function trainedBox(tire: TireKey): Envelope {
+  const blocks = Object.entries(TRAINED_ENVELOPE[tire]);
+  const all = blocks.map(([, b]) => b);
+  const slipped = blocks.filter(([k]) => !k.endsWith('|FR')).map(([, b]) => b);
+  return {
+    load: [Math.max(...all.map((b) => b.load[0])), Math.min(...all.map((b) => b.load[1]))],
+    pressure: [
+      Math.max(...all.map((b) => b.pressure[0])),
+      Math.min(...all.map((b) => b.pressure[1])),
+    ],
+    slip: [0, slipped.length ? Math.min(...slipped.map((b) => b.slip[1])) : 0],
+  };
+}
+
 /* ─────────── the range over which the surrogate stays admissible ───────────
  *
  * Two of the residuals above have thresholds, and in the corners of the
@@ -382,6 +474,14 @@ export const PRESETS: Preset[] = [
  * artifact; equations.test.mjs is not able to re-derive them (it has no
  * artifact), so predictor.test.mjs owns that check and fails if any corner or
  * interior sample ever leaves the band.
+ *
+ * TWO CONSTRAINTS, NOT ONE, and the box is the intersection. The residual
+ * sweep above says where the answer closes; trainedBox(tire) above that says
+ * where there is data behind the answer at all. They bind in different places
+ * — on the DTA branch the residual sets the load ceiling (46 kN) and the
+ * pressure floor (0.685 MPa), while the training envelope sets the load floor
+ * (18 kN) and the pressure ceiling (0.9 MPa) — so both have to be re-checked
+ * whenever either moves.
  *
  * The residual KPIs stay on the page. Narrowing the range is not hiding the
  * residual — it is declining to quote a prediction that does not close.
@@ -413,9 +513,14 @@ export interface SafeRange {
  * scale ends on a number a student can read and keeps headroom against
  * interpolation between the sweep's grid points:
  *
- *          DTA vertical  -0.1031 .. 2.2608     WBT vertical  -0.0878 .. 1.1239
+ *          DTA vertical  -0.1009 .. 2.2608     WBT vertical  -0.0878 .. 1.1239
  *          DTA longitud. -0.5559 .. 0.6622     WBT longitud. -0.0402 .. 0.0318
- *          DTA transv.   -0.2477 .. 0.2010     WBT transv.   -0.1633 .. 0.1548
+ *          DTA transv.   -0.2477 .. 0.2011     WBT transv.   -0.1633 .. 0.1548
+ *
+ * Re-swept when SAFE_RANGE narrowed to the training envelope, and it barely
+ * moved: every DTA extreme is reached at 46 kN and 0.685 MPa — the load
+ * ceiling against the pressure floor — and neither of those two bounds is one
+ * the envelope touched.
  *
  * VERTICAL AND TRANSVERSE ARE SHARED BY BOTH TIRES, so a wide-base tire and a
  * dual assembly can be read against each other — which is the comparison the
@@ -436,6 +541,15 @@ export interface SafeRange {
  * diverging scale puts the card's own surface color at its midpoint, so an
  * asymmetric range would move zero off the neutral stop and make one sign
  * read louder than the other.
+ *
+ * WHAT STILL READS THE SHEAR PAIRS. The 3-D shear windows no longer do — see
+ * shearLimit() below for why they fit themselves to the case instead. The
+ * pairs remain the outer envelope of everything the sliders can reach, which
+ * is what profileRange() needs (the two profile cards draw all three channels
+ * on one FIXED axis, and the DTA longitudinal floor of -0.72 is what sets its
+ * bottom), and they remain the thing predictor.test.mjs sweeps: a re-bake that
+ * outgrew them would still be a re-bake whose fields the profile cards clip.
+ * Keep deriving them with scripts/contact-stress-range.mjs.
  */
 export const FIELD_RANGE: Record<TireKey, Record<ChannelKey, { lo: number; hi: number }>> = {
   DTA: {
@@ -473,16 +587,92 @@ export function divergingLimit(tire: TireKey, ch: ChannelKey): number {
   return Math.max(Math.abs(lo), Math.abs(hi));
 }
 
+/* ───────── the one scale that is allowed to follow its own data ─────────
+ *
+ * The rule everywhere else here is that nothing scales itself to its own
+ * field, and the reason is good: the card's subject is how load and inflation
+ * pressure change the contact stress, and a per-state fit paints a 0.9 MPa rib
+ * and a 2.0 MPa rib the identical orange. That rule still holds for sigma_z,
+ * which is the channel the argument was about — the plan view, the profile
+ * cards and the vertical 3-D window are all still pinned to FIELD_RANGE.
+ *
+ * It does not survive contact with the two SHEAR windows. Their fixed limits
+ * are set by a hard braking case at high slip (DTA sigma_x = +-0.72 MPa), and
+ * almost nothing else comes near them. Measured on the tool's own presets:
+ *
+ *     Standard axle, one tire, free rolling    sigma_x reaches   5% of +-0.72
+ *     Highway speed, free rolling              sigma_x reaches   5%
+ *     Figure 8, free rolling (the OPENING view) sigma_x reaches 21%
+ *
+ * At 5% the surface is a flat sheet in the neutral color, and because the z
+ * axis is pinned to the same limit it is flat in HEIGHT too. Two of the three
+ * windows a student first sees were blank, and the field they were meant to
+ * show — the friction traction, the whole reason the paper models the rolling
+ * condition at all — was invisible in both encodings at once. A scale that
+ * shows nothing is not a more honest scale.
+ *
+ * So the shear windows fit themselves to the case. Three things keep that from
+ * turning back into the original sin:
+ *
+ *   1. It is only the shears. sigma_z never moves, so the load slider still
+ *      changes the picture and not just the legend, in the channel that
+ *      carries 90% of the magnitude.
+ *   2. The limit is SYMMETRIC about zero, so the diverging scale's neutral
+ *      stop stays on zero and neither sign is drawn louder — the same contract
+ *      the fixed pairs had. Under braking sigma_x is entirely positive and only
+ *      half the ramp is used; that is the reading, not waste.
+ *   3. The limit is SNAPPED to a 1-2-5-ish ladder, not fitted exactly. It
+ *      holds still over a whole drag of the slider and then steps once, so the
+ *      surface does not breathe under the cursor, and the number printed on
+ *      the ramp bar is one a student can read off. The window header prints
+ *      the true min and max beside it either way.
+ */
+
+/** Never let an all-but-zero field open out into a meaningless axis, MPa. */
+export const SHEAR_FLOOR = 0.02;
+
+/* Round-numbers ladder within a decade. Deliberately finer than the usual
+   1-2-5, which turns 0.11 MPa into 0.2 and wastes almost half the ramp on a
+   channel that had none to spare. No gap here is wider than 25%, which is the
+   most a field may be asked to give up to get a readable number on the bar —
+   equations.test.mjs pins that, so a stop cannot be removed without noticing.
+   The two odd-looking stops, 1.75 and 3.5, are what close the two 33% gaps a
+   plain 1-1.2-1.5-2-2.5-3-4... ladder leaves at 1.5-2 and 3-4. */
+const NICE_STOPS = [1, 1.2, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9, 10];
+
+/** The smallest round number at or above `v`, on the ladder above. */
+export function niceCeil(v: number): number {
+  if (!Number.isFinite(v) || v <= 0) return 0;
+  const decade = 10 ** Math.floor(Math.log10(v));
+  const m = v / decade;
+  // A value that IS a stop must land on it: 0.3 / 0.1 is 2.9999999999999996 in
+  // binary floating point, and a strict compare would jump it a whole step.
+  const stop = NICE_STOPS.find((x) => m <= x * (1 + 1e-9)) ?? 10;
+  return stop * decade;
+}
+
+/**
+ * The symmetric half-extent for a shear window, from the field's own extrema.
+ * Both the colorscale and the z axis take it, or hue and height disagree.
+ */
+export function shearLimit(min: number, peak: number): number {
+  return Math.max(SHEAR_FLOOR, niceCeil(Math.max(Math.abs(min), Math.abs(peak))));
+}
+
 export const SAFE_RANGE: Record<TireKey, SafeRange> = {
-  /* Trained over 0.99-60.1 kN x 0.50-1.00 MPa. Equilibrium overshoots 1.15
-     below ~13 kN and falls back through 0.85 above ~46 kN — the softer the
-     tire the earlier, which is why the pressure floor is what buys the load
-     ceiling. The box still holds every published-figure preset (20-45.4 kN at
-     0.69-0.70 MPa), which is the binding constraint on it: the whole point of
-     those presets is that the tool reproduces a printed case, and a preset
-     outside the box would be clamped into something else. Worst residual
-     anywhere inside: equilibrium 0.855, tension 0.093. */
-  DTA: { load: [14000, 46000], pressure: [0.685, 1.0] },
+  /* Every block of this branch was trained over at least 18-50 kN x 0.50-0.90
+     MPa (trainedBox above); free rolling at 8 km/h goes wider, and nothing
+     else does. Inside that, equilibrium overshoots 1.15 below ~13 kN and falls
+     back through 0.85 above ~46 kN — the softer the tire the earlier, which is
+     why the pressure floor is what buys the load ceiling. So the load floor
+     and the pressure ceiling come from the data, the load ceiling and the
+     pressure floor from the residual. The box still holds every
+     published-figure preset (20-45.4 kN at 0.69-0.70 MPa), which is the
+     binding constraint on it: the whole point of those presets is that the
+     tool reproduces a printed case, and a preset outside the box would be
+     clamped into something else. Worst residual anywhere inside: equilibrium
+     0.855, tension 0.093. */
+  DTA: { load: [18000, 46000], pressure: [0.685, 0.9] },
   /* Trained over 1.0-56.0 kN x 0.40-1.00 MPa. The wide-base branch is an
      extension beyond the published paper and carries much larger residuals —
      it over-closes by 9-14% everywhere, and its tensile fraction reaches 25%
@@ -491,6 +681,19 @@ export const SAFE_RANGE: Record<TireKey, SafeRange> = {
      tension 0.097. */
   WBT: { load: [11000, 27000], pressure: [0.68, 1.0] },
 };
+
+/**
+ * What the slip slider spans, 0-1.
+ *
+ * The ceiling is the smallest slip the FE database reaches across the blocks
+ * that carry slip at all — 0.99, from the accelerating blocks; braking at
+ * 8 km/h goes two thousandths further and nothing goes past that. It is NOT a
+ * statement that 99% slip is a design case: the how-to panel says that most of
+ * the change happens in the first 5-10% and that beyond ~25% the field barely
+ * moves. It is a statement that the model was shown a locked wheel, so the
+ * tool may show one.
+ */
+export const SLIP_RANGE: [number, number] = [0, 0.99];
 
 /** Clamp a value into an inclusive range. */
 export const clampTo = (v: number, [lo, hi]: [number, number]) =>

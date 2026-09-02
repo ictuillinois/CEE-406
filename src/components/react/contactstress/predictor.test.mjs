@@ -33,8 +33,9 @@ import { dirname, join } from 'node:path';
 import { loadManifest, loadTire, predict, cubicWeights, CHANNELS } from './predictor.ts';
 import {
   fieldMetrics, idealizedContact, compare,
-  SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, PRESETS,
-  FIELD_RANGE, profileRange, divergingLimit,
+  SAFE_RANGE, SLIP_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, PRESETS,
+  TRAINED_ENVELOPE, trainedBox,
+  FIELD_RANGE, profileRange, divergingLimit, shearLimit,
 } from './equations.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -95,8 +96,11 @@ test('nothing in public/tools/contact-stress is a checkpoint', () => {
 
 test('the grid covers the whole training domain of each branch', () => {
   const dta = manifest.tires.DTA;
-  // Lang et al. Table 2: wheel load 989.73-60077.46 N, inflation 0.5-1.0 MPa,
-  // slip 0-0.9978. Nothing a student can dial in may need extrapolation.
+  // The manifest's `domain` is the UNION over the branch, taken from the
+  // min/max columns of the checkpoint's normalization table. It is what the
+  // grid has to span so that no baked node is an extrapolation of the model.
+  // It is NOT the box the sliders may span — see the envelope test below,
+  // which is the thing this used to be read as saying.
   near(dta.domain.load[0], 989.7295, 0.01, 'DTA min load');
   near(dta.domain.load[1], 60077.4648, 0.01, 'DTA max load');
   assert.deepEqual(dta.domain.pressure, [0.5, 1.0]);
@@ -111,6 +115,31 @@ test('the grid covers the whole training domain of each branch', () => {
   const wbt = manifest.tires.WBT;
   assert.deepEqual(wbt.domain.pressure, [0.4, 1.0]);
   assert.deepEqual(wbt.groups.map((g) => `${g.speed}/${g.condition}`), ['5mph/FR']);
+});
+
+test('TRAINED_ENVELOPE names every block the artifact bakes, and unions to the manifest', () => {
+  /* The envelope table is the per-block truth the manifest cannot carry, and
+     it is hand-transcribed from the feature matrix shipped with the weights.
+     Two things tie it to the artifact so it cannot silently go stale:
+     it must name exactly the blocks that were baked, and its union must be
+     the rectangle the manifest reports. A re-bake that adds a block, or that
+     widens the domain, fails here rather than in a student's browser. */
+  for (const [tire, spec] of Object.entries(manifest.tires)) {
+    const baked = spec.groups.map((g) => `${g.speed}|${g.condition}`).sort();
+    assert.deepEqual(Object.keys(TRAINED_ENVELOPE[tire]).sort(), baked,
+      `${tire}: the envelope table and the baked blocks disagree`);
+    const all = Object.values(TRAINED_ENVELOPE[tire]);
+    near(Math.min(...all.map((e) => e.load[0])), spec.domain.load[0], 0.01, `${tire} union load lo`);
+    near(Math.max(...all.map((e) => e.load[1])), spec.domain.load[1], 0.01, `${tire} union load hi`);
+    near(Math.min(...all.map((e) => e.pressure[0])), spec.domain.pressure[0], 1e-9, `${tire} union pressure lo`);
+    near(Math.max(...all.map((e) => e.pressure[1])), spec.domain.pressure[1], 1e-9, `${tire} union pressure hi`);
+    // The manifest rounds the slip ceiling to 1; the database stops at 0.9978.
+    assert.ok(Math.max(...all.map((e) => e.slip[1])) <= spec.domain.slip[1] + 1e-9,
+      `${tire}: the envelope claims more slip than the grid spans`);
+  }
+  // And the slip slider stops at the smallest ceiling any block with slip has.
+  assert.deepEqual(SLIP_RANGE, [0, trainedBox('DTA').slip[1]]);
+  assert.equal(SLIP_RANGE[1], 0.99);
 });
 
 test('the stored grid is 2 mm and maps onto the model footprint', () => {
@@ -330,16 +359,23 @@ test('braking and acceleration flip the sign of the longitudinal field', () => {
 test('no warning is reachable anywhere the sliders go', () => {
   const CONDS = {
     DTA: [['FR', '5mph', 0], ['FR', '70mph', 0],
-      ['Acc', '70mph', 1], ['Acc', '5mph', 0.07438], ['Brake', '70mph', 1], ['Brake', '5mph', 1]],
+      ['Acc', '70mph', SLIP_RANGE[1]], ['Acc', '5mph', 0.07438],
+      ['Brake', '70mph', SLIP_RANGE[1]], ['Brake', '5mph', SLIP_RANGE[1]]],
     WBT: [['FR', '5mph', 0]],
   };
   for (const tire of ['DTA', 'WBT']) {
     const t = manifest.tires[tire];
     const box = SAFE_RANGE[tire];
-    assert.ok(box.load[0] >= t.domain.load[0] && box.load[1] <= t.domain.load[1],
-      `${tire}: the load slider leaves the training domain`);
-    assert.ok(box.pressure[0] >= t.domain.pressure[0] && box.pressure[1] <= t.domain.pressure[1],
-      `${tire}: the pressure slider leaves the training domain`);
+    /* Against the INTERSECTION of the blocks, not the manifest's union. The
+       union is what the artifact bakes; the intersection is what every rolling
+       condition the tool offers was actually simulated over. Checking the
+       union is what let the pressure slider reach 1.0 MPa under braking, where
+       the FE database has no case at any load or speed. */
+    const env = trainedBox(tire);
+    assert.ok(box.load[0] >= env.load[0] && box.load[1] <= env.load[1],
+      `${tire}: the load slider leaves the training envelope ${JSON.stringify(env.load)}`);
+    assert.ok(box.pressure[0] >= env.pressure[0] && box.pressure[1] <= env.pressure[1],
+      `${tire}: the pressure slider leaves the training envelope ${JSON.stringify(env.pressure)}`);
 
     for (let l = box.load[0]; l <= box.load[1] + 1; l += 1000) {
       const load = Math.min(l, box.load[1]);
@@ -378,7 +414,7 @@ test('no field the controls can reach runs off the fixed color scale', () => {
       for (const speed of ['5mph', '70mph']) {
         out.push(['FR', speed, 0]);
         for (const condition of ['Brake', 'Acc']) {
-          for (let i = 0; i <= 4; i++) out.push([condition, speed, i / 4]);
+          for (let i = 0; i <= 4; i++) out.push([condition, speed, (SLIP_RANGE[1] * i) / 4]);
         }
       }
       return out;
@@ -449,6 +485,60 @@ test('the shear scales are symmetric, and the profile range covers every channel
     'the vertical scale is meant to be shared by both tires');
   assert.equal(FIELD_RANGE.DTA.transverse.hi, FIELD_RANGE.WBT.transverse.hi,
     'the transverse scale is meant to be shared by both tires');
+});
+
+/* The two shear windows are the one thing in this tool that scales itself to
+   its own data, and it has the same silent failure mode the fixed scale has:
+   a limit that does not cover the field, which Plotly clamps without a word.
+   This re-derives the limit the way the component does — from the field's own
+   extrema — over the whole box, and checks both halves of the bargain: the
+   limit never clips, and it never leaves so much headroom that the surface is
+   flat again, which is the reason for the change in the first place. */
+test('the adaptive shear scale covers each field and does not leave it flat', () => {
+  const ROLLING = {
+    DTA: [['FR', '5mph', 0], ['FR', '70mph', 0],
+      ['Brake', '5mph', 0.07438], ['Brake', '5mph', SLIP_RANGE[1]],
+      ['Acc', '70mph', 0.07438], ['Acc', '70mph', SLIP_RANGE[1]]],
+    WBT: [['FR', '5mph', 0]],
+  };
+  // What the FIXED scale would have shown, for the record: the smallest
+  // fraction of it any reachable case reaches. This is the defect the adaptive
+  // scale is for, so it is recorded rather than described.
+  const worstFixed = { DTA: Infinity, WBT: Infinity };
+
+  for (const tire of ['DTA', 'WBT']) {
+    const t = manifest.tires[tire];
+    const box = SAFE_RANGE[tire];
+    for (let i = 0; i <= 3; i++) {
+      const load = box.load[0] + ((box.load[1] - box.load[0]) * i) / 3;
+      for (let j = 0; j <= 3; j++) {
+        const pressure = box.pressure[0] + ((box.pressure[1] - box.pressure[0]) * j) / 3;
+        for (const [condition, speed, slip] of ROLLING[tire]) {
+          const inp = { tire, load, pressure, slip: condition === 'FR' ? 0 : slip, speed, condition };
+          for (const ch of ['longitudinal', 'transverse']) {
+            const f = predict(packs[tire], ch, inp);
+            const m = fieldMetrics(f, t.height, t.width, t.mmPerPixelY, t.mmPerPixelX);
+            const lim = shearLimit(m.min, m.peak);
+            const reach = Math.max(Math.abs(m.min), m.peak);
+            const at = `${tire} ${ch} at ${(load / 1000).toFixed(1)} kN, ${pressure.toFixed(3)} MPa, ${speed}/${condition} slip ${slip}`;
+            assert.ok(lim >= reach - 1e-12,
+              `${at}: field reaches ${reach.toFixed(4)} MPa, above the ±${lim} it is drawn on`);
+            // The ladder's widest gap is 25%, so a field must fill at least
+            // 1/1.25 of its own scale unless SHEAR_FLOOR is what is binding.
+            assert.ok(reach / lim >= 0.8 || lim === 0.02,
+              `${at}: fills only ${((reach / lim) * 100).toFixed(0)}% of ±${lim}`);
+            worstFixed[tire] = Math.min(worstFixed[tire], reach / divergingLimit(tire, ch));
+          }
+        }
+      }
+    }
+  }
+  // On the fixed scale some reachable case was down at a few percent of the
+  // ramp — a flat sheet in the neutral color, and flat in height too, because
+  // the z axis took the same limit. If this ever stops being true the adaptive
+  // scale has stopped earning its exception and should go back to fixed.
+  assert.ok(worstFixed.DTA < 0.1,
+    `the fixed DTA shear scale is reached to ${(worstFixed.DTA * 100).toFixed(0)}% at worst — it no longer needs replacing`);
 });
 
 test('every preset lands inside the box its tire offers', () => {

@@ -15,6 +15,12 @@ import {
   idealizedContact,
   planFrame,
   SAFE_RANGE,
+  SLIP_RANGE,
+  TRAINED_ENVELOPE,
+  trainedBox,
+  niceCeil,
+  shearLimit,
+  SHEAR_FLOOR,
   huangOutline,
   circleOutline,
   rectOutline,
@@ -237,4 +243,110 @@ test('the DTA circle is known to overrun the frame vertically', () => {
   const fw = planFrame('WBT', wb.w, wb.h, wb.dx, wb.dy);
   const wbWidest = idealizedContact(SAFE_RANGE.WBT.load[1], SAFE_RANGE.WBT.pressure[0]);
   assert.ok(wbWidest.circleRadius <= fw.halfY, 'the wide-base circle should fit');
+});
+
+
+/* ── What the controls are allowed to reach ───────────────────────────
+ * The training domain is not a box: only free rolling at 8 km/h was simulated
+ * over the whole of the rectangle the checkpoint's normalization table
+ * reports. Every other block is 18-50 kN x 0.5-0.9 MPa. The sliders span the
+ * intersection, so a student cannot press "Braking" and land at 1.0 MPa,
+ * where the FE database has not one case at any load or speed.
+ * predictor.test.mjs owns the other half of this, against the artifact.
+ */
+
+test('the sliders stay inside every block of the training envelope', () => {
+  for (const tire of ['DTA', 'WBT']) {
+    const box = trainedBox(tire);
+    const safe = SAFE_RANGE[tire];
+    assert.ok(safe.load[0] >= box.load[0],
+      `${tire}: the load slider starts at ${safe.load[0]} N, below the ${box.load[0]} N every block covers`);
+    assert.ok(safe.load[1] <= box.load[1], `${tire}: the load slider runs past ${box.load[1]} N`);
+    assert.ok(safe.pressure[0] >= box.pressure[0], `${tire}: the pressure slider starts below ${box.pressure[0]} MPa`);
+    assert.ok(safe.pressure[1] <= box.pressure[1],
+      `${tire}: the pressure slider runs to ${safe.pressure[1]} MPa, past the ${box.pressure[1]} MPa every block covers`);
+    // And the box has to be checked block by block, not just against the
+    // intersection helper — that is the thing that was wrong before.
+    for (const [key, env] of Object.entries(TRAINED_ENVELOPE[tire])) {
+      assert.ok(safe.load[0] >= env.load[0] && safe.load[1] <= env.load[1],
+        `${tire} ${key}: load slider leaves ${JSON.stringify(env.load)}`);
+      assert.ok(safe.pressure[0] >= env.pressure[0] && safe.pressure[1] <= env.pressure[1],
+        `${tire} ${key}: pressure slider leaves ${JSON.stringify(env.pressure)}`);
+    }
+  }
+});
+
+test('the DTA envelope is the one recorded from the shipped feature matrix', () => {
+  // Lang et al. (2026) Table 1, cross-checked case by case against the feature
+  // matrix beside the checkpoint. If a re-bake ever changes these, the sliders
+  // have to be re-derived, not the table edited to match them.
+  const e = TRAINED_ENVELOPE.DTA;
+  assert.deepEqual(Object.keys(e).sort(),
+    ['5mph|Acc', '5mph|Brake', '5mph|FR', '70mph|Acc', '70mph|Brake', '70mph|FR'].sort());
+  // Free rolling at 8 km/h is the ONLY block that spans the full rectangle.
+  assert.deepEqual(e['5mph|FR'].pressure, [0.5, 1.0]);
+  for (const [key, env] of Object.entries(e)) {
+    if (key === '5mph|FR') continue;
+    assert.deepEqual(env.pressure, [0.5, 0.9], `${key} should stop at 0.9 MPa`);
+    assert.ok(env.load[1] === 50000, `${key} should stop at 50 kN`);
+  }
+  // Which is why the intersection is much smaller than the union.
+  const box = trainedBox('DTA');
+  assert.deepEqual(box.pressure, [0.5, 0.9]);
+  assert.deepEqual(box.load, [18000, 50000]);
+  // Free-rolling blocks must not drag the slip ceiling to zero: it is the
+  // smallest ceiling among the blocks that carry slip at all.
+  assert.equal(box.slip[1], 0.99);
+  assert.deepEqual(SLIP_RANGE, [0, box.slip[1]]);
+  // The wide-base branch is one free-rolling block, so its box is that block.
+  assert.deepEqual(trainedBox('WBT').pressure, [0.4, 1.0]);
+  assert.equal(trainedBox('WBT').slip[1], 0);
+});
+
+/* ── The adaptive shear scale ────────────────────────────────────
+ * The 3-D shear windows are the one thing in this tool that scales itself to
+ * its own data. What keeps that honest is that the limit is symmetric (so
+ * neither sign is drawn louder) and snapped to a round number (so it holds
+ * still through a slider drag instead of creeping every frame).
+ */
+
+test('niceCeil rounds up to a round number, and never down', () => {
+  // Every stop, and a value just above every stop — the widest gap in the
+  // ladder is what this bounds, so it has to be probed at every gap.
+  const probes = [0.0031, 0.011, 0.035, 0.117, 0.148, 0.25, 0.464, 0.7, 1.13, 9.5, 47];
+  for (let d = -3; d <= 1; d++) {
+    for (const m of [1, 1.2, 1.5, 1.75, 2, 2.5, 3, 3.5, 4, 5, 6, 7, 8, 9]) {
+      probes.push(m * 10 ** d * 1.0000001);
+    }
+  }
+  for (const v of probes) {
+    const n = niceCeil(v);
+    assert.ok(n >= v, `${v} rounded DOWN to ${n}`);
+    assert.ok(n <= v * 1.250001, `${v} rounded up to ${n} — more than 25% of headroom`);
+  }
+  // A value that already is a stop must land on itself, not jump a step. The
+  // stops are round decimals and the fields they measure are round decimals,
+  // so they coincide constantly; binary floating point makes 0.3 / 0.1 come
+  // out as 2.9999999999999996, and a strict compare walks straight past it.
+  for (const v of [0.1, 0.12, 0.15, 0.175, 0.2, 0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 2, 0.02]) {
+    close(niceCeil(v), v, 1e-12, `niceCeil(${v}) should be itself`);
+  }
+  // Degenerate inputs cannot produce a degenerate axis.
+  assert.equal(niceCeil(0), 0);
+  assert.equal(niceCeil(-1), 0);
+  assert.equal(niceCeil(NaN), 0);
+});
+
+test('shearLimit is symmetric, covers the field, and has a floor', () => {
+  // Symmetric about zero: the sign of the extreme cannot change the limit.
+  assert.equal(shearLimit(-0.464, 0.013), shearLimit(-0.013, 0.464));
+  // It must cover the field it is given, or Plotly clamps and says nothing.
+  for (const [lo, hi] of [[-0.148, 0.093], [-0.013, 0.464], [-0.459, 0.012], [-0.126, 0.117]]) {
+    const lim = shearLimit(lo, hi);
+    assert.ok(lim >= Math.abs(lo) && lim >= hi, `${lo}..${hi} runs off ±${lim}`);
+  }
+  // An all-but-flat field opens onto the floor, not onto nothing.
+  assert.equal(shearLimit(0, 0), SHEAR_FLOOR);
+  assert.equal(shearLimit(-1e-9, 1e-9), SHEAR_FLOOR);
+  assert.ok(shearLimit(-0.03, 0.035) > SHEAR_FLOOR, 'the floor should not bind on a real field');
 });
