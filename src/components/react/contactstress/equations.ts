@@ -31,6 +31,7 @@
    imported. Keep them in step with predictor.ts by hand; predictor.test.mjs
    feeds these presets straight into predict(), so a mismatch fails there. */
 export type TireKey = 'DTA' | 'WBT';
+export type ChannelKey = 'vertical' | 'longitudinal' | 'transverse';
 export type SpeedKey = '5mph' | '70mph';
 export type ConditionKey = 'FR' | 'Brake' | 'Acc';
 
@@ -393,6 +394,83 @@ export interface SafeRange {
   load: [number, number];
   /** Inflation pressure, MPa. */
   pressure: [number, number];
+}
+
+/**
+ * The fixed color scale, per tire and channel, in MPa.
+ *
+ * Every field used to be painted 0-to-its-own-peak, which meant the colors
+ * carried no magnitude at all: a rib at 0.9 MPa and the same rib at 2.0 MPa
+ * came out the identical orange, and dragging the load slider changed the
+ * number on the legend while the picture sat still. That is exactly backwards
+ * for a card whose subject is how load and inflation pressure change the
+ * contact stress. The scale is fixed instead, so the color IS the magnitude
+ * and the field is what moves.
+ *
+ * Swept off the shipped artifact by `scripts/contact-stress-range.mjs`, over
+ * the whole of SAFE_RANGE crossed with every rolling control the tool offers
+ * — 163,125 field reconstructions. Observed, and rounded outward here so the
+ * scale ends on a number a student can read and keeps headroom against
+ * interpolation between the sweep's grid points:
+ *
+ *          DTA vertical  -0.1031 .. 2.2608     WBT vertical  -0.0878 .. 1.1239
+ *          DTA longitud. -0.5559 .. 0.6622     WBT longitud. -0.0402 .. 0.0318
+ *          DTA transv.   -0.2477 .. 0.2010     WBT transv.   -0.1633 .. 0.1548
+ *
+ * VERTICAL AND TRANSVERSE ARE SHARED BY BOTH TIRES, so a wide-base tire and a
+ * dual assembly can be read against each other — which is the comparison the
+ * WBT preset ("one wide-base tire carrying what a dual assembly would") exists
+ * to invite. It costs little: on the shared vertical scale the wide-base still
+ * reaches 47% of the ramp and on the transverse 58%, both far into the legible
+ * part of it.
+ *
+ * LONGITUDINAL IS PER TIRE, and is the one exception. Braking and acceleration
+ * are offered only on the dual-assembly branch — the wide-base checkpoint was
+ * trained free rolling — and they are the whole of what makes sigma_x large.
+ * A shared scale would therefore be set by a braking DTA at 0.66 MPa and would
+ * flatten every wide-base longitudinal window to a blank sheet at 5% of it,
+ * hiding a field the card exists to show. Sharing where it informs, splitting
+ * where it would erase.
+ *
+ * The shear pairs are stored SYMMETRIC about zero on purpose: chartTheme's
+ * diverging scale puts the card's own surface color at its midpoint, so an
+ * asymmetric range would move zero off the neutral stop and make one sign
+ * read louder than the other.
+ */
+export const FIELD_RANGE: Record<TireKey, Record<ChannelKey, { lo: number; hi: number }>> = {
+  DTA: {
+    vertical: { lo: -0.15, hi: 2.4 },
+    longitudinal: { lo: -0.72, hi: 0.72 },
+    transverse: { lo: -0.28, hi: 0.28 },
+  },
+  WBT: {
+    vertical: { lo: -0.15, hi: 2.4 },
+    longitudinal: { lo: -0.05, hi: 0.05 },
+    transverse: { lo: -0.28, hi: 0.28 },
+  },
+};
+
+/**
+ * The y range the two profile cards share, in MPa: wide enough for every
+ * channel of this tire, at every load and pressure. All three curves are drawn
+ * on one axis, so it is the union — and it does NOT follow the data, which is
+ * the point. At the bottom of the load slider the vertical curve fills less
+ * than a third of it; at the top, three quarters. That difference is the
+ * reading.
+ */
+export function profileRange(tire: TireKey): [number, number] {
+  const r = FIELD_RANGE[tire];
+  const chans: ChannelKey[] = ['vertical', 'longitudinal', 'transverse'];
+  return [
+    Math.min(...chans.map((c) => r[c].lo)),
+    Math.max(...chans.map((c) => r[c].hi)),
+  ];
+}
+
+/** The symmetric half-extent a diverging channel is drawn on, in MPa. */
+export function divergingLimit(tire: TireKey, ch: ChannelKey): number {
+  const { lo, hi } = FIELD_RANGE[tire][ch];
+  return Math.max(Math.abs(lo), Math.abs(hi));
 }
 
 export const SAFE_RANGE: Record<TireKey, SafeRange> = {

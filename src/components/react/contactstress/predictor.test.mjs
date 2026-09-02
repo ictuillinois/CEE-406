@@ -34,6 +34,7 @@ import { loadManifest, loadTire, predict, cubicWeights, CHANNELS } from './predi
 import {
   fieldMetrics, idealizedContact, compare,
   SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, PRESETS,
+  FIELD_RANGE, profileRange, divergingLimit,
 } from './equations.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -358,6 +359,96 @@ test('no warning is reachable anywhere the sliders go', () => {
       }
     }
   }
+});
+
+/* FIELD_RANGE is the fixed color scale, and it has exactly one failure mode
+   that matters: a field that runs off the end of it. Plotly does not complain
+   about that — it clamps to the top color and says nothing, so the figure goes
+   on looking plausible while the peak is a lie. This is what says so instead.
+
+   Like SAFE_RANGE above, the constant was derived by a long sweep that does
+   not run here: scripts/contact-stress-range.mjs, 163,125 field
+   reconstructions over the whole admissible box crossed with every rolling
+   control. This is the coarse regression gate over the same space. Re-bake the
+   artifact without re-running the script and this is what catches it. */
+test('no field the controls can reach runs off the fixed color scale', () => {
+  const ROLLING = {
+    DTA: (() => {
+      const out = [];
+      for (const speed of ['5mph', '70mph']) {
+        out.push(['FR', speed, 0]);
+        for (const condition of ['Brake', 'Acc']) {
+          for (let i = 0; i <= 4; i++) out.push([condition, speed, i / 4]);
+        }
+      }
+      return out;
+    })(),
+    WBT: [['FR', '5mph', 0]],
+  };
+
+  for (const tire of ['DTA', 'WBT']) {
+    const box = SAFE_RANGE[tire];
+    // Track how much of each scale is actually used: a scale nothing reaches
+    // the top of wastes contrast, which is the other way to get this wrong.
+    const reach = { vertical: 0, longitudinal: 0, transverse: 0 };
+
+    for (let i = 0; i <= 4; i++) {
+      const load = box.load[0] + ((box.load[1] - box.load[0]) * i) / 4;
+      for (let j = 0; j <= 4; j++) {
+        const pressure = box.pressure[0] + ((box.pressure[1] - box.pressure[0]) * j) / 4;
+        for (const [condition, speed, slip] of ROLLING[tire]) {
+          const inp = { tire, load, pressure, slip: condition === 'FR' ? 0 : slip, speed, condition };
+          const at = `${tire} at ${(load / 1000).toFixed(1)} kN, ${pressure.toFixed(3)} MPa, ${speed}/${condition} slip ${slip}`;
+          for (const ch of CHANNELS) {
+            const f = predict(packs[tire], ch, inp);
+            let lo = Infinity;
+            let hi = -Infinity;
+            for (let k = 0; k < f.length; k++) {
+              if (f[k] < lo) lo = f[k];
+              if (f[k] > hi) hi = f[k];
+            }
+            const r = FIELD_RANGE[tire][ch];
+            assert.ok(hi <= r.hi, `${at}: ${ch} peaks at ${hi.toFixed(4)}, above the ${r.hi} scale top — Plotly would clamp it silently`);
+            assert.ok(lo >= r.lo, `${at}: ${ch} dips to ${lo.toFixed(4)}, below the ${r.lo} scale floor`);
+            reach[ch] = Math.max(reach[ch], Math.abs(hi), Math.abs(lo));
+          }
+        }
+      }
+    }
+
+    for (const ch of CHANNELS) {
+      const span = Math.max(Math.abs(FIELD_RANGE[tire][ch].lo), FIELD_RANGE[tire][ch].hi);
+      const used = reach[ch] / span;
+      // Vertical is shared with the other tire on purpose, so the wide-base
+      // branch only reaches about half of it — that IS the comparison. Nothing
+      // may fall under a third, which is where a ramp stops reading.
+      assert.ok(used > 0.33,
+        `${tire} ${ch} only reaches ${(used * 100).toFixed(0)}% of its scale — too loose to read`);
+    }
+  }
+});
+
+test('the shear scales are symmetric, and the profile range covers every channel', () => {
+  for (const tire of ['DTA', 'WBT']) {
+    for (const ch of ['longitudinal', 'transverse']) {
+      const { lo, hi } = FIELD_RANGE[tire][ch];
+      // chartTheme's diverging scale puts the surface color at its midpoint;
+      // an asymmetric range moves zero off that stop and makes one sign louder.
+      assert.equal(-lo, hi, `${tire} ${ch} diverging range is not symmetric about zero`);
+      assert.equal(divergingLimit(tire, ch), hi);
+    }
+    const [plo, phi] = profileRange(tire);
+    for (const ch of CHANNELS) {
+      assert.ok(plo <= FIELD_RANGE[tire][ch].lo, `${tire} profile range clips ${ch} below`);
+      assert.ok(phi >= FIELD_RANGE[tire][ch].hi, `${tire} profile range clips ${ch} above`);
+    }
+  }
+  // The vertical scale is shared so the two tires can be read against each
+  // other; if that ever stops being true, the comparison silently breaks.
+  assert.equal(FIELD_RANGE.DTA.vertical.hi, FIELD_RANGE.WBT.vertical.hi,
+    'the vertical scale is meant to be shared by both tires');
+  assert.equal(FIELD_RANGE.DTA.transverse.hi, FIELD_RANGE.WBT.transverse.hi,
+    'the transverse scale is meant to be shared by both tires');
 });
 
 test('every preset lands inside the box its tire offers', () => {

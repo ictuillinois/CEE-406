@@ -37,6 +37,7 @@ import {
   idealizedContact, planFrame, huangOutline, circleOutline, rectOutline,
   fieldMetrics, compare, decimate, peakRow, rowProfile, colProfile,
   CONTACT_THRESHOLD, SPEED_KMH, SAFE_RANGE, EQUILIBRIUM_BAND, TENSION_LIMIT, clampTo,
+  FIELD_RANGE, profileRange, divergingLimit,
   forceOut, forceUnit, pressureOut, pressureUnit, lengthOut, lengthUnit,
   areaOut, areaUnit, N_PER_LBF, PSI_PER_MPA,
   type UnitSystem,
@@ -253,7 +254,7 @@ export default function ContactStressApp() {
     const pu = pressureUnit(unit);
     const lu = lengthUnit(unit);
     // Three decimals is precision in MPa and noise in psi; inches need one
-    // where millimetres need none.
+    // where millimeters need none.
     const zfmt = unit === 'SI' ? '.3f' : '.1f';
     const xyfmt = unit === 'SI' ? '.0f' : '.1f';
 
@@ -283,8 +284,17 @@ export default function ContactStressApp() {
       const d = decimate(fields[ch], h, w, h, Math.ceil(w / 2));
       const dxs = Array.from({ length: d.w }, (_, i) => (i * d.fx + d.fx / 2) * dx);
       const dys = Array.from({ length: d.h }, (_, i) => (i * d.fy + d.fy / 2) * dy);
-      const lim = pOut(Math.max(Math.abs(metrics[ch].peak), Math.abs(metrics[ch].min), 1e-6));
+      /* Fixed, not fitted. Both the colorscale and the z AXIS are pinned to
+         FIELD_RANGE, because height and hue encode the same quantity here and
+         freezing one without the other would have them disagree — a low-load
+         field would stand as tall as a high-load one while being paler. Per
+         channel still, as the card's subtitle says: sigma_z runs to 2.4 MPa
+         and the shears to a fraction of that, and one scale across all three
+         would erase both shears. */
       const signed = ch !== 'vertical';
+      const lim = pOut(divergingLimit(tire, ch));
+      const zLo = pOut(signed ? -divergingLimit(tire, ch) : 0);
+      const zHi = pOut(FIELD_RANGE[tire][ch].hi);
       await Plotly.react(el, [{
         type: 'surface' as const,
         x: dxs.map(lOut), y: dys.map(lOut),
@@ -310,7 +320,7 @@ export default function ContactStressApp() {
           // the focused window, which has room, carries them.
           xaxis: { title: { text: three ? '' : `Longitudinal (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
           yaxis: { title: { text: three ? '' : `Transverse (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
-          zaxis: { title: { text: three ? '' : `σ (${pu})` }, nticks: three ? 3 : 6, color: c.fg, gridcolor: grid3d, zeroline: true, zerolinecolor: c.hairline, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
+          zaxis: { title: { text: three ? '' : `σ (${pu})` }, range: [zLo, zHi], nticks: three ? 3 : 6, color: c.fg, gridcolor: grid3d, zeroline: true, zerolinecolor: c.hairline, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
           camera: { eye: three ? { x: 1.7, y: -1.45, z: 1.0 } : { x: 1.55, y: -1.35, z: 0.95 } },
         },
       }), { ...plotConfig, displayModeBar: false });
@@ -357,7 +367,11 @@ export default function ContactStressApp() {
             return v >= CONTACT_THRESHOLD ? pOut(v) : null;
           })),
         colorscale: fieldScale(theme),
-        zmin: 0, zmax: pOut(Math.max(metrics.vertical.peak, 1e-6)),
+        /* FIXED. This used to be the current field's own peak, so the patch
+           came out the same orange whatever the load was and the only thing
+           that moved was the number on the legend. Now the number holds and
+           the picture moves, which is the way round the card needs. */
+        zmin: 0, zmax: pOut(FIELD_RANGE[tire].vertical.hi),
         showscale: false,
         hoverongaps: false,
         hovertemplate: `%{x:${xyfmt}}, %{y:${xyfmt}} ${lu}<br><b>%{z:${zfmt}} ${pu}</b><extra></extra>`,
@@ -417,7 +431,7 @@ export default function ContactStressApp() {
 
       /* Fit the CARD to the figure, not the figure to the card. The plan view
          is equal-aspect, so Plotly shrinks its drawing box to whichever
-         dimension binds and centres what is left — at a fixed height that
+         dimension binds and centers what is left — at a fixed height that
          left the patch floating in a lake of slack, worst on the wide-base
          branch, whose window is half as wide as it is tall. Measuring the
          column and solving for the height the data actually needs removes it,
@@ -457,20 +471,19 @@ export default function ContactStressApp() {
           one-signed channel and the textbook parabola; the two shears cross
           zero inside the patch and stay as lines, so the sign change is still
           the thing the eye lands on. Flat mark, so withAlpha (never mixHex).
+
+       The shared range is now FIXED too — profileRange(tire), not the data.
+       Autoscaling made every load look alike: the curve filled the card at
+       14 kN exactly as it did at 46 kN, and only the axis labels betrayed the
+       2.5x between them. Held still, the vertical curve fills under a third
+       of the card at the bottom of the slider and three quarters at the top,
+       and that difference is the reading.
     */
     const hues = { vertical: c.orange, longitudinal: c.blue, transverse: c.emerald };
     const longSeries = CHANNELS.map((ch) => Array.from(rowProfile(fields[ch], h, w, rowIdx), pOut));
     const tranSeries = CHANNELS.map((ch) => Array.from(colProfile(fields[ch], h, w, colIdx), pOut));
-    let lo = 0;
-    let hi = 0;
-    for (const s of [...longSeries, ...tranSeries]) {
-      for (const v of s) {
-        if (v < lo) lo = v;
-        if (v > hi) hi = v;
-      }
-    }
-    const pad = (hi - lo) * 0.08 || pOut(0.05);
-    const yRange = [lo - pad, hi + pad];
+    const [rangeLo, rangeHi] = profileRange(tire);
+    const yRange = [pOut(rangeLo), pOut(rangeHi)];
     const profileTrace = (ch: Channel, x: number[], y: number[]) => ({
       x, y, mode: 'lines' as const, name: LABEL[ch],
       line: { color: hues[ch], width: ch === 'vertical' ? 2.6 : 2 },
@@ -762,8 +775,11 @@ export default function ContactStressApp() {
               title="Footprint against the design idealization"
               subtitle={
                 <>
-                  Plan view of σz. Blank cells carry under {P(CONTACT_THRESHOLD)}{' '}
-                  {pressureUnit(unit)}; each textbook outline encloses <em>P/p</em>.
+                  Plan view of σz on a scale that does not move: 0 to{' '}
+                  {P(FIELD_RANGE[tire].vertical.hi)} {pressureUnit(unit)} at every load and
+                  pressure, so the color is the magnitude. Blank cells carry under{' '}
+                  {P(CONTACT_THRESHOLD)} {pressureUnit(unit)}; each textbook outline
+                  encloses <em>P/p</em>.
                 </>
               }
             >
@@ -813,7 +829,7 @@ export default function ContactStressApp() {
                     stops={fieldScale(theme)}
                     caption={`Vertical stress σz (${pressureUnit(unit)})`}
                     lowLabel="0"
-                    highLabel={P(result.metrics.vertical.peak)}
+                    highLabel={P(FIELD_RANGE[tire].vertical.hi)}
                   />
                 </div>
 
@@ -853,7 +869,7 @@ export default function ContactStressApp() {
 
             <Card
               title="Three-dimensional contact stress"
-              subtitle="One window per direction, each on its own scale. Drag to orbit, scroll to zoom."
+              subtitle="One window per direction, each on its own fixed scale — σz and the two shears differ by more than a decade, so one scale across all three would erase both shears. Drag to orbit, scroll to zoom."
               affordance={
                 <div className="cee-seg" style={{ marginBottom: 0 }} role="group" aria-label="Which window">
                   <button type="button" className={view === 'all' ? 'is-active' : ''} onClick={() => setView('all')}>All three</button>
@@ -882,12 +898,14 @@ export default function ContactStressApp() {
                     <div className="cee-figure__plot" ref={surfRefs[ch]} role="img"
                       aria-label={`${LABEL[ch]} surface, ${SUBLABEL[ch]}, ranging from ${P(result.metrics[ch].min)} to ${P(result.metrics[ch].peak)} ${pressureUnit(unit)}`} />
                     {ch === 'vertical' ? (
-                      <RampBar theme={theme} stops={fieldScale(theme)} caption="σz" lowLabel="0" highLabel={`${P(result.metrics.vertical.peak)} ${pressureUnit(unit)}`} />
+                      <RampBar theme={theme} stops={fieldScale(theme)} caption="σz" lowLabel="0" highLabel={`${P(FIELD_RANGE[tire].vertical.hi)} ${pressureUnit(unit)}`} />
                     ) : (
+                      /* Now that the diverging scale is fixed too, its ends
+                         can carry numbers instead of a bare − and +. */
                       <div className="cee-rampbar">
                         <span className="cee-rampbar__caption">{ch === 'longitudinal' ? 'σx' : 'σy'}</span>
                         <div className="cee-rampbar__row">
-                          <span className="cee-rampbar__end">−</span>
+                          <span className="cee-rampbar__end">−{P(divergingLimit(tire, ch))}</span>
                           <span
                             className="cee-rampbar__track"
                             style={{
@@ -895,9 +913,9 @@ export default function ContactStressApp() {
                                 .map(([p, col]) => `${col} ${(p * 100).toFixed(0)}%`).join(', ')})`,
                             }}
                             role="img"
-                            aria-label="Diverging color scale, negative to positive through zero"
+                            aria-label={`Diverging color scale, minus to plus ${P(divergingLimit(tire, ch))} ${pressureUnit(unit)} through zero`}
                           />
-                          <span className="cee-rampbar__end">+</span>
+                          <span className="cee-rampbar__end">+{P(divergingLimit(tire, ch))}</span>
                         </div>
                       </div>
                     )}
@@ -914,7 +932,7 @@ export default function ContactStressApp() {
             <div className="cee-chart-grid cee-chart-grid--2">
               <Card
                 title="Profile along travel"
-                subtitle="Through the most heavily loaded rib — the horizontal cut above (paper, Fig. 9). Both profiles share one stress scale."
+                subtitle="Through the most heavily loaded rib — the horizontal cut above (paper, Fig. 9). Both profiles share one fixed stress scale, so the curve's height is the load."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={longRef} role="img"
@@ -929,7 +947,7 @@ export default function ContactStressApp() {
 
               <Card
                 title="Profile across the tire"
-                subtitle="Across the middle of the patch — the vertical cut above (paper, Fig. 10). Both profiles share one stress scale."
+                subtitle="Across the middle of the patch — the vertical cut above (paper, Fig. 10). Both profiles share one fixed stress scale, so the curve's height is the load."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={tranRef} role="img"

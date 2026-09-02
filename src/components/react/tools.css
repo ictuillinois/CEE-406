@@ -1215,10 +1215,10 @@
 
 .cs-foot__main { min-width: 0; }
 
-/* tire rail | plot | scale. The scale is `auto` and centred on the plot's own
+/* tire rail | plot | scale. The scale is `auto` and centered on the plot's own
    height, because the plan view is equal-aspect and `constrain: 'domain'`
    shrinks its drawing box to fit — there is no edge to align a colorbar to,
-   so it is centred rather than stretched. */
+   so it is centered rather than stretched. */
 @media (min-width: 720px) {
   .cs-foot {
     /* The scale column is a FIXED width, not `auto`. On `auto` it tracked its
