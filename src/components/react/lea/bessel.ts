@@ -50,11 +50,20 @@ export const besselJ0Prime = (x: number) => -besselJ1(x);
 /** dJ1/dx = J0(x) - J1(x)/x. */
 export const besselJ1Prime = (x: number) => (x === 0 ? 0.5 : besselJ0(x) - besselJ1(x) / x);
 
+/* Zeros are wanted in strictly increasing order, thousands of times per
+   render (every Hankel quadrature rebuilds its panel breakpoints from them),
+   and each one costs up to eight Newton steps with two Bessel evaluations
+   apiece. They never change, so they are computed once and kept. */
+const J0_ZEROS: number[] = [];
+const J1_ZEROS: number[] = [];
+
 /**
  * The k-th positive zero of J0 (k = 1, 2, ...), by McMahon's asymptotic
- * expansion refined with Newton's method.
+ * expansion refined with Newton's method. Memoized.
  */
 export function besselJ0Zero(k: number): number {
+  const hit = J0_ZEROS[k];
+  if (hit !== undefined) return hit;
   const b = (k - 0.25) * Math.PI;
   const b8 = 1 / (8 * b);
   let x = b + b8 * (1 - b8 * b8 * (124 / 3 - b8 * b8 * 120928 / 15));
@@ -63,11 +72,14 @@ export function besselJ0Zero(k: number): number {
     x -= dx;
     if (Math.abs(dx) < 1e-14) break;
   }
+  J0_ZEROS[k] = x;
   return x;
 }
 
-/** The k-th positive zero of J1 (k = 1, 2, ...), excluding x = 0. */
+/** The k-th positive zero of J1 (k = 1, 2, ...), excluding x = 0. Memoized. */
 export function besselJ1Zero(k: number): number {
+  const hit = J1_ZEROS[k];
+  if (hit !== undefined) return hit;
   const b = (k + 0.25) * Math.PI;
   const b8 = 1 / (8 * b);
   let x = b - b8 * (3 + b8 * b8 * (-4 + b8 * b8 * 32 / 3));
@@ -76,5 +88,6 @@ export function besselJ1Zero(k: number): number {
     x -= dx;
     if (Math.abs(dx) < 1e-14) break;
   }
+  J1_ZEROS[k] = x;
   return x;
 }

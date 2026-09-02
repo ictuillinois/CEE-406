@@ -13,6 +13,7 @@
 // λ = z/H, ρ = r/H, α = a/H. Every exponential is then of the form
 // e^(-m·Δλ) with Δλ ≥ 0, so nothing overflows.
 import { besselJ0, besselJ1, besselJ0Zero, besselJ1Zero } from './bessel.ts';
+import { oneLayerResponse, principalOfTensor } from './oneLayer.ts';
 
 export interface Layer {
   /** Thickness. The last layer is the half-space and its thickness is ignored. */
@@ -180,15 +181,56 @@ function starred(
   return { sigZ, sigR, sigT, tauRZ, w, u };
 }
 
-/** 4-point Gauss-Legendre nodes and weights on [-1, 1]. */
-const GL_X = [-0.8611363115940526, -0.3399810435848563, 0.3399810435848563, 0.8611363115940526];
-const GL_W = [0.3478548451374538, 0.6521451548625461, 0.6521451548625461, 0.3478548451374538];
+/**
+ * The same starred responses for a HALF-SPACE made of the top layer's
+ * material, at the same (ρ, λ) and m.
+ *
+ * This is the n = 1 specialization of the block above: the response has to
+ * vanish at depth, so A = C = 0, and the surface conditions of Eq. B.9 leave
+ * D = 1 and B = 2ν. It is subtracted from the layered integrand and added
+ * back in closed form afterwards — see the note in leaResponse.
+ */
+function starredHalfSpace(m: number, rho: number, lambda: number, v: number, E1: number) {
+  const B = 2 * v, D = 1;
+  const e = Math.exp(-m * lambda);
+  const ml = m * lambda;
+  const J0 = besselJ0(m * rho);
+  const J1 = besselJ1(m * rho);
+  const J1r = rho === 0 ? m / 2 : J1 / rho;
+
+  return {
+    sigZ: -m * J0 * (B + D * (1 - 2 * v + ml)) * e,
+    sigR: (m * J0 - J1r) * (B - D * (1 - ml)) * e - 2 * v * m * J0 * D * e,
+    sigT: J1r * (B - D * (1 - ml)) * e - 2 * v * m * J0 * D * e,
+    tauRZ: -m * J1 * (B - D * (2 * v - ml)) * e,
+    w: ((1 + v) / E1) * J0 * (B + D * (2 - 4 * v + ml)) * e,
+    u: ((1 + v) / E1) * J1 * (B - D * (1 - ml)) * e,
+  };
+}
+
+/** 8-point Gauss-Legendre nodes and weights on [-1, 1]. */
+const GL_X = [
+  -0.9602898564975363, -0.7966664774136267, -0.5255324099163290, -0.1834346424956498,
+  0.1834346424956498, 0.5255324099163290, 0.7966664774136267, 0.9602898564975363,
+];
+const GL_W = [
+  0.1012285362903763, 0.2223810344533745, 0.3137066458778873, 0.3626837833783620,
+  0.3626837833783620, 0.3137066458778873, 0.2223810344533745, 0.1012285362903763,
+];
 
 export interface LeaOptions {
-  /** Integration cycles (intervals between Bessel zeros). */
-  cycles?: number;
-  /** Relative convergence tolerance on the accumulated integral. */
+  /**
+   * Upper limit of the Hankel variable m, overriding the automatic range.
+   * Rarely wanted — the default is derived from the exponential damping at
+   * the evaluation depth, which is the thing that actually decides it.
+   */
+  mMax?: number;
+  /** Panel budget. Bounds the cost at points that need a very long range. */
+  budget?: number;
+  /** Relative tail tolerance: stop once a run of panels stops contributing. */
   tol?: number;
+  /** Deprecated. Kept so old call sites still type-check; ignored. */
+  cycles?: number;
 }
 
 /**
@@ -207,8 +249,7 @@ export function leaResponse(
 ): Response | null {
   const n = layers.length;
   if (n < 2) return null;
-  const cycles = opts.cycles ?? 60;
-  const tol = opts.tol ?? 1e-10;
+  const tol = opts.tol ?? 1e-12;
 
   // H = depth to the top of the lowest layer.
   let H = 0;
@@ -225,62 +266,130 @@ export function leaResponse(
   const E = layers.map(l => l.E);
   const alpha = a / H, rho = r / H, lambda = z / H;
 
-  // Breakpoints: the union of the zeros of J1(mα) and J0(mρ), which is where
-  // the integrand oscillates (Huang App. B, §B.2).
-  const breaks: number[] = [0];
-  for (let k = 1; k <= cycles; k++) {
-    breaks.push(besselJ1Zero(k) / alpha);
-    if (rho > 1e-9) breaks.push(besselJ0Zero(k) / rho);
+  /* ── How far the quadrature has to run, and where its panels go ─────────
+   *
+   * Both of these used to be decided by one `cycles` count applied to both
+   * Bessel families, and that is wrong in a way that does not announce
+   * itself. The zeros of J1(mα) arrive every π/α and those of J0(mρ) every
+   * π/ρ, so a fixed count of each reaches a DIFFERENT m. Past the nearer of
+   * the two limits, panels sized by one family straddle several oscillations
+   * of the other, and 4-point Gauss-Legendre integrates the average of a sign
+   * change rather than the function. Far from the load, where the answer is
+   * small and the cancellation is nearly total, the error swamps it: at
+   * r/a = 24 and z/a = 5.6 this returned σz = -3.3e-3 where the true value is
+   * +2.9e-5 — two orders of magnitude out, with the wrong sign. Superposing
+   * a tandem axle at a realistic 60-in spacing sampled exactly that region,
+   * so the error reached the answer.
+   *
+   * Both families now run out to the same M. M itself comes from the
+   * damping: every term in B.4 carries e^(-m·Δλ) with Δλ ≥ 0, so the tail
+   * past M is about e^(-Mλ)/M and Mλ ≈ 18 puts it near 1e-8. A surface point
+   * has no damping at all and falls back to the budget.
+   */
+  const spacingRate = alpha / Math.PI + (rho > 1e-9 ? (2 * rho) / Math.PI : 0);
+  const budget = opts.budget ?? 4000;
+  // The floor only keeps the range from collapsing at very deep points; the
+  // damping sets it everywhere else. A convergence sweep at the bottom of a
+  // layer with α = 0.18 is exact to 1e-13 by m = 30, where a floor of 6π/α
+  // would have integrated to 105 for nothing.
+  const floorM = 6 / alpha;
+  /* The integrand is the DIFFERENCE from a half-space of the top layer's
+     material (see below), and that difference is a reflection off the first
+     interface, so it decays like e^(-m·λ1) even when the point itself is on
+     the surface and has no damping of its own. λ1 therefore sets the range
+     whenever the point is shallower than it. Without the subtraction a
+     surface point ran to the panel budget every time — Figure 2.17 alone
+     took 53 seconds to draw. */
+  const decay = Math.max(lambda, lam[0], 1e-9);
+  const mMax = opts.mMax ?? Math.min(
+    Math.max(floorM, 18 / decay),
+    Math.max(floorM, budget / Math.max(spacingRate, 1e-12))
+  );
+
+  const brk = new Set<number>();
+  for (let k = 1; ; k++) {
+    const zk = besselJ1Zero(k) / alpha;
+    if (zk > mMax) break;
+    brk.add(zk);
   }
-  breaks.sort((x, y) => x - y);
+  if (rho > 1e-9) {
+    for (let k = 1; ; k++) {
+      const z0 = besselJ0Zero(k) / rho;
+      const z1 = besselJ1Zero(k) / rho;
+      if (z0 > mMax && z1 > mMax) break;
+      if (z0 <= mMax) brk.add(z0);
+      if (z1 <= mMax) brk.add(z1);
+    }
+  }
+  brk.add(mMax);
+  const sorted = [...brk].sort((x, y) => x - y);
 
   // The first cycle is subdivided, as the text recommends, because the
   // integrand varies fastest there.
-  const firstZero = besselJ1Zero(1) / alpha;
-  const refined: number[] = [];
-  for (let s = 0; s < 6; s++) refined.push((firstZero * s) / 6);
-  const nodes = [...refined, ...breaks.filter(x => x > firstZero * (1 - 1e-12))];
+  const nodes: number[] = [];
+  for (let s = 0; s < 8; s++) nodes.push((sorted[0] * s) / 8);
+  nodes.push(...sorted);
 
   const acc6 = { sigZ: 0, sigR: 0, sigT: 0, tauRZ: 0, w: 0, u: 0 };
-  let last = 0;
+  let peak = 0;      // largest single-panel contribution seen, any component
+  let quiet = 0;     // consecutive panels that contributed nothing measurable
 
   for (let s = 0; s < nodes.length - 1; s++) {
     const lo = nodes[s], hi = nodes[s + 1];
     if (hi - lo < 1e-14) continue;
     const mid = 0.5 * (lo + hi), half = 0.5 * (hi - lo);
     let seg = 0;
-    for (let g = 0; g < 4; g++) {
+    for (let g = 0; g < GL_X.length; g++) {
       const m = mid + half * GL_X[g];
       if (m <= 1e-12) continue;
       const K = constantsFor(m, lam, nu, E);
       if (!K) continue;
       const R = starred(m, rho, lambda, lam, nu, E, K);
-      // B.7: R = q·α ∫ (R*/m) J1(mα) dm
+      const P = starredHalfSpace(m, rho, lambda, nu[0], E[0]);
+      // B.7: R = q·α ∫ (R*/m) J1(mα) dm, integrated on R* - P*.
       const f = (besselJ1(m * alpha) / m) * GL_W[g] * half;
-      acc6.sigZ += R.sigZ * f;
-      acc6.sigR += R.sigR * f;
-      acc6.sigT += R.sigT * f;
-      acc6.tauRZ += R.tauRZ * f;
-      acc6.w += R.w * f;
-      acc6.u += R.u * f;
-      seg += Math.abs(R.sigZ * f);
+      const dZ = (R.sigZ - P.sigZ) * f;
+      const dR = (R.sigR - P.sigR) * f;
+      const dT = (R.sigT - P.sigT) * f;
+      const dS = (R.tauRZ - P.tauRZ) * f;
+      acc6.sigZ += dZ;
+      acc6.sigR += dR;
+      acc6.sigT += dT;
+      acc6.tauRZ += dS;
+      acc6.w += (R.w - P.w) * f;
+      acc6.u += (R.u - P.u) * f;
+      seg = Math.max(seg, Math.abs(dZ), Math.abs(dR), Math.abs(dT), Math.abs(dS));
     }
-    // Stop once successive cycles stop contributing.
-    if (s > 8 && seg < tol * Math.max(1e-30, Math.abs(acc6.sigZ))) { last = s; break; }
-    last = s;
+    // Stop only once a RUN of panels has stopped contributing, measured
+    // against the largest contribution seen rather than against a running
+    // total that may be cancelling to near zero.
+    peak = Math.max(peak, seg);
+    quiet = seg < tol * peak ? quiet + 1 : 0;
+    if (quiet >= 12) break;
   }
 
-  // Appendix B reports stresses tension-positive; the rest of this site (and
-  // Huang's own Chapter 2 tables) uses compression positive, so the stresses
-  // are negated. Displacements are already downward-positive in B.4e-f and
-  // keep their sign; they also carry an extra H from the normalization.
+  /* ── Putting the half-space back ────────────────────────────────────────
+   * The loop integrated (layered - half-space), so the half-space itself has
+   * to be added back. oneLayer.ts supplies it in closed form — including at
+   * the surface, where the raw integrals converge only conditionally and the
+   * quadrature has nothing to converge to. The result is identical to
+   * integrating the layered response directly, to the last digit either way
+   * can resolve; what changes is that the integrand now decays.
+   *
+   * Appendix B reports stresses tension-positive; the rest of this site (and
+   * Huang's own Chapter 2 tables) uses compression positive, so the stresses
+   * are negated. Displacements are already downward-positive in B.4e-f and
+   * keep their sign; they also carry an extra H from the normalization.
+   */
+  const base = oneLayerResponse(r, z, q, a, E[0], nu[0]);
+  if (!base) return null;
   const scale = q * alpha;
-  const sigZ = -scale * acc6.sigZ;
-  const sigR = -scale * acc6.sigR;
-  const sigT = -scale * acc6.sigT;
-  const tauRZ = -scale * acc6.tauRZ;
-  const w = scale * acc6.w * H;
-  const u = scale * acc6.u * H;
+  const sigZ = -scale * acc6.sigZ + base.sigZ;
+  const sigR = -scale * acc6.sigR + base.sigR;
+  const sigT = -scale * acc6.sigT + base.sigT;
+  const tauRZ = -scale * acc6.tauRZ + base.tauRZ;
+  const w = scale * acc6.w * H + base.w;
+  const u = scale * acc6.u * H + base.u;
 
   const i = layerAt(lam, lambda);
   const Ei = E[i], vi = nu[i];
@@ -292,41 +401,73 @@ export function leaResponse(
   };
 }
 
+/** A superposed state, in the Cartesian plan frame rather than in (r, t). */
+export interface SuperposedResponse {
+  /** Normal stresses on the plan axes and on z. Compression positive. */
+  sigX: number; sigY: number; sigZ: number;
+  /** Shear stresses in the same frame. */
+  tauXY: number; tauXZ: number; tauYZ: number;
+  /** Vertical displacement, positive downward. */
+  w: number;
+  /** Principal stresses, σ1 ≥ σ2 ≥ σ3. */
+  sig: [number, number, number];
+  /** Principal strains, in the same order as `sig`. */
+  eps: [number, number, number];
+  /** Cartesian strains, for reading a horizontal tension off a known axis. */
+  epsX: number; epsY: number; epsZ: number;
+  /**
+   * The largest tensile strain at the point, as a POSITIVE magnitude — the
+   * "overall principal strain based on all six components" of Huang §2.2.1.
+   * Zero if the point is in triaxial compression.
+   */
+  tensile: number;
+}
+
 /**
- * Superpose the responses of several identical circular loads (dual wheels,
- * tandem axles). Valid because the system is linear elastic.
+ * Superpose several identical circular loads — dual wheels, tandem axles.
+ * Valid because the system is linear elastic.
  *
- * @param wheels  centers of each load in the plan, relative to the point
+ * Each load's own (r, t) axes point in a different direction, so the axisym-
+ * metric components are rotated into one common plan frame BEFORE they are
+ * added. An earlier version added σr to σr and τrz to τrz regardless of
+ * direction, which is only correct when every load sits on the same radius
+ * through the point; for a dual it silently mixed the radial stress of one
+ * wheel with the tangential of the other and dropped the in-plane shear
+ * entirely, so no principal state could be recovered from it.
+ *
+ * @param wheels centers of each load in plan
+ * @param point  where to evaluate, in the same plan coordinates
  */
 export function leaSuperpose(
   layers: Layer[], q: number, a: number,
   wheels: { x: number; y: number }[],
   point: { x: number; y: number; z: number },
   opts: LeaOptions = {}
-): Response | null {
-  const total: Response = {
-    sigZ: 0, sigR: 0, sigT: 0, tauRZ: 0, w: 0, u: 0, epsZ: 0, epsR: 0, epsT: 0,
-  };
+): SuperposedResponse | null {
+  let sigX = 0, sigY = 0, sigZ = 0, tauXY = 0, tauXZ = 0, tauYZ = 0, w = 0;
+
   for (const wl of wheels) {
-    const dr = Math.hypot(point.x - wl.x, point.y - wl.y);
+    const dx = point.x - wl.x, dy = point.y - wl.y;
+    const dr = Math.hypot(dx, dy);
     const R = leaResponse(layers, q, a, dr, point.z, opts);
     if (!R) return null;
-    // Axisymmetric components add directly on the axis of each load; off-axis
-    // the radial/tangential pair must be resolved into common axes first.
-    total.sigZ += R.sigZ;
-    total.w += R.w;
+    sigZ += R.sigZ;
+    w += R.w;
     if (dr < 1e-9) {
-      total.sigR += R.sigR;
-      total.sigT += R.sigT;
+      // On this load's own axis σr = σt and τrz = 0, so the rotation is moot.
+      sigX += R.sigR;
+      sigY += R.sigT;
     } else {
-      const c = (point.x - wl.x) / dr, s = (point.y - wl.y) / dr;
-      total.sigR += R.sigR * c * c + R.sigT * s * s;
-      total.sigT += R.sigR * s * s + R.sigT * c * c;
+      const c = dx / dr, s = dy / dr;
+      sigX += R.sigR * c * c + R.sigT * s * s;
+      sigY += R.sigR * s * s + R.sigT * c * c;
+      tauXY += (R.sigR - R.sigT) * c * s;
+      tauXZ += R.tauRZ * c;
+      tauYZ += R.tauRZ * s;
     }
-    total.tauRZ += R.tauRZ;
-    total.u += R.u;
   }
-  // Recompute strains from the superposed stresses in the layer containing z.
+
+  // Strains come from the SUPERPOSED stresses, in the layer holding the point.
   let H = 0;
   for (let i = 0; i < layers.length - 1; i++) H += layers[i].h;
   const lam: number[] = [];
@@ -334,9 +475,19 @@ export function leaSuperpose(
   for (let i = 0; i < layers.length - 1; i++) { acc += layers[i].h; lam.push(acc / H); }
   lam.push(1);
   const i = layerAt(lam, point.z / H);
-  const Ei = layers[i].E, vi = layers[i].nu;
-  total.epsZ = (total.sigZ - vi * (total.sigR + total.sigT)) / Ei;
-  total.epsR = (total.sigR - vi * (total.sigZ + total.sigT)) / Ei;
-  total.epsT = (total.sigT - vi * (total.sigZ + total.sigR)) / Ei;
-  return total;
+  const E = layers[i].E, nu = layers[i].nu;
+
+  const sig = principalOfTensor(sigX, sigY, sigZ, tauXY, tauXZ, tauYZ);
+  const bulk = sig[0] + sig[1] + sig[2];
+  const eps = sig.map(v => (v - nu * (bulk - v)) / E) as [number, number, number];
+
+  return {
+    sigX, sigY, sigZ, tauXY, tauXZ, tauYZ, w,
+    sig, eps,
+    epsX: (sigX - nu * (sigY + sigZ)) / E,
+    epsY: (sigY - nu * (sigX + sigZ)) / E,
+    epsZ: (sigZ - nu * (sigX + sigY)) / E,
+    // Compression positive, so tension is the most NEGATIVE principal strain.
+    tensile: Math.max(0, -Math.min(eps[0], eps[1], eps[2])),
+  };
 }
