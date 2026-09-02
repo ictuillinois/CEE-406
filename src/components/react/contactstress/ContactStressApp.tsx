@@ -116,6 +116,12 @@ const TIRE_ART: Record<TireType, {
 
 type View = 'all' | Channel;
 
+/* How still the controls must be before the three WebGL windows redraw, and
+   how long they may go without one during a drag that never stops. See the
+   scheduling effect for the measurements these come from. */
+const SURFACE_SETTLE_MS = 110;
+const SURFACE_STALE_MS = 500;
+
 export default function ContactStressApp() {
   const theme = useTheme();
   const [unit, setUnit] = useState<UnitSystem>('SI');
@@ -250,10 +256,52 @@ export default function ContactStressApp() {
   const longRef = useRef<HTMLDivElement>(null);
   const tranRef = useRef<HTMLDivElement>(null);
   const frame = useRef(0);
+  const settle = useRef(0);
+  /* Which draw is the current one. Every pass takes a number on entry and
+     gives up at the next await if a newer pass has started since, so a slider
+     that outruns Plotly drops stale frames instead of queueing them behind
+     each other — which is what it used to do, three deep. */
+  const drawGen = useRef(0);
+  const surfacesAt = useRef(0);
+  /* What is on screen, and what has ever been drawn. A figure ABSENT from
+     onScreen has not been measured yet and counts as visible: the first pass
+     has to draw everything, or a card opens at zero height and the page jumps
+     when it finally fills.
 
-  const draw = useCallback(async () => {
+     TWO notions of visible, because they answer different questions. `nearby`
+     carries a margin and decides whether a figure may be drawn at all, so
+     that one just under the fold is ready before it is scrolled to. `inView`
+     is strict and decides only whether a figure is worth keeping alive DURING
+     a drag. Conflating them cost 5 full 3-D passes in a 2.5 s sweep, on a
+     card 320 px below the fold that nobody could see. */
+  const nearby = useRef(new Map<Element, boolean>());
+  const inView = useRef(new Map<Element, boolean>());
+  const drawnOnce = useRef(new Set<Element>());
+  const [revealed, setRevealed] = useState(0);
+
+  /* What the three 3-D windows are SHOWING, as opposed to what the controls
+     currently say. They redraw on a slower schedule than everything else, so
+     their headers and their color bars have to be read off the pass that drew
+     them: a bar reading ±0.50 over a surface painted on ±0.15 is not a
+     lagging figure, it is a mislabelled one, and the shear bars move with the
+     case. Null until the first pass, which falls back to the live values. */
+  const [surfaced, setSurfaced] = useState<{
+    lim: Record<'longitudinal' | 'transverse', number>;
+    span: Record<Channel, { min: number; peak: number }>;
+  } | null>(null);
+
+  const draw = useCallback(async (withSurfaces: boolean) => {
     if (!result || !spec) return;
+    const gen = ++drawGen.current;
     const Plotly = (await import('plotly.js-dist-min')).default;
+    if (drawGen.current !== gen) return;
+    /** Draw this figure at all? Only if it is on screen, or has never been
+        drawn. Nothing here is cheap enough to spend on pixels nobody can see:
+        sitting at the top of the page with the sliders under your hand, at
+        every viewport height, the 3-D card and both profile charts are below
+        the fold. */
+    const wanted = (el: HTMLDivElement | null): el is HTMLDivElement =>
+      !!el && (!drawnOnce.current.has(el) || nearby.current.get(el) !== false);
     const c = chartColors(theme);
     const three = view === 'all';
     // gl3d draws its wall grid opaquely and ignores the alpha in the token,
@@ -291,68 +339,9 @@ export default function ContactStressApp() {
       ? Math.round((metrics.vertical.bounds[2] + metrics.vertical.bounds[3]) / 2)
       : Math.floor(w / 2);
 
-    /* 1. the three 3-D windows. Decimated anisotropically: the ribs run
-       longitudinally, so transverse resolution is what carries them and is
-       kept, while the smooth along-travel direction is halved. */
-    for (const ch of CHANNELS) {
-      const el = surfRefs[ch].current;
-      // A hidden figure has no box for Plotly to measure, and a gl3d scene
-      // laid out at 0x0 stays 0x0. Skip it; the redraw that unhides it will
-      // draw it at its real size, because `view` is a dependency of draw.
-      if (!el || (view !== 'all' && view !== ch)) continue;
-      const d = decimate(fields[ch], h, w, h, Math.ceil(w / 2));
-      const dxs = Array.from({ length: d.w }, (_, i) => (i * d.fx + d.fx / 2) * dx);
-      const dys = Array.from({ length: d.h }, (_, i) => (i * d.fy + d.fy / 2) * dy);
-      /* The colorscale and the z AXIS always take the SAME limit, because
-         height and hue encode the same quantity here and freezing one without
-         the other would have them disagree — a low-load field would stand as
-         tall as a high-load one while being paler.
-
-         WHICH limit differs by channel, and that is deliberate. sigma_z keeps
-         the fixed FIELD_RANGE top it has everywhere else in the tool, so its
-         color and its height are the magnitude and the load slider moves the
-         picture rather than the legend. The two shears take shearLim, fitted
-         to this case: their fixed limits are set by a hard braking case at
-         high slip, and a free-rolling wheel reaches 5% of that — flat sheet,
-         neutral color, no height. See shearLimit() in equations.ts. */
-      const signed = ch !== 'vertical';
-      const limMPa = signed ? shearLim[ch] : FIELD_RANGE[tire].vertical.hi;
-      const lim = pOut(limMPa);
-      const zLo = pOut(signed ? -limMPa : 0);
-      const zHi = lim;
-      await Plotly.react(el, [{
-        type: 'surface' as const,
-        x: dxs.map(lOut), y: dys.map(lOut),
-        z: d.data.map((row) => row.map(pOut)),
-        colorscale: signed ? divergingScale(theme) : fieldScale(theme),
-        cmin: signed ? -lim : 0,
-        cmax: lim,
-        showscale: false,
-        contours: { z: { show: false } },
-        lighting: { ambient: 0.78, diffuse: 0.45, specular: 0.06, roughness: 0.9 },
-        hovertemplate: `x %{x:${xyfmt}} ${lu} · y %{y:${xyfmt}} ${lu}<br><b>%{z:${zfmt}} ${pu}</b><extra></extra>`,
-      }], baseLayout(theme, {
-        height: three ? 300 : 480,
-        margin: three ? { l: 6, r: 6, t: 6, b: 6 } : { l: 26, r: 26, t: 10, b: 22 },
-        scene: {
-          // True to scale in plan; the stress axis is a free axis, so its
-          // exaggeration is stated in the caption rather than implied.
-          aspectmode: 'manual' as const,
-          aspectratio: { x: 1, y: (h * dy) / (w * dx), z: 0.5 },
-          // gl3d hangs its axis titles outside the scene box and reserves no
-          // margin for them, so in the three-up layout they are dropped
-          // altogether — the card subtitle names the axes instead — and only
-          // the focused window, which has room, carries them.
-          xaxis: { title: { text: three ? '' : `Longitudinal (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
-          yaxis: { title: { text: three ? '' : `Transverse (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
-          zaxis: { title: { text: three ? '' : `σ (${pu})` }, range: [zLo, zHi], nticks: three ? 3 : 6, color: c.fg, gridcolor: grid3d, zeroline: true, zerolinecolor: c.hairline, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
-          camera: { eye: three ? { x: 1.7, y: -1.45, z: 1.0 } : { x: 1.55, y: -1.35, z: 0.95 } },
-        },
-      }), { ...plotConfig, displayModeBar: false });
-    }
-
-    /* 2. plan view: the predicted patch with the textbook outlines on top. */
-    if (planRef.current) {
+    /* 1. plan view: the predicted patch with the textbook outlines on top. */
+    const planEl = planRef.current;
+    if (wanted(planEl)) {
       /* THE FRAME IS FIXED FOR THE WHOLE REACH OF THE SLIDERS, and is a
          function of the tire alone — never of the current load.
 
@@ -462,11 +451,11 @@ export default function ContactStressApp() {
          column and solving for the height the data actually needs removes it,
          and the scale bar beside it then sits against a real edge. */
       const M = { l: 56, r: 8, t: 8, b: 46 };
-      const boxW = Math.max(240, (planRef.current.clientWidth || 560) - M.l - M.r);
+      const boxW = Math.max(240, (planEl.clientWidth || 560) - M.l - M.r);
       const planH = Math.round(
         Math.min(560, Math.max(300, (boxW * halfY) / halfX + M.t + M.b))
       );
-      await Plotly.react(planRef.current, traces, baseLayout(theme, {
+      await Plotly.react(planEl, traces, baseLayout(theme, {
         height: planH,
         margin: M,
         xaxis: axis(theme, `Longitudinal, from patch center (${lu})`, {
@@ -477,9 +466,10 @@ export default function ContactStressApp() {
           range: [-halfY, halfY], constrain: 'domain' as const, zeroline: false,
         }),
       }), plotConfig);
+      drawnOnce.current.add(planEl);
     }
 
-    /* 3. profiles — the same two cuts as Figures 9 and 10 of the paper, and
+    /* 2. profiles — the same two cuts as Figures 9 and 10 of the paper, and
        the two lines just drawn across the plan view.
 
        Three things changed together, and they only work together:
@@ -528,31 +518,185 @@ export default function ContactStressApp() {
       hovermode: 'x unified' as const,
     });
 
-    if (longRef.current) {
+    const longEl = longRef.current;
+    if (wanted(longEl)) {
       const x = xs.map((v) => lOut(v - cx));
       await Plotly.react(
-        longRef.current,
+        longEl,
         CHANNELS.map((ch, i) => profileTrace(ch, x, longSeries[i])),
         profileLayout(`Longitudinal, from patch center (${lu})`),
         plotConfig
       );
+      drawnOnce.current.add(longEl);
     }
-    if (tranRef.current) {
+    const tranEl = tranRef.current;
+    if (wanted(tranEl)) {
       const x = ys.map((v) => lOut(v - cy));
       await Plotly.react(
-        tranRef.current,
+        tranEl,
         CHANNELS.map((ch, i) => profileTrace(ch, x, tranSeries[i])),
         profileLayout(`Transverse, from patch center (${lu})`),
         plotConfig
       );
+      drawnOnce.current.add(tranEl);
     }
-  }, [result, spec, theme, view, overlay, center, unit, tire, shearLim]);
+
+    if (drawGen.current !== gen) return;
+
+    /* 3. the three 3-D windows, drawn last and not on every frame.
+
+       They are 82 of the 134 ms this function used to cost, and they cannot
+       be made cheaper: Plotly.restyle({z}) measured no faster than a full
+       react (40 vs 33 ms), and halving the mesh saved 8. A gl3d scene costs
+       what it costs to rebuild. The only thing left to do with it is to stop
+       doing it sixty times a second, which is what `withSurfaces` is.
+
+       All three or none, and no abort check between them: they are one field
+       seen three ways, and a partial pass would leave two of the windows a
+       slider-drag away from the third. */
+    const unseen = CHANNELS.some((ch) => {
+      const el = surfRefs[ch].current;
+      return !!el && !drawnOnce.current.has(el) && (view === 'all' || view === ch);
+    });
+    if (!withSurfaces && !unseen) return;
+    if (drawGen.current !== gen) return;
+    surfacesAt.current = performance.now();
+    let drew = 0;
+    /* Decimated anisotropically: the ribs run longitudinally, so transverse
+       resolution is what carries them and is kept, while the smooth
+       along-travel direction is halved. */
+    for (const ch of CHANNELS) {
+      const el = surfRefs[ch].current;
+      // A hidden figure has no box for Plotly to measure, and a gl3d scene
+      // laid out at 0x0 stays 0x0. Skip it; the redraw that unhides it will
+      // draw it at its real size, because `view` is a dependency of draw.
+      if (!el || (view !== 'all' && view !== ch) || !wanted(el)) continue;
+      const d = decimate(fields[ch], h, w, h, Math.ceil(w / 2));
+      const dxs = Array.from({ length: d.w }, (_, i) => (i * d.fx + d.fx / 2) * dx);
+      const dys = Array.from({ length: d.h }, (_, i) => (i * d.fy + d.fy / 2) * dy);
+      /* The colorscale and the z AXIS always take the SAME limit, because
+         height and hue encode the same quantity here and freezing one without
+         the other would have them disagree — a low-load field would stand as
+         tall as a high-load one while being paler.
+
+         WHICH limit differs by channel, and that is deliberate. sigma_z keeps
+         the fixed FIELD_RANGE top it has everywhere else in the tool, so its
+         color and its height are the magnitude and the load slider moves the
+         picture rather than the legend. The two shears take shearLim, fitted
+         to this case: their fixed limits are set by a hard braking case at
+         high slip, and a free-rolling wheel reaches 5% of that — flat sheet,
+         neutral color, no height. See shearLimit() in equations.ts. */
+      const signed = ch !== 'vertical';
+      const limMPa = signed ? shearLim[ch] : FIELD_RANGE[tire].vertical.hi;
+      const lim = pOut(limMPa);
+      const zLo = pOut(signed ? -limMPa : 0);
+      const zHi = lim;
+      await Plotly.react(el, [{
+        type: 'surface' as const,
+        x: dxs.map(lOut), y: dys.map(lOut),
+        z: d.data.map((row) => row.map(pOut)),
+        colorscale: signed ? divergingScale(theme) : fieldScale(theme),
+        cmin: signed ? -lim : 0,
+        cmax: lim,
+        showscale: false,
+        contours: { z: { show: false } },
+        lighting: { ambient: 0.78, diffuse: 0.45, specular: 0.06, roughness: 0.9 },
+        hovertemplate: `x %{x:${xyfmt}} ${lu} · y %{y:${xyfmt}} ${lu}<br><b>%{z:${zfmt}} ${pu}</b><extra></extra>`,
+      }], baseLayout(theme, {
+        height: three ? 300 : 480,
+        margin: three ? { l: 6, r: 6, t: 6, b: 6 } : { l: 26, r: 26, t: 10, b: 22 },
+        scene: {
+          // True to scale in plan; the stress axis is a free axis, so its
+          // exaggeration is stated in the caption rather than implied.
+          aspectmode: 'manual' as const,
+          aspectratio: { x: 1, y: (h * dy) / (w * dx), z: 0.5 },
+          // gl3d hangs its axis titles outside the scene box and reserves no
+          // margin for them, so in the three-up layout they are dropped
+          // altogether — the card subtitle names the axes instead — and only
+          // the focused window, which has room, carries them.
+          xaxis: { title: { text: three ? '' : `Longitudinal (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
+          yaxis: { title: { text: three ? '' : `Transverse (${lu})` }, nticks: three ? 4 : 6, color: c.fg, gridcolor: grid3d, zeroline: false, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
+          zaxis: { title: { text: three ? '' : `σ (${pu})` }, range: [zLo, zHi], nticks: three ? 3 : 6, color: c.fg, gridcolor: grid3d, zeroline: true, zerolinecolor: c.hairline, showspikes: false, backgroundcolor: 'rgba(0,0,0,0)', showbackground: false },
+          camera: { eye: three ? { x: 1.7, y: -1.45, z: 1.0 } : { x: 1.55, y: -1.35, z: 0.95 } },
+        },
+      }), { ...plotConfig, displayModeBar: false });
+      drawnOnce.current.add(el);
+      drew++;
+    }
+    /* One extra render per surface pass (not per frame), so the card's
+       numbers and its pictures are the same instant. Only when a surface was
+       actually redrawn: a pass that skipped them all for being off screen
+       must not move the headers over pictures it left alone. `surfaced` is
+       deliberately NOT a dependency of draw, or this would loop. */
+    if (drew && drawGen.current === gen) {
+      setSurfaced({
+        lim: { longitudinal: shearLim.longitudinal, transverse: shearLim.transverse },
+        span: {
+          vertical: { min: metrics.vertical.min, peak: metrics.vertical.peak },
+          longitudinal: { min: metrics.longitudinal.min, peak: metrics.longitudinal.peak },
+          transverse: { min: metrics.transverse.min, peak: metrics.transverse.peak },
+        },
+      });
+    }
+  }, [result, spec, theme, view, overlay, center, unit, tire, shearLim, revealed]);
+
+  /* TWO RATES, because the two halves of this page cost two orders of
+     magnitude apart. One slider tick, DTA, all three windows shown, measured
+     off the built site:
+
+         React render + commit (predict x3 is 3.5 ms of it)     15.8 ms
+         3-D sigma_z / sigma_x / sigma_y                     28 + 27 + 27
+         plan view — the footprint                                9.7
+         the two profile charts                                   9.8
+                                                               --------
+                                                                134 ms   7 fps
+
+     and the footprint, the one figure anybody watches while dragging a
+     slider, was drawn LAST: 115 ms behind the hand. Worse, `draw` is async
+     and nothing stopped a second pass starting inside the first, so a fast
+     drag queued them and fell further behind the longer it went on — a 2.5 s
+     sweep delivered 18 of the ~150 input events it should have, and the
+     picture stayed a steady 13% of the slider's travel behind.
+
+     Four things fix it and they are all scheduling, not arithmetic. The 2-D
+     figures are drawn FIRST. Anything off screen is skipped. A newer pass
+     cancels an older one. And the 3-D group is taken off the drag: it redraws
+     when the controls go still, which is when a student actually looks at it. */
+  /* Anything that changes the SHAPE of a 3-D window rather than its data —
+     focusing one of the three resizes it 300 -> 480 px and gives it back its
+     axis titles — has to redraw immediately. Deferring those to the settle
+     timer leaves a window laid out for the three-up strip sitting in a
+     full-width card for a tenth of a second, which reads as a broken click. */
+  const structural = `${view}|${theme}|${unit}|${tire}`;
+  const lastStructural = useRef(structural);
 
   useEffect(() => {
-    // Coalesce a slider drag into one redraw per animation frame.
+    const reshaped = lastStructural.current !== structural;
+    lastStructural.current = structural;
+    // The cheap half, coalesced to one redraw per animation frame as before.
     cancelAnimationFrame(frame.current);
-    frame.current = requestAnimationFrame(() => { void draw(); });
-    return () => cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      /* A drag that never stops would otherwise freeze the 3-D windows for
+         as long as it lasts, while the headers above them went on counting.
+         Let one pass through every SURFACE_STALE_MS so they stay visibly
+         alive — but only while one of them is genuinely on screen. Off
+         screen there is nothing to keep alive, and the pass is 82 ms of the
+         drag the student IS looking at. */
+      const watching = CHANNELS.some((ch) => {
+        const el = surfRefs[ch].current;
+        return !!el && inView.current.get(el) === true;
+      });
+      void draw(
+        reshaped || (watching && performance.now() - surfacesAt.current > SURFACE_STALE_MS)
+      );
+    });
+    // ...and the expensive half once the controls go quiet.
+    window.clearTimeout(settle.current);
+    settle.current = window.setTimeout(() => { void draw(true); }, SURFACE_SETTLE_MS);
+    return () => {
+      cancelAnimationFrame(frame.current);
+      window.clearTimeout(settle.current);
+    };
   }, [draw]);
 
   // Five plots, three of them WebGL. Browsers cap live contexts at 8-16, so
@@ -566,6 +710,44 @@ export default function ContactStressApp() {
       for (const r of refsForCleanup.current) if (r.current) Plotly.purge(r.current);
     });
   }, []);
+
+  /* Which of the six figures are actually on screen. The margin is generous
+     on purpose: a chart is redrawn while it is still below the fold, so it is
+     never caught mid-scroll showing the load you were on a second ago. And
+     when one does come into view carrying a stale picture — it was skipped
+     while it was hidden — the bump is what asks for a redraw, since scrolling
+     changes no input `draw` otherwise depends on. */
+  const ready = result !== null;
+  useEffect(() => {
+    if (!ready) return;
+    /* The margin is one screenful of scrolling at a normal flick, and no more:
+       it buys the redraw enough warning to land before the figure is seen,
+       and every pixel of it is a figure drawn on spec. */
+    const near = new IntersectionObserver(
+      (entries) => {
+        let appeared = false;
+        for (const e of entries) {
+          if (e.isIntersecting && nearby.current.get(e.target) === false) appeared = true;
+          nearby.current.set(e.target, e.isIntersecting);
+        }
+        // Scrolling changes no input `draw` depends on, so a figure that
+        // comes into view carrying a stale picture has to ask for itself.
+        if (appeared) setRevealed((n) => n + 1);
+      },
+      { rootMargin: '200px 0px' }
+    );
+    /* A second observer with no margin, because one observer cannot report
+       two boundaries: it never fires for a crossing that happens INSIDE its
+       own margin, so strict visibility read off the first one's rectangles
+       would go stale exactly where it matters. */
+    const strict = new IntersectionObserver((entries) => {
+      for (const e of entries) inView.current.set(e.target, e.isIntersecting);
+    });
+    for (const r of refsForCleanup.current) {
+      if (r.current) { near.observe(r.current); strict.observe(r.current); }
+    }
+    return () => { near.disconnect(); strict.disconnect(); };
+  }, [ready]);
 
   /* ── derived readouts ─────────────────────────────────────────────── */
 
@@ -925,7 +1107,15 @@ export default function ContactStressApp() {
               }
             >
               <div className={`cs-windows${view === 'all' ? '' : ' cs-windows--one'}`}>
-                {CHANNELS.map((ch) => (
+                {CHANNELS.map((ch) => {
+                  /* Everything in this figure describes the pass that DREW it,
+                     not the current slider position — the two are the same
+                     within about a tenth of a second, and while they are not,
+                     a header and a color bar that ran ahead of their own
+                     surface would be labelling it wrongly rather than late. */
+                  const span = surfaced?.span[ch] ?? result.metrics[ch];
+                  const lim = ch === 'vertical' ? 0 : surfaced?.lim[ch] ?? shearLim[ch];
+                  return (
                   <figure
                     key={ch}
                     className="cs-window"
@@ -934,12 +1124,12 @@ export default function ContactStressApp() {
                     <figcaption className="cs-window__head">
                       <span className="cs-window__title">{LABEL[ch]}</span>
                       <span className="cs-window__range">
-                        {P(result.metrics[ch].min)} … {P(result.metrics[ch].peak)} {pressureUnit(unit)}
+                        {P(span.min)} … {P(span.peak)} {pressureUnit(unit)}
                       </span>
                       <span className="cs-window__sub">{SUBLABEL[ch]}</span>
                     </figcaption>
                     <div className="cee-figure__plot" ref={surfRefs[ch]} role="img"
-                      aria-label={`${LABEL[ch]} surface, ${SUBLABEL[ch]}, ranging from ${P(result.metrics[ch].min)} to ${P(result.metrics[ch].peak)} ${pressureUnit(unit)}`} />
+                      aria-label={`${LABEL[ch]} surface, ${SUBLABEL[ch]}, ranging from ${P(span.min)} to ${P(span.peak)} ${pressureUnit(unit)}`} />
                     {ch === 'vertical' ? (
                       <RampBar theme={theme} stops={fieldScale(theme)} caption="σz" lowLabel="0" highLabel={`${P(FIELD_RANGE[tire].vertical.hi)} ${pressureUnit(unit)}`} />
                     ) : (
@@ -949,7 +1139,7 @@ export default function ContactStressApp() {
                       <div className="cee-rampbar">
                         <span className="cee-rampbar__caption">{ch === 'longitudinal' ? 'σx' : 'σy'}</span>
                         <div className="cee-rampbar__row">
-                          <span className="cee-rampbar__end">−{P(shearLim[ch])}</span>
+                          <span className="cee-rampbar__end">−{P(lim)}</span>
                           <span
                             className="cee-rampbar__track"
                             style={{
@@ -957,21 +1147,22 @@ export default function ContactStressApp() {
                                 .map(([p, col]) => `${col} ${(p * 100).toFixed(0)}%`).join(', ')})`,
                             }}
                             role="img"
-                            aria-label={`Diverging color scale, minus to plus ${P(shearLim[ch])} ${pressureUnit(unit)} through zero, fitted to this case`}
+                            aria-label={`Diverging color scale, minus to plus ${P(lim)} ${pressureUnit(unit)} through zero, fitted to this case`}
                           />
-                          <span className="cee-rampbar__end">+{P(shearLim[ch])}</span>
+                          <span className="cee-rampbar__end">+{P(lim)}</span>
                         </div>
                       </div>
                     )}
                   </figure>
-                ))}
+                  );
+                })}
               </div>
               <p className="cee-figcaption">
                 The ribs carry the load and stand well above the inflation pressure; the grooves
                 carry nothing. Braking drives σx entirely positive, acceleration entirely
                 negative — the friction force, which a uniform vertical pressure cannot represent.
                 The two shear scales follow the case, so compare them by their numbers rather
-                than by their color: σx is drawn here on ±{P(shearLim.longitudinal)}{' '}
+                than by their color: σx is drawn here on ±{P(surfaced?.lim.longitudinal ?? shearLim.longitudinal)}{' '}
                 {pressureUnit(unit)}, against ±{P(divergingLimit(tire, 'longitudinal'))} for the
                 widest field these controls can reach.
               </p>
