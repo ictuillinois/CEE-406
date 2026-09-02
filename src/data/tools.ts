@@ -69,8 +69,8 @@ export const tools: Tool[] = [
     slug: 'lea',
     color: '#0ea5e9',
     hws: ['HW3', 'HW4'],
-    ref: 'Huang App. B · Hankel transform',
-    desc: 'The real N-layer elastic solution in your browser: stresses, strains and deflections at any depth, dual and tandem wheels superposed — a check on WinJULEA, not a substitute for understanding it.',
+    ref: 'Huang Ch. 2 · Boussinesq to Burmister',
+    desc: "The whole of Chapter 2 in five modules — Boussinesq's half-space, Burmister's two layers, Jones' three, the general N-layer solve, and every design chart in the chapter redrawn from the equations behind it and readable backwards as well as forwards.",
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M10 10 H110" opacity="0.5" stroke-width="3"/>
       <path d="M10 20 H110" opacity="0.35"/>

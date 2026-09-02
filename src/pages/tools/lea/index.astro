@@ -7,7 +7,7 @@ const base = import.meta.env.BASE_URL;
 
 <BaseLayout
   title="Layered Elastic Analysis · CEE 406 Tools"
-  description="N-layer elastic analysis of a pavement under circular loads — stresses, strains, and deflections at any depth, solved in the browser from Huang Appendix B."
+  description="The whole of Huang Chapter 2 in five modules — Boussinesq's half-space, Burmister's two-layer charts, Jones' three-layer factors, the general N-layer solve, and every design chart in the chapter, computed and readable in both directions."
 >
   <div class="container tool-page">
     <nav class="doc-breadcrumb" aria-label="Breadcrumb">
@@ -22,10 +22,13 @@ const base = import.meta.env.BASE_URL;
       <div>
         <h1 class="tool-head__title">Layered Elastic Analysis</h1>
         <p class="tool-head__desc">
-          The full N-layer elastic solution for <a href={`${base}homeworks/hw3/`}>HW3</a>
-          and <a href={`${base}homeworks/hw4/`}>HW4</a>, computed in your browser — stresses,
-          strains, and deflections at any depth, with dual and tandem wheels superposed.
-          Validated against the answers printed in Huang, so you can check WinJULEA with it.
+          Huang's Chapter 2 is a ladder — Boussinesq's half-space, Burmister's two layers,
+          Jones' three, the general N-layer solve, and the design charts that stood in for all
+          of it before there were computers. This is all five rungs on one solver, for
+          <a href={`${base}homeworks/hw3/`}>HW3</a> and <a href={`${base}homeworks/hw4/`}>HW4</a>.
+          Every module reproduces the worked answers printed in the book, so you can calibrate
+          the instrument before you trust it — and the charts read <em>backwards</em>, which a
+          printed page cannot do.
         </p>
       </div>
       <div class="tool-head__hws">

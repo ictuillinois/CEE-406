@@ -22,6 +22,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   TOKENS, HUES, HUE_ORDER, RAMPS, rampScale, divergingScale, mixHex, withAlpha,
+  rampSeries,
 } from './chartTheme.ts';
 
 const MODES = /** @type {const} */ (['light', 'dark']);
@@ -259,5 +260,63 @@ test('mixHex composites toward the background, withAlpha does not', () => {
       const [lo, hi] = [Math.min(fg[i], bg[i]), Math.max(fg[i], bg[i])];
       assert.ok(v >= lo - 1 && v <= hi + 1, `channel ${i} left the interval at t=${t}`);
     });
+  }
+});
+
+test('rampSeries stays visible and keeps its ordering in both modes', () => {
+  // An ordered family of curves — Huang's seventeen r/a curves, say — is drawn
+  // from a ramp rather than from the six categorical hues, because the six say
+  // "different things" and this family says "further along". Two properties
+  // have to hold or a seventeen-curve chart stops being readable.
+  for (const theme of ['light', 'dark']) {
+    const surface = TOKENS[theme].surface;
+    for (const n of [2, 5, 8, 17]) {
+      const series = rampSeries('orange', theme, n);
+      assert.equal(series.length, n, `rampSeries returned ${series.length} for n=${n}`);
+      for (const c of series) {
+        assert.match(c, /^#[0-9a-f]{6}$/i, `"${c}" is not opaque hex`);
+      }
+
+      // 1. Every curve has to be visible against the card it is drawn on.
+      //    §A11 asks 3:1 of a graphical object; a 2px line at 1.6:1 is a line
+      //    nobody can follow, which is the failure mode this guards.
+      // Light mode is the tight side, exactly as it is for the categorical
+      // palette (§B4): the floor here is the emerald 500 stop at 2.14:1 on
+      // white. That is under §A11's 3:1 and tolerated for the same reason —
+      // the curves are direct-labelled and every chart keeps its table view,
+      // so hue is never the only encoding. Dark mode clears 2.9:1 throughout.
+      const floor = theme === 'light' ? 2.1 : 2.9;
+      for (const c of series) {
+        const ratio = contrast(c, surface);
+        assert.ok(ratio >= floor,
+          `${theme}: ${c} is only ${ratio.toFixed(2)}:1 on the card — too faint for a line`);
+      }
+
+      // 2. Lightness has to run one way, so the family reads as ordered
+      //    rather than as an arbitrary set. Per §A4.2 the direction flips
+      //    between modes so the far end always stands OFF the card.
+      const lums = series.map((c) => relLuminance(rgb(c)));
+      const rising = lums.every((v, i) => i === 0 || v >= lums[i - 1] - 1e-9);
+      const falling = lums.every((v, i) => i === 0 || v <= lums[i - 1] + 1e-9);
+      assert.ok(rising || falling,
+        `${theme} n=${n}: lightness must be monotone across the family`);
+      if (theme === 'light') {
+        assert.ok(falling, 'light mode runs pale-low to deep-high');
+      } else {
+        assert.ok(rising, 'dark mode runs deep-low to luminous-high');
+      }
+    }
+  }
+});
+
+test('rampSeries spans the ramp rather than crowding one end', () => {
+  // A family whose colors all sit within a few percent of each other conveys
+  // no ordering at all. The ends must actually differ.
+  for (const theme of ['light', 'dark']) {
+    const s = rampSeries('blue', theme, 8);
+    const first = relLuminance(rgb(s[0]));
+    const last = relLuminance(rgb(s[s.length - 1]));
+    assert.ok(Math.abs(first - last) > 0.15,
+      `${theme}: the family spans only ${Math.abs(first - last).toFixed(3)} in luminance`);
   }
 });

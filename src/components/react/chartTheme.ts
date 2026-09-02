@@ -120,6 +120,44 @@ export function rampScale(name: RampName, theme: Mode): [number, string][] {
   return ordered.map((c, i) => [i / (steps.length - 1), c] as [number, string]);
 }
 
+/**
+ * N discrete colors along a ramp, for an ORDERED family of line series — a
+ * chart whose curves are one quantity at successive values of a parameter,
+ * like Huang's seventeen r/a curves on Figure 2.2.
+ *
+ * This is not the categorical palette of §B4 and must not be confused with
+ * it: those six hues say "different things", while these say "the same thing,
+ * further along". Using the categorical set for an ordered family throws away
+ * the ordering, which on a chart of seventeen curves is the only thing making
+ * it readable.
+ *
+ * Follows `rampScale`'s §A4.2 reversal, so the far end of the family is always
+ * the end that stands off the card. The pale extreme is trimmed: at n > 6 the
+ * 100-step is too faint to hold a 2 px line, and a curve nobody can see is
+ * worse than a curve that shares a hue with its neighbour.
+ */
+export function rampSeries(name: RampName, theme: Mode, n: number): string[] {
+  const r = RAMPS[name];          // [900, 700, 500, 300, 100]
+  /* The five published stops span more range than a LINE can use. The pale
+     100 stop is 1.11-1.16:1 on white and the deep 900 stop is 1.68-2.14:1 on
+     the navy card — fine as a heatmap cell, which has area, and invisible as
+     a 2 px stroke. Each mode therefore works from the four stops that survive
+     on its own surface, running pale-to-deep on white and deep-to-luminous on
+     navy per §A4.2, and light mode extends past 900 toward the ink to keep
+     the span wide enough to read as an ordering. */
+  const ordered = theme === 'dark'
+    ? [r[1], r[2], r[3], r[4]]
+    : [r[2], r[1], r[0], mixHex(r[0], TOKENS.light.ink, 0.55)];
+  if (n <= 1) return [ordered[Math.floor(ordered.length / 2)]];
+  const out: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const x = (i / (n - 1)) * (ordered.length - 1);
+    const j = Math.min(ordered.length - 2, Math.floor(x));
+    out.push(mixHex(ordered[j + 1], ordered[j], x - j));
+  }
+  return out;
+}
+
 /** The two ends of a ramp as the RampBar legend renders them (low, high). */
 export function rampEnds(name: RampName, theme: Mode): [string, string] {
   const s = rampScale(name, theme);

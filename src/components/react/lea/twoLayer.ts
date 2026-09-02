@@ -178,14 +178,15 @@ function criticalTension(
   layers: Layer[], a: number, h1: number,
   wheels: { x: number; y: number }[],
   stations: { x: number; y: number }[]
-): number {
+): { value: number; at: { x: number; y: number } } {
   const z = h1 * (1 - 1e-9);          // just inside the bottom of layer 1
-  let best = 0;
+  let value = 0;
+  let at = { x: 0, y: 0 };
   for (const p of stations) {
     const S = leaSuperpose(layers, 1, a, wheels, { x: p.x, y: p.y, z });
-    if (S) best = Math.max(best, S.tensile);
+    if (S && S.tensile > value) { value = S.tensile; at = p; }
   }
-  return best;
+  return { value, at };
 }
 
 /**
@@ -203,7 +204,7 @@ export function strainFactor(modulusRatio: number, h1OverA: number): number {
   const layers = system(modulusRatio, h1OverA);
   const stations = SINGLE_STATIONS.map(x => ({ x, y: 0 }));
   // e = q·Fe/E1 with q = 1, so Fe = strain × E1.
-  return criticalTension(layers, 1, h1OverA, [{ x: 0, y: 0 }], stations) * modulusRatio;
+  return criticalTension(layers, 1, h1OverA, [{ x: 0, y: 0 }], stations).value * modulusRatio;
 }
 
 /* ── Figures 2.23, 2.25-2.27: the dual and dual-tandem conversion factor ── */
@@ -237,13 +238,11 @@ export const DUAL_AS_TANDEM_ST = 120;
  */
 function groupStations(a: number, sd: number, st: number | null) {
   const out: { x: number; y: number }[] = [];
-  for (let i = 0; i <= 12; i++) out.push({ x: (i / 12) * (sd / 2), y: 0 });
-  for (const d of [0.5, 1, 1.5]) out.push({ x: -d * a, y: 0 });
+  for (let i = 0; i <= 6; i++) out.push({ x: (i / 6) * (sd / 2), y: 0 });
+  for (const d of [0.5, 1.5]) out.push({ x: -d * a, y: 0 });
   const yMax = st ? st / 2 : 1.5 * a;
-  for (const y of [yMax / 2, yMax]) {
-    out.push({ x: 0, y });
-    out.push({ x: sd / 2, y });
-  }
+  out.push({ x: 0, y: yMax });
+  out.push({ x: sd / 2, y: yMax });
   return out;
 }
 
@@ -274,11 +273,25 @@ export function conversionFactor(
     ? [{ x: 0, y: 0 }, { x: s, y: 0 }]
     : [{ x: 0, y: 0 }, { x: s, y: 0 }, { x: 0, y: t }, { x: s, y: t }];
 
-  const group = criticalTension(layers, 1, h1OverA, wheels, groupStations(1, s, t));
+  // Coarse sweep, then a refinement around whichever station won. The maximum
+  // is a smooth ridge along the axle line, so seven coarse points bracket it
+  // and four fine ones resolve it — half the solves of a uniform grid dense
+  // enough to do both, which is what makes the chart drawable at all.
+  const coarse = groupStations(1, s, t);
+  const first = criticalTension(layers, 1, h1OverA, wheels, coarse);
+  const step = s / 12;
+  const refined: { x: number; y: number }[] = [];
+  for (const d of [-1, -0.5, 0.5, 1]) {
+    const x = first.at.x + d * step;
+    if (x >= -2 && x <= s / 2 + 1) refined.push({ x, y: first.at.y });
+  }
+  const second = criticalTension(layers, 1, h1OverA, wheels, refined);
+
   const single = criticalTension(
     layers, 1, h1OverA, [{ x: 0, y: 0 }], SINGLE_STATIONS.map(x => ({ x, y: 0 }))
   );
-  return single > 0 ? group / single : NaN;
+  const group = Math.max(first.value, second.value);
+  return single.value > 0 ? group / single.value : NaN;
 }
 
 /**
