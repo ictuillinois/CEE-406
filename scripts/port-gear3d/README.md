@@ -36,10 +36,44 @@ cp "$UP/assets/textures"/*                                public/gear3d/textures
 # generated files
 node scripts/port-gear3d/port-main.mjs "$UP/main.js"    src/components/react/gear3d/gear3d.js
 node scripts/port-gear3d/port-css.mjs  "$UP/styles.css" src/components/react/gear3d/gear3d.css
+
+# American spelling, LAST, over the copied and the generated files alike
+node scripts/us-english.mjs src/components/react/gear3d
 ```
 
 Then re-apply the `PORT NOTE` in `engine/io/exportRaster.js`, and run
 `npm run build`.
+
+The spelling pass is not optional and is not cosmetic. Upstream spells British
+and this repository spells American, because every printed reference the course
+works against does — the dictionary is enumerated in `scripts/us-english.mjs`.
+Skipping the pass leaves the two spellings mixed inside one file, and the next
+person to write an anchored edit against either of them picks the wrong one, so
+the transform fails on a word rather than on a line of code. Run it last, after
+both the copy and the generated files.
+
+Note that this README is itself in the pass's path, which is why it does not
+spell out the words: written down as examples they would be rewritten into
+their American forms and the sentence would stop meaning anything. The two port
+transforms are exempted for the same reason — see `SKIP_FILES` — because every
+`find` argument in them quotes upstream verbatim.
+
+### Verifying a sync
+
+A sync that changed nothing upstream must change nothing here. `cp` + the port
+note + `us-english.mjs`, run against an unchanged upstream, leaves `git status`
+clean — that is the cheapest possible check that the pipeline is faithful, and
+it is worth doing before trusting a real one.
+
+### Testing a sync
+
+`node --test src/components/react/gear3d/geometry.test.mjs` builds the actual
+tire, rim and hub meshes for every designation in the library. **Nothing else
+in either suite does**: the upstream E-Lab's checks cover the data, the layout
+and the exports, and `render.test.mjs` server-renders the islands but never
+runs a `client:only` island's effects, so it never reaches a line of three.js.
+The one time a merge threw on its first call, all 176 upstream checks passed
+and the tool rendered an empty viewport.
 
 ## Why the transforms assert
 
