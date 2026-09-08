@@ -35,7 +35,10 @@
    real semester calendar is set.                                          */
 
 export const RELEASED_HOMEWORKS: Record<string, true> = {
-  // none yet — unlock week by week, e.g.  hw1: true,
+  hw1: true,   // Fall 2026 sheet, due 9/17. Questions only — the PDF stays on
+               // Canvas, so public/homeworks/hw1/ is empty and hw1 carries no
+               // downloads. Releasing a homework does not oblige us to publish
+               // its files; it only opens the page.
 };
 
 /** Planned release week per homework, for the locked label. Optional. */

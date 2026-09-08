@@ -20,7 +20,9 @@ export interface Homework {
   num: number;
   title: string;
   phase: 'Fundamentals' | 'Materials' | 'Analysis' | 'Loads & Drainage' | 'Design';
-  due: string; // Fall 2024 reference schedule
+  due: string; // Fall 2024 reference schedule unless dueNote says otherwise
+  /** Overrides the "(Fall 2024 reference)" note once the real date is issued. */
+  dueNote?: string;
   overview: string;
   objectives: string[];
   problems: { label: string; desc: string }[];
@@ -37,35 +39,39 @@ export const homeworks: Homework[] = [
     num: 1,
     title: 'Pavement Types, Layers & Distresses',
     phase: 'Fundamentals',
-    due: 'Sep 12',
+    due: 'Sep 17',
+    dueNote: 'Fall 2026',
     layerFocus: 0,
     overview:
       'What the layers of flexible and rigid pavements do, how mechanistic-empirical design works, and how pavements fail — pumping, rutting, and the damage done by different axles and tire pressures.',
     objectives: [
-      'Draw and label flexible and rigid pavement cross-sections with typical thicknesses',
+      'Draw and label flexible and rigid cross-sections with typical thicknesses and interface treatments',
       'Explain the mechanistic and empirical components of M-E design',
       'Distinguish seal, tack, and prime coats and their binder viscosities',
       'Describe pumping, the two kinds of rutting, and the design methods that control them',
       'Compare single, tandem, and tridem axles and the effect of tire pressure',
     ],
     problems: [
-      { label: 'Q1', desc: 'Cross-sections of a typical flexible and rigid pavement, with layer functions and typical thicknesses' },
+      { label: 'Q1', desc: 'Cross-sections of a typical flexible and rigid pavement: layer functions, interface treatments, typical thicknesses' },
       { label: 'Q2', desc: 'The mechanistic-empirical design method — which part is which, and why a fully mechanistic method is out of reach' },
-      { label: 'Q3', desc: 'Seal coat vs. tack coat vs. prime coat' },
+      { label: 'Q3', desc: 'Seal coat vs. tack coat vs. prime coat — and which needs the least viscous asphalt' },
       { label: 'Q4', desc: 'Mechanics of pumping: consequences and fixes' },
       { label: 'Q5', desc: 'The two kinds of rutting and how designs control them' },
-      { label: 'Q6', desc: 'Single vs. tandem vs. tridem axles — which does the least damage per load?' },
+      { label: 'Q6', desc: 'Single vs. tandem vs. tridem axles — at the same group load, tire design and pressure, which does least damage?' },
       { label: 'Q7', desc: 'Tire pressure effects on flexible pavements and trucking operations' },
     ],
     chapters: [
       { id: 'ch01', label: 'Ch. 1 — Introduction' },
       { id: 'ch09', label: 'Ch. 9 — Pavement Performance' },
     ],
-    tools: [],
-    downloads: [
-      { label: 'HW1 assignment', file: 'hw1-assignment.pdf', kind: 'assignment' },
-      { label: 'Distress Identification Manual', file: 'distress-identification-manual.pdf', kind: 'reference' },
+    tools: [
+      { label: 'Cross-Section Studio', href: 'tools/cross-section-studio/', note: 'draw and export the Q1 cross-sections, live' },
+      { label: 'Gear3D', href: 'tools/gear3d/', note: 'single, tandem and tridem axles in 3-D — Q6, live' },
+      { label: 'Contact Stress Visualizer', href: 'tools/contact-stress/', note: 'what inflation pressure does to the contact stresses — Q7, live' },
     ],
+    // The assignment sheet and the Distress Identification Manual are handed
+    // out on Canvas; nothing is served from public/homeworks/hw1/.
+    downloads: [],
   },
   {
     id: 'hw2',

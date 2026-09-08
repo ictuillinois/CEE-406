@@ -45,7 +45,7 @@ const toc = [
   ...(guide?.steps.length ? [{ id: 'approach', label: 'How to approach it' }] : []),
   ...(guide?.pitfalls.length ? [{ id: 'pitfalls', label: 'Common pitfalls' }] : []),
   ...(hw.tools.length ? [{ id: 'tools', label: 'Tools' }] : []),
-  { id: 'downloads', label: 'Downloads' },
+  ...(hw.downloads.length ? [{ id: 'downloads', label: 'Downloads' }] : []),
   ...(hw.chapters.length ? [{ id: 'reading', label: 'Textbook reading' }] : []),
 ];
 
@@ -79,7 +79,7 @@ const kindLabel: Record<string, string> = {
     <p class="doc-header__desc">{hw.overview}</p>
     <div class="hwd-meta">
       <LayerGlyph focus={hw.layerFocus} />
-      <span class="hwd-meta__item"><strong>Due:</strong>&nbsp;{hw.due} <span class="hwd-meta__note">(Fall 2024 reference)</span></span>
+      <span class="hwd-meta__item"><strong>Due:</strong>&nbsp;{hw.due} <span class="hwd-meta__note">({hw.dueNote ?? 'Fall 2024 reference'})</span></span>
       <span class="hwd-meta__item"><strong>{hw.problems.length}</strong>&nbsp;problems</span>
     </div>
   </header>
@@ -217,6 +217,7 @@ const kindLabel: Record<string, string> = {
     </section>
   )}
 
+  {hw.downloads.length > 0 && (
   <section class="doc-section" id="downloads" data-section>
     <h2>Downloads</h2>
     <div class="doc-table-wrap">
@@ -236,6 +237,7 @@ const kindLabel: Record<string, string> = {
       </table>
     </div>
   </section>
+  )}
 
   {hw.chapters.length > 0 && (
     <section class="doc-section" id="reading" data-section>

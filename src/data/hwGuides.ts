@@ -54,7 +54,7 @@ export const hwGuides: Record<string, HwGuide> = {
     pitfalls: [
       'Tack coat bonds two asphalt lifts; prime coat penetrates and seals a granular base — the prime coat is the less viscous one.',
       'Rutting is not only a subgrade problem — instability rutting lives entirely in the AC.',
-      '“Least damage per axle” ≠ “least damage per ton carried” — say which you answer.',
+      'Q6 fixes the <em>total</em> group load, so more axles means less load each — the answer turns on how much the stress bulbs overlap at depth.',
     ],
   },
 
