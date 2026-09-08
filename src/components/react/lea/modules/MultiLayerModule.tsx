@@ -219,7 +219,7 @@ export default function MultiLayerModule() {
             mode: 'lines', line: { color: hueFor('deflection', theme), width: 2, dash: 'dot' },
             visible: 'legendonly',
           },
-        ], layout('Strain (µε) — compression positive'), plotConfig);
+        ], layout('Strain (µε), compression positive'), plotConfig);
       }
     })();
     return () => { dead = true; };
@@ -351,7 +351,7 @@ export default function MultiLayerModule() {
               <li><strong>Build the structure</strong> top to bottom. The bottom layer is the
                 half-space; its thickness is ignored.</li>
               <li><strong>Set the load</strong> and, for Problem 2.5, switch to dual or tandem.
-                The wheels are superposed — legitimate because the system is linear elastic — with
+                The wheels are superposed, which is legitimate because the system is linear elastic, with
                 each load's stresses rotated into a common plan frame before they are added.</li>
               <li><strong>Read the critical strains</strong>: horizontal tension at the bottom of
                 the top layer drives fatigue cracking, vertical compression on top of the subgrade
@@ -375,13 +375,13 @@ export default function MultiLayerModule() {
             <KpiStrip>
               <Kpi accent label="Surface deflection w₀"
                 value={critical.surface ? fmt(critical.surface.w, 4) : '—'}
-                tip="Vertical displacement at the surface under the load — what an FWD sensor reads." />
+                tip="Vertical displacement at the surface under the load: what an FWD sensor reads." />
               <Kpi label="εt at bottom of layer 1"
                 value={critical.acBottom ? fmt(critical.acBottom.epsR * 1e6, 0) : '—'} unit="µε"
                 tip="Horizontal strain at the bottom of the top layer. Negative here means tension (compression is positive), and its magnitude drives bottom-up fatigue cracking." />
               <Kpi label="εz on subgrade"
                 value={critical.sgTop ? fmt(critical.sgTop.epsZ * 1e6, 0) : '—'} unit="µε"
-                tip="Vertical compressive strain on top of the half-space — the strain that drives subgrade rutting." />
+                tip="Vertical compressive strain on top of the half-space: the strain that drives subgrade rutting." />
               <Kpi label="σz on subgrade"
                 value={critical.sgTop ? fmt(critical.sgTop.sigZ, 2) : '—'}
                 tip="Vertical stress delivered to the subgrade. A stiff upper structure is what keeps this small." />
@@ -398,7 +398,7 @@ export default function MultiLayerModule() {
                 ]}
                 takeaway="Vertical stress is continuous across every interface while radial stress jumps, because the layers share strain but not stiffness."
               >
-                <strong>σz is continuous</strong> across each interface — equilibrium demands it — but
+                <strong>σz is continuous</strong> across each interface, because equilibrium demands it, but
                 <strong> σr jumps</strong>, because the two layers share the same horizontal strain and
                 a stiffer layer converts that strain into more stress. That jump is the whole reason
                 layering works: the stiff upper layer takes the bending and hands the subgrade a much
@@ -413,12 +413,12 @@ export default function MultiLayerModule() {
                   { label: wheels === 'single' ? 'εr' : 'εx', color: hueFor('strain', theme) },
                   { label: 'w (click to show)', color: hueFor('deflection', theme), shape: 'dash' },
                 ]}
-                takeaway="Radial strain reverses sign inside the top layer, so its bottom is in tension — the location and mechanism of bottom-up fatigue cracking."
+                takeaway="Radial strain reverses sign inside the top layer, so its bottom is in tension: the location and mechanism of bottom-up fatigue cracking."
               >
                 The top layer bends: compression above the neutral axis, <strong>tension below it</strong>.
                 Where εr crosses zero is that neutral axis, and the tension at the bottom of the layer is
                 what the fatigue transfer function consumes. Vertical strain, meanwhile, peaks in the
-                soft layers — which is where rutting accumulates.
+                soft layers, which is where rutting accumulates.
               </ChartFigure>
             </div>
 
@@ -464,7 +464,7 @@ export default function MultiLayerModule() {
               Gauss–Legendre quadrature between the zeros of the Bessel functions, on the difference
               from a half-space of the top layer's material so the integrand decays even at the
               surface. Interfaces are fully bonded and every layer is linear elastic, homogeneous and
-              isotropic — the same assumptions WinJULEA and KENLAYER make, so the answers should agree.
+              isotropic, the same assumptions WinJULEA and KENLAYER make, so the answers should agree.
             </p>
           </>
         )}

@@ -332,12 +332,12 @@ export const PRESETS: Preset[] = [
   },
   {
     name: 'Figure 8 · braking 7%',
-    note: 'Same wheel, 7% slip under braking — the longitudinal field goes positive.',
+    note: 'Same wheel, 7% slip under braking; the longitudinal field goes positive.',
     inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Brake' },
   },
   {
     name: 'Figure 8 · accelerating 7%',
-    note: 'Same wheel, 7% slip under acceleration — the longitudinal field reverses.',
+    note: 'Same wheel, 7% slip under acceleration; the longitudinal field reverses.',
     inp: { tire: 'DTA', load: 42000, pressure: 0.69, slip: 0.07, speed: '5mph', condition: 'Acc' },
   },
   {

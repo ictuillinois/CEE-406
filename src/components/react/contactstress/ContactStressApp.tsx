@@ -775,7 +775,7 @@ export default function ContactStressApp() {
     if (result.cmp.tension > TENSION_LIMIT) {
       warnings.push(
         `${(result.cmp.tension * 100).toFixed(0)}% of the peak appears as tensile (negative) vertical ` +
-        `stress. A tire cannot pull on a pavement, so that is prediction error, not physics — it is ` +
+        `stress. A tire cannot pull on a pavement, so that is prediction error, not physics. It is ` +
         `largest for the wide-base branch, which the published paper does not cover.`
       );
     }
@@ -833,7 +833,7 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-press">
             <span>
               Inflation pressure
-              <Tip text={`Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Every rolling condition and speed was simulated over ${P(trained.pressure[0])}–${P(trained.pressure[1])} ${pressureUnit(unit)}${tire === 'DTA' ? ' — above 0.9 MPa the database has free-rolling cases only, which is why the slider stops there rather than at the 1.0 MPa the free-rolling branch reaches' : ''}. The slider spans ${P(safe.pressure[0])}–${P(safe.pressure[1])} ${pressureUnit(unit)}, the part of that where the prediction also closes on the load you applied.`} />
+              <Tip text={`Cold inflation pressure. Huang §1.3 assumes the contact pressure equals it; this tool shows how far off that is. Every rolling condition and speed was simulated over ${P(trained.pressure[0])}–${P(trained.pressure[1])} ${pressureUnit(unit)}${tire === 'DTA' ? '. Above 0.9 MPa the database has free-rolling cases only, which is why the slider stops there rather than at the 1.0 MPa the free-rolling branch reaches' : ''}. The slider spans ${P(safe.pressure[0])}–${P(safe.pressure[1])} ${pressureUnit(unit)}, the part of that where the prediction also closes on the load you applied.`} />
             </span>
             <span className="cee-field__unit">{P(pressure)} {pressureUnit(unit)}</span>
           </label>
@@ -862,7 +862,7 @@ export default function ContactStressApp() {
           <label className="cee-field__label" htmlFor="cs-slip">
             <span>
               Slip ratio
-              <Tip text={`Difference between tire circumferential speed and vehicle speed, over vehicle speed. Free rolling is slip = 0 by definition — the FE dataset enforces it — so the slider only applies to braking and acceleration. Slip is a continuous input in the training set, sampled from 1% up to ${(SLIP_RANGE[1] * 100).toFixed(0)}%: the slider spans all of it because a locked wheel is in the data, not because 99% is a design case. Nearly all of the change is below 10%, and past about 25% the field barely moves.`} />
+              <Tip text={`Difference between tire circumferential speed and vehicle speed, over vehicle speed. Free rolling is slip = 0 by definition, and the FE dataset enforces it, so the slider only applies to braking and acceleration. Slip is a continuous input in the training set, sampled from 1% up to ${(SLIP_RANGE[1] * 100).toFixed(0)}%: the slider spans all of it because a locked wheel is in the data, not because 99% is a design case. Nearly all of the change is below 10%, and past about 25% the field barely moves.`} />
             </span>
             <span className="cee-field__unit">{(inputs.slip * 100).toFixed(1)}%</span>
           </label>
@@ -962,7 +962,7 @@ export default function ContactStressApp() {
                   label="Mean contact pressure"
                   value={P(result.metrics.vertical.meanContactPressure)}
                   unit={pressureUnit(unit)}
-                  tip="Resultant vertical force divided by the contact area — the single number the uniform-pressure assumption replaces the whole field with."
+                  tip="Resultant vertical force divided by the contact area. It is the single number the uniform-pressure assumption replaces the whole field with."
                   delta={{
                     direction: result.cmp.meanOverInflation >= 1 ? 'up' : 'down',
                     text: `${result.cmp.meanOverInflation.toFixed(2)}×`,
@@ -1063,7 +1063,7 @@ export default function ContactStressApp() {
                   ]}
                 />
                 <figcaption className="cee-figcaption">
-                  All three outlines enclose the same area — idealized{' '}
+                  All three outlines enclose the same area, idealized{' '}
                   <em>P/p</em> = {A(result.ideal.area)} {areaUnit(unit)}. The real patch is{' '}
                   {A(result.metrics.vertical.contactArea)} {areaUnit(unit)}, a factor of{' '}
                   {result.cmp.areaOverIdeal.toFixed(2)}, and it is not that shape.
@@ -1090,7 +1090,7 @@ export default function ContactStressApp() {
                   fixed 0–{P(FIELD_RANGE[tire].vertical.hi)} {pressureUnit(unit)} scale it has
                   everywhere else here, so its color and its height are the magnitude. The two
                   shears are more than a decade smaller and would lie flat on any scale wide
-                  enough for hard braking, so each one fits itself to the case — read its limits
+                  enough for hard braking, so each one fits itself to the case. Read its limits
                   off the bar beneath it, and the exact extremes off the header. Drag to orbit,
                   scroll to zoom.
                 </>
@@ -1160,7 +1160,7 @@ export default function ContactStressApp() {
               <p className="cee-figcaption">
                 The ribs carry the load and stand well above the inflation pressure; the grooves
                 carry nothing. Braking drives σx entirely positive, acceleration entirely
-                negative — the friction force, which a uniform vertical pressure cannot represent.
+                negative, which is the friction force a uniform vertical pressure cannot represent.
                 The two shear scales follow the case, so compare them by their numbers rather
                 than by their color: σx is drawn here on ±{P(surfaced?.lim.longitudinal ?? shearLim.longitudinal)}{' '}
                 {pressureUnit(unit)}, against ±{P(divergingLimit(tire, 'longitudinal'))} for the
@@ -1171,7 +1171,7 @@ export default function ContactStressApp() {
             <div className="cee-chart-grid cee-chart-grid--2">
               <Card
                 title="Profile along travel"
-                subtitle="Through the most heavily loaded rib — the horizontal cut above (paper, Fig. 9). Both profiles share one fixed stress scale, so the curve's height is the load."
+                subtitle="Through the most heavily loaded rib, the horizontal cut above (paper, Fig. 9). Both profiles share one fixed stress scale, so the curve's height is the load."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={longRef} role="img"
@@ -1186,7 +1186,7 @@ export default function ContactStressApp() {
 
               <Card
                 title="Profile across the tire"
-                subtitle="Across the middle of the patch — the vertical cut above (paper, Fig. 10). Both profiles share one fixed stress scale, so the curve's height is the load."
+                subtitle="Across the middle of the patch, the vertical cut above (paper, Fig. 10). Both profiles share one fixed stress scale, so the curve's height is the load."
               >
                 <figure className="cee-figure">
                   <div className="cee-figure__plot" ref={tranRef} role="img"
@@ -1194,7 +1194,7 @@ export default function ContactStressApp() {
                   <Legend items={CHANNELS.map((ch) => ({ label: LABEL[ch], color: { vertical: chartColors(theme).orange, longitudinal: chartColors(theme).blue, transverse: chartColors(theme).emerald }[ch] }))} />
                   <figcaption className="cee-figcaption">
                     Five ribs, five peaks, the shoulders carrying most. σy reverses sign rib to
-                    rib — the mechanism behind near-surface shear damage.
+                    rib, which is the mechanism behind near-surface shear damage.
                   </figcaption>
                 </figure>
               </Card>
@@ -1205,8 +1205,8 @@ export default function ContactStressApp() {
               <div className="cee-howto__body">
                 <ol>
                   <li>
-                    The tool opens on the headline case of the source paper — a dual assembly at
-                    42 kN and 0.69 MPa, free rolling at 8 km/h — so the surfaces here should look
+                    The tool opens on the headline case of the source paper: a dual assembly at
+                    42 kN and 0.69 MPa, free rolling at 8 km/h. The surfaces here should look
                     like the ones printed there.
                   </li>
                   <li>
@@ -1218,7 +1218,7 @@ export default function ContactStressApp() {
                   <li>
                     Sweep the wheel load from one end of the slider to the other and watch{' '}
                     <strong>contact area</strong> against <em>P/p</em>. The ratio falls the whole
-                    way — the real patch grows more slowly than <em>P/p</em> does — and on a softly
+                    way, because the real patch grows more slowly than <em>P/p</em> does, and on a softly
                     inflated tire it drops through 1.0 near 40 kN. Now raise the inflation pressure
                     and sweep again: it never gets there. The real patch stays larger than the
                     idealization everywhere else the slider reaches.
@@ -1239,7 +1239,7 @@ export default function ContactStressApp() {
                     The load and pressure sliders stop short of what the manifest calls the
                     training domain, for two separate reasons. They span only the part where the
                     predicted field still sums back to the load you applied within ±15%; and only
-                    the part every rolling condition was actually simulated over — above 0.9 MPa,
+                    the part every rolling condition was actually simulated over. Above 0.9 MPa,
                     and below 18 kN, the database has free-rolling cases and nothing else. It is a
                     surrogate, so treat the third decimal place with care.
                   </li>

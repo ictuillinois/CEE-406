@@ -340,7 +340,7 @@ export default function TwoLayerModule() {
                 in §2.2.1 is dimensionless in those, which is why one page of curves serves every
                 load and every section.</li>
               <li><strong>Each card is one figure.</strong> The chart value, the equation Huang
-                applies to it, and the answer — so a hand solution can be checked line by line
+                applies to it, and the answer, so a hand solution can be checked line by line
                 rather than only at the end.</li>
               <li><strong>Dual and tandem wheels go through the conversion factor</strong> of
                 Figures 2.23 and 2.25–2.27: rescale to Sd = 24 in by Eq. 2.18, read both contact
@@ -350,7 +350,7 @@ export default function TwoLayerModule() {
             </ol>
             Reproduces Examples 2.5 through 2.10 and Problem 2.4. Values are computed from the
             two-layer solution rather than read off the printed curves, so they will differ from a
-            hand chart read by a percent or two — usually toward the KENLAYER answer Huang quotes
+            hand chart read by a percent or two, usually toward the KENLAYER answer Huang quotes
             beside each example.
           </div>
         </details>
@@ -363,11 +363,11 @@ export default function TwoLayerModule() {
           <>
             <KpiStrip>
               <Kpi accent label="E₁/E₂" value={fmt(ER, ER > 100 ? 0 : 1)}
-                tip="The modulus ratio — with h₁/a, the only thing every chart in §2.2.1 depends on." />
+                tip="The modulus ratio. With h₁/a, it is the only thing every chart in §2.2.1 depends on." />
               <Kpi label="h₁/a" value={fmt(hOverA, 3)}
                 tip="Thickness in contact radii. Figure 2.15 plots its reciprocal, a/h₁." />
               <Kpi label="σc on subgrade" value={fmt(charts.sigmaC, 3)}
-                tip="Vertical interface stress from Figure 2.15 — what the subgrade actually carries." />
+                tip="Vertical interface stress from Figure 2.15: what the subgrade actually carries." />
               <Kpi label="Critical tensile strain"
                 value={fmt((charts.eGroup ?? charts.e) * 1e6, 0)} unit="µε"
                 tip="At the bottom of layer 1, from Figure 2.21 (times the conversion factor for a wheel group). This is what drives bottom-up fatigue cracking." />
@@ -446,7 +446,7 @@ export default function TwoLayerModule() {
               {charts.group && wheels === 'tandem' && charts.group.C < 1.001 && (
                 <p className="cee-note">
                   A conversion factor of essentially 1 means the tandem axle is far enough away to
-                  do nothing at this thickness — the compensative effect Huang describes has
+                  do nothing at this thickness. The compensative effect Huang describes has
                   cancelled the extra load entirely.
                 </p>
               )}
@@ -454,7 +454,7 @@ export default function TwoLayerModule() {
                 Every value here is computed from the two-layer solution, not read off the printed
                 curve, so it may differ from a hand chart read by a percent or two. Where Huang
                 quotes KENLAYER beside a chart answer, these numbers generally sit closer to
-                KENLAYER — the chart is the lossy step, not the theory.
+                KENLAYER, because the chart is the lossy step, not the theory.
               </p>
             </div>
 
@@ -479,7 +479,7 @@ export default function TwoLayerModule() {
               >
                 Figure 2.14 is drawn once, for h₁/a = 1. This is the same curve for the section you
                 actually have. <strong>The kink is at the interface</strong>: above it the stiff
-                layer is spreading load sideways, below it the subgrade sees whatever is left —
+                layer is spreading load sideways, below it the subgrade sees whatever is left,
                 here {fmt((100 * charts.sigmaC) / q, 1)}% of the contact pressure.
               </ChartFigure>
 
@@ -489,8 +489,8 @@ export default function TwoLayerModule() {
                 plotRef={basinRef}
                 takeaway="The basin is far wider than the load, which is why a second wheel adds to the deflection under the first."
               >
-                Example 2.7 reads this curve twice — once under the near wheel and once at the far
-                one — and adds. <strong>The basin has no edge</strong>, so at a dual spacing of a
+                Example 2.7 reads this curve twice, once under the near wheel and once at the far
+                one, and adds. <strong>The basin has no edge</strong>, so at a dual spacing of a
                 few radii the second wheel is still contributing a third of the deflection under
                 the first.
               </ChartFigure>
@@ -501,7 +501,7 @@ export default function TwoLayerModule() {
               with Eqs. 2.13 through 2.19. Both layers are incompressible (ν = 0.5) and the
               interface is fully bonded, as every chart in the section assumes. The critical
               tensile strain is the overall principal strain on all six stress components,
-              searched at r/a = 0, 0.5, 1 and 1.5 — Huang notes it is slightly greater than the
+              searched at r/a = 0, 0.5, 1 and 1.5. Huang notes it is slightly greater than the
               horizontal principal strain KENLAYER reports, so it is on the safe side.
             </p>
           </>

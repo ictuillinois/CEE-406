@@ -168,7 +168,7 @@ const FIG_2_2: ChartSpec = {
   source: 'After Foster and Ahlvin (1954)',
   section: 'One layer',
   purpose:
-    'The vertical stress anywhere in a half-space under a circular load — the quantity ' +
+    'The vertical stress anywhere in a half-space under a circular load: the quantity ' +
     'that decides how much load reaches the subgrade.',
   equation: 'σz = q · (chart value)/100',
   value: percentAxis('σz/q × 100 (%)'),
@@ -181,7 +181,7 @@ const FIG_2_2: ChartSpec = {
     { fv: 4, sv: 2, reads: 0.76, label: 'Example 2.1, right load' },
   ],
   notes: [
-    'σz is independent of E and ν — Huang notes it under Eq. 2.3 — so this one chart ' +
+    'σz is independent of E and ν, as Huang notes under Eq. 2.3, so this one chart ' +
     'serves every material as well as every load.',
   ],
 };
@@ -206,7 +206,7 @@ const FIG_2_3: ChartSpec = {
   ],
   notes: [
     'Drawn for ν = 0.5, and the Poisson ratio matters here in a way it does not for σz. ' +
-    'At ν = 0.3 the radial stress under the center turns TENSILE below about z/a = 1.5 — ' +
+    'At ν = 0.3 the radial stress under the center turns TENSILE below about z/a = 1.5. ' +
     'Example 2.2 computes −0.25 psi where this chart, at ν = 0.5, gives +0.8 psi.',
     'Every curve runs off the left edge as z/a → 0, because at ν = 0.5 the surface outside ' +
     'the loaded circle carries no horizontal stress at all.',
@@ -219,7 +219,7 @@ const FIG_2_4: ChartSpec = {
   title: 'Tangential stresses due to circular loading',
   source: 'After Foster and Ahlvin (1954)',
   section: 'One layer',
-  purpose: 'The circumferential stress — the third normal stress Eq. 2.1 needs.',
+  purpose: 'The circumferential stress: the third normal stress Eq. 2.1 needs.',
   equation: 'σt = q · (chart value)/100',
   value: percentAxis('σt/q × 100 (%)'),
   sweep: depthAxis(5),
@@ -230,11 +230,11 @@ const FIG_2_4: ChartSpec = {
   },
   evaluate: (ra, za) => 100 * sigTRatio(ra, za),
   notes: [
-    'Example 2.1 reads this chart as ZERO at r/a = 4, z/a = 2 — and that is the right read. ' +
+    'Example 2.1 reads this chart as ZERO at r/a = 4, z/a = 2, and that is the right read. ' +
     'The true value is 0.043% of q, a fifth of the way below the bottom of the scale, so the ' +
     'chart has nothing to show there. It is the one anchor in the tool that cannot be plotted.',
-    'This chart covers less ground than Figures 2.2 and 2.3 — z/a to 5 instead of 10, r/a to ' +
-    '2.5 instead of 10 — because σt collapses with radius far faster than σz does. By ' +
+    'This chart covers less ground than Figures 2.2 and 2.3: z/a to 5 instead of 10, and r/a to ' +
+    '2.5 instead of 10, because σt collapses with radius far faster than σz does. By ' +
     'r/a = 2 at the surface it is already below 0.1% of q and off the scale.',
     'The outer curves hook back on themselves: σt at r/a = 2.5 peaks below the surface, not on it.',
   ],
@@ -248,7 +248,7 @@ const FIG_2_5: ChartSpec = {
   section: 'One layer',
   purpose:
     'The shear stress in the r–z plane, which vanishes on the axis and peaks near the edge ' +
-    'of the load — the reason a critical tensile strain can move off the axis.',
+    'of the load. That is the reason a critical tensile strain can move off the axis.',
   equation: 'τrz = q · (chart value)/100',
   value: percentAxis('ΤRZ/q × 100 (%)'),
   sweep: depthAxis(10),
@@ -273,7 +273,7 @@ const FIG_2_6: ChartSpec = {
   source: 'After Foster and Ahlvin (1954)',
   section: 'One layer',
   purpose:
-    'The deflection factor F — what an FWD sensor at radius r would read over a half-space.',
+    'The deflection factor F: what an FWD sensor at radius r would read over a half-space.',
   equation: 'w = (q·a/E) · F',
   value: {
     label: 'Deflection factor F', log: true, min: 0.1, max: 3,
@@ -293,7 +293,7 @@ const FIG_2_6: ChartSpec = {
     { fv: 4, sv: 2, reads: 0.21, label: 'Example 2.1, right load' },
   ],
   notes: [
-    'At the surface under the center, F = 2(1 − ν²) = 1.5 at ν = 0.5 — Eq. 2.8. A RIGID plate ' +
+    'At the surface under the center, F = 2(1 − ν²) = 1.5 at ν = 0.5, by Eq. 2.8. A RIGID plate ' +
     'of the same average pressure gives only π/4 of that, 1.18, which is Eq. 2.10.',
   ],
 };
@@ -312,7 +312,7 @@ const FIG_2_14: ChartSpec = {
   source: 'After Burmister (1958)',
   section: 'Two layers',
   purpose:
-    'What a stiff surface layer does to the vertical stress below it — the argument for ' +
+    'What a stiff surface layer does to the vertical stress below it: the argument for ' +
     'building a pavement at all, in one picture.',
   equation: 'σz = q · (chart value)',
   value: {
@@ -332,7 +332,7 @@ const FIG_2_14: ChartSpec = {
   notes: [
     'Drawn for h₁/a = 1 only, so the interface sits at z/a = 1 on every curve.',
     'At the interface the vertical stress is about 68% of the applied pressure when ' +
-    'E₁/E₂ = 1 — that is just Boussinesq — and about 8% when E₁/E₂ = 100.',
+    'E₁/E₂ = 1, which is just Boussinesq, and about 8% when E₁/E₂ = 100.',
   ],
 };
 
@@ -343,7 +343,7 @@ const FIG_2_15: ChartSpec = {
   source: 'After Huang (1969b)',
   section: 'Two layers',
   purpose:
-    'The vertical stress delivered to the top of the subgrade — the quantity a thickness ' +
+    'The vertical stress delivered to the top of the subgrade: the quantity a thickness ' +
     'is designed to limit.',
   equation: 'σc = q · (chart value);  Nd = 4.873×10⁻⁵ σc⁻³·⁷³⁴ E₂³·⁵⁸³ (Eq. 2.13)',
   value: {
@@ -365,7 +365,7 @@ const FIG_2_15: ChartSpec = {
     { fv: 5, sv: 0.4, reads: 0.1, label: 'Example 2.5, granular base' },
   ],
   notes: [
-    'The abscissa is a/h₁, not h₁/a — Huang notes the reason was preparing influence charts. ' +
+    'The abscissa is a/h₁, not h₁/a. Huang notes the reason was preparing influence charts. ' +
     'A thicker layer is therefore to the LEFT.',
   ],
 };
@@ -377,7 +377,7 @@ const FIG_2_17: ChartSpec = {
   source: 'After Burmister (1943)',
   section: 'Two layers',
   purpose:
-    'Surface deflection under the load — and, read backwards, the modulus a plate bearing ' +
+    'Surface deflection under the load, and, read backwards, the modulus a plate bearing ' +
     'test implies.',
   equation: 'w₀ = 1.5·q·a·F₂/E₂  (flexible plate, Eq. 2.14);  1.18·q·a·F₂/E₂  (rigid, Eq. 2.15)',
   value: {
@@ -398,7 +398,7 @@ const FIG_2_17: ChartSpec = {
   evaluate: (er, hOverA) => surfaceDeflectionFactor(er, hOverA),
   anchors: [{ fv: 5, sv: 1.333, reads: 0.511, label: 'Example 2.6: a plate test giving E₁/E₂ = 5' }],
   notes: [
-    'F₂ = 1 at h₁/a = 0, where Eq. 2.14 collapses to Eq. 2.8 — that is what the 1.5 is for.',
+    'F₂ = 1 at h₁/a = 0, where Eq. 2.14 collapses to Eq. 2.8, which is what the 1.5 is for.',
     'This F₂ is 1/1.5 of the F in Figure 2.19. Huang flags the difference under Eq. 2.16, ' +
     'and it is the easiest slip to make when moving between the two charts.',
   ],
@@ -411,7 +411,7 @@ const FIG_2_19: ChartSpec = {
   source: 'After Huang (1969c)',
   section: 'Two layers',
   purpose:
-    'Deflection on the layer-1/layer-2 interface at any radius — superposable, which is how ' +
+    'Deflection on the layer-1/layer-2 interface at any radius, and superposable, which is how ' +
     'Example 2.7 handles a dual.',
   equation: 'w = (q·a/E₂) · F',
   value: {
@@ -441,7 +441,7 @@ const FIG_2_19: ChartSpec = {
   ],
   notes: [
     'Huang prints seven separate panels, one per modulus ratio, and tells the reader to ' +
-    'interpolate between them. Here E₁/E₂ is continuous — pick any value, not just the seven.',
+    'interpolate between them. Here E₁/E₂ is continuous, so pick any value, not just the seven.',
     'The E₁/E₂ = 1 panel is Boussinesq.',
   ],
 };
@@ -454,7 +454,7 @@ const FIG_2_21: ChartSpec = {
   section: 'Two layers',
   nomograph: true,
   purpose:
-    'The critical tensile strain at the bottom of layer 1 — the number a fatigue transfer ' +
+    'The critical tensile strain at the bottom of layer 1: the number a fatigue transfer ' +
     'function consumes.',
   equation: 'e = (q/E₁) · Fe  (Eq. 2.17)',
   value: {
@@ -485,7 +485,7 @@ const FIG_2_21: ChartSpec = {
   notes: [
     'Because the interface is bonded, this same factor gives the vertical compressive strain ' +
     'on the subgrade when layer 2 is incompressible: Eq. 2.21 makes εz twice the horizontal εr.',
-    'The curves rise before they fall at low E₁/E₂ and low h₁/a. That is not noise — it is the ' +
+    'The curves rise before they fall at low E₁/E₂ and low h₁/a. That is not noise. It is the ' +
     'critical point leaving the axis of symmetry, driven off it by the shear stress of ' +
     'Figure 2.5. Huang computed r/a = 0, 0.5, 1 and 1.5 and took the worst; so does this.',
   ],
@@ -546,11 +546,11 @@ const FIG_2_23: ChartSpec = {
   ],
   notes: [
     `Every panel is drawn for a dual spacing of ${CHART_SD} in. A real group is rescaled to it ` +
-    `by Eq. 2.18 — a′ = 24a/Sd and h₁′ = 24h₁/Sd — which holds h₁/a and Sd/a, and therefore ` +
+    `by Eq. 2.18, as a′ = 24a/Sd and h₁′ = 24h₁/Sd, which holds h₁/a and Sd/a, and therefore ` +
     'the answer, fixed.',
     `The two contact radii ${CHART_RADII[0]} in and ${CHART_RADII[1]} in are the C₁ and C₂ ` +
     'panels of each figure; Eq. 2.19 interpolates between them.',
-    'Adding a tandem axle often REDUCES the factor — the extra wheels compensate rather than ' +
+    'Adding a tandem axle often REDUCES the factor, because the extra wheels compensate rather than ' +
     'add. The dip is deepest near St = 48 in, and by St = 120 in the tandem has faded back ' +
     'into the duals-only chart, which is why Figure 2.23 can stand in for it.',
     'This chart is the slowest in the tool: every point is a full critical-strain search over ' +
@@ -600,7 +600,7 @@ const FIG_2_31: ChartSpec = {
   samples: 22,
   heavy: true,
   notes: [
-    'Huang reprints only the realistic panels — k₁ ∈ {2, 20, 200} and k₂ ∈ {2, 20}. Jones’ ' +
+    'Huang reprints only the realistic panels: k₁ ∈ {2, 20, 200} and k₂ ∈ {2, 20}. Jones’ ' +
     'own tables also carry 0.2, for a layer softer than the one beneath it.',
     'The factor goes NEGATIVE in one corner: a layer 1 much thinner than layer 2 under a very ' +
     'wide load does not bend, so its underside is in compression, not tension. A log axis ' +

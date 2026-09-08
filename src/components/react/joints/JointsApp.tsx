@@ -275,7 +275,7 @@ export default function JointsApp() {
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="j-fc">
-              <span>f′<sub>c</sub><Tip text="Compressive strength, which sets the allowable bearing stress through Eq. 4.41 — not the modulus of rupture used for slab thickness." /></span>
+              <span>f′<sub>c</sub><Tip text="Compressive strength, which sets the allowable bearing stress through Eq. 4.41, not the modulus of rupture used for slab thickness." /></span>
               <span className="cee-field__unit">psi</span>
             </label>
             <input id="j-fc" className="cee-input" type="number" step="100" value={fcStr}
@@ -374,7 +374,7 @@ export default function JointsApp() {
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="j-dt">
-              <span>ΔT<Tip text="Placement temperature minus the lowest mean monthly temperature — the range the joint has to accommodate." /></span>
+              <span>ΔT<Tip text="Placement temperature minus the lowest mean monthly temperature: the range the joint has to accommodate." /></span>
               <span className="cee-field__unit">°F</span>
             </label>
             <input id="j-dt" className="cee-input" type="number" step="5" value={dTStr}
@@ -445,10 +445,10 @@ export default function JointsApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Calibrate.</strong> Load Huang Ex. 4.12 and confirm 3.27 effective dowels, 1376 lb, 3556 psi against an allowable 3250 — a design the book calls unsatisfactory.</li>
+              <li><strong>Calibrate.</strong> Load Huang Ex. 4.12 and confirm 3.27 effective dowels, 1376 lb, 3556 psi against an allowable 3250, a design the book calls unsatisfactory.</li>
               <li><strong>Find the critical dowel.</strong> It is normally the one nearest the pavement edge, and with two wheels on the slab it is not necessarily under either of them.</li>
               <li><strong>Choose a reach convention.</strong> Friberg's 1.8ℓ is what Huang's examples use; Heinrichs' 1.0ℓ is what he says is correct. They give different answers, and one of them may fail your design.</li>
-              <li><strong>Then check faulting</strong>, which §12.1.4 computes on a third convention again — 1.0ℓ and 0.45W.</li>
+              <li><strong>Then check faulting</strong>, which §12.1.4 computes on a third convention again: 1.0ℓ and 0.45W.</li>
               <li><strong>Now argue about joint spacing.</strong> Three limits pull against each other: the opening the sealant and aggregate interlock can tolerate, the friction stress in the slab, and faulting. Say which you let govern.</li>
             </ol>
             Nothing here decides the design. It makes each constraint visible so the defense can be
@@ -465,11 +465,11 @@ export default function JointsApp() {
           <>
             <KpiStrip>
               <Kpi accent label="Critical dowel load" value={fmt(byReach.friberg.critical, 0)} unit="lb"
-                tip="The largest load any single dowel carries, on Friberg's 1.8ℓ convention — the one Huang's worked examples use." />
+                tip="The largest load any single dowel carries, on Friberg's 1.8ℓ convention, the one Huang's worked examples use." />
               <Kpi label="Bearing stress" value={fmt(byReach.friberg.stress, 0)} unit="psi"
                 tip="Between dowel and concrete, Huang Eq. 4.45. This, not the steel, is what governs dowel design." />
               <Kpi label="Allowable" value={fmt(allowable, 0)} unit="psi"
-                tip="ACI Eq. 4.41: (4 − d)f′c/3. Note it FALLS as the dowel gets bigger — it is a concrete criterion, not a steel one." />
+                tip="ACI Eq. 4.41: (4 − d)f′c/3. Note it FALLS as the dowel gets bigger; it is a concrete criterion, not a steel one." />
               <Kpi label="Predicted faulting"
                 value={fault && Number.isFinite(fault.inches)
                   ? (fault.inRange ? fmt(fault.inches, 3) : `≫ ${fmt(fault.inches, 2)}`)
@@ -483,7 +483,7 @@ export default function JointsApp() {
                 Bearing stress <strong>{fmt(byReach.friberg.stress, 0)} psi</strong> exceeds the
                 allowable <strong>{fmt(allowable, 0)} psi</strong> by{' '}
                 {fmt(100 * (byReach.friberg.stress / allowable - 1), 0)}%. Use larger dowels or
-                closer spacing. (On Huang's Example 4.12 this is the correct verdict — the book's own
+                closer spacing. (On Huang's Example 4.12 this is the correct verdict; the book's own
                 design fails by about 10%.)
               </span></p>
             )}
@@ -503,7 +503,7 @@ export default function JointsApp() {
                 The faulting number above is an <strong>extrapolation</strong>. Eq. 12.3 was fitted
                 over bearing stresses of {FAULTING_DATA_RANGE[0]}–{FAULTING_DATA_RANGE[1]} psi and
                 this design sits at <strong>{fmt(fault.S, 0)} psi</strong>. Huang's instruction is
-                explicit — the model "must not be used to predict faulting by extrapolation beyond
+                explicit: the model "must not be used to predict faulting by extrapolation beyond
                 the data range used in its generation". Treat {fmt(fault.inches, 2)} in as evidence
                 the dowels are badly overstressed, not as a prediction.
               </span></p>
@@ -523,7 +523,7 @@ export default function JointsApp() {
               distance where the negative moment peaks. <strong>That distance is the whole
               disagreement.</strong> Friberg (1940) put it at 1.8ℓ; Heinrichs et al. (1989), checking
               against finite-element results, found 1.0ℓ. A shorter reach means fewer dowels share
-              the load, so the critical one carries more — and Huang notes plainly that the load
+              the load, so the critical one carries more, and Huang notes plainly that the load
               "should be larger than those shown in the examples". The examples were nonetheless
               left as they were.
             </ChartFigure>
@@ -558,7 +558,7 @@ export default function JointsApp() {
                 </table>
               </div>
               <p className="cee-note" style={{ marginTop: '0.75rem' }}>
-                The third row is not a fourth opinion — it is the convention Eq. 12.3 was
+                The third row is not a fourth opinion; it is the convention Eq. 12.3 was
                 <em>calibrated</em> against, so faulting must be predicted with it even if you design
                 the dowels on another. Mixing them silently is the kind of error that survives review
                 because every individual step looks defensible.
@@ -573,7 +573,7 @@ export default function JointsApp() {
                 takeaway={`At ${fmt(fault.S, 0)} psi bearing stress this joint is predicted to fault ${fmt(fault.inches, 3)} in.`}
               >
                 Huang's summary of Figure 12.5 is that <strong>bearing stress matters most and joint
-                spacing least</strong> — which is why dowel design and faulting are the same problem
+                spacing least</strong>, which is why dowel design and faulting are the same problem
                 wearing different clothes. Keeping bearing stress under about 1500 psi holds faulting
                 to an acceptable level. Two cautions come with the model: it is a regression over 280
                 sections and <em>"must not be used to predict faulting by extrapolation beyond the
@@ -582,7 +582,7 @@ export default function JointsApp() {
             )}
 
             <Card title="Choosing a joint spacing"
-              subtitle="Four limits, pulling in different directions — HW9 asks you to pick one to obey">
+              subtitle="Four limits, pulling in different directions. HW9 asks you to pick one to obey">
               <div className="cee-tablewrap">
                 <table className="cee-table">
                   <thead>
@@ -608,7 +608,7 @@ export default function JointsApp() {
                       <td>Friction stress at {fmt(JS, 0)} ft</td>
                       <td>{fmt(spacingLimits.friction, 1)} psi</td>
                       <td>
-                        cracking — but the tensile strength is {fmt(spacingLimits.tensile[0], 0)}–
+                        cracking, but the tensile strength is {fmt(spacingLimits.tensile[0], 0)}–
                         {fmt(spacingLimits.tensile[1], 0)} psi, so this never governs
                       </td>
                     </tr>
@@ -620,28 +620,28 @@ export default function JointsApp() {
                 the stated temperature range and shrinkage. The friction row is worth reading twice:
                 Huang computes it, finds 19.5 psi against a tensile strength near 200, and concludes
                 that <em>joint spacing is not governed by friction stress at all</em>. It is governed
-                by how far the joint opens — and, through faulting, by what happens after it does.
+                by how far the joint opens, and, through faulting, by what happens after it does.
               </p>
             </Card>
 
             {ties && (
               <Card title="Tie bars across the longitudinal joint"
-                subtitle="Huang Eqs. 4.38 and 4.40 — sized by friction, lengthened by bond">
+                subtitle="Huang Eqs. 4.38 and 4.40: sized by friction, lengthened by bond">
                 <div className="cee-tablewrap">
                   <table className="cee-table">
                     <tbody>
                       <tr><td>Steel area required</td><td>{fmt(ties.asPerIn, 5)} in²/in of joint</td></tr>
                       <tr><td>Bar spacing</td><td>{fmt(ties.spacing, 1)} in</td></tr>
                       <tr><td>Bond length</td><td>{fmt(ties.lengthRaw, 1)} in</td></tr>
-                      <tr><td>With misalignment allowance</td><td><strong>{fmt(ties.length, 1)} in</strong> — round up</td></tr>
+                      <tr><td>With misalignment allowance</td><td><strong>{fmt(ties.length, 1)} in</strong>, round up</td></tr>
                     </tbody>
                   </table>
                 </div>
                 <p className="cee-note" style={{ marginTop: '0.75rem' }}>
                   Tie bars are <strong>not</strong> load transfer devices. They hold the longitudinal
                   joint closed so that aggregate interlock can do the load transfer; sizing them is a
-                  friction problem, not a wheel-load problem. Most agencies use a standard detail —
-                  0.5 in bars, 36 in long, at 30 to 40 in centers — rather than designing each one.
+                  friction problem, not a wheel-load problem. Most agencies use a standard detail,
+                  0.5 in bars, 36 in long, at 30 to 40 in centers, rather than designing each one.
                 </p>
               </Card>
             )}

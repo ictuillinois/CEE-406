@@ -338,7 +338,7 @@ export default function ReliabilityApp() {
           deterministic.
         </p>
 
-        {cvField('Σ pᵢFᵢ', 'Mean equivalent axle load factor of the traffic mix. Huang Table 10.9 puts its coefficient of variation near 35% — by far the largest on the traffic side.', cvSumPF, setCvSumPF, sumPF, setSumPF, '—', '0.01')}
+        {cvField('Σ pᵢFᵢ', 'Mean equivalent axle load factor of the traffic mix. Huang Table 10.9 puts its coefficient of variation near 35%, by far the largest on the traffic side.', cvSumPF, setCvSumPF, sumPF, setSumPF, '—', '0.01')}
         {cvField('ADT₀', 'Average daily traffic at the start of the design period, both directions.', cvADT, setCvADT, ADT0, setADT0, 'veh/day', '100')}
         {cvField('Growth rate r', 'Annual traffic growth rate. Its variance reaches the answer through the growth factor G = ½[1 + (1+r)^Y], so a long design period amplifies it.', cvR, setCvR, r, setR, '%', '0.5')}
         {cvField('Trucks T', 'Percentage of ADT that is trucks.', cvT, setCvT, T, setT, '%', '1')}
@@ -359,7 +359,7 @@ export default function ReliabilityApp() {
 
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>Layers<Tip text="Layer coefficient a, thickness D, and drainage coefficient m — each with its own coefficient of variation. All three vary, which is why Eq. 10.44 has three terms per layer." /></span>
+            <span>Layers<Tip text="Layer coefficient a, thickness D, and drainage coefficient m, each with its own coefficient of variation. All three vary, which is why Eq. 10.44 has three terms per layer." /></span>
             <span className="cee-field__unit">a · D · m, each + CV %</span>
           </span>
           {layers.map(l => (
@@ -396,7 +396,7 @@ export default function ReliabilityApp() {
             onClick={() => setLayers(ls => [...ls, { id: nextId++, name: 'New layer', a: '0.10', cvA: '15', D: '6', cvD: '10', m: '1.00', cvM: '10' }])}>+ Add layer</button>
         </div>
 
-        {cvField('Initial serviceability p₀', 'Serviceability of the pavement as built. The AASHO Road Test flexible sections averaged 4.2 with a standard deviation of 0.33 — construction quality, in one number.', cvP0, setCvP0, p0, setP0, '—', '0.1')}
+        {cvField('Initial serviceability p₀', 'Serviceability of the pavement as built. The AASHO Road Test flexible sections averaged 4.2 with a standard deviation of 0.33, which is construction quality in one number.', cvP0, setCvP0, p0, setP0, '—', '0.1')}
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="rel-pt">
@@ -406,7 +406,7 @@ export default function ReliabilityApp() {
             onChange={e => setPt(e.target.value)} />
         </div>
 
-        {cvField('Roadbed modulus M R', 'Effective roadbed soil resilient modulus. Its coefficient of variation is typically 15% within a project — and much larger between projects.', cvMR, setCvMR, MR, setMR, 'psi', '100')}
+        {cvField('Roadbed modulus M R', 'Effective roadbed soil resilient modulus. Its coefficient of variation is typically 15% within a project, and much larger between projects.', cvMR, setCvMR, MR, setMR, 'psi', '100')}
 
         <h2 className="cee-panel__title" style={{ marginTop: '1.5rem' }}>Monte Carlo</h2>
         <div className="cee-field">
@@ -428,9 +428,9 @@ export default function ReliabilityApp() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Traffic gives a distribution, not a number.</strong> Every factor in the ESAL product has a mean and a spread; they combine into a mean and variance of log W<sub>T</sub>.</li>
-              <li><strong>So does the pavement.</strong> Layer coefficients, thicknesses, drainage coefficients, p₀ and M<sub>R</sub> all vary, giving a mean and variance of log W<sub>t</sub> — the capacity.</li>
+              <li><strong>So does the pavement.</strong> Layer coefficients, thicknesses, drainage coefficients, p₀ and M<sub>R</sub> all vary, giving a mean and variance of log W<sub>t</sub>, the capacity.</li>
               <li><strong>Reliability is the overlap.</strong> It is the probability that demand stays below capacity: P(log W<sub>T</sub> − log W<sub>t</sub> &lt; 0).</li>
-              <li><strong>Read the variance chart first.</strong> It ranks every input by how much of the total uncertainty it owns. That ranking, not the reliability number, is what tells you where to spend money — on better traffic counts, tighter construction, or more asphalt.</li>
+              <li><strong>Read the variance chart first.</strong> It ranks every input by how much of the total uncertainty it owns. That ranking, not the reliability number, is what tells you where to spend money: on better traffic counts, tighter construction, or more asphalt.</li>
               <li><strong>Run Monte Carlo and compare.</strong> Taylor's expansion linearizes the design equation; sampling does not. When they disagree, the equation is curved over the range your inputs actually span.</li>
             </ol>
             The design equation itself never changes here. What changes is your honesty about the inputs.
@@ -446,7 +446,7 @@ export default function ReliabilityApp() {
           <>
             <KpiStrip>
               <Kpi accent label="Reliability" value={fmt(rel.R, 1)} unit="%"
-                tip="Probability that the pavement carries its design traffic before reaching terminal serviceability — Huang Eq. 10.45." />
+                tip="Probability that the pavement carries its design traffic before reaching terminal serviceability, by Huang Eq. 10.45." />
               <Kpi label="Design traffic log W T" value={fmt(tRes.logWT, 3)}
                 tip="Mean of the predicted log ESAL over the design period, Eq. 10.39. Its standard deviation is shown below." />
               <Kpi label="Capacity log W t" value={fmt(pRes.logWt, 3)}
@@ -473,18 +473,18 @@ export default function ReliabilityApp() {
 
             <ChartFigure
               title="Where the uncertainty comes from"
-              subtitle="Each input's share of the total variance in log Dr — traffic side in amber, pavement side in violet"
+              subtitle="Each input's share of the total variance in log Dr, traffic side in amber and pavement side in violet"
               plotRef={varRef}
               legend={[
                 { label: 'Traffic prediction', color: trafficHue },
                 { label: 'Performance prediction', color: perfHue },
               ]}
               takeaway={dominant
-                ? `${dominant.name} owns ${fmt(100 * dominant.share, 0)}% of the total variance — it is the input worth measuring better.`
+                ? `${dominant.name} owns ${fmt(100 * dominant.share, 0)}% of the total variance, so it is the input worth measuring better.`
                 : 'No input carries variance; every coefficient of variation is zero.'}
             >
               This is the chart that changes decisions. A design whose uncertainty is dominated by
-              the <strong>axle mix</strong> is not made safer by another inch of asphalt — it is made
+              the <strong>axle mix</strong> is not made safer by another inch of asphalt; it is made
               safer by weighing more trucks. A design dominated by <strong>SN</strong> is a
               construction-control problem: tighter thickness tolerances and better material
               acceptance buy more reliability per dollar than a thicker section does. Adding
@@ -504,7 +504,7 @@ export default function ReliabilityApp() {
             >
               A deterministic design compares two <em>points</em> and declares the pavement adequate
               if capacity exceeds demand. What actually matters is how far apart the two
-              distributions are <em>relative to their combined spread</em> — that ratio is z, and the
+              distributions are <em>relative to their combined spread</em>. That ratio is z, and the
               reliability is the area of the normal curve below it. Two designs with identical mean
               capacity and identical mean traffic can differ by twenty points of reliability purely
               because one was built to tighter tolerances.
@@ -518,13 +518,13 @@ export default function ReliabilityApp() {
             >
               The curve is an S, and where you sit on it decides whether more material is worth
               buying. On the steep part, an inch of base is worth several points of reliability. Past
-              the knee, the same inch buys fractions of a point — the design is no longer limited by
+              the knee, the same inch buys fractions of a point, because the design is no longer limited by
               capacity but by <em>uncertainty</em>, and no amount of thickness removes uncertainty
               about the traffic. Find the knee before you specify the section.
             </ChartFigure>
 
             <Card title="Is that enough reliability?"
-              subtitle="Recommended levels by functional class — Huang Table 11.16, after AASHTO (1986)">
+              subtitle="Recommended levels by functional class, Huang Table 11.16, after AASHTO (1986)">
               <div className="cee-tablewrap">
                 <table className="cee-table">
                   <thead>
@@ -552,7 +552,7 @@ export default function ReliabilityApp() {
               </div>
               <p className="cee-note" style={{ marginTop: '0.75rem' }}>
                 These are the levels a task force recommended, not a law of mechanics. Note how wide
-                the bands are, and that "above both" is not automatically good news — reliability is
+                the bands are, and that "above both" is not automatically good news, because reliability is
                 bought with material, and an interstate built to 99.9% when 95% was called for is
                 money spent on a tail that may not exist.
               </p>
@@ -616,7 +616,7 @@ export default function ReliabilityApp() {
                 plotRef={mcRef}
                 takeaway={`${fmt(100 - mc.R, 1)}% of sampled designs reached terminal serviceability before carrying their design traffic.`}
               >
-                Each trial is one pavement that could have been built from your specifications —
+                Each trial is one pavement that could have been built from your specifications.
                 its own layer thicknesses, its own subgrade, its own traffic. The histogram is the
                 population of outcomes hiding behind a single deterministic answer. Note that it is
                 not symmetric: the design equation is nonlinear, so normally distributed inputs do
@@ -627,7 +627,7 @@ export default function ReliabilityApp() {
 
             <p className="cee-note">
               Traffic prediction: Huang Eqs. 10.38–10.40. Performance prediction: Eqs. 10.41–10.44,
-              the AASHTO flexible equation with the reliability term removed — because reliability is
+              the AASHTO flexible equation with the reliability term removed, because reliability is
               the output here, not an input. Reliability: Eqs. 10.45–10.46. Rosenblueth's point
               estimates follow §10.4. All inputs are treated as independent; correlation between
               layer thicknesses, or between M<sub>R</sub> and drainage, would change the answer and

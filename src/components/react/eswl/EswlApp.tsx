@@ -179,7 +179,7 @@ export default function EswlApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="e-pd">
-              <span>Load per tire P<sub>d</sub><Tip text="Load on ONE of the dual tires. The total on the pair is twice this — and every criterion returns something between the two." /></span>
+              <span>Load per tire P<sub>d</sub><Tip text="Load on ONE of the dual tires. The total on the pair is twice this, and every criterion returns something between the two." /></span>
               <span className="cee-field__unit">lb</span>
             </label>
             <input id="e-pd" className="cee-input" type="number" step="250" value={pdStr}
@@ -222,7 +222,7 @@ export default function EswlApp() {
         <h2 className="cee-panel__title" style={{ marginTop: '1.5rem' }}>Equal tensile strain</h2>
         <p className="cee-hint" style={{ marginTop: '-0.35rem' }}>
           The only criterion that knows the pavement is layered. Its conversion factor comes off
-          Huang Figure 2.23 — a chart read, so you supply it.
+          Huang Figure 2.23 is a chart read, so you supply it.
         </p>
 
         <label className="cee-field__label">
@@ -263,10 +263,10 @@ export default function EswlApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Calibrate.</strong> Load the Huang preset and confirm 7410, 5630, 7340 and 6750 lb — four published answers to one question.</li>
+              <li><strong>Calibrate.</strong> Load the Huang preset and confirm 7410, 5630, 7340 and 6750 lb: four published answers to one question.</li>
               <li><strong>Read the divergence chart, not the number.</strong> The criteria agree at the extremes and disagree in the middle, which is exactly where real pavements sit.</li>
               <li><strong>Notice which response governs where.</strong> Stress peaks midway between the tires; deflection peaks at the center of the pair, because deflection spreads further than stress.</li>
-              <li><strong>Then choose</strong> — and know that the choice is not free. Each criterion was built to feed a particular set of design curves.</li>
+              <li><strong>Then choose</strong>, and know that the choice is not free. Each criterion was built to feed a particular set of design curves.</li>
             </ol>
             HW5 P3 asks which you would use for a thin pavement, a thick pavement, and an airfield.
             The three answers are not the same, and the reasons are more interesting than the numbers.
@@ -289,7 +289,7 @@ export default function EswlApp() {
               <Kpi label="Highest" value={fmt(cmp.range[1], 0)} unit="lb"
                 tip="The most conservative. Designing to it costs material; designing to the lowest costs pavement life." />
               <Kpi label="Total on the duals" value={fmt(cmp.totalLoad, 0)} unit="lb"
-                tip="Every criterion must return something between one wheel load and the total — those are the physical bounds." />
+                tip="Every criterion must return something between one wheel load and the total; those are the physical bounds." />
             </KpiStrip>
 
             <p className="cee-warn" style={{ background: 'transparent' }}>
@@ -313,8 +313,8 @@ export default function EswlApp() {
               ]}
               takeaway={`At ${fmt(z, 1)} in the four criteria span ${fmt(cmp.range[0], 0)} to ${fmt(cmp.range[1], 0)} lb, a spread of ${fmt(cmp.spreadPct, 0)}%.`}
             >
-              All the criteria have to agree at the two extremes — a very thin pavement feels two
-              separate wheels, a very thick one feels a single blur — so <strong>they can only
+              All the criteria have to agree at the two extremes. A very thin pavement feels two
+              separate wheels, a very thick one feels a single blur, so <strong>they can only
               disagree in between</strong>. That is not a defect of the theory; it is where the
               physics stops being obvious and a modeling choice has to be made. Highway pavements
               sit squarely in that band. Note also that the equal-strain criterion does not vary with
@@ -338,7 +338,7 @@ export default function EswlApp() {
 
             {cmp.equalStress && cmp.equalDeflection && (
               <Card title="Where the maximum actually occurs"
-                subtitle="Three candidate points under the duals — Huang Figure 6.3">
+                subtitle="Three candidate points under the duals, Huang Figure 6.3">
                 <div className="cee-tablewrap">
                   <table className="cee-table">
                     <thead>
@@ -367,7 +367,7 @@ export default function EswlApp() {
                   <strong>Stress and deflection peak in different places.</strong> Stress is the more
                   local of the two, so it is largest near a tire; deflection spreads much further, so
                   the two bowls add up most in the middle. That single difference is why the two
-                  criteria give different ESWLs — and why the answer to "where is the critical point"
+                  criteria give different ESWLs, and why the answer to "where is the critical point"
                   depends on which response you are designing against.
                 </p>
               </Card>
@@ -384,7 +384,7 @@ export default function EswlApp() {
                     <tr>
                       <td>Boyd &amp; Foster <span className="cee-field__unit">Eq. 6.1</span></td>
                       <td>a log-log straight line between two geometric anchors</td>
-                      <td>material properties entirely — no E, no ν, no layers</td>
+                      <td>material properties entirely: no E, no ν, no layers</td>
                       <td>{fmt(cmp.boydFoster, 0)} lb</td>
                     </tr>
                     <tr>
@@ -402,7 +402,7 @@ export default function EswlApp() {
                     <tr>
                       <td>Equal strain <span className="cee-field__unit">Eq. 6.14</span></td>
                       <td>a two-layer system; failure driven by fatigue cracking</td>
-                      <td>the subgrade — it is looking at the bottom of the asphalt</td>
+                      <td>the subgrade; it is looking at the bottom of the asphalt</td>
                       <td>{cmp.equalStrain ? fmt(cmp.equalStrain, 0) : '—'} lb</td>
                     </tr>
                   </tbody>
@@ -413,7 +413,7 @@ export default function EswlApp() {
                 by fatigue at the bottom of a thin asphalt layer, so the strain criterion is asking
                 the right question. A <strong>thick</strong> one protects a subgrade, so the stress
                 or deflection criteria are. An <strong>airfield</strong>, with far higher loads and
-                far fewer repetitions, is a different problem again — and Huang notes the whole ESWL
+                far fewer repetitions, is a different problem again, and Huang notes the whole ESWL
                 idea began there, with the B-29, precisely because the single-wheel design curves of
                 the day had nothing else to offer.
               </p>

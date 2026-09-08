@@ -120,7 +120,7 @@ export default function CbrApp() {
 
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>Readings<Tip text="Piston penetration and the corresponding pressure. Include the zero reading — the correction needs the toe of the curve." /></span>
+            <span>Readings<Tip text="Piston penetration and the corresponding pressure. Include the zero reading, because the correction needs the toe of the curve." /></span>
             <span className="cee-field__unit">in · psi</span>
           </span>
           {rows.map(r => (
@@ -165,9 +165,9 @@ export default function CbrApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Enter the readings</strong>, including the zero — the origin correction is constructed from the toe of the curve.</li>
+              <li><strong>Enter the readings</strong>, including the zero, because the origin correction is constructed from the toe of the curve.</li>
               <li><strong>Look at the curve shape.</strong> If it starts concave upward, the test began against surface irregularities and the origin must move; the tool finds the tangent and shifts it.</li>
-              <li><strong>Read the CBR</strong> at 0.1 in. If the 0.2 in value is larger, the standard says rerun the test — and if it repeats, report the 0.2 in value.</li>
+              <li><strong>Read the CBR</strong> at 0.1 in. If the 0.2 in value is larger, the standard says rerun the test, and if it repeats, report the 0.2 in value.</li>
               <li><strong>Toggle the correction off</strong> to see how much it matters: an uncorrected concave-up curve understates the CBR badly.</li>
             </ol>
             CBR is a ratio, not a stress: it is the piston pressure your soil needs expressed as a percentage of what a standard crushed stone needs at the same penetration.
@@ -201,7 +201,7 @@ export default function CbrApp() {
               title="Stress–penetration curve"
               subtitle={res.offset > 1e-9
                 ? 'Measured curve, the tangent that locates the corrected origin, and the shifted curve'
-                : 'Measured curve — concave down from the start, so no correction is needed'}
+                : 'Measured curve, concave down from the start, so no correction is needed'}
               plotRef={chartRef}
               legend={[
                 { label: 'Measured', color: hueFor('stress', theme) },
@@ -246,7 +246,7 @@ export default function CbrApp() {
               CBR = piston pressure ÷ standard pressure × 100, with standard pressures of 1000 psi at
               0.1 in and 1500 psi at 0.2 in (AASHTO T 193). The origin correction is the standard
               construction: the tangent at the steepest point of the curve, extended to zero load.
-              A soaked CBR is the usual design value — state which one you are reporting.
+              A soaked CBR is the usual design value, so state which one you are reporting.
             </p>
           </>
         )}

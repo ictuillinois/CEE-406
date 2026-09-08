@@ -207,7 +207,7 @@ export default function WestergaardApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="wg-e">
-              <span>Concrete E<Tip text="Slab elastic modulus — typically 3–5 ×10⁶ psi." /></span>
+              <span>Concrete E<Tip text="Slab elastic modulus, typically 3–5 ×10⁶ psi." /></span>
               <span className="cee-field__unit">psi</span>
             </label>
             <input id="wg-e" className="cee-input" type="number" min="1" step="100000" value={eStr} onChange={e => setE(e.target.value)} />
@@ -248,7 +248,7 @@ export default function WestergaardApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="wg-mr">
-            <span>Modulus of rupture<Tip text="Concrete flexural strength for interpreting the stress ratio — typically 600–700 psi. Set 0 to hide the reference line." /></span>
+            <span>Modulus of rupture<Tip text="Concrete flexural strength for interpreting the stress ratio, typically 600–700 psi. Set 0 to hide the reference line." /></span>
             <span className="cee-field__unit">psi</span>
           </label>
           <input id="wg-mr" className="cee-input" type="number" min="0" step="25" value={mrStr} onChange={e => setMr(e.target.value)} />
@@ -323,7 +323,7 @@ export default function WestergaardApp() {
         </div>
 
         {res && a / res.ell > 0.5 && (
-          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>a/ℓ = {(a / res.ell).toFixed(2)} — the closed forms assume a small load relative to ℓ; treat results beyond a/ℓ ≈ 0.5 with caution.</span></p>
+          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>a/ℓ = {(a / res.ell).toFixed(2)}. The closed forms assume a small load relative to ℓ; treat results beyond a/ℓ ≈ 0.5 with caution.</span></p>
         )}
 
         <p className="cee-hint">
@@ -338,12 +338,12 @@ export default function WestergaardApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Describe slab and foundation</strong>: E, ν, h, and the subgrade reaction k — ℓ is computed first, every formula consumes it.</li>
+              <li><strong>Describe slab and foundation</strong>: E, ν, h, and the subgrade reaction k. ℓ is computed first, every formula consumes it.</li>
               <li><strong>Set the load</strong>: P and contact radius a. The tool evaluates all three Westergaard cases at once.</li>
               <li><strong>Check the critical fiber</strong>: interior and edge stresses are bottom tension; the corner stress is <em>top</em> tension.</li>
-              <li><strong>Add curling</strong>: Δt &gt; 0 is daytime (bottom tension at interior — adds to load stress); night reverses the sign.</li>
+              <li><strong>Add curling</strong>: Δt &gt; 0 is daytime (bottom tension at interior, adding to load stress); night reverses the sign.</li>
             </ol>
-            The h-sensitivity chart shows why edge loading governs rigid design — compare each curve against the modulus of rupture line.
+            The h-sensitivity chart shows why edge loading governs rigid design. Compare each curve against the modulus of rupture line.
           </div>
         </details>
 
@@ -356,14 +356,14 @@ export default function WestergaardApp() {
                 label="Radius of rel. stiffness ℓ"
                 value={fmt(res.ell, 2)}
                 unit="in"
-                tip="The slab's natural length scale: how far it spreads a load into the foundation. Stiff slab / soft subgrade → large ℓ. Every Westergaard formula and both curling ratios consume it — compute it first."
+                tip="The slab's natural length scale: how far it spreads a load into the foundation. Stiff slab / soft subgrade → large ℓ. Every Westergaard formula and both curling ratios consume it, so compute it first."
               />
               <Kpi
                 accent
                 label="Governing stress"
                 value={fmt(res.governing.stress, 1)}
                 unit="psi"
-                tip="The largest bending stress across every published case. Edge loading normally governs slab thickness because highway wheels track close to the edge — and the semicircular contact, whose centroid sits nearest the edge, is the worst of them."
+                tip="The largest bending stress across every published case. Edge loading normally governs slab thickness because highway wheels track close to the edge, and the semicircular contact, whose centroid sits nearest the edge, is the worst of them."
               />
               <Kpi
                 label="Governing case"
@@ -374,13 +374,13 @@ export default function WestergaardApp() {
               <Kpi
                 label="Stress ratio σ / MR"
                 value={MR > 0 ? fmt(res.governing.stress / MR, 2) : '—'}
-                tip="Governing bending stress over the concrete's flexural strength. PCA-style design keeps this well below 1 — at 0.5 and below, fatigue life is essentially unlimited."
+                tip="Governing bending stress over the concrete's flexural strength. PCA-style design keeps this well below 1; at 0.5 and below, fatigue life is essentially unlimited."
               />
               <Kpi
                 label="Corner deflection"
                 value={fmt(res.corner.ioannides.deflection, 4)}
                 unit="in"
-                tip="The largest deflection of any case — repeated corner deflections pump water and fines from under the joint, which is how corner support is lost."
+                tip="The largest deflection of any case. Repeated corner deflections pump water and fines from under the joint, which is how corner support is lost."
               />
             </KpiStrip>
 
@@ -397,7 +397,7 @@ export default function WestergaardApp() {
                   return (
                     <>
                       <rect x="20" y="26" width="300" height="120" rx="3" fill="none" stroke={ink} strokeWidth="1.5" />
-                      <text x="24" y="18" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={mut}>PLAN VIEW — one slab (joints at the boundary)</text>
+                      <text x="24" y="18" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={mut}>PLAN VIEW: one slab (joints at the boundary)</text>
                       {/* interior */}
                       <circle cx="170" cy="86" r="10" fill={cGr} opacity="0.9" />
                       <text x="170" y="110" textAnchor="middle" fontFamily="IBM Plex Mono, monospace" fontSize="9" fill={ink}>Interior</text>
@@ -422,7 +422,7 @@ export default function WestergaardApp() {
               <p className="cee-chart__caption" style={{ padding: '0.375rem 0 0' }}>
                 The three Westergaard cases, colored to match the charts below. Each formula assumes the
                 load circle is tangent to the boundary it names. The corner is the odd one out: its maximum
-                stress is on the <strong>top</strong> of the slab, a distance ~2.38ℓ from the corner — which
+                stress is on the <strong>top</strong> of the slab, a distance ~2.38ℓ from the corner, which
                 is why corner cracks break downward and why checking bottom tension there is the classic error.
               </p>
             </div>
@@ -494,27 +494,27 @@ export default function WestergaardApp() {
                   <tbody>
                     <tr>
                       <td>Edge contact shape</td>
-                      <td>circle — {fmt(res.edge.circle.stress, 1)} psi</td>
-                      <td>semicircle — {fmt(res.edge.semicircle.stress, 1)} psi</td>
+                      <td>circle, {fmt(res.edge.circle.stress, 1)} psi</td>
+                      <td>semicircle, {fmt(res.edge.semicircle.stress, 1)} psi</td>
                       <td>{fmt(100 * (res.edge.semicircle.stress / res.edge.circle.stress - 1), 0)}%</td>
                     </tr>
                     <tr>
                       <td>Corner formulation</td>
-                      <td>original — {fmt(res.corner.original.stress, 1)} psi</td>
-                      <td>Ioannides — {fmt(res.corner.ioannides.stress, 1)} psi</td>
+                      <td>original, {fmt(res.corner.original.stress, 1)} psi</td>
+                      <td>Ioannides, {fmt(res.corner.ioannides.stress, 1)} psi</td>
                       <td>{fmt(100 * (res.corner.ioannides.stress / res.corner.original.stress - 1), 0)}%</td>
                     </tr>
                     <tr>
                       <td>Corner deflection</td>
-                      <td>original — {fmt(res.corner.original.deflection, 4)} in</td>
-                      <td>Ioannides — {fmt(res.corner.ioannides.deflection, 4)} in</td>
+                      <td>original, {fmt(res.corner.original.deflection, 4)} in</td>
+                      <td>Ioannides, {fmt(res.corner.ioannides.deflection, 4)} in</td>
                       <td>{fmt(100 * (res.corner.ioannides.deflection / res.corner.original.deflection - 1), 0)}%</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <p className="cee-note" style={{ marginTop: '0.75rem' }}>
-                A wheel at a slab edge is closer to a <strong>semicircle</strong> than a circle — its
+                A wheel at a slab edge is closer to a <strong>semicircle</strong> than a circle, and its
                 straight side lies along the edge, so its centroid sits nearer to it and the stress
                 comes out higher. That makes the semicircle the realistic and the conservative
                 choice, and it is the one this tool treats as governing. The corner pair is a
@@ -527,7 +527,7 @@ export default function WestergaardApp() {
             {curl && (
               <p className="cee-note">
                 Curling: ℓ = {fmt(res.ell, 1)} in → L<sub>x</sub>/ℓ = {fmt(Lx / res.ell, 2)}, C<sub>x</sub> = {curl.Cx.toFixed(3)};
-                L<sub>y</sub>/ℓ = {fmt(Ly / res.ell, 2)}, C<sub>y</sub> = {curl.Cy.toFixed(3)} (analytic Bradbury coefficients —
+                L<sub>y</sub>/ℓ = {fmt(Ly / res.ell, 2)}, C<sub>y</sub> = {curl.Cy.toFixed(3)} (analytic Bradbury coefficients,
                 compare with the chart). Interior combines both directions with ν; the edge form is C·Eα∆t/2. Corner curling
                 stress is negligible and customarily taken as zero. Superpose signs carefully: day curling <em>adds</em> to
                 interior/edge load stress, night curling subtracts.
@@ -548,12 +548,12 @@ export default function WestergaardApp() {
                 takeaway="Bending stress falls roughly as one over thickness squared, so a half-inch of slab buys more capacity than any other single change."
               >
                 Each curve sweeps h with everything else fixed (dots = your current h). Stress falls
-                roughly as <strong>1/h²</strong> — the leverage of thickness in rigid design. Where a
+                roughly as <strong>1/h²</strong>, which is the leverage of thickness in rigid design. Where a
                 curve crosses the dashed modulus-of-rupture line is the thickness at which one pass of
                 this load would crack the slab; design keeps the working point far below it.
               </ChartFigure>
               <ChartFigure
-                title={`Load stress by case — h = ${h} in`}
+                title={`Load stress by case at h = ${h} in`}
                 subtitle="Colored bar is the bending stress; the pale bar behind it is the modulus of rupture"
                 plotRef={barRef}
                 legend={[
@@ -563,7 +563,7 @@ export default function WestergaardApp() {
                 takeaway="Edge loading produces the highest bending stress of the three positions, which is why it governs slab thickness design."
               >
                 The same load in the three positions, each read against the concrete's strength. Edge &gt;
-                corner &gt; interior in bending stress — the more slab surrounds the load, the more paths
+                corner &gt; interior in bending stress. The more slab surrounds the load, the more paths
                 the moment has to spread. Deflections rank the other way (corner largest):
                 <strong> stress cracks slabs, deflection pumps joints.</strong>
               </ChartFigure>

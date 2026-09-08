@@ -232,12 +232,12 @@ export default function DrainageApp() {
           <>
             <h2 className="cee-panel__title" style={{ marginTop: '1rem' }}>Surface infiltration</h2>
             <div className="cee-row">
-              {field('dr-n', <span>Traffic lanes N<Tip text="Number of traffic lanes. Eq. 8.18 assumes N + 1 longitudinal cracks — one at each lane edge." /></span>, '–', lanes, setLanes)}
-              {field('dr-wp', <span>Width W_p<Tip text="Width of pavement subject to infiltration — the traffic lanes. In Problem 8.6 that is the 22 ft roadway, not the full 40 ft including shoulders." /></span>, 'ft', wp, setWp)}
+              {field('dr-n', <span>Traffic lanes N<Tip text="Number of traffic lanes. Eq. 8.18 assumes N + 1 longitudinal cracks, one at each lane edge." /></span>, '–', lanes, setLanes)}
+              {field('dr-wp', <span>Width W_p<Tip text="Width of pavement subject to infiltration, meaning the traffic lanes. In Problem 8.6 that is the 22 ft roadway, not the full 40 ft including shoulders." /></span>, 'ft', wp, setWp)}
             </div>
             <div className="cee-row">
               {field('dr-cs', <span>Joint spacing C_s<Tip text="Transverse joint or crack spacing. Use the joint spacing for concrete; Huang recommends 40 ft for asphalt." /></span>, 'ft', cs, setCs)}
-              {field('dr-p', <span>1-h/1-yr rain<Tip text="Maximum 1-hour duration, 1-year frequency precipitation rate from Huang Fig. 8.13 — about 1.2 in/h for Kentucky, 1.1 for Connecticut." /></span>, 'in/h', precip, setPrecip, '0.1')}
+              {field('dr-p', <span>1-h/1-yr rain<Tip text="Maximum 1-hour duration, 1-year frequency precipitation rate from Huang Fig. 8.13, about 1.2 in/h for Kentucky, 1.1 for Connecticut." /></span>, 'in/h', precip, setPrecip, '0.1')}
             </div>
             <div className="cee-row">
               {field('dr-cl', <span>Cedergren low<Tip text="0.33–0.50 for asphalt pavements, 0.50–0.67 for concrete." /></span>, '–', cedLo, setCedLo, '0.01')}
@@ -271,7 +271,7 @@ export default function DrainageApp() {
               {field('dr-g2', 'Base unit wt.', 'pcf', layer2G, setLayer2G)}
             </div>
             <div className="cee-row">
-              {field('dr-qm', <span>q_m/√k from Fig. 8.15<Tip text="Read from Huang Fig. 8.15 (ch. 8, p. 356) using the heave rate from Table 8.5 and the consolidation pressure computed below. This chart is not digitized — see the note in the results." /></span>, '–', qmRatio, setQmRatio, '0.01')}
+              {field('dr-qm', <span>q_m/√k from Fig. 8.15<Tip text="Read from Huang Fig. 8.15 (ch. 8, p. 356) using the heave rate from Table 8.5 and the consolidation pressure computed below. This chart is not digitized; see the note in the results." /></span>, '–', qmRatio, setQmRatio, '0.01')}
               {field('dr-ks', <span>Subgrade k<Tip text="Permeability of the subgrade soil, used to convert q_m/√k into an inflow." /></span>, 'ft/day', kSub, setKSub, '0.01')}
             </div>
           </>
@@ -281,14 +281,14 @@ export default function DrainageApp() {
           <>
             <h2 className="cee-panel__title" style={{ marginTop: '1rem' }}>Drainage layer</h2>
             <div className="cee-row">
-              {field('dr-kd', <span>Layer k<Tip text="Permeability of the open-graded drainage layer — 1,000–20,000 ft/day for a properly graded material." /></span>, 'ft/day', kDrain, setKDrain, '500')}
+              {field('dr-kd', <span>Layer k<Tip text="Permeability of the open-graded drainage layer, 1,000–20,000 ft/day for a properly graded material." /></span>, 'ft/day', kDrain, setKDrain, '500')}
               {field('dr-hd', 'Thickness H', 'in', hDrain, setHDrain, '0.5')}
             </div>
             <div className="cee-row">
               {field('dr-s', <span>Slope S<Tip text="Cross slope of the drainage layer, as a decimal (4% = 0.04)." /></span>, 'ft/ft', slope, setSlope, '0.005')}
               {field('dr-l', <span>Length L<Tip text="Flow path length across the drainage layer to the collector pipe." /></span>, 'ft', lDrain, setLDrain)}
             </div>
-            {field('dr-ne', <span>Effective porosity n_e<Tip text="Drainable void fraction — the water that gravity actually removes, typically 0.20–0.30." /></span>, '–', poros, setPoros, '0.01')}
+            {field('dr-ne', <span>Effective porosity n_e<Tip text="Drainable void fraction: the water that gravity actually removes, typically 0.20–0.30." /></span>, '–', poros, setPoros, '0.01')}
             {field('dr-tf', <span>Time factor T<Tip text="From the degree-of-drainage chart, using the slope factor S₁ shown in the results and the degree of drainage you want. For Problem 8.9 (S₁ = 1.08): T ≈ 0.24 for 50% drainage, ≈ 1.51 for 95%." /></span>, '–', timeFactor, setTimeFactor, '0.01')}
           </>
         )}
@@ -327,12 +327,12 @@ export default function DrainageApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Estimate the inflow</strong>: surface infiltration always, then groundwater or meltwater — Huang treats them as alternatives, not additives, because frozen fine-grained soil is nearly impermeable.</li>
+              <li><strong>Estimate the inflow</strong>: surface infiltration always, then groundwater or meltwater. Huang treats them as alternatives, not additives, because frozen fine-grained soil is nearly impermeable.</li>
               <li><strong>Size the drainage layer</strong> so its steady-state capacity exceeds the design inflow over the flow length, and check the time to drain.</li>
               <li><strong>Size the collector pipe</strong> and the outlet spacing so the pipe can carry what the layer delivers.</li>
               <li><strong>Check the filter</strong> both ways: coarse enough to drain, fine enough not to pipe.</li>
             </ol>
-            FHWA's <strong>DRIP</strong> does the same calculations as a desktop program — HW6 asks you to check Problems 8.6 and 8.8 against it.
+            FHWA's <strong>DRIP</strong> does the same calculations as a desktop program, and HW6 asks you to check Problems 8.6 and 8.8 against it.
           </div>
         </details>
 
@@ -350,7 +350,7 @@ export default function DrainageApp() {
               <Kpi label="Meltwater q_m" value={fmt(inflow.qm, 3)} unit="ft³/day/ft²"
                 tip="Inflow from melting ice lenses in a frost-susceptible subgrade." />
               <Kpi label="Consolidation pressure σ_p" value={fmt(inflow.sigmaP, 0)} unit="psf"
-                tip="Weight of the pavement above the subgrade — the second axis for reading Fig. 8.15." />
+                tip="Weight of the pavement above the subgrade: the second axis for reading Fig. 8.15." />
             </KpiStrip>
 
             <ChartFigure
@@ -365,7 +365,7 @@ export default function DrainageApp() {
             >
               Two independent estimates of the same quantity. Ridgeway's is a flat line here because it
               depends on cracking geometry, not rainfall; Cedergren's rises with the coefficient you
-              assume. <strong>The two agree better in the drier western states</strong> — where they
+              assume. <strong>The two agree better in the drier western states</strong>, where they
               disagree, Huang recommends Eq. 8.18 as the more physically grounded of the two and
               suggests taking the larger if you need to be conservative.
             </ChartFigure>
@@ -381,7 +381,7 @@ export default function DrainageApp() {
             />
 
             <p className="cee-note">
-              Huang Eqs. 8.18–8.26. Sanity checks — Problem 8.6: a two-lane HMA highway with a 22 ft
+              Huang Eqs. 8.18–8.26. Sanity checks. Problem 8.6: a two-lane HMA highway with a 22 ft
               roadway and C_s = 40 ft gives q_i = 0.016 ft³/h/ft² by Eq. 8.18, against 0.033–0.05 by
               Cedergren. Problem 8.8: a GW-GC subgrade with 4% finer than 0.02 mm heaves at 2.5 mm/day
               (Table 8.5) under σ_p ≈ 148 psf, and Fig. 8.15 gives q_m/√k ≈ 0.30, so
@@ -403,11 +403,11 @@ export default function DrainageApp() {
               <Kpi accent label="Discharge capacity q" value={fmt(capacity.q, 0)} unit="ft³/day/ft"
                 tip="Steady-state capacity of the drainage layer per foot of width (Huang Eq. 8.27)." />
               <Kpi label="Required" value={Number.isFinite(capacity.required) ? fmt(capacity.required, 1) : '—'} unit="ft³/day/ft"
-                tip="Design inflow multiplied by the flow length — what the layer must carry." />
+                tip="Design inflow multiplied by the flow length: what the layer must carry." />
               <Kpi label="Time to drain" value={fmt(capacity.tDrain, 2)} unit="h"
                 tip="t = T·n_e·L²/(kH) for the time factor T you entered. AASHTO calls 2 hours to 50% drainage 'excellent'; Huang §8.3.2 suggests removing 95% within about 1 hour." />
               <Kpi label="Slope factor S₁" value={fmt(capacity.S1, 2)}
-                tip="S₁ = L·S/H — the curve to use when reading the time factor T off the degree-of-drainage chart." />
+                tip="S₁ = L·S/H: the curve to use when reading the time factor T off the degree-of-drainage chart." />
             </KpiStrip>
 
             {!capacity.adequate && (
@@ -425,7 +425,7 @@ export default function DrainageApp() {
             >
               Capacity is <strong>k·H·(S + H/2L)</strong>: the slope term dominates for a thin layer,
               so capacity is nearly proportional to thickness. Where the curve crosses the dashed
-              requirement line is the minimum thickness — but check the time to drain too, since a
+              requirement line is the minimum thickness, but check the time to drain too, since a
               layer can be thick enough for steady flow and still drain too slowly.
             </ChartFigure>
 
@@ -487,7 +487,7 @@ export default function DrainageApp() {
               Manning's equation (Huang Eq. 8.32) with A = πD²/4 and R = D/4 for full flow, and
               Eq. 8.34 for the allowable lateral inflow. Sanity check, Problem 8.10: a 4-in smooth
               plastic pipe, n = 0.01, at 2.5% slope with outlets every 300 ft gives
-              112.7 ft³/day/ft. Filter criteria are the classical granular rules — a filter must be
+              112.7 ft³/day/ft. Filter criteria are the classical granular rules: a filter must be
               coarse enough to pass water and fine enough to hold the protected soil back, and both
               directions have to be satisfied at once.
             </p>

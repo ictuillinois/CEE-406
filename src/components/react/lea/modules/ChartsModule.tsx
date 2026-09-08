@@ -30,7 +30,7 @@ export default function ChartsModule() {
           <label className="cee-field__label" htmlFor="chart-pick">
             <span>
               Figure
-              <Tip text="Every empirical chart in Chapter 2. Each is computed from the same solvers the other modules use, not traced from the page — which is why they reproduce Huang's own worked reads." />
+              <Tip text="Every empirical chart in Chapter 2. Each is computed from the same solvers the other modules use, not traced from the page, which is why they reproduce Huang's own worked reads." />
             </span>
             <span className="cee-field__unit">{CHARTS.length} charts</span>
           </label>
@@ -40,7 +40,7 @@ export default function ChartsModule() {
               <optgroup key={section} label={section}>
                 {bySection.get(section)!.map(c => (
                   <option key={c.id} value={c.id}>
-                    {c.figure} — {c.title}
+                    {c.figure}: {c.title}
                   </option>
                 ))}
               </optgroup>
@@ -58,12 +58,12 @@ export default function ChartsModule() {
               any value in [{spec.family.range[0]}, {spec.family.range[1]}] can be drawn
             </dd>
             <dt>Applies as</dt><dd><code>{spec.equation}</code></dd>
-            {spec.nomograph && (<><dt>Note</dt><dd>Nomograph — a lattice of two crossing families, drawn as printed</dd></>)}
+            {spec.nomograph && (<><dt>Note</dt><dd>Nomograph: a lattice of two crossing families, drawn as printed</dd></>)}
           </dl>
         </div>
 
         <p className="cee-hint">
-          Poisson's ratio is <strong>0.5</strong> on every chart in this chapter — Foster and
+          Poisson's ratio is <strong>0.5</strong> on every chart in this chapter. Foster and
           Ahlvin assumed the half-space incompressible so one set of charts would serve, and
           Huang keeps the assumption through the whole of §2.2. It is not an input here because
           changing it would stop reproducing the printed figure. Use the layer modules for any
@@ -83,14 +83,14 @@ export default function ChartsModule() {
                 the chart and the readout applies the equation printed beside it. A curve the book
                 never drew is computed and drawn dashed between the ones it did.</li>
               <li><strong>Read it backwards.</strong> Move the pointer anywhere in the frame. The
-                panel under the chart solves for the curve that passes through that point —
+                panel under the chart solves for the curve that passes through that point,
                 including when there are two such curves, and when there are none.</li>
               <li><strong>Check it against the book.</strong> Every chart with a worked example
                 carries its checkpoints; load one and confirm the marker lands where Huang says.</li>
             </ol>
             These are not scans or traced curves. Each is computed from the same layered-elastic
             solver the other modules use, so intermediate values are exact rather than
-            interpolated by eye — and a curve the book never drew is as available as one it did.
+            interpolated by eye, and a curve the book never drew is as available as one it did.
           </div>
         </details>
 

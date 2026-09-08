@@ -45,7 +45,7 @@ const PRESETS: Preset[] = [
   },
   {
     label: 'Problem 2.1 (under the edge)',
-    tip: 'r = a, z = 2a, ν = 0.5 — the off-axis principal state. Huang prints σ = 0.221q, 0.011q, 0.004q and w = 0.58qa/E from Ahlvin and Ulery’s tables; computed exactly they are 0.228, 0.0108, 0.0092 and 0.572.',
+    tip: 'r = a, z = 2a, ν = 0.5, the off-axis principal state. Huang prints σ = 0.221q, 0.011q, 0.004q and w = 0.58qa/E from Ahlvin and Ulery’s tables; computed exactly they are 0.228, 0.0108, 0.0092 and 0.572.',
     q: '100', a: '1', E: '1000', nu: '0.5', r: '1', z: '2', twin: false, spacing: '20',
   },
 ];
@@ -257,7 +257,7 @@ export default function OneLayerModule() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="ol-e">
-              <span>Modulus E<Tip text="Elastic modulus of the half-space. σz does not depend on it — Huang notes this under Eq. 2.3 — but every strain and deflection does." /></span>
+              <span>Modulus E<Tip text="Elastic modulus of the half-space. σz does not depend on it, as Huang notes under Eq. 2.3, but every strain and deflection does." /></span>
               <span className="cee-field__unit">psi / kPa</span>
             </label>
             <input id="ol-e" className="cee-input" type="number" step="1000" min="1" value={EStr}
@@ -265,7 +265,7 @@ export default function OneLayerModule() {
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="ol-nu">
-              <span>Poisson ν<Tip text="Foster and Ahlvin drew every chart in §2.1.1 at ν = 0.5. Drop to 0.3 and the radial stress under the center turns tensile — the point of Example 2.2." /></span>
+              <span>Poisson ν<Tip text="Foster and Ahlvin drew every chart in §2.1.1 at ν = 0.5. Drop to 0.3 and the radial stress under the center turns tensile, which is the point of Example 2.2." /></span>
               <span className="cee-field__unit">0 – 0.499</span>
             </label>
             <input id="ol-nu" className="cee-input" type="number" step="0.05" min="0" max="0.499"
@@ -289,7 +289,7 @@ export default function OneLayerModule() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="ol-r">
-              <span>Radius r<Tip text="Horizontal distance from the first load's center. Off the axis the shear stress is non-zero and the principal directions rotate — which is why Huang has charts here instead of equations." /></span>
+              <span>Radius r<Tip text="Horizontal distance from the first load's center. Off the axis the shear stress is non-zero and the principal directions rotate, which is why Huang has charts here instead of equations." /></span>
               <span className="cee-field__unit">in / mm</span>
             </label>
             <input id="ol-r" className="cee-input" type="number" step="1" min="0" value={rStr}
@@ -308,7 +308,7 @@ export default function OneLayerModule() {
         <div className="cee-field">
           <label className="cee-check">
             <input type="checkbox" checked={twin} onChange={e => setTwin(e.target.checked)} />
-            <span>Second circle<Tip text="Example 2.1 superposes two circular loads. Legitimate because the half-space is linear elastic — but the stresses must be rotated into a common frame before they are added, not summed component by component." /></span>
+            <span>Second circle<Tip text="Example 2.1 superposes two circular loads. Legitimate because the half-space is linear elastic, but the stresses must be rotated into a common frame before they are added, not summed component by component." /></span>
           </label>
         </div>
         {twin && (
@@ -341,7 +341,7 @@ export default function OneLayerModule() {
               <li><strong>Watch ν.</strong> σz is independent of it. σr is not: at ν = 0.5 the
                 radial stress under the center stays compressive at every depth, and at ν = 0.3 it
                 turns tensile below about z/a = 1.5.</li>
-              <li><strong>Two circles superpose,</strong> but the rotation matters — each load's
+              <li><strong>Two circles superpose,</strong> but the rotation matters, because each load's
                 radial direction points somewhere different at the same point.</li>
             </ol>
             Reproduces Examples 2.1, 2.2 and 2.3. For Problem 2.1 it reports 0.228q, 0.0108q and
@@ -359,14 +359,14 @@ export default function OneLayerModule() {
           <>
             <KpiStrip>
               <Kpi accent label="σz at the point" value={fmt(point.sz, 3)}
-                tip="Vertical stress. Independent of E and ν — the same number for any material." />
+                tip="Vertical stress. Independent of E and ν: the same number for any material." />
               <Kpi label="εz at the point" value={fmt(point.strains.epsZ * 1e6, 0)} unit="µε"
                 tip="Vertical strain, from Eq. 2.1a with all three normal stresses." />
               <Kpi label="w at the point" value={fmt(point.w, 4)}
-                tip="Vertical deflection at the depth given — Eq. 2.6 on the axis." />
+                tip="Vertical deflection at the depth given, by Eq. 2.6 on the axis." />
               <Kpi label={`w₀ at the surface (${plate})`} value={fmt(surfaceW, 4)}
                 tip={plate === 'rigid'
-                  ? 'Eq. 2.10 — a rigid plate settles π/4 ≈ 79% as much as a flexible one at the same average pressure, because it sheds pressure to its rim.'
+                  ? 'Eq. 2.10: a rigid plate settles π/4 ≈ 79% as much as a flexible one at the same average pressure, because it sheds pressure to its rim.'
                   : 'Eq. 2.8, w₀ = 2(1 − ν²)qa/E, under the center of the load.'} />
             </KpiStrip>
 
@@ -391,7 +391,7 @@ export default function OneLayerModule() {
               <p className="cee-note">
                 Compression is positive, so a negative stress is tension.
                 {Math.abs(point.R.tauRZ) > 1e-9
-                  ? ' The shear stress here is non-zero, so σz and σr are NOT principal stresses — the principal directions have rotated out of the vertical.'
+                  ? ' The shear stress here is non-zero, so σz and σr are NOT principal stresses, because the principal directions have rotated out of the vertical.'
                   : ' On the axis of symmetry the shear vanishes, so σz and σr are principal and σr = σt.'}
                 {plate === 'rigid' && (
                   <> A rigid plate is not uniformly loaded: Eq. 2.9 puts {fmt(rigidPlatePressure(q, a, 0), 2)} at
@@ -414,8 +414,8 @@ export default function OneLayerModule() {
                 takeaway="Vertical stress decays smoothly with depth while the horizontal stresses fall much faster, so the state deep in a half-space is nearly uniaxial."
               >
                 This is the column Figures 2.2 through 2.4 plot, at one radius. <strong>σz falls
-                slowly</strong> — a half-space spreads load poorly, which is exactly the problem a
-                pavement exists to fix — while <strong>σr and σt collapse</strong>, so a point well
+                slowly</strong>, because a half-space spreads load poorly, which is exactly the problem a
+                pavement exists to fix, while <strong>σr and σt collapse</strong>, so a point well
                 below the load is in near-uniaxial compression.
               </ChartFigure>
 
@@ -428,7 +428,7 @@ export default function OneLayerModule() {
                   { label: 'σr', color: hueFor('strain', theme) },
                   { label: 'σt', color: hueFor('deflection', theme), shape: 'dash' },
                 ]}
-                takeaway="The stress bulb is wider than the load and has no edge — which is why two wheels 20 inches apart still add at a depth of 10 inches."
+                takeaway="The stress bulb is wider than the load and has no edge, which is why two wheels 20 inches apart still add at a depth of 10 inches."
               >
                 The load has a sharp edge; the stress does not. <strong>Nothing goes to zero at
                 r = a</strong>, which is the whole reason superposition matters: at the depths that
@@ -440,7 +440,7 @@ export default function OneLayerModule() {
               Huang (2004) §2.1. On the axis this is Eqs. 2.2–2.6 exactly; off it, the Hankel
               integrals those charts were built from, so intermediate values are computed rather
               than interpolated between drawn curves. The half-space is linear elastic,
-              homogeneous, isotropic and weightless — see §2.1.3 for what the nonlinearity of a
+              homogeneous, isotropic and weightless; see §2.1.3 for what the nonlinearity of a
               real granular soil does to these numbers.
             </p>
           </>

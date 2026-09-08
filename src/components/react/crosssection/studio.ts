@@ -1085,7 +1085,7 @@ export function initStudio(root: HTMLElement): () => void {
         });
 
         const saveInstead = (why: string) => blobPromise
-            .then(b => { downloadBlob(b, name); toast(`${why} — saved the ${label} instead`); })
+            .then(b => { downloadBlob(b, name); toast(`${why} Saved the ${label} instead.`); })
             .catch(() => toast('Could not produce the image'));
 
         if (!clipboardReady()) {
@@ -1333,7 +1333,7 @@ export function initStudio(root: HTMLElement): () => void {
                 </div>
                 <div class="xs-layer-thick">
                     ${layer.subgrade
-                        ? `<span class="xs-inf" title="Infinite — display thickness set in Section Geometry">${iconHtml('infinity')}</span> <span>${state.section.subgradeDisplay} mm*</span>`
+                        ? `<span class="xs-inf" title="Infinite: display thickness set in Section Geometry">${iconHtml('infinity')}</span> <span>${state.section.subgradeDisplay} mm*</span>`
                         : `<input type="number" class="xs-num" aria-label="Layer thickness in millimeters" data-act="thickness" value="${layer.thickness}" min="5" max="3000" step="5" ${lockAttr}> mm`}
                 </div>
                 <div class="xs-layer-actions">
@@ -1787,7 +1787,7 @@ export function initStudio(root: HTMLElement): () => void {
     animate();
 
     if (!clipboardReady()) {
-        const why = 'This browser will not put an image on the clipboard here — Copy saves a PNG file instead.';
+        const why = 'This browser will not put an image on the clipboard here, so Copy saves a PNG file instead.';
         [ui.copy, ui.copyBg, ui.copyAlpha, ui.vpCopy, ui.vpCopyAlpha].forEach(b => { b.title = why; });
     }
 

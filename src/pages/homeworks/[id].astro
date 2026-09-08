@@ -58,7 +58,7 @@ const kindLabel: Record<string, string> = {
 ---
 
 <DocsLayout
-  title={`HW${hw.num} — ${hw.title} · CEE 406`}
+  title={`HW${hw.num}: ${hw.title} · CEE 406`}
   description={hw.overview}
   sidebarLabel="Homeworks"
   sidebarModules={sidebarModules}
@@ -104,7 +104,7 @@ const kindLabel: Record<string, string> = {
     <section class="doc-section" id="concepts" data-section data-katex>
       <h2>Concepts &amp; equations</h2>
       <p>
-        Everything below comes from the assigned reading — this is the working set
+        Everything below comes from the assigned reading. This is the working set
         you need at your desk while solving the problems.
       </p>
       {guide.concepts.map(c =>
@@ -261,13 +261,13 @@ const kindLabel: Record<string, string> = {
     {prev && (
       <a href={`${base}homeworks/${prev.id}/`} class="doc-page-nav__link">
         <span class="doc-page-nav__dir">&larr; Previous</span>
-        <span class="doc-page-nav__title">HW{prev.num} — {prev.title}</span>
+        <span class="doc-page-nav__title">HW{prev.num}: {prev.title}</span>
       </a>
     )}
     {next && (
       <a href={`${base}homeworks/${next.id}/`} class="doc-page-nav__link doc-page-nav__link--next">
         <span class="doc-page-nav__dir">Next &rarr;</span>
-        <span class="doc-page-nav__title">HW{next.num} — {next.title}</span>
+        <span class="doc-page-nav__title">HW{next.num}: {next.title}</span>
       </a>
     )}
   </nav>

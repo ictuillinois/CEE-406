@@ -60,14 +60,14 @@ export default function AcrApp() {
         <h2 className="cee-panel__title">Aircraft</h2>
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="acr-ac">
-            <span>Designation<Tip text="Label only — it does not look anything up. The ACR values come from the aircraft's published ACR table for each pavement type and subgrade." /></span>
+            <span>Designation<Tip text="Label only; it does not look anything up. The ACR values come from the aircraft's published ACR table for each pavement type and subgrade." /></span>
           </label>
           <input id="acr-ac" className="cee-input" type="text" value={aircraft}
             onChange={e => setAircraft(e.target.value)} />
         </div>
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="acr-tp">
-            <span>Tire pressure<Tip text="Main gear tire pressure. It is checked against the runway's tire pressure code independently of the strength check — an aircraft can pass on strength and still be excluded on tire pressure." /></span>
+            <span>Tire pressure<Tip text="Main gear tire pressure. It is checked against the runway's tire pressure code independently of the strength check, so an aircraft can pass on strength and still be excluded on tire pressure." /></span>
             <span className="cee-field__unit">psi</span>
           </label>
           <input id="acr-tp" className="cee-input" type="number" min="0" step="5" value={tire}
@@ -77,7 +77,7 @@ export default function AcrApp() {
         <h2 className="cee-panel__title" style={{ marginTop: '1rem' }}>Runways</h2>
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>Rating &amp; aircraft ACR<Tip text="Enter the runway's five-part PCR code, then the aircraft's ACR quoted for THAT pavement type and subgrade category — a different runway means a different ACR from the same table." /></span>
+            <span>Rating &amp; aircraft ACR<Tip text="Enter the runway's five-part PCR code, then the aircraft's ACR quoted for THAT pavement type and subgrade category. A different runway means a different ACR from the same table." /></span>
             <span className="cee-field__unit">code · ACR</span>
           </span>
           {rows.map(r => (
@@ -108,11 +108,11 @@ export default function AcrApp() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Read the runway code</strong>: PCR number, R or F for rigid or flexible, the subgrade category A–D, the tire pressure code W–Z, and how the rating was derived.</li>
-              <li><strong>Look up the aircraft's ACR</strong> for that same pavement type and subgrade category — the ACR is not a single number, it is a table.</li>
+              <li><strong>Look up the aircraft's ACR</strong> for that same pavement type and subgrade category. The ACR is not a single number, it is a table.</li>
               <li><strong>Compare.</strong> ACR ≤ PCR is unrestricted. Above that, up to about {(OVERLOAD_ALLOWANCE * 100).toFixed(0)}% is an occasional-overload movement, not a routine one.</li>
               <li><strong>Check the tire pressure separately.</strong> It is an independent gate; passing on strength does not help if the tires are too hard for the surface.</li>
             </ol>
-            This tool does the comparison and the code parsing — the part students most often get wrong — but the ACR values are yours to look up, because they come from published aircraft tables that are not reproduced here.
+            This tool does the comparison and the code parsing, the part students most often get wrong, but the ACR values are yours to look up, because they come from published aircraft tables that are not reproduced here.
           </div>
         </details>
 
@@ -181,7 +181,7 @@ export default function AcrApp() {
 
         <p className="cee-note">
           ICAO Annex 14 ACR/PCR. The ACR is reported for a specific pavement type and one of four
-          subgrade categories — A high, B medium, C low, D ultra low — so the same aircraft has a
+          subgrade categories (A high, B medium, C low, D ultra low), so the same aircraft has a
           different ACR on each runway. Tire pressure codes cap the surface at W unlimited,
           X ≤ 254 psi, Y ≤ 181 psi, Z ≤ 73 psi. The final letter records whether the PCR came from a
           technical evaluation (T) or from using-aircraft experience (U); it does not change the

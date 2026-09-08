@@ -23,7 +23,7 @@ export const textbook: TextbookEntry[] = [
   },
   {
     id: 'ch02', kind: 'chapter', num: '2', title: 'Stresses and Strains in Flexible Pavements',
-    desc: 'Boussinesq theory for a homogeneous mass, Burmister layered systems, and viscoelastic solutions — the analytical backbone of flexible pavements.',
+    desc: 'Boussinesq theory for a homogeneous mass, Burmister layered systems, and viscoelastic solutions: the analytical backbone of flexible pavements.',
     relatedHws: [{ id: 'hw3', label: 'HW3' }, { id: 'hw4', label: 'HW4' }],
   },
   {
@@ -43,7 +43,7 @@ export const textbook: TextbookEntry[] = [
   },
   {
     id: 'ch06', kind: 'chapter', num: '6', title: 'Traffic Loading and Volume',
-    desc: 'Load equivalency factors, truck factors, growth, and lane distribution — turning mixed traffic into design ESALs.',
+    desc: 'Load equivalency factors, truck factors, growth, and lane distribution, turning mixed traffic into design ESALs.',
     relatedHws: [{ id: 'hw5', label: 'HW5' }],
   },
   {

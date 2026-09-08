@@ -31,7 +31,7 @@ const PRESETS: Preset[] = [
   },
   {
     label: 'Example 2.12 (thicker base)',
-    tip: 'The same section with h2 = 8 in, so A = 0.6 and H = 0.75. The strain factor barely moves — layer 2 has very little say in the tension at the bottom of layer 1.',
+    tip: 'The same section with h2 = 8 in, so A = 0.6 and H = 0.75. The strain factor barely moves, because layer 2 has very little say in the tension at the bottom of layer 1.',
     E1: '400000', E2: '20000', E3: '10000', h1: '6', h2: '8', q: '120', a: '4.8',
   },
   {
@@ -174,12 +174,12 @@ export default function ThreeLayerModule() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Read the four groups first.</strong> k₁, k₂, A and H are the whole
-                problem — two sections with the same four numbers have the same stress factors,
+                problem, and two sections with the same four numbers have the same stress factors,
                 whatever their absolute size.</li>
               <li><strong>The factors are Jones' table.</strong> ZZ1, ZZ2, ZZ1−RR1 and ZZ2−RR2
                 are what Table 2.3 tabulates, and Eq. 2.24 turns them into stresses.</li>
               <li><strong>Both sides of each interface.</strong> σz is continuous across an
-                interface and σr is not — the radial STRAIN is what carries over, which is what
+                interface and σr is not. The radial STRAIN is what carries over, which is what
                 Eq. 2.23 says when it divides the deviator by the modulus ratio.</li>
               <li><strong>Interpolate nothing.</strong> Huang's table is on a coarse grid and he
                 counts the cost of interpolating it at eighty-one times the work of a single
@@ -199,10 +199,10 @@ export default function ThreeLayerModule() {
             <KpiStrip>
               <Kpi accent label="εr at bottom of layer 1"
                 value={fmt(state.bot1.epsR * 1e6, 0)} unit="µε"
-                tip="Horizontal strain under the surface course. Negative is tension, and its magnitude drives bottom-up fatigue cracking. This is Eq. 2.25 — what Peattie's Figure 2.31 is for." />
+                tip="Horizontal strain under the surface course. Negative is tension, and its magnitude drives bottom-up fatigue cracking. This is Eq. 2.25, what Peattie's Figure 2.31 is for." />
               <Kpi label="εz on top of layer 3"
                 value={fmt(state.top3.epsZ * 1e6, 0)} unit="µε"
-                tip="Vertical compressive strain on the subgrade — the strain that drives rutting." />
+                tip="Vertical compressive strain on the subgrade: the strain that drives rutting." />
               <Kpi label="σz on top of layer 3" value={fmt(state.top3.sigZ, 3)}
                 tip="Vertical stress reaching the subgrade. Continuous across the interface, so it is the same on both sides." />
               <Kpi label="(RR1 − ZZ1)/2" value={fmt(state.factors.peattie, 4)}
@@ -210,7 +210,7 @@ export default function ThreeLayerModule() {
             </KpiStrip>
 
             <div className="cee-card">
-              <h3 className="cee-card__title">Stress factors — Jones' Table 2.3</h3>
+              <h3 className="cee-card__title">Stress factors: Jones' Table 2.3</h3>
               <div className="cee-tablewrap">
                 <table className="cee-table">
                   <thead>
@@ -243,7 +243,7 @@ export default function ThreeLayerModule() {
                   {coverage.k1Range && coverage.k2Range ? (
                     <>
                       k₁ = {fmt(groups.k1, 2)} and k₂ = {fmt(groups.k2, 2)} are{' '}
-                      <strong>not rows of the printed table</strong> — Huang reprints k₁ ∈ {'{'}2, 20,
+                      <strong>not rows of the printed table</strong>. Huang reprints k₁ ∈ {'{'}2, 20,
                       200{'}'} and k₂ ∈ {'{'}2, 20{'}'}. By hand this case needs a four-way
                       interpolation; here it is computed directly, so no interpolation error enters.
                     </>
@@ -251,7 +251,7 @@ export default function ThreeLayerModule() {
                     <>
                       k₁ = {fmt(groups.k1, 2)} or k₂ = {fmt(groups.k2, 2)} lies{' '}
                       <strong>outside the range Jones tabulated</strong> (0.2 to 200). The layered
-                      solution is still exact — but there is no printed value to check it against.
+                      solution is still exact, but there is no printed value to check it against.
                     </>
                   )}
                 </p>
@@ -284,7 +284,7 @@ export default function ThreeLayerModule() {
               <p className="cee-note">
                 <strong>σz is the same on both sides of an interface and σr is not.</strong>
                 {' '}Equilibrium demands the first; the second jumps because the two layers share a
-                strain, not a stiffness — the deviator falls by exactly k₁ across interface 1 and
+                strain, not a stiffness. The deviator falls by exactly k₁ across interface 1 and
                 by k₂ across interface 2, which is Eq. 2.23. Note the radial strain in each pair is
                 identical, and that at ν = 0.5 every row has εz = −2εr (Eq. 2.21): the material is
                 incompressible, so the three strains sum to zero.
@@ -293,7 +293,7 @@ export default function ThreeLayerModule() {
 
             <p className="cee-note">
               Huang (2004) §2.2.2, Eqs. 2.20–2.25, Table 2.3 and Figure 2.31. Where Jones'
-              table has a row, these factors reproduce it to four decimals — Example 2.11's
+              table has a row, these factors reproduce it to four decimals: Example 2.11's
               ZZ1 = 0.12173 and ZZ1 − RR1 = 1.97428 come back as 0.12176 and 1.97406. All three
               layers are incompressible with fully bonded interfaces, and the responses are on
               the axis of symmetry, where the tangential and radial stresses are equal and the

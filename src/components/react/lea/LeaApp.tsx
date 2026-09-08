@@ -50,7 +50,7 @@ const MODULES: ModuleDef[] = [
     ref: 'Figures 2.2 – 2.31',
     lead:
       'Every empirical chart in the chapter, redrawn from the equations behind it and readable ' +
-      'in both directions — including backwards, which a printed page cannot do.',
+      'in both directions, including backwards, which a printed page cannot do.',
     render: () => <ChartsModule />,
   },
   {
@@ -58,8 +58,8 @@ const MODULES: ModuleDef[] = [
     label: 'One layer',
     ref: '§2.1 · Boussinesq',
     lead:
-      'A homogeneous half-space. The right model when the modulus ratio is near unity — a thin ' +
-      'surface on a thin granular base — and the starting point for everything after it.',
+      'A homogeneous half-space. The right model when the modulus ratio is near unity, such as a thin ' +
+      'surface on a thin granular base, and it is the starting point for everything after it.',
     render: () => <OneLayerModule />,
   },
   {
@@ -76,7 +76,7 @@ const MODULES: ModuleDef[] = [
     label: 'Three layers',
     ref: '§2.2.2 · Jones & Peattie',
     lead:
-      'The four dimensionless groups of Eq. 2.22 and the four stress factors Jones tabulated — ' +
+      'The four dimensionless groups of Eq. 2.22 and the four stress factors Jones tabulated, ' +
       'continuous in k₁ and k₂, where the printed table is a grid of four values.',
     render: () => <ThreeLayerModule />,
   },
@@ -157,7 +157,7 @@ export default function LeaApp() {
               aria-controls="lea-panel"
               aria-disabled={lock.released ? undefined : true}
               tabIndex={lock.released ? undefined : -1}
-              title={lock.released ? undefined : `${m.label} — ${m.ref}. ${lock.label}.`}
+              title={lock.released ? undefined : `${m.label}: ${m.ref}. ${lock.label}.`}
               className={
                 `cee-modules__tab${current.id === m.id ? ' is-active' : ''}` +
                 `${lock.released ? '' : ' is-locked'}`

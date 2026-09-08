@@ -181,7 +181,7 @@ export default function LcaApp() {
           {field('lc-fr', <span>Fuel use<Tip text="Average fuel consumed per vehicle per mile of travel." /></span>, 'gal/mi', fuelRate, setFuelRate, '0.01')}
         </div>
         <div className="cee-row">
-          {field('lc-i0', <span>Initial IRI<Tip text="Roughness at construction — the IRI also resets to this after each rehab." /></span>, 'in/mi', iri0, setIri0)}
+          {field('lc-i0', <span>Initial IRI<Tip text="Roughness at construction. The IRI also resets to this after each rehab." /></span>, 'in/mi', iri0, setIri0)}
           {field('lc-ir', 'IRI growth', 'in/mi/yr', iriRate, setIriRate, '0.1')}
         </div>
         {field('lc-it', <span>Rehab trigger<Tip text="Mill-and-overlay is performed every time the IRI reaches this value." /></span>, 'in/mi', iriTrig, setIriTrig)}
@@ -216,12 +216,12 @@ export default function LcaApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Check the section and factors</strong> — every assignment value is preloaded; edit anything you assume differently and say so in your report.</li>
+              <li><strong>Check the section and factors</strong>. Every assignment value is preloaded; edit anything you assume differently and say so in your report.</li>
               <li><strong>Read the rehab schedule</strong> off the IRI timeline: the sawtooth resets each time the trigger is reached.</li>
-              <li><strong>Walk the stage table</strong>: each row shows the quantity, the factor applied, and the resulting GHG — reproduce them by hand.</li>
+              <li><strong>Walk the stage table</strong>: each row shows the quantity, the factor applied, and the resulting GHG. Reproduce them by hand.</li>
               <li><strong>Answer the closing question</strong>: the governing stage and one mitigation for it.</li>
             </ol>
-            Note the stage chart is on a <em>log scale</em> — the use phase is orders of magnitude above everything else, which is exactly the point of the problem.
+            Note the stage chart is on a <em>log scale</em>, because the use phase is orders of magnitude above everything else, which is exactly the point of the problem.
           </div>
         </details>
 
@@ -237,7 +237,7 @@ export default function LcaApp() {
             compact
             label="Governing stage"
             value={`${res.governing.name} · ${((res.governing.v / res.total) * 100).toFixed(1)}%`}
-            tip="The stage with the largest share — the answer to the closing question of HW10, together with a mitigation aimed at THIS stage (e.g., smoother pavement → lower vehicle fuel use)."
+            tip="The stage with the largest share: the answer to the closing question of HW10, together with a mitigation aimed at THIS stage (e.g., smoother pavement → lower vehicle fuel use)."
           />
           <Kpi
             label="Rehabilitations"
@@ -261,7 +261,7 @@ export default function LcaApp() {
             takeaway={`Roughness reaches the trigger ${res.rehabTimes.length} time${res.rehabTimes.length === 1 ? '' : 's'} in ${years} years, and each mill-and-overlay resets it to the initial value.`}
           >
             Roughness grows linearly until it hits the dashed trigger; each vertical marker is a
-            mill-and-overlay that resets IRI to its initial value — the classic <strong>sawtooth</strong>.
+            mill-and-overlay that resets IRI to its initial value, the classic <strong>sawtooth</strong>.
             This chart <em>is</em> the M&amp;R stage: count the teeth, multiply by the rehab factor.
             Slower deterioration or a higher trigger removes whole rehabs at a time.
           </ChartFigure>
@@ -321,7 +321,7 @@ export default function LcaApp() {
           (production), transport (plant → site), construction (placement), use
           (vehicle fuel over the period), M&amp;R (each mill-and-overlay as one
           inventory item), end of life (disposal). State every assumption you
-          change — the grading looks for a complete, internally consistent system
+          change. The grading looks for a complete, internally consistent system
           boundary, not one “right” number.
         </p>
       </div>

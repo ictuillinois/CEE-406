@@ -17,16 +17,16 @@ const locked = tools.filter(t => !toolLock(t.slug).released);
 
 <BaseLayout
   title="Online Tools · CEE 406"
-  description="Interactive pavement design tools for CEE 406 homeworks — layered elastic stress analysis, ESAL calculation, and more."
+  description="Interactive pavement design tools for CEE 406 homeworks: layered elastic stress analysis, ESAL calculation, and more."
 >
   <div class="container tools-page">
     <header class="tools-header gsap-fade-up">
       <span class="tools-header__eyebrow">Online tools</span>
       <h1>The homework toolbox</h1>
       <p>
-        Every tool here exists because a homework needs it — most of them to compute
+        Every tool here exists because a homework needs it, most of them to compute
         something, one of them to draw the figure the write-up asks for. They run entirely
-        in your browser — nothing to install, nothing to license — and the calculators are
+        in your browser, with nothing to install and nothing to license. The calculators are
         built to let you check hand calculations, not skip them.
       </p>
       {locked.length > 0 && (

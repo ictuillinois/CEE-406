@@ -169,7 +169,7 @@ export default function DamageApp() {
 
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>AC sublayers<Tip text="One row per sublayer, top to bottom — thickness and the vertical strain at its mid-depth from WinJULEA. HW8 uses 0.5/0.5/1/1/1 in." /></span>
+            <span>AC sublayers<Tip text="One row per sublayer, top to bottom: thickness and the vertical strain at its mid-depth from WinJULEA. HW8 uses 0.5/0.5/1/1/1 in." /></span>
             <span className="cee-field__unit">h (in) · εv (µε)</span>
           </span>
           {acRows.map(r => (
@@ -217,14 +217,14 @@ export default function DamageApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="dm-et">
-              <span>εt AC bottom<Tip text="Tensile strain at the bottom of the AC — enter the magnitude in microstrain." /></span>
+              <span>εt AC bottom<Tip text="Tensile strain at the bottom of the AC. Enter the magnitude in microstrain." /></span>
               <span className="cee-field__unit">µε</span>
             </label>
             <input id="dm-et" className="cee-input" type="number" min="0" step="10" value={etStr} onChange={e => setEt(e.target.value)} />
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="dm-eac">
-              <span>E_AC<Tip text="AC modulus for the fatigue equation — the assignment says use the lowest sublayer modulus (565,000 psi)." /></span>
+              <span>E_AC<Tip text="AC modulus for the fatigue equation. The assignment says use the lowest sublayer modulus (565,000 psi)." /></span>
               <span className="cee-field__unit">psi</span>
             </label>
             <input id="dm-eac" className="cee-input" type="number" min="1" step="5000" value={eacStr} onChange={e => setEac(e.target.value)} />
@@ -260,17 +260,17 @@ export default function DamageApp() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Run WinJULEA first</strong> (HW8 P2a): 5 AC sublayers with moduli ordered by loading frequency, base, subgrade.</li>
-              <li><strong>Enter the strains</strong>: εv at each sublayer mid-depth (AC, base, subgrade) and εt at the AC bottom — magnitudes, in µε.</li>
+              <li><strong>Enter the strains</strong>: εv at each sublayer mid-depth (AC, base, subgrade) and εt at the AC bottom, as magnitudes in µε.</li>
               <li><strong>Read the growth curves</strong>: rutting per layer and total, and bottom-up cracked area, from 0 to {Nmax.toLocaleString()} repetitions.</li>
               <li><strong>Answer P2c from the table</strong>: total rutting and the governing layer.</li>
             </ol>
-            Because the same load repeats, DI = N/N_f — the sum in Miner’s law collapses. Describe the <em>shapes</em>: rutting grows as a power law (fast early, then flattening), cracking follows a sigmoid (slow, then accelerating).
+            Because the same load repeats, DI = N/N_f, so the sum in Miner’s law collapses. Describe the <em>shapes</em>: rutting grows as a power law (fast early, then flattening), cracking follows a sigmoid (slow, then accelerating).
           </div>
         </details>
 
         {isDemo && (
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
-            These are <strong>placeholder strains</strong> so you can see the tool working — replace
+            These are <strong>placeholder strains</strong> so you can see the tool working. Replace
             every εv and εt with your own WinJULEA results before using any number in your report.
           </span></p>
         )}
@@ -285,13 +285,13 @@ export default function DamageApp() {
                 label={`Total rut at N = ${Nmax.toLocaleString()}`}
                 value={res.finals.total.toFixed(3)}
                 unit="in"
-                tip="Sum of the permanent deformation of every layer — the rut depth a straightedge across the wheelpath would measure at the end of the loading."
+                tip="Sum of the permanent deformation of every layer: the rut depth a straightedge across the wheelpath would measure at the end of the loading."
               />
               <Kpi
                 compact
                 label="Governing layer"
                 value={res.governing}
-                tip="The layer contributing the most rutting at N_max — the P2c answer. Check the share column below."
+                tip="The layer contributing the most rutting at N_max, which is the P2c answer. Check the share column below."
               />
               <Kpi
                 label="Fatigue life N_f"
@@ -301,13 +301,13 @@ export default function DamageApp() {
               <Kpi
                 label="Damage DI"
                 value={res.finals.DI.toExponential(2)}
-                tip="Miner's damage index — the fraction of fatigue life consumed so far. DI = 1 means the mechanistic failure criterion is reached."
+                tip="Miner's damage index: the fraction of fatigue life consumed so far. DI = 1 means the mechanistic failure criterion is reached."
               />
               <Kpi
                 label="Cracking FC"
                 value={res.finals.FC.toFixed(2)}
                 unit="%"
-                tip="Bottom-up fatigue cracking as % of lane area, from the AASHTOWare sigmoid on DI — the calibrated bridge from damage to visible distress."
+                tip="Bottom-up fatigue cracking as % of lane area, from the AASHTOWare sigmoid on DI, the calibrated bridge from damage to visible distress."
               />
             </KpiStrip>
 
@@ -326,7 +326,7 @@ export default function DamageApp() {
               >
                 Permanent deformation of each layer as loads accumulate. The AC curve is a
                 <strong> power law</strong> (N^0.479): fast early growth that keeps climbing. The granular
-                curves rise then <strong>flatten</strong> — the exp(−(10785.6/N)^0.174) form — as base and
+                curves rise then <strong>flatten</strong>, on the exp(−(10785.6/N)^0.174) form, as base and
                 subgrade densify and stop contributing. Describing exactly this shape difference is what
                 P2b asks for.
               </ChartFigure>
@@ -334,11 +334,11 @@ export default function DamageApp() {
                 title="Bottom-up cracking vs. repetitions"
                 subtitle="The AASHTOWare sigmoid mapping Miner's damage onto cracked lane area"
                 plotRef={fcRef}
-                takeaway="Cracking stays near zero while damage is small, then accelerates — at 90 days the pavement is still on the toe of the S-curve."
+                takeaway="Cracking stays near zero while damage is small, then accelerates. At 90 days the pavement is still on the toe of the S-curve."
               >
                 The AASHTOWare sigmoid converting Miner's damage into visible cracked area: almost nothing
                 while DI is small, then accelerating growth. At 90 days you are still on the
-                <strong> toe of the S-curve</strong> — extend the duration input and watch it steepen.
+                <strong> toe of the S-curve</strong>. Extend the duration input and watch it steepen.
               </ChartFigure>
             </div>
 

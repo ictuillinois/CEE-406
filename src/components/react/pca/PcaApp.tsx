@@ -118,7 +118,7 @@ export default function PcaApp() {
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="pca-es2">
-              <span>σe tandem<Tip text="Equivalent stress for the standard 36-kip tandem axle — the right-hand number in each table cell." /></span>
+              <span>σe tandem<Tip text="Equivalent stress for the standard 36-kip tandem axle: the right-hand number in each table cell." /></span>
               <span className="cee-field__unit">psi</span>
             </label>
             <input id="pca-es2" className="cee-input" type="number" min="1" step="1" value={esTandem}
@@ -188,7 +188,7 @@ export default function PcaApp() {
           </span>
         </label>
         <p className="cee-hint">
-          C₂ = {shoulders ? '0.94' : '0.06'} — Huang Eq. 12.9. With a concrete shoulder the
+          C₂ = {shoulders ? '0.94' : '0.06'}, from Huang Eq. 12.9. With a concrete shoulder the
           corner deflection barely depends on where the truck tracks, so a much
           larger C₂ applies.
         </p>
@@ -196,7 +196,7 @@ export default function PcaApp() {
         <h2 className="cee-panel__title" style={{ marginTop: '1rem' }}>Axle load distribution</h2>
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>Load groups<Tip text="Axle load in kip, type, and axles per 1000 trucks — column 2 of a W-4 style table." /></span>
+            <span>Load groups<Tip text="Axle load in kip, type, and axles per 1000 trucks: column 2 of a W-4 style table." /></span>
             <span className="cee-field__unit">kip · type · per 1000</span>
           </span>
           {rows.map(r => (
@@ -226,7 +226,7 @@ export default function PcaApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Assume a trial thickness</strong>, then read the four table values for that thickness and your k — equivalent stress and erosion factor, each for the standard single and tandem axle.</li>
+              <li><strong>Assume a trial thickness</strong>, then read the four table values for that thickness and your k: equivalent stress and erosion factor, each for the standard single and tandem axle.</li>
               <li><strong>Enter the axle load distribution</strong> as axles per 1000 trucks, and the total trucks over the design period.</li>
               <li><strong>Check both totals.</strong> Fatigue and erosion are independent criteria and <em>both</em> must come out at or under 100%.</li>
               <li><strong>Iterate the thickness</strong> in ½ in steps until both pass, then step back down to confirm you have the thinnest section that works.</li>
@@ -248,7 +248,7 @@ export default function PcaApp() {
               <Kpi label="Erosion damage" value={fmt(res.erosionTotal, 1)} unit="%"
                 tip="Sum of C₂·n/N over every load group (Huang Eq. 12.9). Must also be at or below 100%." />
               <Kpi compact label="Governing criterion" value={res.governing === 'erosion' ? 'Erosion' : 'Fatigue'}
-                tip="Whichever total is larger is what limits this design — and tells you which failure mode the slab is actually close to." />
+                tip="Whichever total is larger is what limits this design, and tells you which failure mode the slab is actually close to." />
               <Kpi compact label="Verdict" value={res.adequate ? 'Adequate' : 'Too thin'}
                 tip="Both criteria must pass. If either exceeds 100%, increase the trial thickness by half an inch and re-read the tables." />
             </KpiStrip>
@@ -272,7 +272,7 @@ export default function PcaApp() {
               ]}
               takeaway={`${res.governing === 'erosion' ? 'Erosion' : 'Fatigue'} governs this section, and the damage is concentrated in the heaviest load groups.`}
             >
-              Damage is <strong>overwhelmingly concentrated in the heaviest axles</strong> — the light
+              Damage is <strong>overwhelmingly concentrated in the heaviest axles</strong>. The light
               groups carry most of the repetitions but contribute almost nothing, because both criteria
               are steeply non-linear in load. A handful of overloaded trucks can matter more than
               hundreds of thousands of legal ones, which is the argument for weight enforcement rather
@@ -329,7 +329,7 @@ export default function PcaApp() {
             </div>
 
             <p className="cee-note">
-              PCA (1984) as presented in Huang §12.2. Fatigue uses the stress-ratio criterion — no
+              PCA (1984) as presented in Huang §12.2. Fatigue uses the stress-ratio criterion, with no
               damage below a ratio of 0.45, then two branches meeting at 0.55. Erosion uses Eq. 12.7,
               log N = 14.524 − 6.777(C₁P − 9.0)^0.103, with the rate of work P of Eq. 12.8 and the
               damage sum of Eq. 12.9 carrying C₂.

@@ -156,7 +156,7 @@ export default function PsiApp() {
           line: { color: c.secondary, width: 1, dash: 'dash' },
         }],
         annotations: [{
-          xref: 'paper', x: 0.99, y: 30, text: 'SN 30 — a common minimum',
+          xref: 'paper', x: 0.99, y: 30, text: 'SN 30, a common minimum',
           showarrow: false, yshift: 9, xanchor: 'right' as const,
           font: { size: 10, color: c.fg },
         }],
@@ -211,7 +211,7 @@ export default function PsiApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="p-cp">
-            <span>Cracking + patching<Tip text="Cracking in linear feet plus patching in square feet, both per 1000 ft² of pavement — combined into one variable because the Road Test could not separate their effects." /></span>
+            <span>Cracking + patching<Tip text="Cracking in linear feet plus patching in square feet, both per 1000 ft² of pavement, combined into one variable because the Road Test could not separate their effects." /></span>
             <span className="cee-field__unit">per 1000 ft²</span>
           </label>
           <input id="p-cp" className="cee-input" type="number" step="5" value={cpStr}
@@ -322,7 +322,7 @@ export default function PsiApp() {
             {ratio !== null && ratio > 5 && (
               <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
                 Your rut-depth coefficient is <strong>{fmt(fit.a2, 2)}</strong> against AASHO's
-                <strong> −1.38</strong> — {fmt(ratio, 0)} times larger — while the fit reports
+                <strong> −1.38</strong>, {fmt(ratio, 0)} times larger, while the fit reports
                 R² = {fmt(100 * fit.r2, 1)}%. Both things are true at once. With only {obs.length} sections,
                 rut depth barely varies and moves in step with slope variance, so the regression cannot
                 tell their effects apart and assigns an enormous coefficient to a variable that is
@@ -367,8 +367,8 @@ export default function PsiApp() {
               <p className="cee-note" style={{ marginTop: '0.75rem' }}>
                 The intercept and the roughness term usually come out close, because slope variance
                 spans a wide range in almost any sample and dominates the equation. The other two
-                wander, because they do not. That pattern — <strong>the coefficient you can trust is
-                the one attached to the variable that actually varied</strong> — is the whole of
+                wander, because they do not. That pattern, that <strong>the coefficient you can trust is
+                the one attached to the variable that actually varied</strong>, is the whole of
                 regression diagnostics in one table.
               </p>
             </Card>
@@ -385,7 +385,7 @@ export default function PsiApp() {
               takeaway={`Your equation reproduces its own training data to ${fmt(fit.rms, 3)} RMS; the published one, fitted elsewhere, will not sit as close.`}
             >
               Your fitted points hug the 1:1 line because they were fitted to it. The AASHO points do
-              not, and that is the correct behavior — those coefficients came from 74 different
+              not, and that is the correct behavior, because those coefficients came from 74 different
               sections in three states. <strong>A model always looks best on the data that made
               it.</strong> The only honest test of a PSI equation is a section it has never seen,
               which is exactly what neither you nor Carey and Irick can offer from a single dataset.
@@ -394,13 +394,13 @@ export default function PsiApp() {
             {Number.isFinite(sn0) && Number.isFinite(png) && (
               <ChartFigure
                 title="Skid number against speed"
-                subtitle={`From one measurement and a texture depth of ${fmt(mtd, 4)} in — Huang Eqs. 9.31–9.34`}
+                subtitle={`From one measurement and a texture depth of ${fmt(mtd, 4)} in, Huang Eqs. 9.31–9.34`}
                 plotRef={skidRef}
                 takeaway={`SN falls from ${fmt(sn0, 0)} at rest to ${fmt(skidNumber(sn0, png, 60), 1)} at 60 mph.`}
               >
-                Two independent properties set this curve. <strong>SN₀</strong> — the intercept — is
+                Two independent properties set this curve. <strong>SN₀</strong>, the intercept, is
                 microtexture: the fine grit of the aggregate, which is what grips at low speed and
-                what polishing destroys. <strong>PNG</strong> — the slope — is macrotexture: the
+                what polishing destroys. <strong>PNG</strong>, the slope, is macrotexture: the
                 coarse channels that let water escape, which is what keeps the tire in contact at
                 speed. A surface can be resurfaced to fix one and leave the other untouched, and a
                 skid number quoted without its test speed says almost nothing.
@@ -415,7 +415,7 @@ export default function PsiApp() {
                 replaced them: <strong>PSI is an approximation of PSR within prescribed limits</strong>,
                 and every terminal serviceability in every design equation is a point on that
                 approximated scale. Huang records that repeat ratings of the same section differed by
-                0 to 0.5, averaging 0.2 — so the difference between a p<sub>t</sub> of 2.5 and 2.4 is
+                0 to 0.5, averaging 0.2, so the difference between a p<sub>t</sub> of 2.5 and 2.4 is
                 comfortably inside the noise of the panel the scale was built from.
               </p>
             </Card>

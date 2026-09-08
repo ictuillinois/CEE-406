@@ -16,7 +16,7 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
 
 <BaseLayout
   title="CEE 406 · Pavement Design I"
-  description="Course portal for CEE 406 Pavement Design I at UIUC — homework assignments, online design tools, and the Huang (2004) textbook."
+  description="Course portal for CEE 406 Pavement Design I at UIUC: homework assignments, online design tools, and the Huang (2004) textbook."
 >
   <PavementHero />
 
@@ -27,7 +27,7 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
         <span class="section-eyebrow">Online tools</span>
         <h2>Start in the browser</h2>
         <p>
-          Purpose-built instruments for this course — nothing to install, nothing to
+          Purpose-built instruments for this course. Nothing to install, nothing to
           license, and every number they produce is one you could have computed by hand.
           {liveTools.length} are open now; the rest unlock alongside the homework that
           needs them.
@@ -81,7 +81,7 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
         <h2>Ten assignments, one structure</h2>
         <p>
           The course is organized around its homeworks. Each one pairs the assignment with
-          the textbook chapters behind it and the tools you need to solve it — from surface
+          the textbook chapters behind it and the tools you need to solve it, from surface
           distresses down to the subgrade, and back up through design.
         </p>
       </div>
@@ -129,9 +129,9 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
     <div class="container">
       <div class="section-head gsap-fade-up">
         <span class="section-eyebrow">Course textbook</span>
-        <h2>Huang — <em>Pavement Analysis and Design</em></h2>
+        <h2>Huang, <em>Pavement Analysis and Design</em></h2>
         <p>
-          The reading map for the course — {chapters.length} chapters and
+          The reading map for the course: {chapters.length} chapters and
           {' '}{appendices.length} appendices, each summarized and linked to the homework it
           backs. The book is a copyrighted commercial text and is not hosted here; the
           University Library is where you borrow it.

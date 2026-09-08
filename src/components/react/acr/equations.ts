@@ -110,7 +110,7 @@ export function evaluate(runway: RunwayCode, acr: number, tirePressure: number):
       `within the ${(OVERLOAD_ALLOWANCE * 100).toFixed(0)}% occasional-overload allowance.`
     );
   } else {
-    reasons.push(`ACR ${acr} exceeds PCR ${runway.pcr} by ${((ratio - 1) * 100).toFixed(1)}% — beyond the overload allowance.`);
+    reasons.push(`ACR ${acr} exceeds PCR ${runway.pcr} by ${((ratio - 1) * 100).toFixed(1)}%, beyond the overload allowance.`);
   }
 
   const limit = TIRE[runway.tire].psi;

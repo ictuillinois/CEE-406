@@ -242,7 +242,7 @@ export default function EsalCalculatorApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="es-sn">
-              <span>SN<Tip text="Structural number of the pavement the EALF is evaluated for. If unknown, SN = 5 is the standard assumption — EALFs are only mildly sensitive to it." /></span>
+              <span>SN<Tip text="Structural number of the pavement the EALF is evaluated for. If unknown, SN = 5 is the standard assumption; EALFs are only mildly sensitive to it." /></span>
               <span className="cee-field__unit">1–9</span>
             </label>
             <input id="es-sn" className="cee-input" type="number" min="1" max="9" step="0.5" value={snStr} onChange={e => setSn(e.target.value)} />
@@ -336,7 +336,7 @@ export default function EsalCalculatorApp() {
         </div>
 
         {computed.withEalf.some(r => r.loadNum > AXLE_RANGE[r.type][1]) && (
-          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>An axle load is beyond the range of the AASHTO tables — the equation extrapolates, so treat that EALF with caution.</span></p>
+          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>An axle load is beyond the range of the AASHTO tables, so the equation extrapolates, so treat that EALF with caution.</span></p>
         )}
 
         <p className="cee-hint">
@@ -387,7 +387,7 @@ export default function EsalCalculatorApp() {
               </div>
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="es-vc">
-                  <span>Vehicles counted<Tip text="Number of trucks counted — the denominator of the truck factor. For Huang Problem 6-9 this is the tractor semitrailer total." /></span>
+                  <span>Vehicles counted<Tip text="Number of trucks counted: the denominator of the truck factor. For Huang Problem 6-9 this is the tractor semitrailer total." /></span>
                   <span className="cee-field__unit">–</span>
                 </label>
                 <input id="es-vc" className="cee-input" type="number" min="0" step="100" value={vehCounted}
@@ -404,11 +404,11 @@ export default function EsalCalculatorApp() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Describe the pavement</strong>: SN and pₜ pick the AASHTO equivalency table (SN = 5, pₜ = 2.5 reproduce Table D.4).</li>
-              <li><strong>Build the axle spectrum</strong>: one row per axle group — a tandem is one group with its own EALF, <em>not</em> two singles. The presets load typical streams.</li>
+              <li><strong>Build the axle spectrum</strong>: one row per axle group. A tandem is one group with its own EALF, <em>not</em> two singles. The presets load typical streams.</li>
               <li><strong>Project the traffic</strong>: D and L bring two-way counts down to the design lane; r and n set the growth factor G. Counts already design-lane? Set D = L = 1.</li>
               <li><strong>Read the results</strong>: the flow strip shows each factor doing its work, the table gives exact EALFs to compare with your interpolated values, and the growth chart shows the traffic accumulating.</li>
             </ol>
-            EALFs come from the AASHTO design equation itself, so they match the printed tables to the fourth decimal — a stronger check than the (L/18)⁴ rule of thumb.
+            EALFs come from the AASHTO design equation itself, so they match the printed tables to the fourth decimal, a stronger check than the (L/18)⁴ rule of thumb.
           </div>
         </details>
 
@@ -423,7 +423,7 @@ export default function EsalCalculatorApp() {
               <Kpi label="Total ESALs" value={sci(w4.totalEsal)}
                 tip="Sum over every load group of scaled axles times that group's equivalency factor." />
               <Kpi label="Vehicles counted" value={sci(w4.vehicles)}
-                tip="The denominator — trucks counted at the station over the recording period." />
+                tip="The denominator: trucks counted at the station over the recording period." />
               <Kpi label="First-year design lane" value={sci(firstYearEsal(w4.vehicles, w4.factor, dir, lane))}
                 tip="Trucks × truck factor × D × L × 365. Problem 6-7 asks for this over two directions and all lanes, so set D = L = 1 there." />
             </KpiStrip>
@@ -466,7 +466,7 @@ export default function EsalCalculatorApp() {
               A loadometer station weighs only a sample of the axles it counts, so the weighed
               distribution is scaled by (axles counted ÷ axles weighed) for each axle type before the
               equivalency factors are applied. Dividing by the vehicles counted gives ESALs per truck.
-              Note the scale factors differ between singles and tandems — applying one blended factor
+              Note the scale factors differ between singles and tandems, so applying one blended factor
               is the usual mistake.
             </p>
           </Card>
@@ -474,7 +474,7 @@ export default function EsalCalculatorApp() {
 
         <div className="cee-flow" role="group" aria-label="Traffic projection breakdown">
           <div className="cee-flow__step">
-            <div className="cee-flow__label">ESALs/DAY · TWO-WAY<Tip text="Σ EALF × passes over the whole spectrum — the raw daily damage of the traffic stream, both directions, before any distribution factor." /></div>
+            <div className="cee-flow__label">ESALs/DAY · TWO-WAY<Tip text="Σ EALF × passes over the whole spectrum: the raw daily damage of the traffic stream, both directions, before any distribution factor." /></div>
             <div className="cee-flow__value">{computed.esalPerDay.toFixed(1)}</div>
           </div>
           <div className="cee-flow__op">× D·L = {(dir * lane).toFixed(2)}</div>
@@ -484,7 +484,7 @@ export default function EsalCalculatorApp() {
           </div>
           <div className="cee-flow__op">× 365 × G = {computed.G.toFixed(2)}</div>
           <div className="cee-flow__step cee-flow__step--accent">
-            <div className="cee-flow__label">DESIGN ESALs · {years} YR<Tip text="W18 — the design traffic that goes straight into the AASHTO design equation (HW7). G already contains all the years, so no further ×n." /></div>
+            <div className="cee-flow__label">DESIGN ESALs · {years} YR<Tip text="W18: the design traffic that goes straight into the AASHTO design equation (HW7). G already contains all the years, so no further ×n." /></div>
             <div className="cee-flow__value">{sci(computed.designEsal)}</div>
           </div>
         </div>
@@ -495,8 +495,8 @@ export default function EsalCalculatorApp() {
               <tr>
                 <th>Axle</th>
                 <th>Load (kip)</th>
-                <th>EALF<Tip text="Damage of ONE pass of this axle group expressed in 18-kip single-axle passes — from the AASHTO design equation at your SN and pt, so it matches the printed tables exactly." /></th>
-                <th>(L/18)⁴<Tip text="The fourth-power rule of thumb — defined for single axles only. Compare it with the exact EALF to see how good the approximation is." /></th>
+                <th>EALF<Tip text="Damage of ONE pass of this axle group expressed in 18-kip single-axle passes, from the AASHTO design equation at your SN and pt, so it matches the printed tables exactly." /></th>
+                <th>(L/18)⁴<Tip text="The fourth-power rule of thumb, defined for single axles only. Compare it with the exact EALF to see how good the approximation is." /></th>
                 <th>Passes/day</th>
                 <th>ESALs/day</th>
                 <th>Share</th>
@@ -532,7 +532,7 @@ export default function EsalCalculatorApp() {
 
         <div className="cee-chart-grid cee-chart-grid--2">
           <ChartFigure
-            title={`EALF vs. axle load — SN = ${SN}, pₜ = ${ptv}`}
+            title={`EALF vs. axle load. SN = ${SN}, pₜ = ${ptv}`}
             subtitle="AASHTO load equivalency on a log axis; dots are your axle groups"
             plotRef={chartRef}
             legend={[
@@ -545,17 +545,17 @@ export default function EsalCalculatorApp() {
             Each curve is the AASHTO design equation for one axle configuration; the y-axis is
             logarithmic, so the near-straight lines mean damage grows as a <strong>power</strong> of
             load. The dots are your axle groups. At a given load a tandem damages far less than a
-            single — the load is shared between two closely spaced axles — which is exactly why the
+            single, because the load is shared between two closely spaced axles, which is exactly why the
             curves are separated.
           </ChartFigure>
           <ChartFigure
-            title={`Traffic accumulation — r = ${(growth * 100).toFixed(1)}%/yr`}
+            title={`Traffic accumulation at r = ${(growth * 100).toFixed(1)}%/yr`}
             subtitle="Design-lane ESALs accumulated year by year over the design period"
             plotRef={cumRef}
             takeaway="With traffic growth the accumulation curve bends upward, so the later years of the design period contribute more ESALs than the early ones."
           >
-            Design-lane ESALs piling up year by year. With growth the curve bends upward — later years
-            contribute more than early ones — and the end point is exactly the design W18 from the flow
+            Design-lane ESALs piling up year by year. With growth the curve bends upward, so later years
+            contribute more than early ones, and the end point is exactly the design W18 from the flow
             strip. Set r = 0 and it becomes a straight line: G = n.
           </ChartFigure>
         </div>

@@ -97,8 +97,8 @@ let bulbCache: ReturnType<typeof computeBulb> | null = null;
 
 const PRESETS: { label: string; p: string; a: string; E: string; nu: string; tip: string }[] = [
   { label: 'HW4 load', p: '720', a: '145', E: '42', nu: '0.40', tip: 'The HW4 wheel: 720 kPa on a 145 mm radius, on the HW4 subgrade (42 MPa).' },
-  { label: 'Soft subgrade', p: '550', a: '120', E: '20', nu: '0.45', tip: 'A weak fine-grained subgrade — watch the strains and deflection grow.' },
-  { label: 'Granular base', p: '700', a: '150', E: '150', nu: '0.35', tip: 'A stiff unbound layer — stresses are identical, strains are not.' },
+  { label: 'Soft subgrade', p: '550', a: '120', E: '20', nu: '0.45', tip: 'A weak fine-grained subgrade; watch the strains and deflection grow.' },
+  { label: 'Granular base', p: '700', a: '150', E: '150', nu: '0.35', tip: 'A stiff unbound layer: stresses are identical, strains are not.' },
 ];
 
 export default function StressExplorerApp() {
@@ -164,7 +164,7 @@ export default function StressExplorerApp() {
         Plotly.react(strainRef.current, [
           { x: prof.epsZ, y: prof.z, name: 'εz', mode: 'lines', line: { color: hueFor('stress', theme), width: 2.5, shape: 'spline' as const } },
           { x: prof.epsR, y: prof.z, name: 'εr', mode: 'lines', line: { color: hueFor('strain', theme), width: 2.5, shape: 'spline' as const } },
-        ], layout('Strain (µε) — compression positive'), plotConfig);
+        ], layout('Strain (µε), compression positive'), plotConfig);
       }
       if (deflRef.current) {
         const wHue = hueFor('deflection', theme);
@@ -248,7 +248,7 @@ export default function StressExplorerApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="sx-p">
-            <span>Contact pressure p<Tip text="Uniform pressure on the circular contact area — close to the tire inflation pressure. HW4 uses 720 kPa (~105 psi)." /></span>
+            <span>Contact pressure p<Tip text="Uniform pressure on the circular contact area, close to the tire inflation pressure. HW4 uses 720 kPa (~105 psi)." /></span>
             <span className="cee-field__unit">kPa</span>
           </label>
           <input id="sx-p" className="cee-input" type="number" min="1" step="10" value={pStr} onChange={e => setP(e.target.value)} />
@@ -265,7 +265,7 @@ export default function StressExplorerApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="sx-e">
-              <span>Modulus E<Tip text="Elastic modulus of the half-space. Typical subgrades: 20–150 MPa. Stresses don't depend on E — strains and deflection do." /></span>
+              <span>Modulus E<Tip text="Elastic modulus of the half-space. Typical subgrades: 20–150 MPa. Stresses don't depend on E, but strains and deflection do." /></span>
               <span className="cee-field__unit">MPa</span>
             </label>
             <input id="sx-e" className="cee-input" type="number" min="1" step="10" value={eStr} onChange={e => setE(e.target.value)} />
@@ -292,7 +292,7 @@ export default function StressExplorerApp() {
         )}
 
         <p className="cee-hint">
-          One-layer elastic half-space, flexible circular load, on-axis response —
+          One-layer elastic half-space, flexible circular load, on-axis response.
           Huang (2004) Eqs. 2.1–2.6. Compression positive. For layered systems use
           the HW3 charts or WinJULEA; this is the limiting check.
         </p>
@@ -303,12 +303,12 @@ export default function StressExplorerApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Set the load</strong>: pressure <code>p</code> and radius <code>a</code> (a = √(P/πp)) — or pick a preset.</li>
-              <li><strong>Set the material</strong>: one modulus and Poisson ratio — a homogeneous half-space.</li>
+              <li><strong>Set the load</strong>: pressure <code>p</code> and radius <code>a</code> (a = √(P/πp)), or pick a preset.</li>
+              <li><strong>Set the material</strong>: one modulus and Poisson ratio, for a homogeneous half-space.</li>
               <li><strong>Drag the depth probe</strong> to read every response at one depth; hover any curve for exact values.</li>
               <li><strong>Check hand solutions</strong>: the table gives the classic z/a ratios; σz/p = 0.646 at z = a and w₀ = 2(1−ν²)pa/E are the two results every solution should reproduce.</li>
             </ol>
-            The pressure bulb shows σz/p over the whole r–z plane — where two wheels sit close together, their bulbs overlap and stresses superpose (the HW1 axle question, visualized). A stiff top layer cuts the subgrade stress well below the one-layer curve; that reduction is what the HW3 charts and WinJULEA quantify.
+            The pressure bulb shows σz/p over the whole r–z plane. Where two wheels sit close together, their bulbs overlap and stresses superpose (the HW1 axle question, visualized). A stiff top layer cuts the subgrade stress well below the one-layer curve; that reduction is what the HW3 charts and WinJULEA quantify.
           </div>
         </details>
 
@@ -322,24 +322,24 @@ export default function StressExplorerApp() {
                 label="Surface deflection w₀"
                 value={fmt(w0, 3)}
                 unit="mm"
-                tip="Settlement of the surface at the load center — what an FWD sensor under the load plate would read. The single most-checked number in HW3."
+                tip="Settlement of the surface at the load center: what an FWD sensor under the load plate would read. The single most-checked number in HW3."
               />
               <Kpi
                 label="σz at z = a"
                 value={fmt(p * (1 - 1 / Math.pow(2, 1.5)), 1)}
                 unit="kPa"
-                tip="Vertical stress one contact-radius deep. It depends only on p — not on E or ν — because a homogeneous half-space has no stiffness contrast to redistribute load."
+                tip="Vertical stress one contact-radius deep. It depends only on p, not on E or ν, because a homogeneous half-space has no stiffness contrast to redistribute load."
               />
               <Kpi
                 label="σz / p at z = a"
                 value={fmt(1 - 1 / Math.pow(2, 1.5), 3)}
-                tip="Dimensionless — 0.646 for every load and every material. If your hand solution doesn't reproduce this, check it before anything else."
+                tip="Dimensionless: 0.646 for every load and every material. If your hand solution doesn't reproduce this, check it before anything else."
               />
               <Kpi
                 compact
                 label="w₀ formula"
                 value="2(1−ν²)pa/E"
-                tip="Center deflection of a flexible circular load on a half-space (Huang Eq. 2.8). A rigid plate gives π/4 of this — about 79%."
+                tip="Center deflection of a flexible circular load on a half-space (Huang Eq. 2.8). A rigid plate gives π/4 of this, about 79%."
               />
             </KpiStrip>
 
@@ -379,20 +379,20 @@ export default function StressExplorerApp() {
               >
                 Both stresses under the load center, compression positive. <strong>σz</strong> starts
                 at p on the surface and decays to ~5% of p by z = 4a; <strong>σr</strong> dies off much
-                faster and can go (slightly) tensile — that difference is what bends the upper layers
+                faster and can go (slightly) tensile, and that difference is what bends the upper layers
                 of a real pavement. Note stresses are independent of E: only the geometry matters.
               </ChartFigure>
               <ChartFigure
                 title="Strain vs. depth"
-                subtitle="Hooke's law applied to the stresses at left — everything scales with 1/E"
+                subtitle="Hooke's law applied to the stresses at left, so everything scales with 1/E"
                 plotRef={strainRef}
                 legend={[
                   { label: 'εz', color: hueFor('stress', theme) },
                   { label: 'εr', color: hueFor('strain', theme) },
                 ]}
-                takeaway="Radial strain turns negative near the surface, meaning horizontal tension — the mechanism that cracks the bottom of an asphalt layer."
+                takeaway="Radial strain turns negative near the surface, meaning horizontal tension: the mechanism that cracks the bottom of an asphalt layer."
               >
-                Strains follow the stresses through Hooke's law and scale with 1/E — halve the modulus,
+                Strains follow the stresses through Hooke's law and scale with 1/E, so halve the modulus,
                 double every strain. <strong>εr</strong> turning negative means horizontal tension: in a
                 layered pavement that tension concentrates at the bottom of the stiff AC layer and drives
                 fatigue cracking.
@@ -401,7 +401,7 @@ export default function StressExplorerApp() {
 
             <div className="cee-chart-grid cee-chart-grid--2">
               <ChartFigure
-                title="Pressure bulb — σz / p"
+                title="Pressure bulb: σz / p"
                 subtitle="Normalized contours over the r–z plane; the same shape for every load"
                 plotRef={bulbRef}
                 ramp={{ name: 'orange', theme, caption: 'σz / p', lowLabel: '0', highLabel: '1' }}
@@ -409,7 +409,7 @@ export default function StressExplorerApp() {
               >
                 Contours of vertical stress over the whole r–z plane, not just the axis. Because axes are
                 in multiples of a and stress in multiples of p, <strong>this exact shape holds for every
-                load</strong> — only the physical scale changes. Where the bulbs of two nearby wheels
+                load</strong>; only the physical scale changes. Where the bulbs of two nearby wheels
                 overlap, their stresses add: that superposition is why tandem axles load the subgrade
                 differently than two separated singles (the HW1 axle question, drawn).
               </ChartFigure>
@@ -419,7 +419,7 @@ export default function StressExplorerApp() {
                 plotRef={deflRef}
                 takeaway="Most of the surface deflection accumulates in the top few contact radii, so stiffening the upper layers pays off more than anything done at depth."
               >
-                Downward displacement of each point on the axis. The curve is steepest near the surface —
+                Downward displacement of each point on the axis. The curve is steepest near the surface,
                 most of w₀ accumulates within the top few radii, which is why improving the upper layers
                 pays off more than anything done at depth.
               </ChartFigure>

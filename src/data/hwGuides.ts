@@ -26,35 +26,35 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Flexible vs. rigid load spreading',
-        body: 'A flexible pavement spreads load through the layer stack in a narrowing cone — every layer matters and thicknesses control performance. A rigid slab spreads load by bending over a large area — slab flexural strength dominates and the subgrade sees little stress.',
+        body: 'A flexible pavement spreads load through the layer stack in a narrowing cone, so every layer matters and thicknesses control performance. A rigid slab spreads load by bending over a large area, so slab flexural strength dominates and the subgrade sees little stress.',
       },
       {
         kind: 'concept',
         title: 'Mechanistic–empirical design',
-        body: 'The <strong>mechanistic</strong> part computes responses (stress, strain, deflection) from mechanics; the <strong>empirical</strong> part maps them to observed distress through calibrated transfer functions. Full physics for every distress is out of reach — calibration never disappears.',
+        body: 'The <strong>mechanistic</strong> part computes responses (stress, strain, deflection) from mechanics; the <strong>empirical</strong> part maps them to observed distress through calibrated transfer functions. Full physics for every distress is out of reach, so calibration never disappears.',
       },
       {
         kind: 'equation',
-        title: 'Tire contact — pressure and area',
+        title: 'Tire contact: pressure and area',
         body: '$$A_c = \\frac{P}{p} \\qquad p \\approx p_{tire}$$',
         where: '<dl class="doc-equation__defs"><dt>A_c</dt><dd>contact area</dd><dt>P</dt><dd>wheel load</dd><dt>p</dt><dd>contact pressure ≈ tire inflation pressure</dd></dl>',
       },
       {
         kind: 'concept',
         title: 'Distress mechanisms to know',
-        body: '<strong>Pumping</strong>: water under a slab ejects fines through joints until corners lose support and crack. <strong>Rutting</strong>: instability rutting (shear flow within the AC) vs. structural rutting (deformation of base/subgrade) — different causes, different design fixes.',
+        body: '<strong>Pumping</strong>: water under a slab ejects fines through joints until corners lose support and crack. <strong>Rutting</strong>: instability rutting (shear flow within the AC) vs. structural rutting (deformation of base/subgrade). Different causes, different design fixes.',
       },
     ],
     steps: [
       'Read Huang Ch. 1; skim the Distress Identification Manual for photos of each failure mode.',
       'Draw both cross-sections with labeled layers and typical thicknesses.',
-      'Answer by explaining mechanisms — grading rewards cause-and-effect, not definitions.',
+      'Answer by explaining mechanisms; grading rewards cause-and-effect, not definitions.',
       'For the axle question, think about overlapping stress bulbs at depth.',
     ],
     pitfalls: [
-      'Tack coat bonds two asphalt lifts; prime coat penetrates and seals a granular base — the prime coat is the less viscous one.',
-      'Rutting is not only a subgrade problem — instability rutting lives entirely in the AC.',
-      'Q6 fixes the <em>total</em> group load, so more axles means less load each — the answer turns on how much the stress bulbs overlap at depth.',
+      'Tack coat bonds two asphalt lifts; prime coat penetrates and seals a granular base. The prime coat is the less viscous one.',
+      'Rutting is not only a subgrade problem; instability rutting lives entirely in the AC.',
+      'Q6 fixes the <em>total</em> group load, so more axles means less load each. The answer turns on how much the stress bulbs overlap at depth.',
     ],
   },
 
@@ -71,7 +71,7 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Linearize, then regress',
-        body: 'Take log&#8321;&#8320; of both sides — the model becomes linear in log(k&#8321;), k&#8322;, k&#8323;: a two-variable regression (Excel <code>LINEST</code> or the <a href="../../tools/mr-fitter/">Resilient Modulus Fitter</a>, which runs it live). Report R² and whether it is in log space or on back-transformed M<sub>r</sub>.',
+        body: 'Take log&#8321;&#8320; of both sides and the model becomes linear in log(k&#8321;), k&#8322;, k&#8323;: a two-variable regression (Excel <code>LINEST</code> or the <a href="../../tools/mr-fitter/">Resilient Modulus Fitter</a>, which runs it live). Report R² and whether it is in log space or on back-transformed M<sub>r</sub>.',
       },
       {
         kind: 'equation',
@@ -88,12 +88,12 @@ export const hwGuides: Record<string, HwGuide> = {
     steps: [
       'Per test row: σ₁ = σd + σ₃, then θ, τ_oct, and Mr = σd/εr.',
       'Log-transform, regress for k₁, k₂, k₃, and compute R².',
-      'Plot measured vs. predicted Mr — check with the Mr Fitter tool.',
+      'Plot measured vs. predicted Mr, then check with the Mr Fitter tool.',
       'CBR: plot pressure–penetration, correct the origin, apply the 0.1/0.2-in rule.',
     ],
     pitfalls: [
-      'The data are in kPa — use p_a = 101.325 kPa, or k₁ is off by orders of magnitude.',
-      'Keep the “+1” in the τ_oct term — it keeps the model defined at zero shear.',
+      'The data are in kPa, so use p_a = 101.325 kPa, or k₁ is off by orders of magnitude.',
+      'Keep the “+1” in the τ_oct term; it keeps the model defined at zero shear.',
       'Mr uses recoverable (resilient) strain, not total strain.',
     ],
   },
@@ -104,9 +104,9 @@ export const hwGuides: Record<string, HwGuide> = {
     concepts: [
       {
         kind: 'equation',
-        title: 'One-layer system — Boussinesq, on the axis',
+        title: 'One-layer system: Boussinesq, on the axis',
         body: '$$\\sigma_z = p\\left[1 - \\frac{z^3}{(a^2+z^2)^{3/2}}\\right] \\qquad w_0 = \\frac{2(1-\\nu^2)\\,p\\,a}{E}$$',
-        where: '<dl class="doc-equation__defs"><dt>p, a</dt><dd>contact pressure and radius (flexible plate)</dd><dt>z</dt><dd>depth under the load center</dd><dt>w&#8320;</dt><dd>center surface deflection; a rigid plate gives &asymp;79% of it — use the form the problem assumes</dd></dl>',
+        where: '<dl class="doc-equation__defs"><dt>p, a</dt><dd>contact pressure and radius (flexible plate)</dd><dt>z</dt><dd>depth under the load center</dd><dt>w&#8320;</dt><dd>center surface deflection; a rigid plate gives &asymp;79% of it, so use the form the problem assumes</dd></dl>',
       },
       {
         kind: 'equation',
@@ -122,7 +122,7 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Check yourself online',
-        body: 'The <a href="../../tools/stress-explorer/">Stress Explorer</a> computes the full one-layer response live — verify every Boussinesq number before moving to the layered charts.',
+        body: 'The <a href="../../tools/stress-explorer/">Stress Explorer</a> computes the full one-layer response live. Verify every Boussinesq number before moving to the layered charts.',
       },
     ],
     steps: [
@@ -132,9 +132,9 @@ export const hwGuides: Record<string, HwGuide> = {
       'Verify one-layer answers with the Stress Explorer.',
     ],
     pitfalls: [
-      'Flexible vs. rigid plate formulas differ — check which the chart assumes.',
+      'Flexible vs. rigid plate formulas differ, so check which the chart assumes.',
       'Most charts are log-log: interpolate on the log scale.',
-      'Compression is positive throughout Huang — state your convention and keep it.',
+      'Compression is positive throughout Huang; state your convention and keep it.',
     ],
   },
 
@@ -144,7 +144,7 @@ export const hwGuides: Record<string, HwGuide> = {
     concepts: [
       {
         kind: 'concept',
-        title: 'Layered elastic analysis — the assumptions',
+        title: 'Layered elastic analysis: the assumptions',
         body: 'Homogeneous, isotropic, linear elastic layers (E, ν), horizontally infinite, fully bonded here, circular uniform load. The observations are graded because the numbers are only as good as these assumptions.',
       },
       {
@@ -165,9 +165,9 @@ export const hwGuides: Record<string, HwGuide> = {
       'Write ≥ 4 observations tied to mechanics; state the sign convention. Compare against the one-layer Stress Explorer solution.',
     ],
     pitfalls: [
-      'WinJULEA is unit-agnostic — one consistent system (kPa, mm) or the output is garbage.',
-      'Horizontal stress is ambiguous exactly at an interface — offset ±1 mm to capture the jump.',
-      'Bonded vs. frictionless interfaces change AC bottom strain dramatically — this assignment says bonded.',
+      'WinJULEA is unit-agnostic, so use one consistent system (kPa, mm) or the output is garbage.',
+      'Horizontal stress is ambiguous exactly at an interface, so offset ±1 mm to capture the jump.',
+      'Bonded vs. frictionless interfaces change AC bottom strain dramatically. This assignment says bonded.',
     ],
   },
 
@@ -177,9 +177,9 @@ export const hwGuides: Record<string, HwGuide> = {
     concepts: [
       {
         kind: 'equation',
-        title: 'Load equivalency — fourth-power rule of thumb',
+        title: 'Load equivalency: fourth-power rule of thumb',
         body: '$$EALF \\approx \\left(\\frac{L_x}{18\\,\\text{kip}}\\right)^4$$',
-        where: '<dl class="doc-equation__defs"><dt>L<sub>x</sub></dt><dd>single-axle load, kip</dd><dt>exact values</dt><dd>AASHTO design equation (Tables D.4–D.9), depend on SN and p<sub>t</sub> — the <a href="../../tools/esal-calculator/">ESAL Calculator</a> computes them exactly</dd></dl>',
+        where: '<dl class="doc-equation__defs"><dt>L<sub>x</sub></dt><dd>single-axle load, kip</dd><dt>exact values</dt><dd>AASHTO design equation (Tables D.4–D.9), depend on SN and p<sub>t</sub>; the <a href="../../tools/esal-calculator/">ESAL Calculator</a> computes them exactly</dd></dl>',
       },
       {
         kind: 'equation',
@@ -190,7 +190,7 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Truck factor',
-        body: 'T<sub>f</sub> = average ESALs per truck of a class — the bridge between classified counts and axle spectra. Problems either give axle data (build T<sub>f</sub>) or T<sub>f</sub> directly (use it).',
+        body: 'T<sub>f</sub> = average ESALs per truck of a class, the bridge between classified counts and axle spectra. Problems either give axle data (build T<sub>f</sub>) or T<sub>f</sub> directly (use it).',
       },
     ],
     steps: [
@@ -200,7 +200,7 @@ export const hwGuides: Record<string, HwGuide> = {
       'Sanity-check: a busy interstate sees 10⁶–10⁷ ESALs over 20 years.',
     ],
     pitfalls: [
-      'A tandem is one axle group with its own EALF — never two singles.',
+      'A tandem is one axle group with its own EALF, never two singles.',
       'r enters as a decimal; G is the total multiplier, not per-year.',
       'Check whether ADT is two-way (needs D) or already one-way per lane.',
     ],
@@ -208,7 +208,7 @@ export const hwGuides: Record<string, HwGuide> = {
 
   hw6: {
     purpose:
-      'Estimate water inflow, size the drainage layer, and verify filter criteria — checked against FHWA’s DRIP.',
+      'Estimate water inflow, size the drainage layer, and verify filter criteria, checked against FHWA’s DRIP.',
     concepts: [
       {
         kind: 'concept',
@@ -224,19 +224,19 @@ export const hwGuides: Record<string, HwGuide> = {
         kind: 'equation',
         title: 'Granular filter criteria',
         body: '$$D_{15}^{filter} \\le 5\\,D_{85}^{soil} \\qquad D_{15}^{filter} \\ge 5\\,D_{15}^{soil}$$',
-        where: '<dl class="doc-equation__defs"><dt>first</dt><dd>piping criterion — fine enough to hold the soil</dd><dt>second</dt><dd>permeability criterion — coarse enough to drain</dd><dt>D&#8321;&#8325;, D&#8328;&#8325;</dt><dd>sizes at 15% and 85% passing</dd></dl>',
+        where: '<dl class="doc-equation__defs"><dt>first</dt><dd>piping criterion, fine enough to hold the soil</dd><dt>second</dt><dd>permeability criterion, coarse enough to drain</dd><dt>D&#8321;&#8325;, D&#8328;&#8325;</dt><dd>sizes at 15% and 85% passing</dd></dl>',
       },
     ],
     steps: [
       'Set up the geometry: drainage path length, slope, thickness.',
       'Solve by hand with the Ch. 8 equations and charts.',
-      'Rebuild in DRIP and compare — small gaps are chart-reading, large ones are setup errors.',
+      'Rebuild in DRIP and compare. Small gaps are chart-reading, large ones are setup errors.',
       'Check both filter criteria and state which governs.',
     ],
     pitfalls: [
       'Permeability units (ft/day vs. m/day vs. cm/s) cause most wrong answers.',
       'Use effective porosity, not total, for time-to-drain.',
-      'The drainage path follows the resultant slope — not simply the lane width.',
+      'The drainage path follows the resultant slope, not simply the lane width.',
     ],
   },
 
@@ -259,7 +259,7 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Design from the top down',
-        body: 'Solve for SN₁ (on the base), SN₂ (on the subbase), SN₃ (on the subgrade). D₁ covers SN₁; D₂ covers SN₂ − a₁D₁; and so on — rounding each thickness <em>up</em> before moving down.',
+        body: 'Solve for SN₁ (on the base), SN₂ (on the subbase), SN₃ (on the subgrade). D₁ covers SN₁; D₂ covers SN₂ − a₁D₁; and so on, rounding each thickness <em>up</em> before moving down.',
       },
     ],
     steps: [
@@ -269,9 +269,9 @@ export const hwGuides: Record<string, HwGuide> = {
       'Report rounded thicknesses and provided vs. required SN.',
     ],
     pitfalls: [
-      'M_R goes in as psi — ksi silently shifts the log term.',
+      'M_R goes in as psi; ksi silently shifts the log term.',
       'Drainage coefficients m never apply to the AC layer.',
-      'Z_R is negative for R > 50% (−1.645 at 95%) — dropping the sign inflates the design.',
+      'Z_R is negative for R > 50% (−1.645 at 95%), and dropping the sign inflates the design.',
     ],
   },
 
@@ -282,7 +282,7 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'AC sublayers and loading frequency',
-        body: 'The stress pulse lengthens with depth, so deeper AC feels a lower frequency — and asphalt is softer at low frequency. Assign the given sublayer moduli in descending order from the surface (595 → 585 → 575 → 570 → 565 ksi).',
+        body: 'The stress pulse lengthens with depth, so deeper AC feels a lower frequency, and asphalt is softer at low frequency. Assign the given sublayer moduli in descending order from the surface (595 → 585 → 575 → 570 → 565 ksi).',
       },
       {
         kind: 'equation',
@@ -299,17 +299,17 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Where the code goes',
-        body: 'The 90-day × 1,000-reps/day accumulation is a loop — the <a href="../../tools/damage/">Transfer-Function Damage</a> tool runs it in the browser from your WinJULEA strains. Plot rutting and cracking against N and describe the shape.',
+        body: 'The 90-day × 1,000-reps/day accumulation is a loop; the <a href="../../tools/damage/">Transfer-Function Damage</a> tool runs it in the browser from your WinJULEA strains. Plot rutting and cracking against N and describe the shape.',
       },
     ],
     steps: [
       'Part 1: follow the class mechanistic design procedure for the Sangamon County highway.',
       'Part 2a: WinJULEA with 5 AC sublayers (moduli ordered by frequency), base, subgrade; extract the required strains.',
-      'Part 2b: accumulate damage over N, plot rutting and cracking growth — the Damage tool automates this.',
+      'Part 2b: accumulate damage over N, plot rutting and cracking growth. The Damage tool automates this.',
       'Part 2c: total the rutting and name the governing layer.',
     ],
     pitfalls: [
-      'The rutting equations want strains at sublayer mid-depths — not interface values.',
+      'The rutting equations want strains at sublayer mid-depths, not interface values.',
       'Use the lowest sublayer modulus in N_f, exactly as the assignment states.',
       'Pick one accumulation approach (running N vs. daily increments) and stay consistent.',
     ],
@@ -328,7 +328,7 @@ export const hwGuides: Record<string, HwGuide> = {
       {
         kind: 'concept',
         title: 'Westergaard’s three cases',
-        body: '<strong>Interior</strong>: max stress at the slab bottom. <strong>Edge</strong>: the critical highway case — roughly 50% higher. <strong>Corner</strong>: max stress on <em>top</em>, away from the corner — why corner cracks break downward. Know the tension fiber before plugging numbers — the <a href="../../tools/westergaard/">Westergaard tool</a> computes all three cases live.',
+        body: '<strong>Interior</strong>: max stress at the slab bottom. <strong>Edge</strong>: the critical highway case, roughly 50% higher. <strong>Corner</strong>: max stress on <em>top</em>, away from the corner, which is why corner cracks break downward. Know the tension fiber before plugging numbers. The <a href="../../tools/westergaard/">Westergaard tool</a> computes all three cases live.',
       },
       {
         kind: 'equation',
@@ -338,15 +338,15 @@ export const hwGuides: Record<string, HwGuide> = {
       },
     ],
     steps: [
-      'Compute ℓ first — everything consumes it.',
+      'Compute ℓ first; everything consumes it.',
       'Identify each problem’s case (interior/edge/corner, day/night) and critical fiber.',
       'Evaluate the stresses, superposing load + curling when asked.',
       'Compare against the modulus of rupture to interpret.',
     ],
     pitfalls: [
-      'Day curling puts the interior bottom in tension; night reverses it — get the sign of Δt right.',
-      'k is in pci — mixing units breaks ℓ.',
-      'Corner max stress is on top of the slab — checking bottom tension there is the classic error.',
+      'Day curling puts the interior bottom in tension; night reverses it, so get the sign of Δt right.',
+      'k is in pci; mixing units breaks ℓ.',
+      'Corner max stress is on top of the slab; checking bottom tension there is the classic error.',
     ],
   },
 
@@ -374,12 +374,12 @@ export const hwGuides: Record<string, HwGuide> = {
     steps: [
       'Part 1a: interpolate the ACR tables per runway subgrade category; compare ACR vs. PCR and tire pressure vs. the letter.',
       'Part 1b: run FAARFIELD for both subgrades; make the stabilization decision quantitatively.',
-      'Part 2: build the stage-by-stage GHG table, timeline the rehabs from IRI — the <a href="../../tools/lca/">LCA Worksheet</a> automates the accounting.',
+      'Part 2: build the stage-by-stage GHG table, timeline the rehabs from IRI. The <a href="../../tools/lca/">LCA Worksheet</a> automates the accounting.',
       'Close with the governing stage and one concrete mitigation.',
     ],
     pitfalls: [
       'Compare each runway against the matching ACR (type + category), not a single number.',
-      'The use phase usually dwarfs everything — forgetting it (or the second rehab) flips the conclusion.',
+      'The use phase usually dwarfs everything, and forgetting it (or the second rehab) flips the conclusion.',
       'Keep the functional unit straight: per lane-mile over 20 years.',
     ],
   },

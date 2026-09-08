@@ -23,12 +23,12 @@ const byPhase = phases
       <p>
         Ten assignments trace the arc of the course: what pavements are, what they're made of,
         how they carry load, and how they're designed. Every homework links the tools and
-        chapters you need — start at the assignment, and everything else is one click away.
+        chapters you need. Start at the assignment, and everything else is one click away.
       </p>
       <p class="hw-header__release">
         {liveCount === 0
           ? 'Assignments are released as the semester reaches them. The full sequence is listed below so you can see what is coming; each one opens on its release date.'
-          : `${liveCount} of ${homeworks.length} released so far — the rest open as the semester reaches them.`}
+          : `${liveCount} of ${homeworks.length} released so far; the rest open as the semester reaches them.`}
       </p>
     </header>
 
@@ -64,7 +64,7 @@ const byPhase = phases
                   {hw.chapters.length > 0 && (
                     <span class="hw-row__fact">
                       <Icon name="layers" size={13} />
-                      {hw.chapters.map(c => c.label.split(' — ')[0]).join(', ')}
+                      {hw.chapters.map(c => c.label.split(': ')[0]).join(', ')}
                     </span>
                   )}
                   {lock.released && hw.tools.some(t => t.href) && (

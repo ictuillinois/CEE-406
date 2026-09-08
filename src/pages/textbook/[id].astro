@@ -25,7 +25,7 @@ const heading = entry.kind === 'chapter' ? `Chapter ${entry.num}` : `Appendix ${
 ---
 
 <BaseLayout
-  title={`${heading} — ${entry.title} · CEE 406 Textbook`}
+  title={`${heading}: ${entry.title} · CEE 406 Textbook`}
   description={entry.desc}
 >
   <div class="reader">
@@ -79,7 +79,7 @@ const heading = entry.kind === 'chapter' ? `Chapter ${entry.num}` : `Appendix ${
         <p class="reader-source__body">
           The course does not host the text. {heading} is part of a copyrighted
           commercial book, and redistributing it is not something this site can do.
-          The University Library holds it — use the catalog record below to borrow a
+          The University Library holds it. Use the catalog record below to borrow a
           physical copy, check for an electronic edition, or place a request through
           I-Share if every copy is out.
         </p>
@@ -111,13 +111,13 @@ const heading = entry.kind === 'chapter' ? `Chapter ${entry.num}` : `Appendix ${
         {prev ? (
           <a href={`${base}textbook/${prev.id}/`} class="reader-nav__link">
             <span class="reader-nav__dir">&larr; Previous</span>
-            <span class="reader-nav__label">{prev.kind === 'chapter' ? `Ch. ${prev.num}` : `App. ${prev.num}`} — {prev.title}</span>
+            <span class="reader-nav__label">{prev.kind === 'chapter' ? `Ch. ${prev.num}` : `App. ${prev.num}`}: {prev.title}</span>
           </a>
         ) : <span></span>}
         {next && (
           <a href={`${base}textbook/${next.id}/`} class="reader-nav__link reader-nav__link--next">
             <span class="reader-nav__dir">Next &rarr;</span>
-            <span class="reader-nav__label">{next.kind === 'chapter' ? `Ch. ${next.num}` : `App. ${next.num}`} — {next.title}</span>
+            <span class="reader-nav__label">{next.kind === 'chapter' ? `Ch. ${next.num}` : `App. ${next.num}`}: {next.title}</span>
           </a>
         )}
       </nav>

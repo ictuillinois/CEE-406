@@ -259,7 +259,7 @@ export default function MrFitterApp() {
         <div className="cee-presets">
           <button type="button" className="cee-chip" title="The HW2 dataset (single confining stress, psi, recoverable strains)."
             onClick={() => { setUnits('psi'); setMode('strain'); setRows(HW2_ROWS.map(r => ({ ...r, id: nextId++ }))); }}>HW2 data</button>
-          <button type="button" className="cee-chip" title="A full 3×5 T307-style matrix (kPa) — see what a well-conditioned fit looks like."
+          <button type="button" className="cee-chip" title="A full 3×5 T307-style matrix (kPa). See what a well-conditioned fit looks like."
             onClick={() => { setUnits('kPa'); setMode('strain'); setRows(DEMO_ROWS.map(r => ({ ...r, id: nextId++ }))); }}>T307 matrix demo</button>
           <button type="button" className="cee-chip" onClick={() => setPasteOpen(o => !o)}>Paste from Excel…</button>
         </div>
@@ -267,7 +267,7 @@ export default function MrFitterApp() {
         {pasteOpen && (
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="mr-paste">
-              <span>3 columns: σ₃, σd, {mode === 'strain' ? 'εr' : 'Mr'}<Tip text="Copy the three columns straight from Excel (tab-separated) — one test point per line. Replaces the current table." /></span>
+              <span>3 columns: σ₃, σd, {mode === 'strain' ? 'εr' : 'Mr'}<Tip text="Copy the three columns straight from Excel (tab-separated), one test point per line. Replaces the current table." /></span>
             </label>
             <textarea id="mr-paste" className="cee-textarea" value={pasteText}
               placeholder={'31.94\t2\t0.000141\n31.94\t4\t0.00032'}
@@ -304,7 +304,7 @@ export default function MrFitterApp() {
         <p className="cee-hint">
           Triaxial conventions: θ = σd + 3σ₃, τ_oct = √2 σd/3, Mr = σd/εr with the
           <em> recoverable</em> strain. p_a = {pa} {units}. Fit is ordinary least squares
-          on log₁₀ Mr — identical to Excel LINEST on the linearized model.
+          on log₁₀ Mr, identical to Excel LINEST on the linearized model.
         </p>
       </aside>
 
@@ -313,26 +313,26 @@ export default function MrFitterApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Pick units and what your third column is</strong> — recoverable strain εr (the tool computes Mr = σd/εr) or Mr directly.</li>
+              <li><strong>Pick units and what your third column is</strong>: recoverable strain εr (the tool computes Mr = σd/εr) or Mr directly.</li>
               <li><strong>Enter the data</strong>: type points, or paste the three columns straight from Excel.</li>
               <li><strong>Read the fit</strong>: k₁, k₂, k₃ and R² update live; the parity plot shows every point against the 1:1 line.</li>
               <li><strong>Check the physics</strong>: expect k₂ ≥ 0 (stress hardening with θ) and k₃ ≤ 0 (softening with shear).</li>
             </ol>
-            R² is reported both in log space (what the regression optimizes — quote this one with LINEST) and on back-transformed Mr.
+            R² is reported both in log space (what the regression optimizes, so quote this one with LINEST) and on back-transformed Mr.
           </div>
         </details>
 
         {points.length < 4 ? (
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>Enter at least 4 valid test points (σ₃ ≥ 0, σd &gt; 0, {mode === 'strain' ? 'εr' : 'Mr'} &gt; 0) to fit the three-parameter model.</span></p>
         ) : !fit ? (
-          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>The regression is singular — the points don’t span enough stress states to separate k₂ and k₃.</span></p>
+          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>The regression is singular. The points don’t span enough stress states to separate k₂ and k₃.</span></p>
         ) : (
           <>
             {(collinear || singleS3) && (
               <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
                 All points share one confining stress, so θ and τ_oct move together
                 (predictor correlation {fit.corr.toFixed(3)}). The fit still reproduces the data,
-                but k₂ and k₃ individually are not reliable — a full test matrix varies σ₃. This is
+                but k₂ and k₃ individually are not reliable; a full test matrix varies σ₃. This is
                 worth a sentence in your report.
               </span></p>
             )}
@@ -351,23 +351,23 @@ export default function MrFitterApp() {
               <Kpi
                 label="k₂"
                 value={fit.k2.toFixed(4)}
-                tip="Stress-hardening exponent on bulk stress θ — confinement stiffens the soil, so expect k₂ ≥ 0 (strongly positive for granular materials)."
+                tip="Stress-hardening exponent on bulk stress θ. Confinement stiffens the soil, so expect k₂ ≥ 0 (strongly positive for granular materials)."
               />
               <Kpi
                 label="k₃"
                 value={fit.k3.toFixed(4)}
-                tip="Shear-softening exponent on τ_oct — shearing weakens the soil, so expect k₃ ≤ 0 (most negative for fine-grained soils)."
+                tip="Shear-softening exponent on τ_oct. Shearing weakens the soil, so expect k₃ ≤ 0 (most negative for fine-grained soils)."
               />
               <Kpi
                 accent
                 label="R² (log space)"
                 value={fit.r2log.toFixed(4)}
-                tip="Goodness of fit of the linearized regression — this is the R² Excel LINEST reports, so quote this one when comparing."
+                tip="Goodness of fit of the linearized regression. This is the R² Excel LINEST reports, so quote this one when comparing."
               />
               <Kpi
                 label="R² (on Mr)"
                 value={fit.r2.toFixed(4)}
-                tip="R² recomputed on back-transformed Mr values — usually close to the log-space value, but not identical; say which you report."
+                tip="R² recomputed on back-transformed Mr values, usually close to the log-space value, but not identical; say which you report."
               />
             </KpiStrip>
 
@@ -387,7 +387,7 @@ export default function MrFitterApp() {
                 vertical distance from it is the residual in the table. This is the plot HW2 asks for.
               </ChartFigure>
               <ChartFigure
-                title="Mr vs. bulk stress θ — fitted model by σ₃"
+                title="Mr vs. bulk stress θ, fitted model by σ₃"
                 subtitle="The fitted surface sliced at each confining stress in the data set"
                 plotRef={curvesRef}
                 legend={sigma3Groups.map((s3, gi) => ({
@@ -396,8 +396,8 @@ export default function MrFitterApp() {
                 }))}
                 takeaway={
                   fit.k2 + fit.k3 >= 0
-                    ? 'Modulus rises with bulk stress, so stress hardening dominates — granular behavior.'
-                    : 'Modulus falls as bulk stress rises, so shear softening dominates — fine-grained behavior.'
+                    ? 'Modulus rises with bulk stress, so stress hardening dominates: granular behavior.'
+                    : 'Modulus falls as bulk stress rises, so shear softening dominates: fine-grained behavior.'
                 }
               >
                 The fitted surface sliced at each confining stress: along one curve, rising θ comes with
@@ -437,7 +437,7 @@ export default function MrFitterApp() {
             </div>
 
             <p className="cee-note">
-              Model: Mr = k₁ p_a (θ/p_a)<sup>k₂</sup> (τ_oct/p_a + 1)<sup>k₃</sup> — MEPDG / NCHRP 1-28A
+              Model: Mr = k₁ p_a (θ/p_a)<sup>k₂</sup> (τ_oct/p_a + 1)<sup>k₃</sup>, MEPDG / NCHRP 1-28A
               form (Huang Ch. 7). The “+1” keeps the model defined at zero shear; don’t drop it.
             </p>
           </>

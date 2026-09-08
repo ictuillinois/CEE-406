@@ -51,7 +51,7 @@ export const tools: Tool[] = [
     color: '#E87722',
     hws: ['HW2'],
     ref: 'MEPDG k₁–k₂–k₃ · Huang Ch. 7',
-    desc: 'Fit k₁, k₂, k₃ of the generalized Mr model to triaxial data — live LINEST-style regression with R², a parity plot, and paste-from-Excel input.',
+    desc: 'Fit k₁, k₂, k₃ of the generalized Mr model to triaxial data. Live LINEST-style regression with R², a parity plot, and paste-from-Excel input.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M16 33 Q52 24 108 9"/>
@@ -67,7 +67,7 @@ export const tools: Tool[] = [
     color: '#E87722',
     hws: ['HW2'],
     ref: 'AASHTO T 193 · ASTM D1883',
-    desc: 'Reduce a piston penetration test to a CBR, with the tangent construction that corrects a concave-up curve — and a toggle to see how much that correction is worth.',
+    desc: 'Reduce a piston penetration test to a CBR, with the tangent construction that corrects a concave-up curve, and a toggle to see how much that correction is worth.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M20 37 C34 36 44 26 60 18 C76 11 92 9 106 8"/>
@@ -84,7 +84,7 @@ export const tools: Tool[] = [
     imageAlt: 'Figure 2.2 redrawn as log paper: seventeen curves of vertical stress against depth ' +
       'in a boxed frame with tick values on all four sides, each curve numbered in a gap in its ' +
       'own ink, and a dashed curve for an r/a the book never printed.',
-    desc: "The whole of Chapter 2 in five modules — Boussinesq's half-space, Burmister's two layers, Jones' three, the general N-layer solve, and every design chart in the chapter redrawn from the equations behind it and readable backwards as well as forwards.",
+    desc: "The whole of Chapter 2 in five modules: Boussinesq's half-space, Burmister's two layers, Jones' three, the general N-layer solve, and every design chart in the chapter redrawn from the equations behind it and readable backwards as well as forwards.",
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M10 10 H110" opacity="0.5" stroke-width="3"/>
       <path d="M10 20 H110" opacity="0.35"/>
@@ -114,7 +114,7 @@ export const tools: Tool[] = [
     color: '#10b981',
     hws: ['HW5', 'HW7'],
     ref: 'AASHTO 1993 · App. D',
-    desc: 'Exact AASHTO load equivalency factors, a mixed axle spectrum with presets, and the full design-lane projection — D, L, growth — shown factor by factor.',
+    desc: 'Exact AASHTO load equivalency factors, a mixed axle spectrum with presets, and the full design-lane projection (D, L, growth) shown factor by factor.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M16 36 C52 33 84 22 108 7"/>
@@ -129,7 +129,7 @@ export const tools: Tool[] = [
     color: '#10b981',
     hws: ['HW5'],
     ref: 'Huang §6.2 · Eqs. 6.1-6.14',
-    desc: 'Four published criteria for converting duals to one wheel, which give four different answers — 5630 to 7410 lb on the same example in Huang. The question is which failure mode you are designing against.',
+    desc: 'Four published criteria for converting duals to one wheel, which give four different answers: 5630 to 7410 lb on the same example in Huang. The question is which failure mode you are designing against.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <circle cx="34" cy="14" r="6"/><circle cx="52" cy="14" r="6"/>
       <path d="M14 26 H108" opacity="0.35"/>
@@ -158,7 +158,7 @@ export const tools: Tool[] = [
     color: '#8b5cf6',
     hws: ['HW7', 'HW9'],
     ref: 'AASHTO 1993 · Huang Eqs. 11.34, 12.21, 12.29–12.30',
-    desc: 'The 1993 design equations solved in any direction — SN, slab thickness, reliability, roadbed support — with the layered thickness solution and the seasonal effective k.',
+    desc: 'The 1993 design equations solved in any direction (SN, slab thickness, reliability, roadbed support), with the layered thickness solution and the seasonal effective k.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M18 34 C46 32 74 22 106 8"/>
@@ -198,7 +198,7 @@ export const tools: Tool[] = [
     color: '#0ea5e9',
     hws: ['HW9'],
     ref: 'Huang Eqs. 4.35-4.45 · 12.3',
-    desc: 'Dowel group action, bearing stress, tie bars, joint opening and faulting — under the three different conventions Huang uses in three different places, one of which may fail your design.',
+    desc: 'Dowel group action, bearing stress, tie bars, joint opening and faulting, under the three different conventions Huang uses in three different places. One of them may fail your design.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M8 14 H54 M66 14 H112" stroke-width="2.5"/>
       <path d="M8 30 H54 M66 30 H112" opacity="0.3"/>
@@ -214,7 +214,7 @@ export const tools: Tool[] = [
     color: '#0ea5e9',
     hws: ['HW9'],
     ref: 'Westergaard · Huang Eqs. 4.9–4.31',
-    desc: 'Every published case in Huang Ch. 4 — interior, edge under both circular and semicircular contact, and corner by both the original and Ioannides formulas, which disagree. Plus Bradbury curling and the dual-tire equivalent circle.',
+    desc: 'Every published case in Huang Ch. 4: interior, edge under both circular and semicircular contact, and corner by both the original and Ioannides formulas, which disagree. Plus Bradbury curling and the dual-tire equivalent circle.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <rect class="anim" x="22" y="9" width="76" height="26" rx="2"/>
       <circle cx="60" cy="22" r="4" fill="currentColor" stroke="none" opacity="0.9"/>
@@ -228,7 +228,7 @@ export const tools: Tool[] = [
     color: '#E87722',
     hws: ['HW2', 'HW8'],
     ref: 'Huang Eqs. 7.24-7.28 · 2.44-2.46',
-    desc: 'Asphalt has no single modulus. Predict |E*| by two published routes that disagree by 65%, then shift the isotherms onto one master curve — and read whether time-temperature superposition actually held.',
+    desc: 'Asphalt has no single modulus. Predict |E*| by two published routes that disagree by 65%, then shift the isotherms onto one master curve, and read whether time-temperature superposition actually held.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M18 35 C40 34 52 26 62 18 C72 10 92 8 108 7"/>
@@ -242,7 +242,7 @@ export const tools: Tool[] = [
     color: '#0ea5e9',
     hws: ['Ch. 9', 'Ch. 13'],
     ref: 'Huang §9.4.3 · Eqs. 13.22-13.26',
-    desc: 'The forward problem run backwards: a measured deflection basin becomes layer moduli, by layered-elastic inversion and by the AASHTO closed form — plus the sensitivity that says which of those moduli the data actually determines.',
+    desc: 'The forward problem run backwards: a measured deflection basin becomes layer moduli, by layered-elastic inversion and by the AASHTO closed form, plus the sensitivity that says which of those moduli the data actually determines.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M52 4 V12" stroke-width="3"/>
       <path class="anim" d="M14 14 C34 15 46 30 60 30 C74 30 86 15 106 14" opacity="0.9"/>
@@ -287,7 +287,7 @@ export const tools: Tool[] = [
     color: '#8b5cf6',
     hws: ['HW10'],
     ref: 'ICAO Annex 14 · ACR/PCR',
-    desc: 'Parse runway rating codes and decide where an aircraft may operate — strength, subgrade category, tire pressure, and the occasional-overload allowance.',
+    desc: 'Parse runway rating codes and decide where an aircraft may operate: strength, subgrade category, tire pressure, and the occasional-overload allowance.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
       <path d="M20 34 V28 M40 34 V28 M60 34 V28 M80 34 V28 M100 34 V28" opacity="0.4"/>
@@ -314,7 +314,7 @@ export const tools: Tool[] = [
     ref: 'FAA P-401 · P-209 · P-154 · P-501',
     image: 'cross-section-studio.webp',
     imageAlt: 'A true-to-scale 3-D pavement cross section: asphalt surface over base, subbase and subgrade, each layer rendered with its own procedural material.',
-    desc: 'The figure every write-up needs and nobody wants to redraw: a true-to-scale 3-D pavement section, eighteen procedural materials, thirteen airfield and highway templates — and the PNG copied straight to your clipboard, with or without a background.',
+    desc: 'The figure every write-up needs and nobody wants to redraw: a true-to-scale 3-D pavement section, eighteen procedural materials, thirteen airfield and highway templates, and the PNG copied straight to your clipboard, with or without a background.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path class="anim" d="M14 15h70l14-8H28z"/>
       <path d="M14 15v6h70v-6"/>
@@ -330,8 +330,8 @@ export const tools: Tool[] = [
     hws: ['HW3', 'HW4', 'Ch. 1'],
     ref: 'Lang et al. 2026 · phyContactGAN · Huang Eq. 1.1',
     image: 'contact-stress.webp',
-    imageAlt: 'The predicted contact patch of a truck tire in plan view — five orange ribs of vertical stress — with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
-    desc: 'The 3-D contact stresses a truck tire really applies — vertical, longitudinal and transverse — from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
+    imageAlt: 'The predicted contact patch of a truck tire in plan view: five orange ribs of vertical stress, with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
+    desc: 'The 3-D contact stresses a truck tire really applies (vertical, longitudinal and transverse), from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
       <path d="M26 34 V16 M38 34 V9 M50 34 V6 M62 34 V6 M74 34 V9 M86 34 V16" opacity="0.5"/>
@@ -347,7 +347,7 @@ export const tools: Tool[] = [
     ref: 'FHWA classes 1–13 · FAA Order 5300.7',
     image: 'gear3d.webp',
     imageAlt: 'A dual-tandem axle rendered in 3-D on a measurement grid, with the dual spacing, track width and axle spacing called out as dimension lines in millimeters.',
-    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions — and contact-patch corner coordinates exported in millimeters for a finite-element pre-processor.',
+    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions, and contact-patch corner coordinates exported in millimeters for a finite-element pre-processor.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M18 12h74l10 9v8H18z" opacity="0.5"/>
       <circle class="anim" cx="34" cy="31" r="7"/>

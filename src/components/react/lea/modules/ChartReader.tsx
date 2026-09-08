@@ -576,14 +576,14 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         )}
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="cr-family">
-            <span>{spec.family.symbol}<Tip text={`${spec.family.label}. Any value in [${spec.family.range[0]}, ${spec.family.range[1]}] works — you are not restricted to the ${spec.family.values.length} the book drew. Type one it did not print and that curve is computed and drawn dashed, through the gap.`} /></span>
+            <span>{spec.family.symbol}<Tip text={`${spec.family.label}. Any value in [${spec.family.range[0]}, ${spec.family.range[1]}] works; you are not restricted to the ${spec.family.values.length} the book drew. Type one it did not print and that curve is computed and drawn dashed, through the gap.`} /></span>
           </label>
           <input id="cr-family" className="cee-input" type="number" step="0.25" value={familyStr}
             onChange={e => setFamilyStr(e.target.value)} />
         </div>
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="cr-sweep">
-            <span>{spec.sweep.label}<Tip text="The other axis of the chart — where along the curve to read." /></span>
+            <span>{spec.sweep.label}<Tip text="The other axis of the chart: where along the curve to read." /></span>
           </label>
           <input id="cr-sweep" className="cee-input" type="number" step="0.25" value={sweepStr}
             onChange={e => setSweepStr(e.target.value)} />
@@ -603,7 +603,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           <p className="cee-warn cee-warn--inline">
             <span className="cee-warn__icon">⚠️</span>
             <span>
-              This value is <strong>off the printed chart</strong> — the axis stops at{' '}
+              This value is <strong>off the printed chart</strong>. The axis stops at{' '}
               {markerValue < spec.value.min ? spec.value.min : spec.value.max}. The number is still
               right; Huang's page simply had nowhere to draw it.
             </span>
@@ -612,7 +612,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       </div>
 
       <ChartFigure
-        title={`${spec.figure} — ${spec.title}`}
+        title={`${spec.figure}: ${spec.title}`}
         subtitle={
           <>
             {spec.source}.{' '}
@@ -627,7 +627,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       >
         <p>
           <strong>Move the pointer over the chart.</strong> The reading below is solved from
-          wherever the cursor is, not from the nearest data point — which is the half of a chart
+          wherever the cursor is, not from the nearest data point, which is the half of a chart
           a printed page cannot do. Click to pin a reading.
         </p>
         <p>
@@ -641,14 +641,14 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           fitted on the sheet.</strong> Type any {spec.family.symbol} in
           [{spec.family.range[0]}, {spec.family.range[1]}] and it is computed and drawn dashed
           {spec.nomograph ? ', threading the mesh between the printed ones' : ', between the printed ones'}
-          {' '}— the interpolation the book asks you to do by eye.
+          , the interpolation the book asks you to do by eye.
         </p>
         {spec.notes?.map(n => <p key={n}>{n}</p>)}
         {spec.nomograph && (
           <p>
             <strong>The abscissa is blank because it is blank in the book.</strong> This figure is
             a nomograph: two families crossing in a mesh over an axis that carries no variable at
-            all. That axis is not arbitrary, though — a point's place on it is its position
+            all. That axis is not arbitrary, though: a point's place on it is its position
             along one family plus its position along the other, which is why {spec.figure}'s
             corners, its label runs down the left and the right, and the apex where the two
             extreme curves meet all land where the plate puts them. Every crossing here carries
@@ -663,8 +663,8 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           <p className="cee-hint">
             Move the pointer into the chart.{' '}
             {spec.nomograph
-              ? `Whatever point it lands on, this panel solves for the ${spec.family.symbol} and ${spec.sweep.label} whose curves cross there. A point on a nomograph looks like it carries less than a point on a plot, because the abscissa means nothing — but the pair is determined, and the printed page cannot recover it.`
-              : `Whatever point it lands on, this panel solves for the ${spec.family.symbol} whose curve passes through it — the question a printed chart cannot answer without a ruler and a guess.`}
+              ? `Whatever point it lands on, this panel solves for the ${spec.family.symbol} and ${spec.sweep.label} whose curves cross there. A point on a nomograph looks like it carries less than a point on a plot, because the abscissa means nothing, but the pair is determined, and the printed page cannot recover it.`
+              : `Whatever point it lands on, this panel solves for the ${spec.family.symbol} whose curve passes through it. That is the question a printed chart cannot answer without a ruler and a guess.`}
           </p>
         ) : !inFrame(reading) ? (
           <p className="cee-hint">Pointer is outside the chart frame.</p>
@@ -702,7 +702,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
                       </code>
                       {reading.pairs!.length > 1 && i === 0 && (
                         <span className="cee-reading__note">
-                          {' '}— more than one, because these families turn back on themselves
+                          , more than one, because these families turn back on themselves
                         </span>
                       )}
                     </li>
@@ -720,7 +720,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
                 <span className="cee-warn__icon">⚠️</span>
                 <span>
                   No value of {spec.family.symbol} reaches this point. That is a real answer, not a
-                  gap in the chart — this combination does not occur.
+                  gap in the chart. This combination does not occur.
                 </span>
               </p>
             ) : (
@@ -730,7 +730,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
                     <code>{spec.family.symbol} = {fmtParam(r)}</code>
                     {reading.roots!.length > 1 && i === 0 && (
                       <span className="cee-reading__note">
-                        {' '}— two answers, because this family turns back on itself
+                        , two answers, because this family turns back on itself
                       </span>
                     )}
                   </li>
@@ -766,7 +766,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           <h3 className="cee-card__title">Checkpoints from the book</h3>
           <p className="cee-hint">
             Reads Huang prints in a worked example. Load one and the marker should land on the
-            printed value — that is how you tell this chart is still his chart.
+            printed value. That is how you tell this chart is still his chart.
           </p>
           <ul className="cee-anchors">
             {spec.anchors.map(a => (
@@ -791,7 +791,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       <div className="cee-tablewrap">
         <table className="cee-table">
           <caption className="cee-table__caption">
-            The chart as numbers — every curve at each printed station of {spec.sweep.label}.
+            The chart as numbers: every curve at each printed station of {spec.sweep.label}.
           </caption>
           <thead>
             <tr>

@@ -43,7 +43,7 @@ export const homeworks: Homework[] = [
     dueNote: 'Fall 2026',
     layerFocus: 0,
     overview:
-      'What the layers of flexible and rigid pavements do, how mechanistic-empirical design works, and how pavements fail — pumping, rutting, and the damage done by different axles and tire pressures.',
+      'What the layers of flexible and rigid pavements do, how mechanistic-empirical design works, and how pavements fail: pumping, rutting, and the damage done by different axles and tire pressures.',
     objectives: [
       'Draw and label flexible and rigid cross-sections with typical thicknesses and interface treatments',
       'Explain the mechanistic and empirical components of M-E design',
@@ -53,21 +53,21 @@ export const homeworks: Homework[] = [
     ],
     problems: [
       { label: 'Q1', desc: 'Cross-sections of a typical flexible and rigid pavement: layer functions, interface treatments, typical thicknesses' },
-      { label: 'Q2', desc: 'The mechanistic-empirical design method — which part is which, and why a fully mechanistic method is out of reach' },
-      { label: 'Q3', desc: 'Seal coat vs. tack coat vs. prime coat — and which needs the least viscous asphalt' },
+      { label: 'Q2', desc: 'The mechanistic-empirical design method: which part is which, and why a fully mechanistic method is out of reach' },
+      { label: 'Q3', desc: 'Seal coat vs. tack coat vs. prime coat, and which needs the least viscous asphalt' },
       { label: 'Q4', desc: 'Mechanics of pumping: consequences and fixes' },
       { label: 'Q5', desc: 'The two kinds of rutting and how designs control them' },
-      { label: 'Q6', desc: 'Single vs. tandem vs. tridem axles — at the same group load, tire design and pressure, which does least damage?' },
+      { label: 'Q6', desc: 'At the same group load, tire design and pressure, which does least damage: single, tandem, or tridem?' },
       { label: 'Q7', desc: 'Tire pressure effects on flexible pavements and trucking operations' },
     ],
     chapters: [
-      { id: 'ch01', label: 'Ch. 1 — Introduction' },
-      { id: 'ch09', label: 'Ch. 9 — Pavement Performance' },
+      { id: 'ch01', label: 'Ch. 1: Introduction' },
+      { id: 'ch09', label: 'Ch. 9: Pavement Performance' },
     ],
     tools: [
       { label: 'Cross-Section Studio', href: 'tools/cross-section-studio/', note: 'draw and export the Q1 cross-sections, live' },
-      { label: 'Gear3D', href: 'tools/gear3d/', note: 'single, tandem and tridem axles in 3-D — Q6, live' },
-      { label: 'Contact Stress Visualizer', href: 'tools/contact-stress/', note: 'what inflation pressure does to the contact stresses — Q7, live' },
+      { label: 'Gear3D', href: 'tools/gear3d/', note: 'single, tandem and tridem axles in 3-D for Q6, live' },
+      { label: 'Contact Stress Visualizer', href: 'tools/contact-stress/', note: 'what inflation pressure does to the contact stresses, for Q7, live' },
     ],
     // The assignment sheet and the Distress Identification Manual are handed
     // out on Canvas; nothing is served from public/homeworks/hw1/.
@@ -93,7 +93,7 @@ export const homeworks: Homework[] = [
       { label: 'P3', desc: 'One-page synthesis on subgrade stabilization using lime' },
       { label: 'P4', desc: 'Determine the CBR from piston pressure–penetration data' },
     ],
-    chapters: [{ id: 'ch07', label: 'Ch. 7 — Material Characterization' }],
+    chapters: [{ id: 'ch07', label: 'Ch. 7: Material Characterization' }],
     tools: [
       { label: 'Resilient Modulus Fitter', href: 'tools/mr-fitter/', note: 'fit k₁, k₂, k₃ and R² online, live' },
       { label: 'CBR Reduction', href: 'tools/cbr/', note: 'penetration curve → CBR with the origin correction, live' },
@@ -101,9 +101,9 @@ export const homeworks: Homework[] = [
     downloads: [
       { label: 'HW2 assignment', file: 'hw2-assignment.pdf', kind: 'assignment' },
       { label: 'Resilient modulus test data (Excel)', file: 'hw2-part1-data.xlsx', kind: 'data' },
-      { label: 'AASHTO T 193 — CBR', file: 'aashto-t193-cbr.pdf', kind: 'reference' },
-      { label: 'Handout — Performance grading', file: 'handout-performance-grading.pdf', kind: 'handout' },
-      { label: 'Reading — Soil mechanics & US national defense', file: 'reading-soil-mechanics.pdf', kind: 'reference' },
+      { label: 'AASHTO T 193: CBR', file: 'aashto-t193-cbr.pdf', kind: 'reference' },
+      { label: 'Handout: Performance grading', file: 'handout-performance-grading.pdf', kind: 'handout' },
+      { label: 'Reading: Soil mechanics & US national defense', file: 'reading-soil-mechanics.pdf', kind: 'reference' },
     ],
   },
   {
@@ -127,20 +127,20 @@ export const homeworks: Homework[] = [
       { label: 'P4', desc: 'Problem 2-5, Huang p. 91' },
     ],
     chapters: [
-      { id: 'ch02', label: 'Ch. 2 — Stresses and Strains in Flexible Pavements' },
-      { id: 'appendix-b', label: 'App. B — Theory of Elastic Layer Systems' },
+      { id: 'ch02', label: 'Ch. 2: Stresses and Strains in Flexible Pavements' },
+      { id: 'appendix-b', label: 'App. B: Theory of Elastic Layer Systems' },
     ],
     tools: [
-      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'two- and three-layer systems solved exactly — covers Problems 2-3 and 2-5, live' },
+      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'two- and three-layer systems solved exactly; covers Problems 2-3 and 2-5, live' },
       { label: 'Stress Explorer', href: 'tools/stress-explorer/', note: 'one-layer Boussinesq response, live' },
     ],
     downloads: [
       { label: 'HW3 assignment', file: 'hw3-assignment.pdf', kind: 'assignment' },
-      { label: 'Handout — One-layer system plots', file: 'handout-one-layer-plots.pdf', kind: 'handout' },
-      { label: 'Handout — One-layer system tables', file: 'handout-one-layer-tables.pdf', kind: 'handout' },
-      { label: 'Handout — Two-layer systems', file: 'handout-two-layer.pdf', kind: 'handout' },
-      { label: 'Handout — Three-layer system plots', file: 'handout-three-layer-plots.pdf', kind: 'handout' },
-      { label: 'Handout — Three-layer system tables', file: 'handout-three-layer-tables.pdf', kind: 'handout' },
+      { label: 'Handout: One-layer system plots', file: 'handout-one-layer-plots.pdf', kind: 'handout' },
+      { label: 'Handout: One-layer system tables', file: 'handout-one-layer-tables.pdf', kind: 'handout' },
+      { label: 'Handout: Two-layer systems', file: 'handout-two-layer.pdf', kind: 'handout' },
+      { label: 'Handout: Three-layer system plots', file: 'handout-three-layer-plots.pdf', kind: 'handout' },
+      { label: 'Handout: Three-layer system tables', file: 'handout-three-layer-tables.pdf', kind: 'handout' },
     ],
   },
   {
@@ -163,14 +163,14 @@ export const homeworks: Homework[] = [
       { label: 'P3', desc: 'Depth profiles of stress, strain, and deflection for a 4-layer structure (E = 3200/200/100/42 MPa) under p = 720 kPa, a = 145 mm' },
     ],
     chapters: [
-      { id: 'ch02', label: 'Ch. 2 — Stresses and Strains in Flexible Pavements' },
-      { id: 'ch03', label: 'Ch. 3 — KENLAYER Computer Program' },
-      { id: 'appendix-c', label: 'App. C — KENPAVE Software' },
+      { id: 'ch02', label: 'Ch. 2: Stresses and Strains in Flexible Pavements' },
+      { id: 'ch03', label: 'Ch. 3: KENLAYER Computer Program' },
+      { id: 'appendix-c', label: 'App. C: KENPAVE Software' },
     ],
     tools: [
-      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'the four-layer depth profile without leaving the browser — check your WinJULEA run against it, live' },
+      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'the four-layer depth profile in the browser; check your WinJULEA run against it, live' },
       { label: 'Stress Explorer', href: 'tools/stress-explorer/', note: 'compare the one-layer solution against your multilayer run' },
-      { label: 'WinJULEA', note: 'desktop layered-elastic analysis — provided in class' },
+      { label: 'WinJULEA', note: 'desktop layered-elastic analysis, provided in class' },
     ],
     downloads: [{ label: 'HW4 assignment', file: 'hw4-assignment.pdf', kind: 'assignment' }],
   },
@@ -182,7 +182,7 @@ export const homeworks: Homework[] = [
     due: 'Oct 22',
     layerFocus: 0,
     overview:
-      'Design traffic in ESALs: load equivalency factors, truck factors, growth, and lane distribution — converting mixed traffic into the single number that drives thickness design.',
+      'Design traffic in ESALs: load equivalency factors, truck factors, growth, and lane distribution. Mixed traffic becomes the single number that drives thickness design.',
     objectives: [
       'Apply AASHTO equivalent axle load factors (EALF) to mixed axle streams',
       'Compute growth factors and design-lane ESALs over a design period',
@@ -195,7 +195,7 @@ export const homeworks: Homework[] = [
       { label: 'P4', desc: 'Problem 6.7, Huang p. 277' },
       { label: 'P5', desc: 'Problem 6.9, Huang p. 278' },
     ],
-    chapters: [{ id: 'ch06', label: 'Ch. 6 — Traffic Loading and Volume' }],
+    chapters: [{ id: 'ch06', label: 'Ch. 6: Traffic Loading and Volume' }],
     tools: [
       { label: 'ESAL Calculator', href: 'tools/esal-calculator/', note: 'AASHTO load equivalency + design traffic, live' },
     ],
@@ -209,20 +209,20 @@ export const homeworks: Homework[] = [
     due: 'Oct 29',
     layerFocus: 2,
     overview:
-      'Estimate inflow, size the permeable base, and check filter criteria — with FHWA’s DRIP software as a check on hand calculations.',
+      'Estimate inflow, size the permeable base, and check filter criteria, with FHWA’s DRIP software as a check on hand calculations.',
     objectives: [
       'Estimate design inflow from infiltration and groundwater',
       'Size drainage layers for steady-state flow and time-to-drain',
       'Verify granular filter criteria between subgrade and drainage layer',
     ],
     problems: [
-      { label: 'P1', desc: 'Problem 8.6, Huang p. 366 — check with DRIP' },
-      { label: 'P2', desc: 'Problem 8.8, Huang p. 367 — check with DRIP' },
+      { label: 'P1', desc: 'Problem 8.6, Huang p. 366; check with DRIP' },
+      { label: 'P2', desc: 'Problem 8.8, Huang p. 367; check with DRIP' },
       { label: 'P3', desc: 'Problem 8.10, Huang p. 367' },
     ],
-    chapters: [{ id: 'ch08', label: 'Ch. 8 — Drainage Design' }],
+    chapters: [{ id: 'ch08', label: 'Ch. 8: Drainage Design' }],
     tools: [
-      { label: 'Drainage Designer', href: 'tools/drainage/', note: 'inflow, layer capacity, pipe sizing, filter criteria — live' },
+      { label: 'Drainage Designer', href: 'tools/drainage/', note: 'inflow, layer capacity, pipe sizing, filter criteria, live' },
       { label: 'DRIP', external: 'https://www.fhwa.dot.gov/pavement/software.cfm', note: 'FHWA Drainage Requirements In Pavements' },
     ],
     downloads: [{ label: 'HW6 assignment', file: 'hw6-assignment.pdf', kind: 'assignment' }],
@@ -246,16 +246,16 @@ export const homeworks: Homework[] = [
       { label: 'P2', desc: 'Problem 11-10, Huang p. 532' },
       { label: 'P3', desc: 'Problem 11-12, Huang p. 532' },
     ],
-    chapters: [{ id: 'ch11', label: 'Ch. 11 — Flexible Pavement Design' }],
+    chapters: [{ id: 'ch11', label: 'Ch. 11: Flexible Pavement Design' }],
     tools: [
-      { label: 'AASHTO Design Studio', href: 'tools/aashto/', note: 'solve the 1993 flexible equation for SN, W₁₈, or reliability — and split SN into layers, live' },
+      { label: 'AASHTO Design Studio', href: 'tools/aashto/', note: 'solve the 1993 flexible equation for SN, W₁₈, or reliability, and split SN into layers, live' },
       { label: 'ESAL Calculator', href: 'tools/esal-calculator/', note: 'design traffic input for the nomographs' },
     ],
     downloads: [
       { label: 'HW7 assignment', file: 'hw7-assignment.pdf', kind: 'assignment' },
-      { label: 'Handout — AASHTO flexible nomographs', file: 'handout-aashto-nomographs.pdf', kind: 'handout' },
-      { label: 'Handout — Worked AASHTO example', file: 'handout-aashto-example.pdf', kind: 'handout' },
-      { label: 'Handout — Textbook explanation', file: 'handout-textbook-explanation.pdf', kind: 'handout' },
+      { label: 'Handout: AASHTO flexible nomographs', file: 'handout-aashto-nomographs.pdf', kind: 'handout' },
+      { label: 'Handout: Worked AASHTO example', file: 'handout-aashto-example.pdf', kind: 'handout' },
+      { label: 'Handout: Textbook explanation', file: 'handout-textbook-explanation.pdf', kind: 'handout' },
     ],
   },
   {
@@ -273,24 +273,24 @@ export const homeworks: Homework[] = [
       'Accumulate damage with Miner’s law and plot rutting and cracking growth',
     ],
     problems: [
-      { label: 'P1', desc: 'Flexible mechanistic design — rural 4-lane highway, Sangamon County, 20-year performance period (PV 15,000 / SU 320 / MU 300, SSR fair, PG 64-22)' },
+      { label: 'P1', desc: 'Flexible mechanistic design: rural 4-lane highway, Sangamon County, 20-year performance period (PV 15,000 / SU 320 / MU 300, SSR fair, PG 64-22)' },
       { label: 'P2a', desc: 'WinJULEA: tensile and compressive strains at mid-depth of each sublayer under a 6,000 lb wheel on a 6 in radius' },
       { label: 'P2b', desc: 'AASHTOWare transfer functions: bottom-up cracking and rutting after 1,000 reps/day × 90 days' },
       { label: 'P2c', desc: 'Total rutting and the layer that governs it' },
     ],
     chapters: [
-      { id: 'ch03', label: 'Ch. 3 — KENLAYER Computer Program' },
-      { id: 'ch11', label: 'Ch. 11 — Flexible Pavement Design' },
+      { id: 'ch03', label: 'Ch. 3: KENLAYER Computer Program' },
+      { id: 'ch11', label: 'Ch. 11: Flexible Pavement Design' },
     ],
     tools: [
-      { label: 'WinJULEA', note: 'desktop layered-elastic analysis — provided in class' },
+      { label: 'WinJULEA', note: 'desktop layered-elastic analysis, provided in class' },
       { label: 'Transfer-Function Damage', href: 'tools/damage/', note: 'rutting & fatigue accumulation from your strains, live' },
     ],
     downloads: [
       { label: 'HW8 assignment', file: 'hw8-assignment.pdf', kind: 'assignment' },
-      { label: 'Handout — AASHTO flexible nomographs', file: 'handout-aashto-nomographs.pdf', kind: 'handout' },
-      { label: 'Handout — Worked AASHTO example', file: 'handout-aashto-example.pdf', kind: 'handout' },
-      { label: 'Handout — Textbook explanation', file: 'handout-textbook-explanation.pdf', kind: 'handout' },
+      { label: 'Handout: AASHTO flexible nomographs', file: 'handout-aashto-nomographs.pdf', kind: 'handout' },
+      { label: 'Handout: Worked AASHTO example', file: 'handout-aashto-example.pdf', kind: 'handout' },
+      { label: 'Handout: Textbook explanation', file: 'handout-textbook-explanation.pdf', kind: 'handout' },
     ],
   },
   {
@@ -315,13 +315,13 @@ export const homeworks: Homework[] = [
       { label: 'P5', desc: 'Problem 12-8, Huang p. 599' },
     ],
     chapters: [
-      { id: 'ch04', label: 'Ch. 4 — Stresses and Deflections in Rigid Pavements' },
-      { id: 'ch12', label: 'Ch. 12 — Rigid Pavement Design' },
-      { id: 'ch05', label: 'Ch. 5 — KENSLABS Computer Program' },
+      { id: 'ch04', label: 'Ch. 4: Stresses and Deflections in Rigid Pavements' },
+      { id: 'ch12', label: 'Ch. 12: Rigid Pavement Design' },
+      { id: 'ch05', label: 'Ch. 5: KENSLABS Computer Program' },
     ],
     tools: [
-      { label: 'PCA Rigid Thickness', href: 'tools/pca/', note: 'fatigue + erosion damage summation — covers Problems 12-3 and 12-4, live' },
-      { label: 'AASHTO Design Studio', href: 'tools/aashto/', note: 'rigid design equation + effective k — covers Problems 12-6, 12-7, 12-8, live' },
+      { label: 'PCA Rigid Thickness', href: 'tools/pca/', note: 'fatigue + erosion damage summation; covers Problems 12-3 and 12-4, live' },
+      { label: 'AASHTO Design Studio', href: 'tools/aashto/', note: 'rigid design equation + effective k; covers Problems 12-6, 12-7, 12-8, live' },
       { label: 'Westergaard Slab Stress', href: 'tools/westergaard/', note: 'interior, edge, corner + curling, live' },
     ],
     downloads: [{ label: 'HW9 assignment', file: 'hw9-assignment.pdf', kind: 'assignment' }],
@@ -341,11 +341,11 @@ export const homeworks: Homework[] = [
       'Assemble a complete pavement LCA and identify the governing life-cycle stage',
     ],
     problems: [
-      { label: 'P1a', desc: 'ACR/PCR check — B747-400 on runways rated 700/R/C/Y/T, 650/F/C/Y/T, 600/F/B/X/T' },
-      { label: 'P1b', desc: 'FAARFIELD subbase design — 4,000 annual departures, CBR 5% vs. stabilized 7%' },
-      { label: 'P2', desc: 'Pavement LCA over 20 years — GHG emissions per lane-mile with IRI-triggered mill-and-overlay' },
+      { label: 'P1a', desc: 'ACR/PCR check: B747-400 on runways rated 700/R/C/Y/T, 650/F/C/Y/T, 600/F/B/X/T' },
+      { label: 'P1b', desc: 'FAARFIELD subbase design: 4,000 annual departures, CBR 5% vs. stabilized 7%' },
+      { label: 'P2', desc: 'Pavement LCA over 20 years: GHG emissions per lane-mile with IRI-triggered mill-and-overlay' },
     ],
-    chapters: [{ id: 'ch13', label: 'Ch. 13 — Design of Overlays' }],
+    chapters: [{ id: 'ch13', label: 'Ch. 13: Design of Overlays' }],
     tools: [
       { label: 'ACR/PCR Compatibility', href: 'tools/acr/', note: 'runway rating codes → where the aircraft may operate, live' },
       { label: 'FAARFIELD', external: 'https://www.faa.gov/airports/engineering/design_software', note: 'FAA airfield pavement design software' },

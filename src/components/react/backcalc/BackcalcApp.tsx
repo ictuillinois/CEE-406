@@ -61,7 +61,7 @@ interface Preset {
  *  and the one students otherwise never meet. */
 const PRESETS: Preset[] = [
   {
-    label: 'Synthetic — answer known',
+    label: 'Synthetic, answer known',
     tip: 'Basin generated forward from E = 420 / 28 / 11 ksi, then rounded to the 0.01 mil an FWD reports. Fit it and check whether you get those moduli back.',
     P: '9000', a: '5.9', tempF: '68',
     sensors: DEMO_SENSORS,
@@ -69,7 +69,7 @@ const PRESETS: Preset[] = [
   },
   {
     label: 'Huang Example 13.11',
-    tip: 'The worked example on p. 638. M_R comes straight out at 16,900 psi. SN_eff only reaches the printed 2.88 once you tick the manual box and enter 0.92, the factor Huang reads off Fig. 13.18 — the built-in suggestion gives 0.82 and SN_eff = 3.14. Two sensors, three unknowns: the layered fit cannot be trusted here and says so.',
+    tip: 'The worked example on p. 638. M_R comes straight out at 16,900 psi. SN_eff only reaches the printed 2.88 once you tick the manual box and enter 0.92, the factor Huang reads off Fig. 13.18. The built-in suggestion gives 0.82 and SN_eff = 3.14. Two sensors, three unknowns: the layered fit cannot be trusted here and says so.',
     P: '9000', a: '5.9', tempF: '80',
     sensors: [['0', '13.90'], ['36', '3.55']],
     layers: [
@@ -79,7 +79,7 @@ const PRESETS: Preset[] = [
     ],
   },
   {
-    label: 'Thin surface — indeterminate',
+    label: 'Thin surface, indeterminate',
     tip: 'A 2 in surface over a thick base, measured with 1.5% instrument noise. It was generated from 200 / 18 / 8 ksi. Fit it: the subgrade comes back within a percent, the basin matches to about 1.5% RMS, and the surface modulus comes back roughly half the truth. That is Huang §9.4.3, quantified.',
     P: '9000', a: '5.9', tempF: '68',
     // Forward solution of 200 / 18 / 8 ksi with 1.5% measurement noise — the
@@ -381,12 +381,12 @@ export default function BackcalcApp() {
         <h2 className="cee-panel__title" style={{ marginTop: '1.5rem' }}>Assumed structure</h2>
         <p className="cee-hint" style={{ marginTop: '-0.35rem' }}>
           Thicknesses come from cores or construction records and are held fixed. The moduli are
-          only a starting guess — the fit moves them.
+          only a starting guess; the fit moves them.
         </p>
 
         <div className="cee-field">
           <span className="cee-field__label">
-            <span>Layers<Tip text="Top to bottom. The last layer is the subgrade half-space and its thickness is ignored. Tick 'hold' to freeze a modulus you know independently — a cored AC layer tested in the lab, for instance." /></span>
+            <span>Layers<Tip text="Top to bottom. The last layer is the subgrade half-space and its thickness is ignored. Tick 'hold' to freeze a modulus you know independently, such as a cored AC layer tested in the lab." /></span>
             <span className="cee-field__unit">in · psi · ν</span>
           </span>
           {layers.map((l, i) => (
@@ -437,7 +437,7 @@ export default function BackcalcApp() {
           <input id="bc-t" className="cee-input" type="number" step="1" value={tempF}
             disabled={manualT} onChange={e => setTempF(e.target.value)} />
           <p className="cee-hint">
-            Suggested d₀ factor ≈ {fmt(suggestedT, 3)} — an interpolation, <strong>not</strong>{' '}
+            Suggested d₀ factor ≈ {fmt(suggestedT, 3)}, an interpolation, <strong>not</strong>{' '}
             Figure 13.18. Read the chart and enter the real value below.
           </p>
           <label className="cee-hint" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.35rem' }}>
@@ -467,9 +467,9 @@ export default function BackcalcApp() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Enter the basin and the load.</strong> Offsets in inches from the plate center, deflections in mils. The plate pressure follows from load and radius.</li>
-              <li><strong>Enter the structure you believe is down there</strong> — thicknesses from cores, and a rough guess at each modulus. The guess only has to be within a factor of a few.</li>
+              <li><strong>Enter the structure you believe is down there</strong>: thicknesses from cores, and a rough guess at each modulus. The guess only has to be within a factor of a few.</li>
               <li><strong>Fit.</strong> The solver adjusts the moduli until the computed basin matches the measured one, then reports how well it matched.</li>
-              <li><strong>Read the sensitivity chart before you believe the moduli.</strong> A layer with low sensitivity is one the basin cannot see — its backcalculated modulus is close to arbitrary, and a different seed will give a different answer that fits just as well.</li>
+              <li><strong>Read the sensitivity chart before you believe the moduli.</strong> A layer with low sensitivity is one the basin cannot see, so its backcalculated modulus is close to arbitrary, and a different seed will give a different answer that fits just as well.</li>
               <li><strong>Compare against the AASHTO closed form.</strong> It uses one outer sensor for the subgrade and d₀ for everything above. When the two routes disagree, ask which assumption broke.</li>
             </ol>
             A basin match is necessary but not sufficient. Huang §9.4.3 records two agencies
@@ -491,7 +491,7 @@ export default function BackcalcApp() {
               <Kpi label="Subgrade modulus" value={fit ? fmt(fit.E[fit.E.length - 1] / 1000, 1) : '—'} unit="ksi"
                 tip="Backcalculated from the layered-elastic fit. This is the best-determined layer in almost every basin, because the outer sensors see nothing else." />
               <Kpi label="M R (AASHTO Eq. 13.22)" value={aashto ? fmt(aashto.mrBackcalculated / 1000, 1) : '—'} unit="ksi"
-                tip="From one outer sensor and Boussinesq alone. Compare it with the fitted subgrade modulus — they are answering the same question with very different assumptions." />
+                tip="From one outer sensor and Boussinesq alone. Compare it with the fitted subgrade modulus; they are answering the same question with very different assumptions." />
               <Kpi label="SN eff" value={aashto?.snEff ? fmt(aashto.snEff, 2) : '—'}
                 tip="Effective structural number of the existing pavement, AASHTO Eq. 13.26. This is what an overlay design subtracts from the SN a new pavement would need." />
             </KpiStrip>
@@ -518,7 +518,7 @@ export default function BackcalcApp() {
                 You are asking for <strong>{freeCount} free moduli</strong> from{' '}
                 <strong>{sensorData.offsets.length} sensor{sensorData.offsets.length === 1 ? '' : 's'}</strong>.
                 There are at least as many unknowns as measurements, so the fit can drive the error
-                to zero through infinitely many different modulus sets — <strong>a perfect basin
+                to zero through infinitely many different modulus sets. <strong>A perfect basin
                 match here means nothing</strong>. Add sensors, or hold a modulus fixed at a value
                 you know independently.
               </span></p>
@@ -528,7 +528,7 @@ export default function BackcalcApp() {
               <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
                 The best match is <strong>{fmt(fit.rmsPct, 1)}% RMS</strong>, which is poor. No set of
                 moduli for <em>this</em> layer structure reproduces the measured basin. Something in the
-                assumed section is wrong — a thickness, a missing stiff or soft layer, a rigid bottom, or
+                assumed section is wrong: a thickness, a missing stiff or soft layer, a rigid bottom, or
                 a cracked layer that is not behaving elastically at all.
               </span></p>
             )}
@@ -568,12 +568,12 @@ export default function BackcalcApp() {
                 ? `The fitted moduli reproduce the measured basin to ${fmt(fit.rmsPct, 2)}% RMS, with the largest single-sensor error ${fmt(fit.maxErrPct, 1)}%.`
                 : 'The seed moduli produce this basin; fit to move them until it matches the measurement.'}
             >
-              The basin is plotted the way the pavement moves — <strong>down is more deflection</strong>.
+              The basin is plotted the way the pavement moves, so <strong>down is more deflection</strong>.
               Read it from the outside in: the far sensors are outside the stress zone of the bound
               layers, so they carry information about the <em>subgrade only</em>. Each sensor closer to
               the plate adds one more layer to what the reading depends on. That nesting is the whole
               basis of backcalculation, and it is also why the surface layer is always the least
-              certain — by the time you get to d₀, every layer is in the answer at once.
+              certain, because by the time you get to d₀, every layer is in the answer at once.
             </ChartFigure>
 
             {fit && (
@@ -587,7 +587,7 @@ export default function BackcalcApp() {
               >
                 A long bar means the basin <em>notices</em> that layer: get its modulus wrong and the
                 match falls apart, so the backcalculated value is trustworthy. A short bar means the
-                opposite — that modulus could be off by a factor of two and the basin would barely
+                opposite: that modulus could be off by a factor of two and the basin would barely
                 change, so what you are reading is mostly your seed guess coming back to you. This is
                 Huang's warning in §9.4.3 made measurable: <em>"a good match between computed and
                 measured deflections can be obtained even if totally unreasonable moduli are derived
@@ -622,7 +622,7 @@ export default function BackcalcApp() {
 
             <div className="cee-chart-grid">
               <Card title="Backcalculated moduli"
-                subtitle="Layered-elastic fit — the exact Burmister solution inverted">
+                subtitle="Layered-elastic fit: the exact Burmister solution inverted">
                 <div className="cee-tablewrap">
                   <table className="cee-table">
                     <thead>
@@ -684,7 +684,7 @@ export default function BackcalcApp() {
                       <td>the upper subgrade</td></tr>
                     <tr><td>Area</td><td>d₀…d₃₆</td>
                       <td>{indices.area === null ? '—' : `${fmt(indices.area, 1)} in`}</td>
-                      <td>overall stiffness — 36 in is a perfectly rigid basin</td></tr>
+                      <td>overall stiffness; 36 in is a perfectly rigid basin</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -698,7 +698,7 @@ export default function BackcalcApp() {
             <p className="cee-note">
               Layered-elastic route: Huang (2004) App. B, inverted by Levenberg–Marquardt on ln E.
               AASHTO route: Eqs. 13.22–13.26 (§13.5.2), which rest on Odemark's two-layer
-              approximation rather than Burmister's theory — Huang Table 13.10 compares the two and
+              approximation rather than Burmister's theory. Huang Table 13.10 compares the two and
               the difference is not small. Backcalculation is non-unique by nature; report the seed
               you started from along with the moduli you ended at.
             </p>

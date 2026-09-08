@@ -48,7 +48,7 @@ export default function CrossSectionApp() {
       // the boot path is DOM work that cannot fail on a browser that got here.
       setFailure(
         err instanceof Error && /webgl/i.test(err.message)
-          ? 'This browser could not open a WebGL context, so the 3-D viewport cannot start. Hardware acceleration is usually the cause — check it is enabled in your browser settings.'
+          ? 'This browser could not open a WebGL context, so the 3-D viewport cannot start. Hardware acceleration is usually the cause, so check it is enabled in your browser settings.'
           : 'The studio failed to start in this browser.'
       );
     }
@@ -62,28 +62,28 @@ export default function CrossSectionApp() {
         <summary>How to use this tool</summary>
         <div className="cee-howto__body">
           <ol>
-            <li><strong>Start from a template.</strong> Thirteen sections ship with the tool — FAA flexible and rigid, conventional and deep-strength highway, JPCP, CRCP, composite, permeable, FDR. Pick the nearest one and edit it rather than building from scratch.</li>
+            <li><strong>Start from a template.</strong> Thirteen sections ship with the tool: FAA flexible and rigid, conventional and deep-strength highway, JPCP, CRCP, composite, permeable, FDR. Pick the nearest one and edit it rather than building from scratch.</li>
             <li><strong>Set the layer structure.</strong> Every thickness in the bottom strip is the real engineering thickness in millimeters, drawn to scale. The subgrade is the exception: it is infinite in the analysis, so it carries a display thickness set under Section Geometry and is marked with an asterisk.</li>
-            <li><strong>Pick materials.</strong> Click a layer to select it, then a tile in the Material Library. The eighteen textures are procedural and seeded, so the same settings always produce the same figure — a section rendered today matches the one in a report from last term.</li>
+            <li><strong>Pick materials.</strong> Click a layer to select it, then a tile in the Material Library. The eighteen textures are procedural and seeded, so the same settings always produce the same figure, so a section rendered today matches the one in a report from last term.</li>
             <li><strong>Frame it.</strong> Drag to orbit, wheel to zoom, right-drag to pan, or use the Isometric / Front / Fit buttons. Orthographic projection is the honest one for a dimensioned figure; perspective reads better in a presentation.</li>
-            <li><strong>Take the image.</strong> <strong>Copy</strong> puts the PNG straight on your clipboard — paste it into Word, PowerPoint, LaTeX-adjacent editors, or a lab notebook without ever touching a file. <strong>Copy transparent</strong> does the same with no background, so the section sits on whatever the slide is already using. <strong>Export</strong> downloads the file instead.</li>
+            <li><strong>Take the image.</strong> <strong>Copy</strong> puts the PNG straight on your clipboard. Paste it into Word, PowerPoint, LaTeX-adjacent editors, or a lab notebook without ever touching a file. <strong>Copy transparent</strong> does the same with no background, so the section sits on whatever the slide is already using. <strong>Export</strong> downloads the file instead.</li>
           </ol>
           <p>
             Copy and Export both render at the resolution chosen under Export, not at the size of the
-            viewport on screen — 2400&nbsp;×&nbsp;1800 is 300&nbsp;dpi at 8&nbsp;×&nbsp;6&nbsp;in and is
+            viewport on screen. 2400&nbsp;×&nbsp;1800 is 300&nbsp;dpi at 8&nbsp;×&nbsp;6&nbsp;in and is
             the right default for a report figure. The selection outline never appears in the output.
             <strong> Ctrl</strong>+<strong>Alt</strong>+<strong>C</strong> copies without leaving the
             keyboard.
           </p>
           <p>
             A transparent PNG keeps its alpha channel through the clipboard on Windows and macOS.
-            A few consumers flatten it — some chat clients, and older builds of Office — and there
+            A few consumers flatten it (some chat clients, and older builds of Office), and there
             the section will land on a white or black card instead. If that happens, use
             <strong> Copy</strong> with <em>Publication white</em> selected under Background and you
             get the same figure on a known ground.
           </p>
           <p>
-            Save and Open store the whole section — geometry, layers, materials, camera, lighting —
+            Save and Open store the whole section: geometry, layers, materials, camera, lighting,
             as a <code>.pavement.json</code> file, so a figure can be reopened and re-rendered at a
             different size or angle later instead of being redrawn.
           </p>
@@ -134,7 +134,7 @@ export default function CrossSectionApp() {
                   <span className="xs-unit">mm</span>
                 </div>
                 <div className="xs-field">
-                  <label htmlFor="xs-sec-recess-x" title="How far each layer is stepped back from the one below it along the length — the staircase that lets every layer be seen at once. Zero gives a flush block.">Step (length)</label>
+                  <label htmlFor="xs-sec-recess-x" title="How far each layer is stepped back from the one below it along the length. This is the staircase that lets every layer be seen at once. Zero gives a flush block.">Step (length)</label>
                   <input type="number" id="xs-sec-recess-x" className="xs-num" min="0" max="2000" step="25" />
                   <span className="xs-unit">mm</span>
                 </div>
@@ -156,7 +156,7 @@ export default function CrossSectionApp() {
               <summary><Icon name="video" /> Camera</summary>
               <div className="xs-group">
                 <div className="xs-field">
-                  <label htmlFor="xs-cam-proj" title="Orthographic keeps parallel edges parallel and thicknesses comparable anywhere in the frame — the right choice for a dimensioned figure. Perspective reads better on a slide.">Projection</label>
+                  <label htmlFor="xs-cam-proj" title="Orthographic keeps parallel edges parallel and thicknesses comparable anywhere in the frame, which is the right choice for a dimensioned figure. Perspective reads better on a slide.">Projection</label>
                   <select id="xs-cam-proj" className="xs-select" defaultValue="persp">
                     <option value="ortho">Orthographic</option>
                     <option value="persp">Perspective</option>
@@ -256,7 +256,7 @@ export default function CrossSectionApp() {
                   </select>
                 </div>
                 <div className="xs-field">
-                  <label htmlFor="xs-exp-size" title="Output resolution. This is what both Export and Copy render at — the viewport size on screen has no effect on it.">Resolution</label>
+                  <label htmlFor="xs-exp-size" title="Output resolution. This is what both Export and Copy render at; the viewport size on screen has no effect on it.">Resolution</label>
                   <select id="xs-exp-size" className="xs-select" defaultValue="2400x1800">
                     <option value="1600x1200">1600 × 1200</option>
                     <option value="2400x1800">2400 × 1800 (300 dpi @ 8×6 in)</option>
@@ -284,7 +284,7 @@ export default function CrossSectionApp() {
                   </button>
                 </div>
                 <p className="xs-field-note">
-                  Paste straight into a report or a slide — no file, no download folder. Alpha survives
+                  Paste straight into a report or a slide, with no file and no download folder. Alpha survives
                   the clipboard in Word, PowerPoint and Google Slides; a few apps flatten it to white.
                 </p>
 
@@ -345,7 +345,7 @@ export default function CrossSectionApp() {
               <summary><Icon name="sliders" /> Material Properties</summary>
               <div className="xs-group">
                 <div className="xs-field">
-                  <label htmlFor="xs-mat-tint" title="Multiplies the texture color. Use it sparingly — a tinted P-401 stops looking like P-401.">Tint</label>
+                  <label htmlFor="xs-mat-tint" title="Multiplies the texture color. Use it sparingly; a tinted P-401 stops looking like P-401.">Tint</label>
                   <input type="color" id="xs-mat-tint" className="xs-color" defaultValue="#ffffff" />
                   <button type="button" className="xs-icon-btn" id="xs-mat-tint-reset" title="Reset tint" aria-label="Reset tint"><Icon name="eraser" /></button>
                 </div>
@@ -358,7 +358,7 @@ export default function CrossSectionApp() {
                   <input type="range" id="xs-mat-rough" className="xs-range" min="0.05" max="1" step="0.01" />
                 </div>
                 <div className="xs-field">
-                  <label htmlFor="xs-mat-scale" title="Size of the texture tile relative to true scale. 1.0 is true scale — the aggregate is the size the mix design says it is. Change it only for effect.">Texture scale</label>
+                  <label htmlFor="xs-mat-scale" title="Size of the texture tile relative to true scale. 1.0 is true scale, so the aggregate is the size the mix design says it is. Change it only for effect.">Texture scale</label>
                   <input type="range" id="xs-mat-scale" className="xs-range" min="0.25" max="4" step="0.05" />
                 </div>
                 <div className="xs-field">
@@ -368,7 +368,7 @@ export default function CrossSectionApp() {
                 <div className="xs-mini-btn-row">
                   <button type="button" id="xs-mat-reset" className="xs-btn"><Icon name="reset" /> Reset material</button>
                 </div>
-                <p className="xs-field-note">Textures are procedural and seeded — the same settings always reproduce the exact same figure.</p>
+                <p className="xs-field-note">Textures are procedural and seeded, so the same settings always reproduce the exact same figure.</p>
               </div>
             </details>
           </aside>
@@ -392,7 +392,7 @@ export default function CrossSectionApp() {
       <p className="cee-note">
         Thicknesses are drawn true to scale; the subgrade is a half-space and its drawn depth is a
         visualization choice, not a design value. Materials are procedural textures keyed to FAA
-        item numbers (P-401, P-209, P-154, P-501, P-304, P-306) and to the common highway courses —
+        item numbers (P-401, P-209, P-154, P-501, P-304, P-306) and to the common highway courses,
         they are a legible stand-in for the material, not a photograph of a particular mix. Ported
         from the Cross-Section Studio E-Lab.
       </p>

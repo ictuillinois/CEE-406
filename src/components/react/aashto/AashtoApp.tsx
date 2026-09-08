@@ -311,7 +311,7 @@ export default function AashtoApp() {
             <div className="cee-row">
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-r">
-                  <span>Reliability R<Tip text="Probability that the pavement lasts the design period. Higher R makes Z_R more negative, which subtracts traffic capacity — the design gets thicker. AASHTO suggests 80–99% for interstates, 50–80% for local roads." /></span>
+                  <span>Reliability R<Tip text="Probability that the pavement lasts the design period. Higher R makes Z_R more negative, which subtracts traffic capacity, so the design gets thicker. AASHTO suggests 80–99% for interstates, 50–80% for local roads." /></span>
                   <span className="cee-field__unit">%</span>
                 </label>
                 <input id="aa-r" className="cee-input" type="number" min="50" max="99.99" step="1" value={rStr} onChange={e => setR(e.target.value)} />
@@ -342,7 +342,7 @@ export default function AashtoApp() {
             {fSolve !== 'W18' && (
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-w18">
-                  <span>Design ESALs W₁₈<Tip text="Cumulative 18-kip equivalent single axle loads in the design lane over the design period — the output of the ESAL Calculator." /></span>
+                  <span>Design ESALs W₁₈<Tip text="Cumulative 18-kip equivalent single axle loads in the design lane over the design period: the output of the ESAL Calculator." /></span>
                   <span className="cee-field__unit">–</span>
                 </label>
                 <input id="aa-w18" className="cee-input" type="text" value={fW18} onChange={e => setFW18(e.target.value)} />
@@ -351,7 +351,7 @@ export default function AashtoApp() {
             {fSolve !== 'SN' && (
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-sn">
-                  <span>Structural number SN<Tip text="An abstract index of total pavement strength: SN = Σ aᵢ·mᵢ·Dᵢ. It is not a thickness — the layered solution below turns it into one." /></span>
+                  <span>Structural number SN<Tip text="An abstract index of total pavement strength: SN = Σ aᵢ·mᵢ·Dᵢ. It is not a thickness; the layered solution below turns it into one." /></span>
                   <span className="cee-field__unit">–</span>
                 </label>
                 <input id="aa-sn" className="cee-input" type="number" min="0" step="0.1" value={fSN} onChange={e => setFSN(e.target.value)} />
@@ -388,7 +388,7 @@ export default function AashtoApp() {
             <div className="cee-row">
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-a1">
-                  <span>a₁ surface<Tip text="HMA layer coefficient — about 0.42–0.44 for a dense-graded surface at 400,000–450,000 psi. Read it off AASHTO Fig. 2.5 for your modulus." /></span>
+                  <span>a₁ surface<Tip text="HMA layer coefficient, about 0.42–0.44 for a dense-graded surface at 400,000–450,000 psi. Read it off AASHTO Fig. 2.5 for your modulus." /></span>
                   <span className="cee-field__unit">/in</span>
                 </label>
                 <input id="aa-a1" className="cee-input" type="number" min="0" step="0.01" value={a1} onChange={e => setA1(e.target.value)} />
@@ -404,7 +404,7 @@ export default function AashtoApp() {
             <div className="cee-row">
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-a3">
-                  <span>a₃ subbase<Tip text="Subbase layer coefficient — around 0.11 for a sand-gravel subbase at 15,000 psi." /></span>
+                  <span>a₃ subbase<Tip text="Subbase layer coefficient, around 0.11 for a sand-gravel subbase at 15,000 psi." /></span>
                   <span className="cee-field__unit">/in</span>
                 </label>
                 <input id="aa-a3" className="cee-input" type="number" min="0" step="0.01" value={a3} onChange={e => setA3(e.target.value)} />
@@ -420,14 +420,14 @@ export default function AashtoApp() {
             <div className="cee-row">
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-m3">
-                  <span>m₃ subbase<Tip text="Drainage coefficient for the subbase — pick it from the table below the results." /></span>
+                  <span>m₃ subbase<Tip text="Drainage coefficient for the subbase. Pick it from the table below the results." /></span>
                   <span className="cee-field__unit">–</span>
                 </label>
                 <input id="aa-m3" className="cee-input" type="number" min="0" step="0.05" value={m3} onChange={e => setM3(e.target.value)} />
               </div>
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-mrb">
-                  <span>M_R base<Tip text="Resilient modulus of the base material — used to compute the SN the surface layer alone must supply." /></span>
+                  <span>M_R base<Tip text="Resilient modulus of the base material, used to compute the SN the surface layer alone must supply." /></span>
                   <span className="cee-field__unit">psi</span>
                 </label>
                 <input id="aa-mrb" className="cee-input" type="number" min="1" step="1000" value={mrBase} onChange={e => setMrBase(e.target.value)} />
@@ -435,7 +435,7 @@ export default function AashtoApp() {
             </div>
             <div className="cee-field">
               <label className="cee-field__label" htmlFor="aa-mrs">
-                <span>M_R subbase<Tip text="Resilient modulus of the subbase — used to compute the SN that surface + base together must supply." /></span>
+                <span>M_R subbase<Tip text="Resilient modulus of the subbase, used to compute the SN that surface + base together must supply." /></span>
                 <span className="cee-field__unit">psi</span>
               </label>
               <input id="aa-mrs" className="cee-input" type="number" min="1" step="1000" value={mrSub} onChange={e => setMrSub(e.target.value)} />
@@ -457,7 +457,7 @@ export default function AashtoApp() {
             {rSolve !== 'W18' && (
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-gw">
-                  <span>Design ESALs W₁₈<Tip text="Cumulative 18-kip ESALs in the design lane. Rigid EALFs differ from flexible ones — use the rigid column." /></span>
+                  <span>Design ESALs W₁₈<Tip text="Cumulative 18-kip ESALs in the design lane. Rigid EALFs differ from flexible ones, so use the rigid column." /></span>
                   <span className="cee-field__unit">–</span>
                 </label>
                 <input id="aa-gw" className="cee-input" type="text" value={gW18} onChange={e => setGW18(e.target.value)} />
@@ -483,7 +483,7 @@ export default function AashtoApp() {
               </div>
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-gec">
-                  <span>Concrete E_c<Tip text="Elastic modulus of the concrete — typically 4–5 ×10⁶ psi." /></span>
+                  <span>Concrete E_c<Tip text="Elastic modulus of the concrete, typically 4–5 ×10⁶ psi." /></span>
                   <span className="cee-field__unit">psi</span>
                 </label>
                 <input id="aa-gec" className="cee-input" type="text" value={gEc} onChange={e => setGEc(e.target.value)} />
@@ -515,7 +515,7 @@ export default function AashtoApp() {
               </div>
               <div className="cee-field">
                 <label className="cee-field__label" htmlFor="aa-gpt">
-                  <span>Terminal pₜ<Tip text="Terminal serviceability. It appears twice in the rigid equation — in ΔPSI and in the exponent (4.22 − 0.32 pₜ)." /></span>
+                  <span>Terminal pₜ<Tip text="Terminal serviceability. It appears twice in the rigid equation: in ΔPSI and in the exponent (4.22 − 0.32 pₜ)." /></span>
                   <span className="cee-field__unit">–</span>
                 </label>
                 <input id="aa-gpt" className="cee-input" type="number" min="0" max="5" step="0.1" value={gPt} onChange={e => setGPt(e.target.value)} />
@@ -523,7 +523,7 @@ export default function AashtoApp() {
             </div>
             <div className="cee-field">
               <label className="cee-field__label" htmlFor="aa-gp0">
-                <span>Initial p₀<Tip text="Initial serviceability — 4.5 for rigid pavements at the Road Test." /></span>
+                <span>Initial p₀<Tip text="Initial serviceability: 4.5 for rigid pavements at the Road Test." /></span>
                 <span className="cee-field__unit">–</span>
               </label>
               <input id="aa-gp0" className="cee-input" type="number" min="0" max="5" step="0.1" value={gP0} onChange={e => setGP0(e.target.value)} />
@@ -569,12 +569,12 @@ export default function AashtoApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Pick the method</strong> — flexible (Huang Ch. 11), rigid (Ch. 12), or the effective-k season average that feeds the rigid design.</li>
+              <li><strong>Pick the method</strong>: flexible (Huang Ch. 11), rigid (Ch. 12), or the effective-k season average that feeds the rigid design.</li>
               <li><strong>Pick what to solve for.</strong> The design equation is one relationship among W₁₈, thickness, reliability, and support; this inverts it in whichever direction the problem asks.</li>
               <li><strong>Read the design chart</strong>: your point sits on the curve for your reliability. Moving up a reliability curve is what the R term costs you in thickness.</li>
               <li><strong>Convert SN to layers</strong> (flexible): each layer is designed against the modulus of the material beneath it, and thicknesses are rounded up to constructible increments.</li>
             </ol>
-            The equations are transcendental in SN and D, so those directions are solved by bisection rather than a nomograph — the same answer the AASHTO design charts give, without chart-reading error.
+            The equations are transcendental in SN and D, so those directions are solved by bisection rather than a nomograph. It is the same answer the AASHTO design charts give, without chart-reading error.
           </div>
         </details>
 
@@ -584,7 +584,7 @@ export default function AashtoApp() {
           <>
             <KpiStrip>
               <Kpi accent label="Structural number SN" value={fmt(flex.SN, 2)}
-                tip="Total structural capacity required. It is an index, not a thickness — the layered solution converts it." />
+                tip="Total structural capacity required. It is an index, not a thickness; the layered solution converts it." />
               <Kpi label="Design ESALs W₁₈" value={flex.w.toExponential(2)}
                 tip="Traffic the section carries to terminal serviceability at this reliability." />
               <Kpi label="Reliability R" value={fmt(flex.rOut, 1)} unit="%"
@@ -610,7 +610,7 @@ export default function AashtoApp() {
             >
               Each curve is the design equation at one reliability. Reading up from your SN gives the
               traffic the section carries; reading across from your W₁₈ gives the SN you need.
-              <strong> The vertical gap between curves is the price of reliability</strong> — it is
+              <strong> The vertical gap between curves is the price of reliability</strong>. It is
               pure penalty, subtracted from capacity through the Z_R·S₀ term.
             </ChartFigure>
 
@@ -656,7 +656,7 @@ export default function AashtoApp() {
               AASHTO 1993 Part II flexible equation (Huang Eq. 11.34). Layer thicknesses follow the
               staged procedure: each layer is designed against the modulus of the material beneath it,
               SNᵢ* = aᵢ·mᵢ·Dᵢ is what it actually supplies, and thicknesses round up to ½ in.
-              Sanity checks — Problem 11-9: SN = 0.44 × 12 = 5.28, M_R = 10,000 psi, ΔPSI = 1.7,
+              Sanity checks. Problem 11-9: SN = 0.44 × 12 = 5.28, M_R = 10,000 psi, ΔPSI = 1.7,
               S₀ = 0.5, W₁₈ = 3×10⁷ → R ≈ 88%. Problem 11-12: W₁₈ = 5×10⁶, M_R = 5000 psi,
               ΔPSI = 1.7, R = 50% → SN ≈ 4.2.
             </p>
@@ -665,7 +665,7 @@ export default function AashtoApp() {
 
         {tab === 'rigid' && (!rigid ? (
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
-            No solution for these inputs. The slab term D^0.75 − 18.42/(E_c/k)^0.25 must stay positive —
+            No solution for these inputs. The slab term D^0.75 − 18.42/(E_c/k)^0.25 must stay positive.
             a very soft foundation under a thin slab pushes it negative.
           </span></p>
         ) : (
@@ -678,7 +678,7 @@ export default function AashtoApp() {
               <Kpi label="Reliability R" value={fmt(rigid.rOut, 1)} unit="%"
                 tip="Probability the slab survives the design traffic." />
               <Kpi label="W₁₈ without reliability" value={rigid.wNoRel ? rigid.wNoRel.toExponential(2) : '—'}
-                tip="Performance traffic with the Z_R·S₀ term dropped — this is what Huang Problem 12-7 asks for." />
+                tip="Performance traffic with the Z_R·S₀ term dropped, which is what Huang Problem 12-7 asks for." />
             </KpiStrip>
 
             <ChartFigure
@@ -696,13 +696,13 @@ export default function AashtoApp() {
             >
               Slab thickness enters through D^0.75 inside a logarithm raised to (4.22 − 0.32 pₜ), which
               is why these curves are so much steeper than the flexible ones. <strong>Half an inch of
-              concrete is worth far more than half an inch of asphalt</strong> — and why rigid designs
+              concrete is worth far more than half an inch of asphalt</strong>, and why rigid designs
               are quoted to the nearest ½ in.
             </ChartFigure>
 
             <p className="cee-note">
               AASHTO 1993 rigid equation (Huang Eq. 12.21). The k it consumes is the effective modulus
-              of subgrade reaction on top of the subbase — compute it on the Effective k tab. Sanity
+              of subgrade reaction on top of the subbase. Compute it on the Effective k tab. Sanity
               check, Problem 12-7: E_c = 4×10⁶ psi, S'_c = 650 psi, J = 3.2, ΔPSI = 4.5 − 2.0,
               C_d = 1.05, D = 8 in → W₁₈ ≈ 8.5×10⁶ without the reliability term.
             </p>
@@ -722,7 +722,7 @@ export default function AashtoApp() {
                 tip="The relative damage equation contains D, so the effective k is tied to the slab assumed." />
               <Kpi compact label="Weakest month"
                 value={effk.rows.reduce((a, b) => (Number.isFinite(b.u) && b.u > a.u ? b : a), effk.rows[0]).month}
-                tip="The month contributing the most damage — spring thaw in most northern climates." />
+                tip="The month contributing the most damage, usually spring thaw in northern climates." />
             </KpiStrip>
 
             <ChartFigure
@@ -733,7 +733,7 @@ export default function AashtoApp() {
             >
               The relationship between damage and support is steeply non-linear, so a few weak months
               dominate the year. <strong>This is why the effective k is much closer to the spring value
-              than to the mean</strong> — averaging the k values directly would badly overstate the
+              than to the mean</strong>, and averaging the k values directly would badly overstate the
               foundation.
             </ChartFigure>
 

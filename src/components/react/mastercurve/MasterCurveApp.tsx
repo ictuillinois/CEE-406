@@ -209,7 +209,7 @@ export default function MasterCurveApp() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="mc-p200">
-              <span>P<sub>200</sub><Tip text="Percent by weight of aggregate passing the No. 200 sieve. The Asphalt Institute equations use it; the Shell nomographs do not — one of several reasons the two methods disagree." /></span>
+              <span>P<sub>200</sub><Tip text="Percent by weight of aggregate passing the No. 200 sieve. The Asphalt Institute equations use it; the Shell nomographs do not, one of several reasons the two methods disagree." /></span>
               <span className="cee-field__unit">%</span>
             </label>
             <input id="mc-p200" className="cee-input" type="number" min="0" step="0.5" value={p200}
@@ -227,7 +227,7 @@ export default function MasterCurveApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="mc-vb">
-            <span>Bitumen volume V<sub>b</sub><Tip text="Bitumen volume as a percentage of total mix volume — by volume, not by weight. Huang Eq. 7.21 converts from weight if that is what you have." /></span>
+            <span>Bitumen volume V<sub>b</sub><Tip text="Bitumen volume as a percentage of total mix volume, by volume rather than by weight. Huang Eq. 7.21 converts from weight if that is what you have." /></span>
             <span className="cee-field__unit">%</span>
           </label>
           <input id="mc-vb" className="cee-input" type="number" min="0.8" step="0.5" value={vb}
@@ -247,7 +247,7 @@ export default function MasterCurveApp() {
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="mc-penr">
-              <span>Pen, recovered<Tip text="Penetration of the binder recovered from the mix — always lower than the original, because mixing and aging stiffen it." /></span>
+              <span>Pen, recovered<Tip text="Penetration of the binder recovered from the mix, always lower than the original, because mixing and aging stiffen it." /></span>
             </label>
             <input id="mc-penr" className="cee-input" type="number" min="1" step="1" value={penRec}
               onChange={e => setPenRec(e.target.value)} />
@@ -256,7 +256,7 @@ export default function MasterCurveApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="mc-trb">
-            <span>Ring &amp; ball point<Tip text="Softening point, °C — the temperature at which every bitumen has a penetration of about 800. It anchors the temperature-susceptibility line of Eq. 7.18." /></span>
+            <span>Ring &amp; ball point<Tip text="Softening point, °C: the temperature at which every bitumen has a penetration of about 800. It anchors the temperature-susceptibility line of Eq. 7.18." /></span>
             <span className="cee-field__unit">°C</span>
           </label>
           <input id="mc-trb" className="cee-input" type="number" step="1" value={tRB}
@@ -269,7 +269,7 @@ export default function MasterCurveApp() {
 
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="mc-sb">
-            <span>Bitumen stiffness S<sub>b</sub><Tip text="Read off the Van der Poel nomograph (Huang Fig. 7.19) from the penetration index, the loading time, and the temperature below the ring-and-ball point. The nomograph is not digitized here — this is a chart read you supply." /></span>
+            <span>Bitumen stiffness S<sub>b</sub><Tip text="Read off the Van der Poel nomograph (Huang Fig. 7.19) from the penetration index, the loading time, and the temperature below the ring-and-ball point. The nomograph is not digitized here; this is a chart read you supply." /></span>
             <span className="cee-field__unit">N/m²</span>
           </label>
           <input id="mc-sb" className="cee-input" type="text" value={sbStr}
@@ -326,7 +326,7 @@ export default function MasterCurveApp() {
           <div className="cee-howto__body">
             <ol>
               <li><strong>Calibrate first.</strong> Load the Huang Ex. 7.10 preset and confirm |E*| = 5.07 × 10⁵ psi at 77°F and 8 Hz before trusting anything else.</li>
-              <li><strong>Look at the isotherms.</strong> Each curve is one temperature. Asphalt is stiffer when cold and stiffer under a faster load — the two axes of the same underlying behavior.</li>
+              <li><strong>Look at the isotherms.</strong> Each curve is one temperature. Asphalt is stiffer when cold and stiffer under a faster load, the two axes of the same underlying behavior.</li>
               <li><strong>Shift them.</strong> Time–temperature superposition says a hot slow test and a cold fast test are the same test. If that is true, every isotherm lands on one curve.</li>
               <li><strong>Read the collapse, not just the curve.</strong> The R² tells you whether superposition actually held. A poor collapse means the model you shifted does not obey it, and no amount of curve-fitting fixes that.</li>
               <li><strong>Compare the two methods.</strong> The Asphalt Institute and Shell routes answer the same question and disagree. Decide which you would hand a designer, and on what grounds.</li>
@@ -348,7 +348,7 @@ export default function MasterCurveApp() {
               <Kpi accent label="|E*| at the design point" value={ai ? fmt(ai.eStar / 1000, 0) : '—'} unit="ksi"
                 tip="Asphalt Institute regression, Huang Eq. 7.27, at the temperature and frequency set on the left." />
               <Kpi label="Shell S m, same mix" value={shellPsi ? fmt(shellPsi / 1000, 0) : '—'} unit="ksi"
-                tip="Shell/Bonnaure route, Eqs. 7.24-7.25, from the bitumen stiffness you read off the nomograph. The two answers are not supposed to be identical — see below." />
+                tip="Shell/Bonnaure route, Eqs. 7.24-7.25, from the bitumen stiffness you read off the nomograph. The two answers are not supposed to be identical; see below." />
               <Kpi label="Master curve collapse" value={fit ? fmt(100 * fit.r2, 1) : '—'} unit="% R²"
                 tip="How well the shifted isotherms fall on one sigmoid. This is a test of whether time-temperature superposition holds for the model, not a measure of curve-fitting effort." />
               <Kpi label="Best-collapsing β" value={bestBeta ? bestBeta.beta.toFixed(3) : '—'}
@@ -372,13 +372,13 @@ export default function MasterCurveApp() {
                 <strong>{fmt(residualPct!, 0)}% in modulus</strong> (R² = {fmt(fit.r2, 3)}). This
                 mix collapses best at <strong>β = {bestBeta.beta.toFixed(3)}</strong>, which is near
                 the bottom of Huang's 0.061–0.170 range rather than at the 0.113 average.
-                Superposition is not failing here — <strong>the handbook average is</strong>. Fit the
+                Superposition is not failing here; <strong>the handbook average is</strong>. Fit the
                 shift slope to the mix rather than inheriting it, and say which you used.
               </span></p>
             )}
 
             <ChartFigure
-              title="Isotherms — |E*| before any shifting"
+              title="Isotherms: |E*| before any shifting"
               subtitle="One curve per temperature, from the Asphalt Institute regression"
               plotRef={isoRef}
               legend={TEMPS.map((T, i) => ({ label: `${T}°F`, color: isothermColor(i, TEMPS.length) }))}
@@ -388,7 +388,7 @@ export default function MasterCurveApp() {
             >
               Both axes say the same thing about asphalt: it is a <strong>viscoelastic</strong>
               material, so its stiffness depends on how fast you load it and how hot it is. A curve
-              that is steep in frequency is equally steep in temperature — which is the observation
+              that is steep in frequency is equally steep in temperature, which is the observation
               time–temperature superposition turns into a method. Note the range: across a summer
               afternoon and a winter morning, the same mix varies by more than an order of magnitude,
               which is why a single "AC modulus" in a design is always a choice about season and speed.
@@ -408,7 +408,7 @@ export default function MasterCurveApp() {
             >
               <strong>The question this chart asks is whether the colored points overlap.</strong>
               Superposition claims a measurement at 115°F and 25 Hz contains the same information as
-              one at 40°F and a much lower frequency — so shifted onto a common reference, every
+              one at 40°F and a much lower frequency, so shifted onto a common reference, every
               temperature should trace out one curve. Where the points separate into visible bands,
               the material (or the model standing in for it) is not thermorheologically simple, and
               the master curve is a convenient fiction rather than a physical law.
@@ -420,14 +420,14 @@ export default function MasterCurveApp() {
                 <div className="cee-tablewrap">
                   <table className="cee-table">
                     <tbody>
-                      <tr><td>δ — lower asymptote</td>
+                      <tr><td>δ, lower asymptote</td>
                         <td>{fmt(fit.delta, 3)} → {fmt(Math.pow(10, fit.delta) / 1000, 1)} ksi</td>
                         <td>the modulus as the load becomes infinitely slow, or the pavement infinitely hot</td></tr>
-                      <tr><td>δ + α — upper asymptote</td>
+                      <tr><td>δ + α, upper asymptote</td>
                         <td>{fmt(fit.delta + fit.alpha, 3)} → {fmt(Math.pow(10, fit.delta + fit.alpha) / 1000, 0)} ksi
                           {fit.atBound.upper && <strong> (at the bound)</strong>}</td>
                         <td>the glassy modulus: infinitely fast, or infinitely cold</td></tr>
-                      <tr><td>γ — transition steepness</td><td>{fmt(fit.gamma, 3)}</td>
+                      <tr><td>γ, transition steepness</td><td>{fmt(fit.gamma, 3)}</td>
                         <td>how abruptly the mix passes from glassy to viscous</td></tr>
                       <tr><td>RMS residual</td><td>{fmt(fit.rmsLog, 4)} log units</td>
                         <td>≈ {fmt(100 * (Math.pow(10, fit.rmsLog) - 1), 1)}% in modulus</td></tr>
@@ -436,7 +436,7 @@ export default function MasterCurveApp() {
                 </div>
                 <p className="cee-note" style={{ marginTop: '0.75rem' }}>
                   The two asymptotes bracket everything the mix can ever do. A design modulus outside
-                  them is not conservative — it is impossible. Shifting the reference temperature
+                  them is not conservative; it is impossible. Shifting the reference temperature
                   moves the curve sideways but must leave both asymptotes where they are; if it does
                   not, the fit has not converged.
                 </p>
@@ -447,7 +447,7 @@ export default function MasterCurveApp() {
                       {fit.atBound.lower && 'lower'} asymptote finished <strong>pinned against its
                       physical bound</strong>. That means your temperature and frequency range never
                       reached that plateau, so the number shown is the bound this tool imposes, not
-                      something your data determined. Quote it as a limit, not a result — or widen
+                      something your data determined. Quote it as a limit, not a result, or widen
                       the range until the curve actually flattens.
                     </span>
                   </p>
@@ -480,7 +480,7 @@ export default function MasterCurveApp() {
               </div>
               <p className="cee-note" style={{ marginTop: '0.75rem' }}>
                 They disagree because they are asking slightly different questions of slightly
-                different materials — one characterizes the binder as delivered, the other as it
+                different materials: one characterizes the binder as delivered, the other as it
                 ends up in the road. Huang's own comment is that the Shell nomograph is accurate to
                 "a factor of 1.5 to 2", which is worth holding next to any modulus quoted to three
                 significant figures. <strong>Say which route you used, and why.</strong>
@@ -493,7 +493,7 @@ export default function MasterCurveApp() {
               Van der Poel nomograph. Time–temperature superposition: Eqs. 2.44–2.46, shift slope
               0.061 to 0.170 averaging {BETA_DEFAULT} (FHWA, 1978). Sigmoidal master curve: the MEPDG
               form (App. F). Validated against the printed answers of Examples 2.16, 7.7, 7.8, 7.9
-              and 7.10 — note that Example 7.9 case 1 does not reproduce, and the tool's tests record
+              and 7.10. Note that Example 7.9 case 1 does not reproduce, and the tool's tests record
               why.
             </p>
           </>
