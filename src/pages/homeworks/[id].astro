@@ -122,7 +122,10 @@ const kindLabel: Record<string, string> = {
         ) : (
           <div class="doc-callout doc-callout--info">
             <span class="doc-callout__icon">💡</span>
-            <p><strong>{c.title}.</strong> <Fragment set:html={c.body} /></p>
+            {/* A title that is already a question keeps its mark: guide
+                callouts are often phrased as the question to ask yourself,
+                and "…subgrade?." is not a sentence. */}
+            <p><strong>{/[?!.:]$/.test(c.title) ? c.title : `${c.title}.`}</strong> <Fragment set:html={c.body} /></p>
           </div>
         )
       )}

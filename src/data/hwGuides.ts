@@ -25,36 +25,37 @@ export const hwGuides: Record<string, HwGuide> = {
     concepts: [
       {
         kind: 'concept',
-        title: 'Flexible vs. rigid load spreading',
-        body: 'A flexible pavement spreads load through the layer stack in a narrowing cone, so every layer matters and thicknesses control performance. A rigid slab spreads load by bending over a large area, so slab flexural strength dominates and the subgrade sees little stress.',
+        title: 'How does the load reach the subgrade?',
+        body: 'Trace one wheel load down each of your two sections. In which one does the load spread through the <em>thickness</em> of a stack, and in which through the <em>bending</em> of a single member? Your answer decides which material property governs each design, and how much stress is left at the subgrade. Huang §1.1–1.2.',
       },
       {
         kind: 'concept',
-        title: 'Mechanistic–empirical design',
-        body: 'The <strong>mechanistic</strong> part computes responses (stress, strain, deflection) from mechanics; the <strong>empirical</strong> part maps them to observed distress through calibrated transfer functions. Full physics for every distress is out of reach, so calibration never disappears.',
+        title: 'Where does the physics stop?',
+        body: 'Follow one design decision from wheel load to predicted distress and mark the point where computation ends and observed field performance takes over. What would you have to measure, and for how long, to push that mark all the way to the end? Huang §1.4.',
       },
       {
         kind: 'equation',
         title: 'Tire contact: pressure and area',
         body: '$$A_c = \\frac{P}{p} \\qquad p \\approx p_{tire}$$',
-        where: '<dl class="doc-equation__defs"><dt>A_c</dt><dd>contact area</dd><dt>P</dt><dd>wheel load</dd><dt>p</dt><dd>contact pressure ≈ tire inflation pressure</dd></dl>',
+        where: '<dl class="doc-equation__defs"><dt>A_c</dt><dd>contact area</dd><dt>P</dt><dd>wheel load</dd><dt>p</dt><dd>contact pressure, <em>assumed</em> equal to tire inflation pressure. Q7 is partly about how far that assumption holds.</dd></dl>',
       },
       {
         kind: 'concept',
-        title: 'Distress mechanisms to know',
-        body: '<strong>Pumping</strong>: water under a slab ejects fines through joints until corners lose support and crack. <strong>Rutting</strong>: instability rutting (shear flow within the AC) vs. structural rutting (deformation of base/subgrade). Different causes, different design fixes.',
+        title: 'Anatomy of a distress',
+        body: 'For each distress in the set, name three things: the driving force, the material that moves, and where that material ends up. For pumping, what has to be present under the slab before it can start, and what is carried away? For rutting, which of the two kinds leaves the total layer thickness unchanged? Huang §1.5 and the Distress Identification Manual.',
       },
     ],
     steps: [
       'Read Huang Ch. 1; skim the Distress Identification Manual for photos of each failure mode.',
       'Draw both cross-sections with labeled layers and typical thicknesses.',
       'Answer by explaining mechanisms; grading rewards cause-and-effect, not definitions.',
-      'For the axle question, think about overlapping stress bulbs at depth.',
+      'For the axle question, sketch the stress at depth under one axle before you try to compare groups.',
     ],
     pitfalls: [
-      'Tack coat bonds two asphalt lifts; prime coat penetrates and seals a granular base. The prime coat is the less viscous one.',
-      'Rutting is not only a subgrade problem; instability rutting lives entirely in the AC.',
-      'Q6 fixes the <em>total</em> group load, so more axles means less load each. The answer turns on how much the stress bulbs overlap at depth.',
+      'Q3 turns on <em>what each coat is applied to</em> and what it has to do there. Settle that first; the viscosity ranking follows from it, and not the other way round.',
+      'A rut is measured at the surface, but the material that moved need not be near it. For each mechanism, say which layer deforms, then check that the design method you propose acts on <em>that</em> layer.',
+      'Q6 holds the total group load, tire design and inflation pressure fixed. Be explicit about what that leaves free to vary, and name the depth at which you are comparing damage: the ranking can depend on it.',
+      'Q1 asks for interface treatments as well as layers. A drawing with no bond between lifts is missing part of the answer.',
     ],
   },
 
