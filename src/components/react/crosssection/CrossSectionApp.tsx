@@ -63,7 +63,8 @@ export default function CrossSectionApp() {
         <div className="cee-howto__body">
           <ol>
             <li><strong>Start from a template.</strong> Thirteen sections ship with the tool: FAA flexible and rigid, conventional and deep-strength highway, JPCP, CRCP, composite, permeable, FDR. Pick the nearest one and edit it rather than building from scratch.</li>
-            <li><strong>Set the layer structure.</strong> Every thickness in the bottom strip is the real engineering thickness in millimeters, drawn to scale. The subgrade is the exception: it is infinite in the analysis, so it carries a display thickness set under Section Geometry and is marked with an asterisk.</li>
+            <li><strong>Pick your units first.</strong> SI (mm) and English (in) sit at the top of the toolbar, and the choice is remembered. Switching does not just relabel the numbers, it re-rounds them to the designation the other system uses: a 75 mm surface course becomes a 3 in surface course, 150 mm becomes 6 in. That is the soft conversion the specifications themselves print, so the section stays one somebody could build, and the figure is then drawn at exactly that size.</li>
+              <li><strong>Set the layer structure.</strong> Every thickness in the bottom strip is the real engineering thickness in the system you picked, drawn to scale. The subgrade is the exception: it is infinite in the analysis, so it carries a display thickness set under Section Geometry and is marked with an asterisk.</li>
             <li><strong>Pick materials.</strong> Click a layer to select it, then a tile in the Material Library. The eighteen textures are procedural and seeded, so the same settings always produce the same figure, so a section rendered today matches the one in a report from last term.</li>
             <li><strong>Frame it.</strong> Drag to orbit, wheel to zoom, right-drag to pan, or use the Isometric / Front / Fit buttons. Orthographic projection is the honest one for a dimensioned figure; perspective reads better in a presentation.</li>
             <li><strong>Take the image.</strong> <strong>Copy</strong> puts the PNG straight on your clipboard. Paste it into Word, PowerPoint, LaTeX-adjacent editors, or a lab notebook without ever touching a file. <strong>Copy transparent</strong> does the same with no background, so the section sits on whatever the slide is already using. <strong>Export</strong> downloads the file instead.</li>
@@ -105,6 +106,15 @@ export default function CrossSectionApp() {
             <select id="xs-template" className="xs-select" title="Section templates" aria-label="Section templates" defaultValue="">
               <option value="" disabled>Templates…</option>
             </select>
+            <div
+              className="xs-units"
+              role="group"
+              aria-label="Units"
+              title="Which system every thickness and dimension is given in. Switching re-rounds them to the designation the other system uses, the way a specification does: a 75 mm lift is a 3 in lift, 100 mm is 4 in, 150 mm is 6 in. The figure is then drawn at exactly that size."
+            >
+              <button type="button" id="xs-units-si" className="xs-unit-btn is-active" aria-pressed="true">SI (mm)</button>
+              <button type="button" id="xs-units-en" className="xs-unit-btn" aria-pressed="false">English (in)</button>
+            </div>
             <span className="xs-tool-sep" />
             <button type="button" id="xs-undo" className="xs-btn xs-btn--icon" title="Undo (Ctrl+Z)" aria-label="Undo"><Icon name="undo" /></button>
             <button type="button" id="xs-redo" className="xs-btn xs-btn--icon" title="Redo (Ctrl+Y)" aria-label="Redo"><Icon name="redo" /></button>
@@ -126,27 +136,27 @@ export default function CrossSectionApp() {
                 <div className="xs-field">
                   <label htmlFor="xs-sec-width" title="Out-of-plane dimension of the block, across the section.">Width</label>
                   <input type="number" id="xs-sec-width" className="xs-num" min="500" max="20000" step="50" />
-                  <span className="xs-unit">mm</span>
+                  <span className="xs-unit" data-xs-unit>mm</span>
                 </div>
                 <div className="xs-field">
                   <label htmlFor="xs-sec-length" title="In-plane dimension of the block, along the direction of travel.">Length</label>
                   <input type="number" id="xs-sec-length" className="xs-num" min="500" max="20000" step="50" />
-                  <span className="xs-unit">mm</span>
+                  <span className="xs-unit" data-xs-unit>mm</span>
                 </div>
                 <div className="xs-field">
                   <label htmlFor="xs-sec-recess-x" title="How far each layer is stepped back from the one below it along the length. This is the staircase that lets every layer be seen at once. Zero gives a flush block.">Step (length)</label>
                   <input type="number" id="xs-sec-recess-x" className="xs-num" min="0" max="2000" step="25" />
-                  <span className="xs-unit">mm</span>
+                  <span className="xs-unit" data-xs-unit>mm</span>
                 </div>
                 <div className="xs-field">
                   <label htmlFor="xs-sec-recess-z" title="The same step, taken across the width instead. Use one or the other, rarely both.">Step (width)</label>
                   <input type="number" id="xs-sec-recess-z" className="xs-num" min="0" max="2000" step="25" />
-                  <span className="xs-unit">mm</span>
+                  <span className="xs-unit" data-xs-unit>mm</span>
                 </div>
                 <div className="xs-field">
                   <label htmlFor="xs-sec-subgrade" title="Drawn depth of the subgrade. The subgrade is a half-space in analysis; this figure is a visualization choice and is excluded from the Σ above subgrade.">Subgrade display</label>
                   <input type="number" id="xs-sec-subgrade" className="xs-num" min="50" max="2000" step="25" />
-                  <span className="xs-unit">mm</span>
+                  <span className="xs-unit" data-xs-unit>mm</span>
                 </div>
                 <p className="xs-field-note">Layer heights are exact engineering thicknesses. The infinite subgrade uses a fixed visualization thickness only.</p>
               </div>

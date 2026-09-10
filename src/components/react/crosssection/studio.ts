@@ -24,6 +24,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { iconHtml } from './icons';
+import {
+    type Units, FIELD_LIMITS, redesignate,
+    inUnits, toMm, formatLength, unitLabelOf, unitWordOf,
+} from './units';
 
 /**
  * Boots the studio inside `root` and returns a disposer.
@@ -531,6 +535,9 @@ export function initStudio(root: HTMLElement): () => void {
     };
 
     const state = {
+        /** Which system the reader is working in. Storage is millimetres
+            regardless — see section 3b. */
+        units: 'mm' as Units,
         section: { ...DEFAULTS.section },
         camera: { ...DEFAULTS.camera },
         lighting: { ...DEFAULTS.lighting },
@@ -612,8 +619,56 @@ export function initStudio(root: HTMLElement): () => void {
     function applyTemplate(tpl: Template) {
         state.layers = tpl.layers.map(l => makeLayer(l[0], l[1], l[2]));
         state.layers.push(makeLayer('Subgrade (infinite)', 'subgrade', 0, { subgrade: true }));
+        // Every table above is written in metric designations, so a template
+        // loaded while English is showing has to be re-designated. The
+        // section geometry is already in the active unit and is left alone.
+        if (state.units === 'in') convertLengths('in', 'layers');
         selectedId = state.layers[0].id;
     }
+
+
+    /* ========================================================
+       3b. Units
+       ========================================================
+       The arithmetic and the reasoning live in units.ts, which imports
+       nothing and is tested on its own. What stays here is only the part
+       that needs `state`: reading a stored millimetre length in whatever
+       system is showing, and re-designating every length when the reader
+       changes systems.
+    */
+    const disp = (mmValue: number) => inUnits(mmValue, state.units);
+    const store = (v: number) => toMm(v, state.units);
+    const fmtLen = (mmValue: number) => formatLength(mmValue, state.units);
+    const unitLabel = () => unitLabelOf(state.units);
+    const unitWord = () => unitWordOf(state.units);
+
+    /**
+     * Re-express stored lengths as designations in `to`.
+     *
+     * `what` is 'layers' when a template has just supplied metric numbers
+     * into a section whose geometry is already in the active unit; converting
+     * the section again there would apply the map twice, and the map is not
+     * idempotent by design (see units.ts).
+     */
+    function convertLengths(to: Units, what: 'all' | 'layers') {
+        if (what === 'all') {
+            const s = state.section;
+            s.width = redesignate(s.width, to);
+            s.length = redesignate(s.length, to);
+            s.recessX = redesignate(s.recessX, to);
+            s.recessZ = redesignate(s.recessZ, to);
+            s.subgradeDisplay = redesignate(s.subgradeDisplay, to);
+        }
+        state.layers.forEach(l => { l.thickness = redesignate(l.thickness, to); });
+    }
+
+    function applyFieldLimits(input: HTMLInputElement, kind: keyof typeof FIELD_LIMITS) {
+        const [lo, hi, step] = FIELD_LIMITS[kind][state.units];
+        input.min = String(lo); input.max = String(hi); input.step = String(step);
+    }
+
+    /** The unit choice outlives the tab: most of this class works in one. */
+    const UNITS_KEY = 'cee406-xs-units';
 
     /* ========================================================
        4. Three.js scene
@@ -1111,6 +1166,7 @@ export function initStudio(root: HTMLElement): () => void {
         return {
             app: 'cross-section-studio', version: 1,
             savedAt: new Date().toISOString(),
+            units: state.units,
             meta: { ...state.meta },
             section: { ...state.section },
             camera: { ...state.camera },
@@ -1130,6 +1186,11 @@ export function initStudio(root: HTMLElement): () => void {
         if (!data || data.app !== 'cross-section-studio' || !Array.isArray(data.layers)) {
             toast('Not a valid .pavement.json project'); return;
         }
+        // A project written before this field existed is metric, which is
+        // what the default says. If it does not match what the reader is
+        // working in, it is re-designated rather than shown in the wrong
+        // system — the file's numbers were designations too.
+        const fileUnits: Units = data.units === 'in' ? 'in' : 'mm';
         Object.assign(state.section, data.section || {});
         Object.assign(state.camera, data.camera || {});
         Object.assign(state.lighting, data.lighting || {});
@@ -1144,7 +1205,9 @@ export function initStudio(root: HTMLElement): () => void {
         if (!state.layers.some(l => l.subgrade)) {
             state.layers.push(makeLayer('Subgrade (infinite)', 'subgrade', 0, { subgrade: true }));
         }
+        if (fileUnits !== state.units) convertLengths(state.units, 'all');
         selectedId = state.layers[0].id;
+        syncUnitsUi();
         syncAllInputs();
         rebuildSection();
         applyBackground();
@@ -1162,7 +1225,7 @@ export function initStudio(root: HTMLElement): () => void {
 
     function snapshot() {
         return JSON.stringify({
-            section: state.section, layers: state.layers,
+            units: state.units, section: state.section, layers: state.layers,
             lighting: state.lighting, background: state.background
         });
     }
@@ -1179,11 +1242,13 @@ export function initStudio(root: HTMLElement): () => void {
 
     function restore(snap: string) {
         const d = JSON.parse(snap);
+        state.units = d.units === 'in' ? 'in' : 'mm';
         Object.assign(state.section, d.section);
         Object.assign(state.lighting, d.lighting);
         Object.assign(state.background, d.background);
         state.layers = d.layers;
         if (!state.layers.some(l => l.id === selectedId)) selectedId = state.layers[0] && state.layers[0].id;
+        syncUnitsUi();
         syncAllInputs();
         rebuildSection();
         applyBackground();
@@ -1205,6 +1270,7 @@ export function initStudio(root: HTMLElement): () => void {
     const el = <T extends HTMLElement>(id: string) => root.querySelector('#' + id) as T;
     const ui = {
         template: el<HTMLSelectElement>('xs-template'),
+        unitsSi: el<HTMLButtonElement>('xs-units-si'), unitsEn: el<HTMLButtonElement>('xs-units-en'),
         undo: el<HTMLButtonElement>('xs-undo'), redo: el<HTMLButtonElement>('xs-redo'),
         open: el<HTMLButtonElement>('xs-open'), save: el<HTMLButtonElement>('xs-save'),
         fileInput: el<HTMLInputElement>('xs-file-input'),
@@ -1263,16 +1329,60 @@ export function initStudio(root: HTMLElement): () => void {
 
     function updateHud() {
         const s = state.section;
-        ui.hud.textContent = `W ${s.width} × L ${s.length} × D ${sceneInfo.totalDepth} mm`;
+        ui.hud.textContent =
+            `W ${fmtLen(s.width)} × L ${fmtLen(s.length)} × D ${fmtLen(sceneInfo.totalDepth)} ${unitLabel()}`;
         const engDepth = state.layers.reduce((a, l) => a + (l.subgrade ? 0 : l.thickness), 0);
-        ui.layersTotal.textContent = `Σ ${engDepth} mm above subgrade`;
+        ui.layersTotal.textContent = `Σ ${fmtLen(engDepth)} ${unitLabel()} above subgrade`;
+    }
+
+    /**
+     * Everything that says "mm" or "in", and every field's own limits.
+     *
+     * The limits are not decoration: a thickness spinner stepping by 5 in a
+     * field showing 3 would jump to 8, and the browser's own validation
+     * would refuse anything under 5 inches.
+     */
+    function syncUnitsUi() {
+        const english = state.units === 'in';
+        for (const [btn, on] of [[ui.unitsSi, !english], [ui.unitsEn, english]] as const) {
+            btn.classList.toggle('is-active', on);
+            btn.setAttribute('aria-pressed', String(on));
+        }
+        root.querySelectorAll('[data-xs-unit]').forEach(n => { n.textContent = unitLabel(); });
+        applyFieldLimits(ui.secWidth, 'plan');
+        applyFieldLimits(ui.secLength, 'plan');
+        applyFieldLimits(ui.secRecessX, 'recess');
+        applyFieldLimits(ui.secRecessZ, 'recess');
+        applyFieldLimits(ui.secSubgrade, 'subgrade');
+    }
+
+    /**
+     * Switch systems: re-designate every length, then redraw.
+     *
+     * `rebuildSection` is not optional even though nothing about the section
+     * has been edited. The stored millimetres really do change — a 75-mm
+     * layer becomes a 3-in one, which is 76.2 — so the figure is a different
+     * figure, by a little, and the export has to agree with the panel.
+     */
+    function setUnits(next: Units) {
+        if (next === state.units) return;
+        state.units = next;
+        convertLengths(next, 'all');
+        try { localStorage.setItem(UNITS_KEY, next); } catch { /* private mode */ }
+        syncUnitsUi();
+        syncAllInputs();
+        rebuildSection();
+        renderLayerRows();
+        pushHistory();
+        // The instructor's copy rule: no long hyphen in anything the reader sees.
+        toast(next === 'in' ? 'English units: inches' : 'SI units: millimeters');
     }
 
     function syncAllInputs() {
         const s = state.section, c = state.camera, L = state.lighting, b = state.background;
-        ui.secWidth.value = String(s.width); ui.secLength.value = String(s.length);
-        ui.secRecessX.value = String(s.recessX); ui.secRecessZ.value = String(s.recessZ);
-        ui.secSubgrade.value = String(s.subgradeDisplay);
+        ui.secWidth.value = fmtLen(s.width); ui.secLength.value = fmtLen(s.length);
+        ui.secRecessX.value = fmtLen(s.recessX); ui.secRecessZ.value = fmtLen(s.recessZ);
+        ui.secSubgrade.value = fmtLen(s.subgradeDisplay);
         ui.camProj.value = c.mode; ui.camAz.value = String(c.azimuth);
         ui.camEl.value = String(c.elevation); ui.camFov.value = String(c.fov);
         ui.camFov.disabled = c.mode !== 'persp';
@@ -1294,6 +1404,7 @@ export function initStudio(root: HTMLElement): () => void {
     }
 
     function renderLayerRows() {
+        const thickLimits = FIELD_LIMITS.thickness[state.units];
         ui.layerRows.innerHTML = '';
         state.layers.forEach((layer, idx) => {
             if (idx > 0) {
@@ -1333,8 +1444,8 @@ export function initStudio(root: HTMLElement): () => void {
                 </div>
                 <div class="xs-layer-thick">
                     ${layer.subgrade
-                        ? `<span class="xs-inf" title="Infinite: display thickness set in Section Geometry">${iconHtml('infinity')}</span> <span>${state.section.subgradeDisplay} mm*</span>`
-                        : `<input type="number" class="xs-num" aria-label="Layer thickness in millimeters" data-act="thickness" value="${layer.thickness}" min="5" max="3000" step="5" ${lockAttr}> mm`}
+                        ? `<span class="xs-inf" title="Infinite: display thickness set in Section Geometry">${iconHtml('infinity')}</span> <span>${fmtLen(state.section.subgradeDisplay)} ${unitLabel()}*</span>`
+                        : `<input type="number" class="xs-num" aria-label="Layer thickness in ${unitWord()}" data-act="thickness" value="${fmtLen(layer.thickness)}" min="${thickLimits[0]}" max="${thickLimits[1]}" step="${thickLimits[2]}" ${lockAttr}> ${unitLabel()}`}
                 </div>
                 <div class="xs-layer-actions">
                     <button type="button" class="xs-icon-btn ${layer.visible ? 'is-active' : ''}" data-act="visible" title="${layer.visible ? 'Hide layer' : 'Show layer'}" aria-label="${layer.visible ? 'Hide layer' : 'Show layer'}">${iconHtml(layer.visible ? 'eye' : 'eyeOff')}</button>
@@ -1412,7 +1523,7 @@ export function initStudio(root: HTMLElement): () => void {
         if (act === 'rename') { layer.name = target.value.trim() || layer.name; }
         else if (act === 'thickness') {
             const v = parseFloat(target.value);
-            if (v > 0) layer.thickness = v;
+            if (v > 0) layer.thickness = store(v);
         }
         else if (act === 'material') {
             layer.material = target.value;
@@ -1543,8 +1654,8 @@ export function initStudio(root: HTMLElement): () => void {
     function bindSectionInput(input: HTMLInputElement, key: keyof typeof state.section) {
         input.addEventListener('change', () => {
             const v = parseFloat(input.value);
-            if (isNaN(v)) { input.value = String(state.section[key]); return; }
-            state.section[key] = v;
+            if (isNaN(v)) { input.value = fmtLen(state.section[key]); return; }
+            state.section[key] = store(v);
             rebuildSection();
             renderLayerRows();
             pushHistory();
@@ -1726,6 +1837,9 @@ export function initStudio(root: HTMLElement): () => void {
         ui.fileInput.value = '';
     });
 
+    ui.unitsSi.addEventListener('click', () => setUnits('mm'));
+    ui.unitsEn.addEventListener('click', () => setUnits('in'));
+
     ui.reset.addEventListener('click', () => {
         if (!confirm('Reset the section, camera and lighting to defaults?')) return;
         Object.assign(state.section, DEFAULTS.section);
@@ -1733,6 +1847,10 @@ export function initStudio(root: HTMLElement): () => void {
         Object.assign(state.lighting, DEFAULTS.lighting);
         Object.assign(state.background, DEFAULTS.background);
         state.layers = defaultLayers();
+        // DEFAULTS and defaultLayers() are written in metric designations,
+        // like the templates. The reader's unit choice is theirs and survives
+        // a reset, so the numbers come to it rather than the other way round.
+        if (state.units === 'in') convertLengths('in', 'all');
         selectedId = state.layers[0].id;
         syncAllInputs();
         rebuildSection();
@@ -1773,7 +1891,17 @@ export function initStudio(root: HTMLElement): () => void {
     state.layers = defaultLayers();
     selectedId = state.layers[0].id;
 
+    /* Adopt the remembered unit before the first draw, so an English reader
+       never sees a frame of millimetres. */
+    try {
+        if (localStorage.getItem(UNITS_KEY) === 'in') {
+            state.units = 'in';
+            convertLengths('in', 'all');
+        }
+    } catch { /* private mode, or storage disabled — SI is the default */ }
+
     buildMaterialGrid();
+    syncUnitsUi();
     syncAllInputs();
     resize();
     rebuildSection();

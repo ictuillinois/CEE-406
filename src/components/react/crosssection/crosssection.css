@@ -124,6 +124,50 @@
 
 .xs-toolbar .xs-spacer { flex: 1; }
 
+/* Units: a segmented pair rather than two buttons, because the two are one
+   choice and only one of them can be true. It sits next to the templates
+   because it is the same kind of decision: what the numbers in this document
+   mean, before any of them are typed. */
+.xs-app .xs-units {
+    display: inline-flex;
+    border: 1px solid var(--xs-border-strong);
+    border-radius: var(--xs-radius-control);
+    overflow: hidden;
+    cursor: help;
+}
+
+.xs-app .xs-unit-btn {
+    appearance: none;
+    padding: 0.42rem 0.7rem;
+    border: 0;
+    background: var(--xs-bg);
+    color: var(--xs-text-muted);
+    font-family: var(--font-body, inherit);
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: 0;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.xs-app .xs-unit-btn + .xs-unit-btn { border-left: 1px solid var(--xs-border-strong); }
+
+.xs-app .xs-unit-btn:hover { color: var(--xs-primary); }
+
+.xs-app .xs-unit-btn.is-active {
+    background: var(--xs-primary);
+    color: #fff;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .xs-app .xs-unit-btn.is-active { color: #0f1a2e; }
+
+.xs-app .xs-unit-btn:focus-visible {
+    outline: 2px solid var(--xs-primary);
+    outline-offset: -2px;
+}
+
 .xs-app .xs-btn {
     display: inline-flex;
     align-items: center;
