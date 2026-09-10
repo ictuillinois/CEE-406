@@ -21,10 +21,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Tip from '../../Tip';
 import {
   useTheme, chartColors, baseLayout, plotConfig, paperAxis, paperFrame,
-  rampSeries, hoverLabel, fmt, TOKENS,
+  rampSeries, hoverLabel, fmt, num, TOKENS,
 } from '../../chartTheme';
 import ChartFigure from '../../ui/ChartFigure';
-import type { AxisSpec, ChartSpec, CurvePoint, LatticeCurve } from '../charts.ts';
+import type { AxisSpec, ChartSpec, CurvePoint, LatticeCurve, StackPanel } from '../charts.ts';
 import {
   sampleCurve, invertFamily, nearestCurve,
   curveLabelSpots, emptiestCorner, CORNER_XY,
@@ -96,11 +96,17 @@ interface Reading {
    * two parameters and the ordinate fixes another, so the pair is determined.
    */
   pairs: { family: number; sweep: number }[] | null;
+  /** Which stacked panel the pointer was over. 0 for an ordinary chart. */
+  panel?: number;
 }
 
 export default function ChartReader({ spec }: { spec: ChartSpec }) {
   const theme = useTheme();
+  /* Two plot elements, because a stacked figure is a pair of charts on one
+     page and the second one is not optional to read — see ChartSpec.stack.
+     An ordinary chart uses the first and leaves the second unmounted. */
   const plotRef = useRef<HTMLDivElement>(null);
+  const plotRef2 = useRef<HTMLDivElement>(null);
 
   const [panelValue, setPanelValue] = useState<number | undefined>(spec.panel?.values[0]);
   const [familyStr, setFamilyStr] = useState('');
@@ -108,7 +114,9 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
   const [hover, setHover] = useState<Reading | null>(null);
   const [pinned, setPinned] = useState<Reading | null>(null);
   const [busy, setBusy] = useState(false);
-  const [curves, setCurves] = useState<{ fv: number; pts: { sweep: number; value: number }[] }[]>([]);
+  // Only the four percent charts read this; every other spec ignores it.
+  const [qStr, setQStr] = useState('50');
+  const [curveSets, setCurveSets] = useState<{ fv: number; pts: { sweep: number; value: number }[] }[][]>([]);
   const [lattice, setLattice] = useState<LatticeCurve[] | null>(null);
 
   // A fresh chart starts on its first anchor when it has one, so the tool
@@ -122,12 +130,26 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
     setPinned(null);
   }, [spec]);
 
+  /**
+   * The panels this figure draws, in order. An ordinary chart draws one, at
+   * whatever the panel select is on; a stacked figure always draws both of
+   * its own, and the select does not exist.
+   */
+  const drawn: StackPanel[] = useMemo(
+    () => spec.stack ?? [{ pv: panelValue as number, label: '' }],
+    [spec, panelValue]
+  );
+
   const familyValue = Number(familyStr);
   const sweepValue = Number(sweepStr);
-  const markerValue = useMemo(() => {
-    if (!Number.isFinite(familyValue) || !Number.isFinite(sweepValue)) return NaN;
-    return spec.evaluate(familyValue, sweepValue, panelValue);
-  }, [spec, familyValue, sweepValue, panelValue]);
+  /** One marker per drawn panel: the same input, read on each chart. */
+  const markerValues = useMemo(() => {
+    if (!Number.isFinite(familyValue) || !Number.isFinite(sweepValue)) {
+      return drawn.map(() => NaN);
+    }
+    return drawn.map(d => spec.evaluate(familyValue, sweepValue, d.pv));
+  }, [spec, familyValue, sweepValue, drawn]);
+  const markerValue = markerValues[0];
 
   /* ── Build the curves ────────────────────────────────────────────────────
    * Heavy charts are seconds of work, so the sampling is pushed off the paint
@@ -145,19 +167,20 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         const mesh = sampleLattice(spec, panelValue);
         if (dead) return;
         setLattice(mesh);
-        setCurves(mesh.filter(c => c.kind === 'family').map(c => ({
+        setCurveSets([mesh.filter(c => c.kind === 'family').map(c => ({
           fv: c.label,
           pts: c.pts.map(pt => ({ sweep: pt.sweep, value: pt.value })),
-        })));
+        }))]);
         setBusy(false);
         return;
       }
-      const out = spec.family.values.map(fv => ({ fv, pts: sampleCurve(spec, fv, panelValue) }));
-      if (!dead) { setLattice(null); setCurves(out); setBusy(false); }
+      const out = drawn.map(d =>
+        spec.family.values.map(fv => ({ fv, pts: sampleCurve(spec, fv, d.pv) })));
+      if (!dead) { setLattice(null); setCurveSets(out); setBusy(false); }
     };
     const t = window.setTimeout(build, spec.heavy ? 40 : 0);
     return () => { dead = true; window.clearTimeout(t); };
-  }, [spec, panelValue]);
+  }, [spec, panelValue, drawn]);
 
   const colors = useMemo(
     () => rampSeries(rampFor(spec), theme, spec.family.values.length),
@@ -174,7 +197,9 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
    * fine on a click, impossible on a mousemove. Heavy charts therefore snap
    * while the pointer moves and solve when it is clicked.
    */
-  const read = useMemo(() => (valueAt: number, sweepAt: number, solve: boolean): Reading => {
+  const read = useMemo(() => (
+    valueAt: number, sweepAt: number, solve: boolean, panel = 0
+  ): Reading => {
     if (spec.nomograph) {
       // `sweepAt` is the lattice abscissa here, and no nearest curve is
       // offered: nearestCurve measures in the value/sweep frame, which is not
@@ -184,14 +209,17 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         pairs: solve ? invertLattice(spec, sweepAt, valueAt, panelValue) : null,
       };
     }
+    // A stacked figure's two panels are two different functions of the same
+    // family, so a reading has to be inverted against the panel it came from.
+    const pv = drawn[panel]?.pv;
     return {
       value: valueAt,
       sweep: sweepAt,
-      roots: solve ? invertFamily(spec, valueAt, sweepAt, panelValue) : null,
-      nearest: nearestCurve(spec, valueAt, sweepAt, curves),
+      roots: solve ? invertFamily(spec, valueAt, sweepAt, pv) : null,
+      nearest: nearestCurve(spec, valueAt, sweepAt, curveSets[panel] ?? []),
       pairs: null,
     };
-  }, [spec, panelValue, curves]);
+  }, [spec, panelValue, curveSets, drawn]);
 
   /* ── The curve you asked for ──────────────────────────────────────────
    * The whole difference between this and the page it redraws. Foster and
@@ -205,30 +233,42 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
    * conversion-factor chart every point is a critical-strain search, and this
    * would otherwise run one per keystroke.
    */
-  const [userCurve, setUserCurve] = useState<CurvePoint[] | null>(null);
+  const [userCurves, setUserCurves] = useState<(CurvePoint[] | null)[]>([]);
   useEffect(() => {
     const [lo, hi] = spec.family.range;
     const printed = spec.family.values.some(v => Math.abs(v - familyValue) < 1e-9);
     if (!Number.isFinite(familyValue) || printed || familyValue < lo || familyValue > hi) {
-      setUserCurve(null);
+      setUserCurves([]);
       return;
     }
     let dead = false;
     const t = window.setTimeout(() => {
-      const pts = sampleCurve(spec, familyValue, panelValue);
-      if (!dead) setUserCurve(pts);
+      const pts = drawn.map(d => sampleCurve(spec, familyValue, d.pv));
+      if (!dead) setUserCurves(pts);
     }, spec.heavy ? 320 : 140);
     return () => { dead = true; window.clearTimeout(t); };
-  }, [spec, familyValue, panelValue]);
+  }, [spec, familyValue, panelValue, drawn]);
 
   /* ── Draw ─────────────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (!curves.length || !plotRef.current) return;
+    if (!curveSets.length || !plotRef.current) return;
     if (spec.nomograph && !lattice) return;
     let dead = false;
     (async () => {
       const Plotly = (await import('plotly.js-dist-min')).default;
-      if (dead || !plotRef.current) return;
+      if (dead) return;
+      const els = [plotRef.current, plotRef2.current];
+
+      /* One pass per panel. A stacked figure draws the SAME inputs on two
+         different functions, so everything below — curves, labels, marker,
+         crosshairs, frame — is built per panel and nothing is shared except
+         the numbers the reader typed. */
+      for (let panel = 0; panel < drawn.length; panel++) {
+      const el = els[panel];
+      const curves = curveSets[panel];
+      const userCurve = userCurves[panel] ?? null;
+      const markerValue = markerValues[panel];
+      if (dead || !el || !curves?.length) continue;
       const c = chartColors(theme);
       const t = TOKENS[theme];
 
@@ -269,8 +309,10 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       const traces: any[] = [];
       const annotations: any[] = [];
 
-      const plotW = plotRef.current.clientWidth || 900;
-      const height = 560;
+      const plotW = el.clientWidth || 900;
+      // A stacked pair has to fit two frames on one screen, so each half is
+      // shorter — but not so short that the ruled paper stops being readable.
+      const height = drawn.length > 1 ? 400 : 560;
       const aspect = Math.max(0.6, Math.min(3, (plotW - 110) / (height - 90)));
 
       if (nomo) {
@@ -448,8 +490,8 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       }
 
       // A ghost marker while the pointer is in the frame.
-      const ghost = hover ?? pinned;
-      if (ghost) {
+      const ghost = (hover ?? pinned);
+      if (ghost && (ghost.panel ?? 0) === panel) {
         traces.push({
           x: [nomo ? ghost.sweep : putX(ghost.value, ghost.sweep)],
           y: [nomo ? ghost.value : putY(ghost.value, ghost.sweep)],
@@ -486,7 +528,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       const frame = paperFrame(theme, xa, paperFor(yAxis, yAxis.label));
       traces.push(frame.anchor);
 
-      await Plotly.react(plotRef.current, traces, baseLayout(theme, {
+      await Plotly.react(el, traces, baseLayout(theme, {
         height,
         margin: { l: 34, r: 34, t: 26, b: 34 },
         ...frame.axes,
@@ -496,50 +538,60 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         annotations,
         shapes,
       }), plotConfig);
+      }
     })();
     return () => { dead = true; };
-  }, [curves, lattice, userCurve, colors, theme, spec, markerValue, sweepValue, familyValue, hover, pinned]);
+  }, [curveSets, lattice, userCurves, colors, theme, spec, markerValues, sweepValue,
+      familyValue, hover, pinned, drawn]);
 
   /* ── The pointer, which is the whole backwards half ───────────────────── */
   useEffect(() => {
-    const gd = plotRef.current as any;
-    if (!gd) return;
+    const gds = [plotRef.current, plotRef2.current]
+      .slice(0, drawn.length)
+      .map((el, i) => [el as any, i] as const)
+      .filter(([el]) => el);
+    if (!gds.length) return;
     let frame = 0;
     // Returns [value, sweep] — and on a nomograph the second slot is the
     // lattice abscissa, which is what invertLattice takes.
     const split = (d: { x: number; y: number }) =>
       (spec.nomograph || !spec.valueOnX ? [d.y, d.x] : [d.x, d.y]) as [number, number];
 
-    const onMove = (e: MouseEvent) => {
-      // One reading per animation frame. Without this the handler fires on
-      // every pixel of travel, and each one redraws the figure.
-      if (frame) return;
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        const d = pointerData(gd, e);
-        if (!d) { setHover(null); return; }
-        const [value, sweep] = split(d);
-        setHover(read(value, sweep, !spec.heavy));
-      });
-    };
     const onLeave = () => setHover(null);
-    const onClick = (e: MouseEvent) => {
-      const d = pointerData(gd, e);
-      if (!d) return;
-      const [value, sweep] = split(d);
-      setHover(null);
-      setPinned(read(value, sweep, true));
-    };
-    gd.addEventListener('mousemove', onMove);
-    gd.addEventListener('mouseleave', onLeave);
-    gd.addEventListener('click', onClick);
+    const handlers = gds.map(([gd, panel]) => {
+      const onMove = (e: MouseEvent) => {
+        // One reading per animation frame. Without this the handler fires on
+        // every pixel of travel, and each one redraws the figure.
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const d = pointerData(gd, e);
+          if (!d) { setHover(null); return; }
+          const [value, sweep] = split(d);
+          setHover({ ...read(value, sweep, !spec.heavy, panel), panel });
+        });
+      };
+      const onClick = (e: MouseEvent) => {
+        const d = pointerData(gd, e);
+        if (!d) return;
+        const [value, sweep] = split(d);
+        setHover(null);
+        setPinned({ ...read(value, sweep, true, panel), panel });
+      };
+      gd.addEventListener('mousemove', onMove);
+      gd.addEventListener('mouseleave', onLeave);
+      gd.addEventListener('click', onClick);
+      return { gd, onMove, onClick };
+    });
     return () => {
       if (frame) cancelAnimationFrame(frame);
-      gd.removeEventListener('mousemove', onMove);
-      gd.removeEventListener('mouseleave', onLeave);
-      gd.removeEventListener('click', onClick);
+      for (const h of handlers) {
+        h.gd.removeEventListener('mousemove', h.onMove);
+        h.gd.removeEventListener('mouseleave', onLeave);
+        h.gd.removeEventListener('click', h.onClick);
+      }
     };
-  }, [read, spec]);
+  }, [read, spec, drawn]);
 
   const reading = hover ?? pinned;
   const inFrame = (r: Reading) =>
@@ -549,14 +601,17 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       : r.sweep >= spec.sweep.min && r.sweep <= spec.sweep.max);
 
   /* ── Table view (§B9 — not optional) ──────────────────────────────────── */
-  const tableRows = useMemo(() => {
+  const tableSets = useMemo(() => {
     const stations = spec.sweep.ticks?.filter(v => v >= spec.sweep.min && v > 0)
       ?? Array.from({ length: 6 }, (_, i) => spec.sweep.min + ((i + 1) / 6) * (spec.sweep.max - spec.sweep.min));
-    return stations.slice(0, 8).map(s => ({
-      sweep: s,
-      values: spec.family.values.map(fv => spec.evaluate(fv, s, panelValue)),
+    return drawn.map(d => ({
+      label: d.label,
+      rows: stations.slice(0, 8).map(s => ({
+        sweep: s,
+        values: spec.family.values.map(fv => spec.evaluate(fv, s, d.pv)),
+      })),
     }));
-  }, [spec, panelValue, curves]);
+  }, [spec, drawn, curveSets]);
 
   return (
     <>
@@ -588,15 +643,52 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           <input id="cr-sweep" className="cee-input" type="number" step="0.25" value={sweepStr}
             onChange={e => setSweepStr(e.target.value)} />
         </div>
+        {spec.percent && (
+          <div className="cee-field">
+            <label className="cee-field__label" htmlFor="cr-q">
+              <span>Pressure q<Tip text="Contact pressure, so the readout can finish the job: the chart gives a percentage of q, and this turns it into a stress. It does not move the chart — every curve here is dimensionless. 50 psi is Example 2.1's." /></span>
+              <span className="cee-field__unit">psi / kPa</span>
+            </label>
+            <input id="cr-q" className="cee-input" type="number" step="5" value={qStr}
+              onChange={e => setQStr(e.target.value)} />
+          </div>
+        )}
       </div>
 
       <div className="cee-readout">
-        <div className="cee-readout__main">
-          <span className="cee-readout__label">{spec.value.label}</span>
-          <span className="cee-readout__value">
-            {Number.isFinite(markerValue) ? fmt(markerValue, 4) : '—'}
-          </span>
-        </div>
+        {spec.stack ? (
+          /* Eq. 2.19 needs both, so both are reported. Reading one of these
+             charts and stopping is the mistake this layout exists to stop. */
+          <div className="cee-readout__steps">
+            {drawn.map((d, i) => (
+              <span key={d.label}>
+                {d.label.split('·')[0].trim()}{' = '}
+                <strong>{Number.isFinite(markerValues[i]) ? fmt(markerValues[i], 4) : '—'}</strong>
+                {'  '}({d.label.split('·').slice(1).join('·').trim()})
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="cee-readout__main">
+            <span className="cee-readout__label">{spec.value.label}</span>
+            <span className="cee-readout__value">
+              {Number.isFinite(markerValue) ? fmt(markerValue, 4) : '—'}
+            </span>
+          </div>
+        )}
+        {spec.percent && Number.isFinite(markerValue) && (
+          <div className="cee-readout__steps">
+            <span>
+              &divide; 100 &rarr; {spec.percent.ratio} ={' '}
+              <strong>{(markerValue / 100).toFixed(4)}</strong>
+            </span>
+            <span>
+              &times; q &rarr; {spec.percent.stress} ={' '}
+              <strong>{fmt((markerValue / 100) * num(qStr, 0), 4)}</strong>
+              {' '}(in the units of q)
+            </span>
+          </div>
+        )}
         <div className="cee-readout__eq">{spec.equation}</div>
         {Number.isFinite(markerValue) &&
           (markerValue < spec.value.min || markerValue > spec.value.max) && (
@@ -622,6 +714,8 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           </>
         }
         plotRef={plotRef}
+        plotLabel={spec.stack ? spec.stack[0].label : undefined}
+        panels={spec.stack ? [{ label: spec.stack[1].label, plotRef: plotRef2 }] : undefined}
         takeaway={spec.purpose}
         affordance={busy ? <span className="cee-chip cee-chip--busy">Computing…</span> : undefined}
       >
@@ -630,6 +724,15 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           wherever the cursor is, not from the nearest data point, which is the half of a chart
           a printed page cannot do. Click to pin a reading.
         </p>
+        {spec.stack && (
+          <p>
+            <strong>Both panels are the same figure.</strong> {spec.stack[0].label} above,{' '}
+            {spec.stack[1].label} below, exactly as the page prints them. One set of inputs moves
+            both markers, and the readout carries both values, because Eq. 2.19 interpolates
+            between them for the contact radius your section actually has — reading one panel and
+            stopping is the mistake.
+          </p>
+        )}
         <p>
           <strong>Read it like the page.</strong>{' '}
           {spec.nomograph
@@ -671,7 +774,12 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         ) : (
           <>
             <p className="cee-reading__at">
-              At <strong>{spec.value.label} = {fmt(reading.value, 4)}</strong>
+              {/* A stacked figure has two of everything, so a reading has to
+                  say which half of it came from. */}
+              {spec.stack
+                ? <>On <strong>{drawn[reading.panel ?? 0]?.label}</strong>, at{' '}</>
+                : 'At '}
+              <strong>{spec.value.label} = {fmt(reading.value, 4)}</strong>
               {spec.nomograph
                 ? ', this point of the mesh is:'
                 : <> and <strong>{spec.sweep.label} = {fmt(reading.sweep, 3)}</strong>:</>}
@@ -774,7 +882,8 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
                 <button type="button" className="cee-chip" onClick={() => {
                   setFamilyStr(String(a.fv));
                   setSweepStr(String(a.sv));
-                  if (a.pv !== undefined) setPanelValue(a.pv);
+                  // A stacked figure has no panel select; both panels move together.
+                  if (a.pv !== undefined && !spec.stack) setPanelValue(a.pv);
                 }}>
                   {a.label}
                 </button>
@@ -788,29 +897,32 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         </div>
       )}
 
-      <div className="cee-tablewrap">
-        <table className="cee-table">
-          <caption className="cee-table__caption">
-            The chart as numbers: every curve at each printed station of {spec.sweep.label}.
-          </caption>
-          <thead>
-            <tr>
-              <th>{spec.sweep.label}</th>
-              {spec.family.values.map(fv => <th key={fv}>{fv}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {tableRows.map(r => (
-              <tr key={r.sweep}>
-                <td>{fmtParam(r.sweep)}</td>
-                {r.values.map((v, i) => (
-                  <td key={i}>{Number.isFinite(v) ? fmt(v, 3) : '—'}</td>
-                ))}
+      {tableSets.map(set => (
+        <div className="cee-tablewrap" key={set.label || 'only'}>
+          <table className="cee-table">
+            <caption className="cee-table__caption">
+              The chart as numbers: every curve at each printed station of {spec.sweep.label}
+              {set.label ? ` — ${set.label}` : ''}.
+            </caption>
+            <thead>
+              <tr>
+                <th>{spec.sweep.label}</th>
+                {spec.family.values.map(fv => <th key={fv}>{fv}</th>)}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {set.rows.map(r => (
+                <tr key={r.sweep}>
+                  <td>{fmtParam(r.sweep)}</td>
+                  {r.values.map((v, i) => (
+                    <td key={i}>{Number.isFinite(v) ? fmt(v, 3) : '—'}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
     </>
   );
 }

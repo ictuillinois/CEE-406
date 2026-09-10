@@ -6,7 +6,9 @@ import assert from 'node:assert/strict';
 import {
   oneLayerResponse, principalAt, superposeOneLayer, principalOfTensor,
   sigZRatio, sigRRatio, sigTRatio, deflectionFactorAt,
-  rigidPlateDeflection, CHART_NU,
+  rigidPlateDeflection, rigidPlatePressure, rigidPlateResponse,
+  pointLoadResponse, pointLoadAxisStress, pointLoadSurfaceDeflection,
+  CHART_NU,
 } from './oneLayer.ts';
 import { leaResponse } from './lea.ts';
 
@@ -205,4 +207,177 @@ test('principalOfTensor matches the axisymmetric Mohr circle', () => {
   const viaMohr = principalAt(R, 1, 0.4).sig;
   const viaCubic = principalOfTensor(R.sigR, R.sigT, R.sigZ, 0, R.tauRZ, 0);
   for (let i = 0; i < 3; i++) abs(viaCubic[i], viaMohr[i], 1e-9, `principal ${i + 1}`);
+});
+
+/* ── The surface outside the load: the sign that was wrong ──────────────── */
+
+test('outside the load the surface is in radial TENSION, not compression', () => {
+  // A wheel makes a bowl. The surface around it stretches radially and is
+  // squeezed circumferentially, which is the mechanics of a radial crack
+  // around a punch. So at z = 0, r > a: sigma_r < 0 and sigma_t = -sigma_r.
+  //
+  // This module shipped both signs the other way round. It went unnoticed
+  // because the error vanishes identically at nu = 0.5 — the only Poisson
+  // ratio Foster and Ahlvin drew a chart for, and the only one the suite
+  // exercised outside the load. Every other nu was wrong at z = 0.
+  const q = 100, a = 6, E = 1e4;
+  for (const nu of [0, 0.2, 0.3, 0.45]) {
+    for (const r of [9, 12, 24]) {
+      const S = oneLayerResponse(r, 0, q, a, E, nu);
+      const mag = (q * (1 - 2 * nu) * a * a) / (2 * r * r);
+      abs(S.sigR, -mag, 1e-12, `sigma_r at r=${r}, nu=${nu} (tension)`);
+      abs(S.sigT, +mag, 1e-12, `sigma_t at r=${r}, nu=${nu} (compression)`);
+      abs(S.sigR + S.sigT, 0, 1e-12, `the two are equal and opposite at r=${r}`);
+
+      // ...and the quadrature, which was right all along, converges ON it as
+      // z -> 0. Asserting a band at one small z would just be picking a
+      // tolerance; asserting that the gap keeps shrinking is the statement.
+      let prev = Infinity;
+      for (const z of [0.32, 0.08, 0.02, 0.005]) {
+        const gap = Math.abs(oneLayerResponse(r, z, q, a, E, nu).sigR - S.sigR);
+        assert.ok(gap < prev,
+          `the integral should approach the closed form as z -> 0 ` +
+          `(r=${r}, nu=${nu}, z=${z}): gap ${gap} after ${prev}`);
+        prev = gap;
+      }
+      assert.ok(prev < 0.05 * mag + 1e-9,
+        `and arrive: at z = 0.005, r=${r}, nu=${nu} the gap is still ${prev}`);
+    }
+  }
+  // The far field is the point load's, which is where the sign comes from.
+  const P = 100 * Math.PI * 36;
+  abs(oneLayerResponse(24, 0, 100, 6, 1e4, 0.3).sigR,
+    -(1 - 0.6) * P / (2 * Math.PI * 24 * 24), 1e-10, 'far field = the point load');
+});
+
+/* ── The rigid plate, Huang Eqs. 2.9 and 2.10 ───────────────────────────── */
+
+test('a rigid plate: Eq. 2.9 on the surface, Eq. 2.10 for the settlement', () => {
+  const q = 100, a = 6, E = 1e4;
+  for (const nu of [0.3, 0.4, 0.5]) {
+    const w0 = rigidPlateDeflection(q, a, E, nu);
+
+    // Eq. 2.10 is pi/4 of Eq. 2.8: the whole point of the comparison Huang
+    // draws under it ("only 79% of that under the center of a uniformly
+    // distributed load").
+    const flexible = oneLayerResponse(0, 0, q, a, E, nu).w;
+    near(w0 / flexible, Math.PI / 4, 1e-12, `Eq. 2.10 / Eq. 2.8 at nu=${nu}`);
+
+    // The plate is rigid, so it settles as a unit: w is FLAT under it.
+    for (const r of [0, 1, 3, 5.5, 6]) {
+      abs(rigidPlateResponse(r, 0, q, a, E, nu).w, w0, 1e-12,
+        `w under the plate at r=${r}, nu=${nu}`);
+    }
+    // ...and falls off as (2 w0 / pi) asin(a/r) outside it.
+    for (const r of [7, 12, 30]) {
+      abs(rigidPlateResponse(r, 0, q, a, E, nu).w,
+        (2 * w0 / Math.PI) * Math.asin(a / r), 1e-12, `w outside at r=${r}`);
+    }
+
+    // Eq. 2.9: q/2 at the center, unbounded at the rim, nothing outside.
+    abs(rigidPlateResponse(0, 0, q, a, E, nu).sigZ, q / 2, 1e-12, 'q(0) = q/2');
+    for (const r of [2, 4, 5.9]) {
+      abs(rigidPlateResponse(r, 0, q, a, E, nu).sigZ,
+        rigidPlatePressure(q, a, r), 1e-12, `Eq. 2.9 at r=${r}`);
+    }
+    assert.ok(!Number.isFinite(rigidPlateResponse(6, 0, q, a, E, nu).sigZ),
+      'the pressure at the rim of a rigid plate is infinite');
+    abs(rigidPlateResponse(9, 0, q, a, E, nu).sigZ, 0, 1e-12, 'nothing outside the plate');
+
+    // The plate applies the load it is given: integrating Eq. 2.9 over the
+    // disc must return q times the area.
+    let sum = 0;
+    const N = 200000;
+    for (let i = 0; i < N; i++) {
+      const rr = ((i + 0.5) / N) * a;
+      sum += rigidPlatePressure(q, a, rr) * 2 * Math.PI * rr * (a / N);
+    }
+    near(sum, q * Math.PI * a * a, 2e-3, `Eq. 2.9 carries the whole load at nu=${nu}`);
+  }
+});
+
+test('the rigid plate below the surface, against its own closed forms', () => {
+  // The punch has closed forms on the axis, which is what pins the changed
+  // factor in the integrand:
+  //   sigma_z = q a^2 (a^2 + 3z^2) / (2 (a^2 + z^2)^2)
+  //   w       = q a (1+nu)/(2E) [ 2(1-nu) atan(a/z) + a z/(a^2 + z^2) ]
+  // Both collapse at z = 0 to q/2 and to Eq. 2.10.
+  const q = 100, a = 6, E = 1e4;
+  for (const nu of [0.3, 0.5]) {
+    for (const z of [0.5, 1, 3, 6, 12, 24, 60]) {
+      const R = rigidPlateResponse(0, z, q, a, E, nu);
+      const sz = (q * a * a * (a * a + 3 * z * z)) / (2 * (a * a + z * z) ** 2);
+      const w = ((q * a * (1 + nu)) / (2 * E)) *
+        (2 * (1 - nu) * Math.atan(a / z) + (a * z) / (a * a + z * z));
+      near(R.sigZ, sz, 1e-5, `punch sigma_z on the axis at z=${z}, nu=${nu}`);
+      near(R.w, w, 1e-5, `punch w on the axis at z=${z}, nu=${nu}`);
+      abs(R.tauRZ, 0, 1e-9, `punch tau_rz vanishes on the axis at z=${z}`);
+    }
+    // Deep enough, a plate is a point load: both tend to 3P/(2 pi z^2).
+    const P = q * Math.PI * a * a;
+    near(rigidPlateResponse(0, 30 * a, q, a, E, nu).sigZ,
+      (3 * P) / (2 * Math.PI * (30 * a) ** 2), 2e-3, 'the punch far field is the point load');
+  }
+});
+
+/* ── Boussinesq's concentrated load, which the circle is an integral of ─── */
+
+test('the point load reproduces its own closed forms', () => {
+  const P = 9000, E = 1e4;
+  for (const nu of [0, 0.3, 0.5]) {
+    // On the axis: 0.4775 P / z^2, independent of E and nu alike.
+    for (const z of [6, 12, 24, 100]) {
+      const R = pointLoadResponse(0, z, P, E, nu);
+      near(R.sigZ, (3 * P) / (2 * Math.PI * z * z), 1e-12, `sigma_z on the axis at z=${z}`);
+      near(R.sigZ, pointLoadAxisStress(z, P), 1e-12, 'the shorthand agrees');
+      abs(R.tauRZ, 0, 1e-12, 'no shear on the axis');
+      near(R.w, (P * (1 + nu) * (3 - 2 * nu)) / (2 * Math.PI * E * z), 1e-12,
+        `w on the axis at z=${z}`);
+    }
+    // On the surface: the 1/r deflection bowl, and radial tension around it.
+    for (const r of [6, 12, 24]) {
+      const R = pointLoadResponse(r, 0, P, E, nu);
+      near(R.w, pointLoadSurfaceDeflection(r, P, E, nu), 1e-12, `surface w at r=${r}`);
+      near(R.w, (P * (1 - nu * nu)) / (Math.PI * E * r), 1e-12, `Boussinesq surface w at r=${r}`);
+      abs(R.sigZ, 0, 1e-12, `no vertical stress at the surface away from the load, r=${r}`);
+      near(R.sigR, -((1 - 2 * nu) * P) / (2 * Math.PI * r * r), 1e-12,
+        `surface sigma_r is TENSION at r=${r}, nu=${nu}`);
+      abs(R.sigR + R.sigT, 0, 1e-12, 'and sigma_t is its mirror');
+    }
+  }
+  // At nu = 0.5 the hoop stress vanishes everywhere: it carries the factor
+  // (1 - 2nu) and nothing else.
+  for (const rz of [[0, 5], [5, 5], [20, 5], [10, 20]]) {
+    abs(pointLoadResponse(rz[0], rz[1], P, E, 0.5).sigT, 0, 1e-15,
+      `sigma_t = 0 at nu = 0.5, (${rz[0]}, ${rz[1]})`);
+  }
+  // The load is a singularity; the origin is not a point of the solution.
+  assert.equal(pointLoadResponse(0, 0, P, E, 0.35), null,
+    'the point under a point load has no finite state');
+});
+
+test('a circular load of the same total load IS the point load, as a shrinks', () => {
+  // Huang's own framing of Chapter 2: "the stresses, strains, and deflections
+  // due to a concentrated load can be integrated to obtain those due to a
+  // circular loaded area". Run it the other way and the disc must converge on
+  // the point — quadratically in a/z, which is what makes this a real check
+  // of both solvers rather than of one constant.
+  const P = 1000, E = 1e4;
+  for (const nu of [0.3, 0.5]) {
+    for (const rz of [[0, 10], [5, 10], [20, 10], [10, 15]]) {
+      const r = rz[0], z = rz[1];
+      const pt = pointLoadResponse(r, z, P, E, nu);
+      let prev = Infinity;
+      for (const a of [2, 1, 0.5]) {
+        const dc = oneLayerResponse(r, z, P / (Math.PI * a * a), a, E, nu);
+        const err = Math.abs(dc.sigZ - pt.sigZ) / pt.sigZ;
+        assert.ok(err < prev, `sigma_z should converge at (${r},${z}), a=${a}`);
+        prev = err;
+      }
+      const fine = oneLayerResponse(r, z, P / (Math.PI * 0.0625), 0.25, E, nu);
+      near(fine.sigZ, pt.sigZ, 3e-3, `sigma_z at (${r}, ${z}), nu=${nu}`);
+      near(fine.w, pt.w, 3e-3, `w at (${r}, ${z}), nu=${nu}`);
+      abs(fine.tauRZ, pt.tauRZ, 3e-3 * Math.max(pt.sigZ, 1e-6), `tau_rz at (${r}, ${z})`);
+    }
+  }
 });

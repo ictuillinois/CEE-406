@@ -18,8 +18,8 @@ test('the catalog covers every empirical chart in Chapter 2', () => {
   const figures = CHARTS.map(c => c.figure);
   for (const f of [
     'Figure 2.2', 'Figure 2.3', 'Figure 2.4', 'Figure 2.5', 'Figure 2.6',
-    'Figure 2.14', 'Figure 2.15', 'Figure 2.17', 'Figure 2.19', 'Figure 2.21',
-    'Figures 2.23 and 2.25–2.27', 'Figure 2.31',
+    'Figure 2.14', 'Figure 2.15', 'Figure 2.15*', 'Figure 2.17', 'Figure 2.19', 'Figure 2.21',
+    'Figure 2.23', 'Figure 2.25', 'Figure 2.26', 'Figure 2.27', 'Figure 2.31',
   ]) {
     assert.ok(figures.includes(f), `${f} is missing from the catalog`);
   }
@@ -274,24 +274,29 @@ test('every curve of the mesh is named, at the end the plate names it', () => {
     const pv = c.panel ? c.panel.values[0] : undefined;
     const mesh = sampleLattice(c, pv);
     const labels = latticeLabels(c, mesh);
-    const drawable = mesh.filter(m => m.pts.some(p => Number.isFinite(p.value)));
+    const drawable = mesh.filter(m => m.pts.some(p => Number.isFinite(p.value) &&
+      p.value >= c.value.min && p.value <= c.value.max));
     assert.equal(labels.length, drawable.length,
       `${c.figure}: ${drawable.length} curves are drawn, ${labels.length} named`);
 
-    // Each label is the OUTERMOST point of its own curve that is still on
-    // the frame, taken from the end the plate names it at. A curve whose
-    // named end has fallen through the axis floor — the H = 8 curve of
-    // Figure 2.31's first panel does exactly that — is named where it
-    // actually emerges, which is what the plate does with it too.
+    // Each label is the outermost point of its own curve that is actually ON
+    // the page, taken from the end the plate names it at. Not merely the
+    // outermost DRAWN point: the samplers run a curve 10% past the ordinate
+    // so it crosses the frame line rather than stopping on it, and a number
+    // placed out there is clipped away. A curve whose named end has fallen
+    // through the axis floor — the H = 8 curve of Figure 2.31's first panel
+    // does exactly that — is named where it emerges, which is what the plate
+    // does with it too.
     for (const l of labels) {
       const cv = mesh.find(m => m.kind === l.kind && m.label === l.label);
       const order = l.kind === 'family' ? cv.pts : [...cv.pts].reverse();
-      const first = order.findIndex(q => Number.isFinite(q.value));
+      const first = order.findIndex(q => Number.isFinite(q.value) &&
+        q.value >= c.value.min && q.value <= c.value.max);
       assert.ok(first >= 0);
       assert.equal(order[first].x, l.x,
-        `${c.figure}: the ${l.label} label is not at the outermost drawn point`);
+        `${c.figure}: the ${l.label} label is not at the outermost point on the page`);
       assert.equal(order[first].value, l.value);
-      assert.ok(l.value >= c.value.min * 0.9 && l.value <= c.value.max * 1.1,
+      assert.ok(l.value >= c.value.min && l.value <= c.value.max,
         `${c.figure}: the ${l.label} label is off the ordinate at ${l.value}`);
       // Uncipped, the two runs of labels fall on the two halves of the
       // frame, which is the layout both plates use.
@@ -528,6 +533,170 @@ test('every chart the reader draws can be framed as ruled paper', () => {
         const span = (a.max - a.min) / a.minorDtick;
         assert.ok(span >= 8 && span <= 90,
           `${c.figure}: the ${which} axis would carry ${Math.round(span)} minor divisions`);
+      }
+    }
+  }
+});
+
+test('Figure 2.15* is Figure 2.15 turned ninety degrees, and its axis agrees', () => {
+  // The variant fixes E1/E2 = 100 and makes r/a the family. Its r/a = 0 curve
+  // is therefore, point for point, the E1/E2 = 100 curve of the parent — the
+  // two are the same solve read at the same station, so any drift means one
+  // of them has stopped describing the section it names.
+  const parent = chartById('fig-2-15');
+  const variant = chartById('fig-2-15-ra');
+  assert.ok(parent && variant, 'both figures must be in the catalog');
+
+  for (const ah of [0.2, 0.6, 1.0, 1.4, 1.8, 2.2, 2.4]) {
+    const onAxis = variant.evaluate(0, ah);
+    const printed = parent.evaluate(100, ah);
+    assert.ok(Math.abs(onAxis - printed) < 1e-9,
+      `Figure 2.15* at r/a = 0, a/h1 = ${ah} reads ${onAxis}, ` +
+      `Figure 2.15 at E1/E2 = 100 reads ${printed}`);
+  }
+
+  // The whole point of the variant: the stress falls off with radius, at
+  // every thickness, monotonically. If it did not, there would be nothing to
+  // read off the family.
+  for (const ah of [0.4, 1.2, 2.4]) {
+    let last = Infinity;
+    for (const ra of variant.family.values) {
+      const v = variant.evaluate(ra, ah);
+      assert.ok(v > 0, `sigma_c/q must stay positive at r/a = ${ra}, a/h1 = ${ah}`);
+      assert.ok(v < last,
+        `sigma_c/q should fall with radius at a/h1 = ${ah}: r/a = ${ra} gave ${v} after ${last}`);
+      last = v;
+    }
+  }
+
+  // Both axes are the parent's, unchanged — that is what makes the two
+  // comparable, and it is the reason the family sits low on the ordinate.
+  assert.deepEqual(variant.value, parent.value, 'Figure 2.15* must keep the parent ordinate');
+  assert.deepEqual(variant.sweep, parent.sweep, 'Figure 2.15* must keep the parent abscissa');
+});
+
+test('the percent charts name the two steps between a read and a stress', () => {
+  // The four Foster-Ahlvin charts are the ones whose abscissa is a percentage
+  // of q, and they are exactly the ones that must carry the conversion. A
+  // chart that says "/100" in its equation but declares no `percent` would
+  // leave the reader to do the arithmetic the readout exists to do.
+  for (const c of CHARTS) {
+    const equationDivides = c.equation.includes('/100');
+    assert.equal(!!c.percent, equationDivides,
+      `${c.id}: equation says "${c.equation}" but percent is ${JSON.stringify(c.percent)}`);
+    if (!c.percent) continue;
+    assert.ok(c.value.label.includes('100'),
+      `${c.id}: declares percent but its axis is not a percentage`);
+    assert.ok(c.percent.ratio.includes('/q'),
+      `${c.id}: the ratio should be written over q`);
+    assert.ok(c.percent.ratio.startsWith(c.percent.stress),
+      `${c.id}: the ratio and the stress should name the same component`);
+  }
+  assert.equal(CHARTS.filter(c => c.percent).length, 4,
+    'Figures 2.2, 2.3, 2.4 and 2.5 are the percent charts; no others');
+});
+
+test('a chart is a panel chart, a stacked chart, or neither — never two', () => {
+  // `panel` is a chart you choose between; `stack` is a chart you read both
+  // halves of. They are drawn by different paths, so a spec carrying both
+  // would silently show one and ignore the other.
+  for (const c of CHARTS) {
+    assert.ok(!(c.panel && c.stack), `${c.id} declares both a panel and a stack`);
+    if (c.nomograph) {
+      assert.ok(!c.stack, `${c.id} is a nomograph and cannot be stacked`);
+    }
+    if (!c.stack) continue;
+    assert.equal(c.stack.length, 2, `${c.id}: a stack is a pair, as the page prints it`);
+    assert.notEqual(c.stack[0].pv, c.stack[1].pv, `${c.id}: both panels draw the same thing`);
+    for (const panel of c.stack) {
+      assert.ok(panel.label.length > 3, `${c.id}: a stacked panel needs a heading`);
+    }
+  }
+});
+
+test('the four conversion-factor figures are four figures', () => {
+  // They used to be one entry with eight panels, which made a reader switch
+  // panels to apply an equation that needs both of them at once. Huang prints
+  // four separate figures, each a C1/C2 pair.
+  const ids = ['fig-2-23', 'fig-2-25', 'fig-2-26', 'fig-2-27'];
+  const specs = ids.map(id => chartById(id));
+  for (let i = 0; i < ids.length; i++) {
+    assert.ok(specs[i], `${ids[i]} is missing from the catalog`);
+    assert.ok(specs[i].stack, `${ids[i]} must draw its C₁/C₂ pair together`);
+    assert.equal(specs[i].heavy, true, `${ids[i]}: every point is a critical-strain search`);
+  }
+
+  // Each is a different tandem spacing, so at a section where the group
+  // matters they must not all give the same number.
+  const at = (spec, pv) => spec.evaluate(10, 16.7, pv);
+  const c1 = specs.map(s => at(s, s.stack[0].pv));
+  assert.equal(new Set(c1.map(v => v.toFixed(4))).size, ids.length,
+    `the four figures returned ${c1.map(v => v.toFixed(3)).join(', ')} — they are not four figures`);
+
+  // C₂ is the wider contact radius and reads higher than C₁ on all of them;
+  // that ordering is what makes Eq. 2.19's interpolation an interpolation.
+  for (const s of specs) {
+    assert.ok(at(s, s.stack[1].pv) > at(s, s.stack[0].pv),
+      `${s.id}: C₂ should exceed C₁ at Example 2.9's section`);
+  }
+});
+
+test('no curve ends in open space — it runs to a label or off the frame', () => {
+  // The one structural property every plate in this chapter has, and the one
+  // a sampled redraw loses first. A curve ends in exactly two ways on the
+  // page: at the end of its own parameter range, where the plate labels it,
+  // or by leaving through the frame. What it must never do is stop in the
+  // middle of the picture because the last sample that happened to be inside
+  // the frame was there.
+  //
+  // Figure 2.31 broke this in four places: the strain factor changes sign in
+  // one corner, so on a log ordinate it dives two decades inside a single
+  // sample interval, and with 22 samples the curve simply stopped at 0.02
+  // over a floor of 0.001. `edgeApproach` finds the crossing.
+  // "On the frame" cannot mean "within a rounding error of the bound": the
+  // crossing is found by bisecting one sample interval ten times, and where
+  // the function is steep — Figure 2.3's radial stress runs off the left edge
+  // as z/a -> 0 — the value still moves several percent across that last
+  // 1/1024. A factor of three on a log axis, or 5% of the span on a linear
+  // one, separates "ran off the page" from the defect this is here for, which
+  // was a curve stopping 19 to 47 times the axis floor above it.
+  const leftFrame = (spec, v) => (spec.value.log
+    ? v <= spec.value.min * 3 || v >= spec.value.max / 3
+    : v <= spec.value.min + 0.05 * (spec.value.max - spec.value.min) ||
+      v >= spec.value.max - 0.05 * (spec.value.max - spec.value.min));
+
+  for (const c of CHARTS) {
+    const pv = c.panel ? c.panel.values[0] : c.stack ? c.stack[0].pv : undefined;
+    const curves = c.nomograph
+      ? sampleLattice(c, pv).map(m => ({ name: `${m.kind} ${m.label}`, pts: m.pts }))
+      : c.family.values.map(fv => ({ name: `${c.family.symbol} = ${fv}`, pts: sampleCurve(c, fv, pv) }));
+
+    for (const cv of curves) {
+      const fin = cv.pts.map(p => Number.isFinite(p.value));
+      const first = fin.indexOf(true), last = fin.lastIndexOf(true);
+      if (first < 0) continue;                 // entirely off the page: nothing drawn
+
+      if (first !== 0) {
+        assert.ok(leftFrame(c, cv.pts[first].value),
+          `${c.figure}, ${cv.name}: the curve begins in open space at ` +
+          `${cv.pts[first].value} on an axis of [${c.value.min}, ${c.value.max}]`);
+      }
+      if (last !== cv.pts.length - 1) {
+        assert.ok(leftFrame(c, cv.pts[last].value),
+          `${c.figure}, ${cv.name}: the curve ends in open space at ` +
+          `${cv.pts[last].value} on an axis of [${c.value.min}, ${c.value.max}]`);
+      }
+      // A gap in the middle is the same defect, one sample further in: both
+      // sides of it have to be on the frame.
+      for (let i = first; i < last; i++) {
+        if (fin[i] && !fin[i + 1]) {
+          assert.ok(leftFrame(c, cv.pts[i].value),
+            `${c.figure}, ${cv.name}: a break starts in open space at ${cv.pts[i].value}`);
+        }
+        if (!fin[i] && fin[i + 1]) {
+          assert.ok(leftFrame(c, cv.pts[i + 1].value),
+            `${c.figure}, ${cv.name}: a break ends in open space at ${cv.pts[i + 1].value}`);
+        }
       }
     }
   }

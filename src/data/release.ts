@@ -92,7 +92,8 @@ export const TOOL_WEEK: Record<string, number> = {
 export const RELEASED_TOOL_MODULES: Record<string, Record<string, true>> = {
   lea: {
     charts: true,
-    // one, two, three, multi — the solver modules, unlocking with HW3/HW4.
+    one: true,   // Boussinesq's half-space: point load, flexible and rigid plates.
+    // two, three, multi — the layered solvers, unlocking with HW3/HW4.
   },
 };
 

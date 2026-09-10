@@ -1649,3 +1649,160 @@ select.cee-input {
 .cee-modules__tab[aria-disabled='true']:focus-visible {
   outline: none;
 }
+
+/* ─────────────── Typeset math, and equations beside a figure ───────────────
+ * A design chart is read; a closed form is APPLIED. The One-layer module
+ * shows the equation it is plotting next to the plot rather than under it,
+ * because the point of that pairing is to move your eye between the two —
+ * change nu, watch the (1 - 2nu) term and the curve move together.
+ *
+ * Rendered by <Equation> through KaTeX. `.cee-math__plain` is the fallback
+ * the component leaves in place if the CDN script never arrives.
+ */
+.cee-math { display: inline; min-width: 0; }
+.cee-math--block { display: block; }
+
+.cee-math .katex { font-size: 1.02em; }
+.cee-math--block .katex-display { margin: 0; }
+
+/* KaTeX lays a display equation out at its natural width; a long one has to
+   be able to scroll inside its own rail rather than widen the card. */
+.cee-math--block .katex-display > .katex { white-space: normal; }
+
+.cee-math__plain {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--cee-secondary);
+  background: none;
+  padding: 0;
+}
+
+.cee-eqrow {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 1180px) {
+  .cee-eqrow {
+    grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 1fr);
+  }
+}
+
+.cee-eqrail { padding: 1rem 1.125rem 1.125rem; }
+
+.cee-eqrail__title {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--cee-muted);
+  margin: 0 0 0.75rem;
+}
+
+.cee-eqs { display: flex; flex-direction: column; gap: 0.9rem; margin: 0; }
+
+.cee-eq { min-width: 0; }
+
+.cee-eq__name {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cee-ink);
+  margin-bottom: 0.2rem;
+}
+
+.cee-eq__math {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.2rem 0 0.3rem;
+}
+
+/* A rail is narrower than a card, and Huang's Eq. 2.6 is a long line even
+   broken over two. Set the rail's math a shade smaller so it fits rather
+   than scrolls: an equation you have to drag sideways to finish is no longer
+   next to the chart, which is the whole reason it is here. */
+.cee-eqrail .cee-math .katex { font-size: 0.94em; }
+
+.cee-eq__note {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--cee-secondary);
+}
+
+.cee-eq + .cee-eq {
+  border-top: 1px solid var(--cee-hairline);
+  padding-top: 0.85rem;
+}
+
+/* The load-case card: what is being solved, drawn, next to the equations
+   that define it. Two columns from the same breakpoint as the chart rows. */
+.cee-casecard { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+
+@media (min-width: 900px) {
+  .cee-casecard { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+}
+
+.cee-casefig svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 25rem;
+}
+
+.cee-casefig__caption {
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--cee-secondary);
+  margin: 0.5rem 0 0;
+}
+
+.cee-casefig__caption strong { color: var(--cee-ink); font-weight: 600; }
+
+/* A segmented control that has to carry three-word labels wraps instead of
+   squeezing them; the two-value plate switch stays on one line. */
+.cee-seg--wrap { flex-wrap: wrap; }
+
+.cee-panel__group {
+  margin: 1.25rem 0 0.75rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--cee-hairline);
+}
+
+/* The chart-value conversion in the chart reader: the two steps between the
+   number a reader takes off the page and the stress it stands for. Set in
+   mono and tabular so the ladder lines up under itself. */
+.cee-readout__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cee-secondary);
+}
+
+.cee-readout__steps strong {
+  color: var(--cee-ink);
+  font-weight: 600;
+}
+
+/* The heading over one panel of a STACKED figure — Huang's Figures 2.23 and
+   2.25-2.27 print C1 above and C2 below on one page, and a reader has to
+   know which half they are on before the numbers mean anything. */
+.cee-figure__panel {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--cee-secondary);
+  margin: 0.75rem 0 0.15rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--cee-hairline);
+}
+
+.cee-figure > .cee-figure__panel:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}

@@ -27,7 +27,7 @@ import {
   sigZRatio, sigRRatio, sigTRatio, tauRatio, deflectionFactorAt,
 } from './oneLayer.ts';
 import {
-  verticalStressProfile, interfaceStressRatio, surfaceDeflectionFactor,
+  verticalStressProfile, interfaceStressRatio, interfaceStressRatioAt, surfaceDeflectionFactor,
   interfaceDeflectionFactor, strainFactor, conversionFactor,
   CHART_SD, CHART_RADII,
 } from './twoLayer.ts';
@@ -67,6 +67,14 @@ export interface FamilySpec {
   logSearch?: boolean;
 }
 
+/** One half of a stacked figure: the panel value, and what to call it. */
+export interface StackPanel {
+  /** Passed to `evaluate` as its third argument, exactly like a panel value. */
+  pv: number;
+  /** The heading over that panel, e.g. "C1 - contact radius a = 3 in". */
+  label: string;
+}
+
 export interface PanelSpec {
   label: string;
   symbol: string;
@@ -87,6 +95,25 @@ export interface ChartSpec {
   purpose: string;
   /** The equation that turns the chart value into an answer. */
   equation: string;
+  /**
+   * Foster and Ahlvin's four stress charts put sigma/q x 100 on the abscissa,
+   * so a read is two steps and BOTH are places to slip: divide by 100 to get
+   * the ratio, then multiply by the contact pressure to get a stress. The
+   * factor of 100 is set in small type beside the axis on the printed page
+   * and is the single most-missed thing on it — Example 2.1's 28 is 0.28q,
+   * and 0.28q at 50 psi is 14 psi.
+   *
+   * Naming the two quantities here lets the readout carry the whole ladder,
+   * so nothing is left to be done in the reader's head. Charts whose value
+   * is already dimensionless (a deflection factor, a conversion factor) have
+   * no `percent` and show no ladder.
+   */
+  percent?: {
+    /** The dimensionless ratio, e.g. "sigma_z/q" written for display. */
+    ratio: string;
+    /** The stress it becomes once multiplied by q, e.g. "sigma_z". */
+    stress: string;
+  };
   /** The plotted quantity's axis. */
   value: AxisSpec;
   /** The axis swept along each curve — depth, thickness, radius ratio. */
@@ -103,6 +130,17 @@ export interface ChartSpec {
    * sampleLattice for how the mesh is built and why it is the book's mesh.
    */
   nomograph?: boolean;
+  /**
+   * TWO panels of one figure, drawn one over the other instead of picked from
+   * a list -- Figures 2.23 and 2.25-2.27, where the page itself is a pair.
+   *
+   * A `panel` is a chart you choose between; a `stack` is a chart you read
+   * both halves of. Eq. 2.19 needs C1 AND C2 for the same section, so the two
+   * are drawn together, share every input, and carry the marker at the same
+   * time. A spec has one or the other, never both, and a nomograph has
+   * neither -- charts.test.mjs asserts all three.
+   */
+  stack?: [StackPanel, StackPanel];
   /** Points to plot per curve. Heavy charts ask for fewer. */
   samples?: number;
   /**
@@ -171,6 +209,7 @@ const FIG_2_2: ChartSpec = {
     'The vertical stress anywhere in a half-space under a circular load: the quantity ' +
     'that decides how much load reaches the subgrade.',
   equation: 'σz = q · (chart value)/100',
+  percent: { ratio: 'σz/q', stress: 'σz' },
   value: percentAxis('σz/q × 100 (%)'),
   sweep: depthAxis(10),
   valueOnX: true,
@@ -195,6 +234,7 @@ const FIG_2_3: ChartSpec = {
   purpose:
     'The radial stress, which with σz and σt gives the strains through Eq. 2.1.',
   equation: 'σr = q · (chart value)/100',
+  percent: { ratio: 'σr/q', stress: 'σr' },
   value: percentAxis('σr/q × 100 (%)'),
   sweep: depthAxis(10),
   valueOnX: true,
@@ -221,6 +261,7 @@ const FIG_2_4: ChartSpec = {
   section: 'One layer',
   purpose: 'The circumferential stress: the third normal stress Eq. 2.1 needs.',
   equation: 'σt = q · (chart value)/100',
+  percent: { ratio: 'σt/q', stress: 'σt' },
   value: percentAxis('σt/q × 100 (%)'),
   sweep: depthAxis(5),
   valueOnX: true,
@@ -250,6 +291,7 @@ const FIG_2_5: ChartSpec = {
     'The shear stress in the r–z plane, which vanishes on the axis and peaks near the edge ' +
     'of the load. That is the reason a critical tensile strain can move off the axis.',
   equation: 'τrz = q · (chart value)/100',
+  percent: { ratio: 'τrz/q', stress: 'τrz' },
   value: percentAxis('ΤRZ/q × 100 (%)'),
   sweep: depthAxis(10),
   valueOnX: true,
@@ -367,6 +409,64 @@ const FIG_2_15: ChartSpec = {
   notes: [
     'The abscissa is a/h₁, not h₁/a. Huang notes the reason was preparing influence charts. ' +
     'A thicker layer is therefore to the LEFT.',
+  ],
+};
+
+/*
+ * Figure 2.15*, which Huang does not print.
+ *
+ * The parent figure answers "how much stress reaches the subgrade under the
+ * middle of the wheel", one curve per modulus ratio. That is the design
+ * check, and it is also the only station the chart has: every curve on
+ * Figure 2.15 is r/a = 0.
+ *
+ * This one turns the figure ninety degrees. It fixes the modulus ratio at
+ * E1/E2 = 100 — the stiffest curve of the parent, a full-depth asphalt on a
+ * soft subgrade — and lets r/a be the family instead, so the chart shows how
+ * far ACROSS the subgrade the interface stress reaches rather than only how
+ * much of it arrives on the axis. That is the question a dual wheel asks:
+ * two loads 20 in. apart still add at the top of the subgrade, and how much
+ * they add is read off the r/a curves here, not off the parent.
+ *
+ * Both axes are deliberately the parent's, so the two figures can be laid
+ * over each other and read against each other. The cost is that this family
+ * never leaves the bottom third of the ordinate: E1/E2 = 100 tops out near
+ * sigma_c/q = 0.32 at a/h1 = 2.4, and every off-axis curve is below that.
+ * Shrinking the axis to fit would make the two charts no longer comparable,
+ * which is the whole reason for the variant.
+ */
+/** The one modulus ratio Figure 2.15* is drawn for. */
+const FIG_2_15R_RATIO = 100;
+
+const FIG_2_15R: ChartSpec = {
+  id: 'fig-2-15-ra',
+  figure: 'Figure 2.15*',
+  title: 'Vertical interface stresses across the load, E₁/E₂ = 100',
+  source: 'Computed from Burmister two-layer theory; not printed in Huang',
+  section: 'Two layers',
+  purpose:
+    'How far sideways the vertical stress at the top of the subgrade reaches: the ' +
+    'off-axis half of Figure 2.15, which the printed page draws only on the axis.',
+  equation: 'σc = q · (chart value), at radius r from the load axis',
+  value: FIG_2_15.value,
+  sweep: FIG_2_15.sweep,
+  valueOnX: false,
+  family: {
+    label: 'Numbers on curves indicate r/a', symbol: 'r/a',
+    values: [0, 0.5, 0.75, 1.0, 1.2, 1.5, 2.0, 2.5, 3.0], range: [0, 5],
+  },
+  evaluate: (ra, aOverH1) =>
+    (aOverH1 <= 0 ? 0 : interfaceStressRatioAt(FIG_2_15R_RATIO, aOverH1, ra)),
+  notes: [
+    'The modulus ratio is FIXED at E₁/E₂ = 100 here; on Figure 2.15 it is the family. ' +
+    'The r/a = 0 curve of this chart is therefore the E₁/E₂ = 100 curve of that one, ' +
+    'and charts.test.mjs asserts the two agree.',
+    'Both axes are Figure 2.15’s, unchanged, so the two can be read against each other. ' +
+    'That is why the curves sit low: at E₁/E₂ = 100 the interface stress never exceeds ' +
+    'about 0.32q anywhere on the parent chart either.',
+    'The fall-off with r is the reason a dual wheel is not two independent wheels. At ' +
+    'a/h₁ = 2.4 the stress two radii off the axis is still a quarter of the stress on it, ' +
+    'so the second tire of a dual is contributing at the point the first one governs.',
   ],
 };
 
@@ -491,72 +591,141 @@ const FIG_2_21: ChartSpec = {
   ],
 };
 
-const FIG_2_23: ChartSpec = {
-  id: 'fig-2-23',
-  figure: 'Figures 2.23 and 2.25–2.27',
-  title: 'Conversion factor for dual and dual-tandem wheels',
-  source: 'After Huang (1973a)',
-  section: 'Two layers',
-  purpose:
-    'How much worse a wheel group is than one wheel. Multiply Figure 2.21 by this and the ' +
-    'single-wheel chart covers duals and tandems too.',
-  equation: 'Fe(group) = C · Fe(single);  C = C₁ + 0.2(a′ − 3)(C₂ − C₁)  (Eq. 2.19)',
-  value: {
-    label: 'Conversion factor C', log: false, min: 1, max: 1.8,
-    ticks: [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8], minorDtick: 0.025,
-  },
-  sweep: {
-    label: 'Thickness of asphalt layer, in.', log: false, min: 2, max: 18,
-    ticks: [2, 6, 10, 14, 18], minorDtick: 1,
-  },
-  valueOnX: false,
-  family: {
-    label: 'Numbers on curves indicate E₁/E₂', symbol: 'E₁/E₂',
-    values: [1, 2, 5, 10, 20, 50, 100, 200], range: [1, 400], logSearch: true,
-  },
-  panel: {
-    // Sd is fixed at 24 in on every panel; a and St are what vary.
-    // Encoded as a·1000 + St, with St = 0 meaning duals alone.
-    label: 'Chart panel', symbol: 'a, St',
-    values: [
-      3000, 8000,
-      3024, 8024,
-      3048, 8048,
-      3072, 8072,
-    ],
-    name: v => {
-      const a = Math.floor(v / 1000), st = v % 1000;
-      return st === 0
-        ? `${a === 3 ? 'C₁' : 'C₂'} · a = ${a} in, duals only (Fig. 2.23)`
-        : `${a === 3 ? 'C₁' : 'C₂'} · a = ${a} in, St = ${st} in (Fig. 2.${st === 24 ? 25 : st === 48 ? 26 : 27})`;
+/* ── Figures 2.23 and 2.25 through 2.27, one entry each ──────────────────
+ *
+ * Huang prints four separate figures here, and each of them is a PAIR of
+ * charts on one page: C1 above, for a contact radius of 3 in., and C2 below,
+ * for 8 in. Eq. 2.19 then interpolates between the two for the section's own
+ * radius. So a reader never wants one of them — the equation needs both, and
+ * a tool that makes you switch panels to see the second is asking you to hold
+ * the first one in your head while you do it.
+ *
+ * The catalog therefore carries four figures rather than one with eight
+ * panels, and each of them draws its own pair, stacked, with the marker in
+ * both at once. Whatever moves in the top chart moves in the bottom one.
+ *
+ * The four differ only in the tandem spacing St, so they are built from one
+ * factory: anything that has to be true of all four is true by construction.
+ */
+const C_PAIR: [StackPanel, StackPanel] = [
+  { pv: CHART_RADII[0], label: `C₁ · contact radius a = ${CHART_RADII[0]} in` },
+  { pv: CHART_RADII[1], label: `C₂ · contact radius a = ${CHART_RADII[1]} in` },
+];
+
+function conversionChart(o: {
+  id: string;
+  figure: string;
+  title: string;
+  purpose: string;
+  /** Tandem axle spacing, in inches; null for duals with no tandem. */
+  st: number | null;
+  anchors?: ChartSpec['anchors'];
+  note: string;
+}): ChartSpec {
+  return {
+    id: o.id,
+    figure: o.figure,
+    title: o.title,
+    source: 'After Huang (1973a)',
+    section: 'Two layers',
+    purpose: o.purpose,
+    equation: 'Fe(group) = C · Fe(single);  C = C₁ + 0.2(a′ − 3)(C₂ − C₁)  (Eq. 2.19)',
+    value: {
+      label: 'Conversion factor C', log: false, min: 1, max: 1.8,
+      ticks: [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8], minorDtick: 0.025,
     },
-  },
-  heavy: true,
-  evaluate: (er, h1, panel) => {
-    const a = Math.floor((panel ?? 3000) / 1000);
-    const st = (panel ?? 3000) % 1000;
-    return conversionFactor(er, h1, a, CHART_SD, st === 0 ? null : st);
-  },
-  samples: 9,
+    sweep: {
+      label: 'Thickness of asphalt layer, in.', log: false, min: 2, max: 18,
+      ticks: [2, 6, 10, 14, 18], minorDtick: 1,
+    },
+    valueOnX: false,
+    family: {
+      label: 'Numbers on curves indicate E₁/E₂', symbol: 'E₁/E₂',
+      values: [1, 2, 5, 10, 20, 50, 100, 200], range: [1, 400], logSearch: true,
+    },
+    stack: C_PAIR,
+    heavy: true,
+    // `pv` is the contact radius the panel is drawn for; St belongs to the
+    // figure, not to the panel, which is exactly the split Huang's page makes.
+    evaluate: (er, h1, pv) =>
+      conversionFactor(er, h1, pv ?? CHART_RADII[0], CHART_SD, o.st),
+    samples: 9,
+    anchors: o.anchors,
+    notes: [
+      o.note,
+      `Both panels are drawn for a dual spacing of ${CHART_SD} in. A real group is rescaled to ` +
+      `it by Eq. 2.18, as a′ = 24a/Sd and h₁′ = 24h₁/Sd, which holds h₁/a and Sd/a, and ` +
+      'therefore the answer, fixed.',
+      'Read BOTH panels, not one: Eq. 2.19 interpolates between C₁ and C₂ for the contact ' +
+      'radius your section actually has. The two are stacked here so one input moves both ' +
+      'markers, which is the arithmetic the printed page leaves to you.',
+      'This chart is the slowest in the tool: every point is a full critical-strain search ' +
+      'over a whole wheel group, not a single solve, and there are two panels of them.',
+    ],
+  };
+}
+
+const FIG_2_23 = conversionChart({
+  id: 'fig-2-23',
+  figure: 'Figure 2.23',
+  title: 'Conversion factor for dual wheels',
+  st: null,
+  purpose:
+    'How much worse a pair of duals is than one wheel. Multiply Figure 2.21 by this and the ' +
+    'single-wheel chart covers dual wheels too.',
   anchors: [
-    { fv: 10, sv: 16.7, pv: 3000, reads: 1.35, label: 'Example 2.9, C₁' },
-    { fv: 10, sv: 16.7, pv: 8000, reads: 1.46, label: 'Example 2.9, C₂' },
-    { fv: 10, sv: 16.7, pv: 3072, reads: 1.23, label: 'Example 2.10, C₁' },
-    { fv: 10, sv: 16.7, pv: 8072, reads: 1.30, label: 'Example 2.10, C₂' },
+    { fv: 10, sv: 16.7, pv: CHART_RADII[0], reads: 1.35, label: 'Example 2.9, C₁' },
+    { fv: 10, sv: 16.7, pv: CHART_RADII[1], reads: 1.46, label: 'Example 2.9, C₂' },
   ],
-  notes: [
-    `Every panel is drawn for a dual spacing of ${CHART_SD} in. A real group is rescaled to it ` +
-    `by Eq. 2.18, as a′ = 24a/Sd and h₁′ = 24h₁/Sd, which holds h₁/a and Sd/a, and therefore ` +
-    'the answer, fixed.',
-    `The two contact radii ${CHART_RADII[0]} in and ${CHART_RADII[1]} in are the C₁ and C₂ ` +
-    'panels of each figure; Eq. 2.19 interpolates between them.',
-    'Adding a tandem axle often REDUCES the factor, because the extra wheels compensate rather than ' +
-    'add. The dip is deepest near St = 48 in, and by St = 120 in the tandem has faded back ' +
-    'into the duals-only chart, which is why Figure 2.23 can stand in for it.',
-    'This chart is the slowest in the tool: every point is a full critical-strain search over ' +
-    'a wheel group, not a single solve.',
+  note:
+    'Duals alone — no tandem axle. This is the chart the other three are compared against, ' +
+    'and the one they converge back to as the tandem spacing grows.',
+});
+
+const FIG_2_25 = conversionChart({
+  id: 'fig-2-25',
+  figure: 'Figure 2.25',
+  title: 'Conversion factor for dual-tandem wheels, St = 24 in.',
+  st: 24,
+  purpose:
+    'The same factor with a tandem axle 24 in. behind the first: close enough that the two ' +
+    'axles are still one load as far as the subgrade is concerned.',
+  note:
+    'Tandem spacing St = 24 in., the same as the dual spacing. The second axle sits right on ' +
+    'top of the first one’s stress bulb, so this is where the group is at its worst.',
+});
+
+const FIG_2_26 = conversionChart({
+  id: 'fig-2-26',
+  figure: 'Figure 2.26',
+  title: 'Conversion factor for dual-tandem wheels, St = 48 in.',
+  st: 48,
+  purpose:
+    'A tandem axle 48 in. behind the first. Compare with Figure 2.25: adding distance between ' +
+    'the axles can LOWER the factor, which is not the direction most people expect.',
+  note:
+    'Tandem spacing St = 48 in. Adding a tandem axle often REDUCES the factor relative to a ' +
+    'closer one, because the extra wheels compensate rather than add. The dip is deepest ' +
+    'around here.',
+});
+
+const FIG_2_27 = conversionChart({
+  id: 'fig-2-27',
+  figure: 'Figure 2.27',
+  title: 'Conversion factor for dual-tandem wheels, St = 72 in.',
+  st: 72,
+  purpose:
+    'A tandem axle 72 in. behind the first, and the case Example 2.10 works. By St = 120 in. ' +
+    'the tandem has faded back into the duals-only chart entirely.',
+  anchors: [
+    { fv: 10, sv: 16.7, pv: CHART_RADII[0], reads: 1.23, label: 'Example 2.10, C₁' },
+    { fv: 10, sv: 16.7, pv: CHART_RADII[1], reads: 1.30, label: 'Example 2.10, C₂' },
   ],
-};
+  note:
+    'Tandem spacing St = 72 in. The factor is on its way back down to Figure 2.23: by ' +
+    'St = 120 in. the second axle contributes nothing, which is why Figure 2.23 can stand ' +
+    'in for a widely spaced tandem.',
+});
 
 /* ═══════════════════════════════════════════════════════════════════════
    §2.2.2 — Three-layer systems
@@ -604,7 +773,9 @@ const FIG_2_31: ChartSpec = {
     'own tables also carry 0.2, for a layer softer than the one beneath it.',
     'The factor goes NEGATIVE in one corner: a layer 1 much thinner than layer 2 under a very ' +
     'wide load does not bend, so its underside is in compression, not tension. A log axis ' +
-    'cannot draw that, which is why the printed lattice closes to a point instead of continuing.',
+    'cannot draw that, which is why the printed lattice closes to a point instead of continuing. ' +
+    'Here those curves dive to the axis floor and leave the frame, which is the same statement ' +
+    'the plate makes by ending them on the border.',
     'The plotted quantity is the positive magnitude, as Huang draws it. The strain itself is ' +
     'tension.',
   ],
@@ -612,7 +783,8 @@ const FIG_2_31: ChartSpec = {
 
 export const CHARTS: ChartSpec[] = [
   FIG_2_2, FIG_2_3, FIG_2_4, FIG_2_5, FIG_2_6,
-  FIG_2_14, FIG_2_15, FIG_2_17, FIG_2_19, FIG_2_21, FIG_2_23,
+  FIG_2_14, FIG_2_15, FIG_2_15R, FIG_2_17, FIG_2_19, FIG_2_21,
+  FIG_2_23, FIG_2_25, FIG_2_26, FIG_2_27,
   FIG_2_31,
 ];
 
@@ -623,6 +795,104 @@ export const SECTIONS: ChartSection[] = ['One layer', 'Two layers', 'Three layer
 /* ── Drawing ─────────────────────────────────────────────────────────────── */
 
 export interface CurvePoint { sweep: number; value: number }
+
+/* ── Where a curve leaves the page ───────────────────────────────────────
+ *
+ * A printed curve never stops in mid-air. It runs to a label, or it runs off
+ * the edge of the frame; those are the only two ways a curve on one of these
+ * plates ends, and the mesh of Figure 2.31 is a closed lattice precisely
+ * because of it.
+ *
+ * A SAMPLED curve stops wherever the last sample that happened to be inside
+ * the frame was. That is fine when the samples are dense and the function is
+ * gentle, and wrong the moment either fails. On Figure 2.31 both fail at
+ * once: the strain factor changes SIGN in one corner (a thin layer 1 under a
+ * wide load does not bend, so its underside is in compression), the ordinate
+ * is logarithmic so the curve has to plunge to the bottom of the frame as it
+ * approaches the zero, and the chart is expensive enough to be sampled 22
+ * times. The result was four curves ending in open space at 0.02 and 0.05 on
+ * an axis whose floor is 0.001 — between one and two decades short of the
+ * edge they should have run off. The book's own lattice has no such ends.
+ *
+ * So wherever two consecutive samples straddle the frame boundary, bisect
+ * for the crossing and insert it. The curve then reaches the edge and breaks
+ * there, and a curve that starts outside begins ON the edge rather than at
+ * the first sample that happened to land inside.
+ *
+ * `onFrame` carries the same 10% grace the samplers use, so the inserted
+ * point sits just OUTSIDE the drawn range and Plotly clips the segment at the
+ * frame line — a curve that crosses the border rather than stopping on it.
+ *
+ * One crossing per interval is assumed. A function that leaves and re-enters
+ * between two samples is under-sampled for a different reason, and no amount
+ * of edge-finding would make that curve right.
+ */
+const CROSS_STEPS = 10;       // 1/1024 of a sample interval: the usual case
+const CROSS_STEPS_MAX = 40;   // ...and the cap where the function is a cliff
+const CROSS_FILL = 3;         // interior samples along the run out to the edge
+
+/**
+ * The tail of a curve on its way off the page: a few interior samples and the
+ * crossing itself, between a parameter known to be INSIDE the frame and one
+ * known to be outside.
+ *
+ * The interior samples matter more than they look. The exits this exists for
+ * are the steep ones -- a factor diving through zero drops two decades of a
+ * logarithmic ordinate inside one sample interval -- and a single segment
+ * from the last sample to the edge draws that as a chord: a straight cliff
+ * where the function has a curve. Three points along the way cost three
+ * evaluations and make the run-out read as the curve it is.
+ *
+ * The search converges on the VALUE, not on a step count. Ten bisections of
+ * one sample interval put the run-out on the frame for anything with a
+ * gradient, but some of these functions are cliffs: tau_rz is discontinuous
+ * at the rim of a uniformly loaded circle, so Figure 2.5's r/a = 1 curve goes
+ * from zero at the surface to 32% of q by z/a = 0.005, and ten steps leave it
+ * entering the page at 14% instead of at the 0.1% floor. So bisect until the
+ * inside value is actually NEAR the bound, with a hard cap for the case where
+ * the function jumps across it and no parameter gets closer.
+ *
+ * Returned in ascending parameter order whichever way the curve is crossing,
+ * so a caller can splice them straight in.
+ */
+function edgeApproach(
+  spec: ChartSpec,
+  tIn: number, tOut: number,
+  value: (t: number) => number,
+  onFrame: (v: number) => boolean
+): { t: number; value: number }[] {
+  const { min, max, log } = spec.value;
+  const atEdge = (v: number) => (log
+    ? v <= min * 2 || v >= max / 2
+    : v <= min + 0.02 * (max - min) || v >= max - 0.02 * (max - min));
+
+  let a = tIn, b = tOut, va = value(tIn);
+  for (let k = 0; k < CROSS_STEPS_MAX; k++) {
+    if (k >= CROSS_STEPS && atEdge(va)) break;
+    const m = 0.5 * (a + b);
+    const vm = value(m);
+    if (onFrame(vm)) { a = m; va = vm; } else { b = m; }
+  }
+  const out: { t: number; value: number }[] = [];
+  for (let j = 1; j <= CROSS_FILL; j++) {
+    const t = tIn + ((a - tIn) * j) / (CROSS_FILL + 1);
+    out.push({ t, value: value(t) });
+  }
+  out.push({ t: a, value: va });
+  return tIn < tOut ? out : out.reverse();
+}
+
+/**
+ * Is this value on the page at all? The 10% grace on each side is what lets a
+ * curve CROSS the frame line rather than stop on it: the point just outside
+ * is drawn, and Plotly clips the segment at the border.
+ */
+function frameTest(spec: ChartSpec) {
+  return (v: number) =>
+    Number.isFinite(v) &&
+    v >= spec.value.min * 0.9 && v <= spec.value.max * 1.1 &&
+    (!spec.value.log || v > 0);
+}
 
 /**
  * Sample one curve of the family across the sweep axis.
@@ -638,15 +908,26 @@ export function sampleCurve(spec: ChartSpec, familyValue: number, panelValue?: n
   const { min, max, log } = spec.sweep;
   const lo = log ? Math.log(Math.max(min, 1e-9)) : min;
   const hi = log ? Math.log(max) : max;
+
+  const sweepAt = (t: number) => (log ? Math.exp(lo + t * (hi - lo)) : lo + t * (hi - lo));
+  const valueAt = (t: number) => spec.evaluate(familyValue, sweepAt(t), panelValue);
+  const onFrame = frameTest(spec);
+
   const out: CurvePoint[] = [];
+  let prevT = 0, prevOn = false;
   for (let i = 0; i <= n; i++) {
     const t = i / n;
-    const sweep = log ? Math.exp(lo + t * (hi - lo)) : lo + t * (hi - lo);
-    const value = spec.evaluate(familyValue, sweep, panelValue);
-    const inFrame = Number.isFinite(value) &&
-      value >= spec.value.min * 0.9 && value <= spec.value.max * 1.1 &&
-      (!spec.value.log || value > 0);
-    out.push({ sweep, value: inFrame ? value : NaN });
+    const value = valueAt(t);
+    const on = onFrame(value);
+    // The curve enters or leaves the frame somewhere in this interval; find
+    // where, so it runs to the edge instead of stopping at the last sample.
+    if (i > 0 && on !== prevOn) {
+      for (const c of edgeApproach(spec, on ? t : prevT, on ? prevT : t, valueAt, onFrame)) {
+        out.push({ sweep: sweepAt(c.t), value: c.value });
+      }
+    }
+    out.push({ sweep: sweepAt(t), value: on ? value : NaN });
+    prevT = t; prevOn = on;
   }
   return out;
 }
@@ -1055,6 +1336,7 @@ export interface LatticeCurve {
 export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurve[] {
   const a = latticeAxes(spec);
   const n = spec.samples ?? 70;
+  const onFrame = frameTest(spec);
   const out: LatticeCurve[] = [];
 
   const walk = (
@@ -1062,14 +1344,33 @@ export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurv
     lo: number, hi: number, log: boolean,
     at: (t: number) => [number, number]
   ) => {
+    const paramAt = (t: number) => at(spanVal(t, lo, hi, log));
+    const valueAt = (t: number) => {
+      const [fv, sv] = paramAt(t);
+      return spec.evaluate(fv, sv, panelValue);
+    };
+    const pointAt = (t: number, value: number): LatticePoint => {
+      const [fv, sv] = paramAt(t);
+      return { x: latticeX(spec, fv, sv), family: fv, sweep: sv, value };
+    };
+
     const pts: LatticePoint[] = [];
+    let prevT = 0, prevOn = false;
     for (let i = 0; i <= n; i++) {
-      const [fv, sv] = at(spanVal(i / n, lo, hi, log));
-      const value = spec.evaluate(fv, sv, panelValue);
-      const on = Number.isFinite(value) &&
-        value >= spec.value.min * 0.9 && value <= spec.value.max * 1.1 &&
-        (!spec.value.log || value > 0);
-      pts.push({ x: latticeX(spec, fv, sv), family: fv, sweep: sv, value: on ? value : NaN });
+      const t = i / n;
+      const value = valueAt(t);
+      const on = onFrame(value);
+      // The lattice is a CLOSED mesh on the page: every curve runs to a label
+      // or off the frame, and none of them stops in open space. Inserting the
+      // boundary crossing is what keeps that true when the factor dives
+      // through zero between two samples.
+      if (i > 0 && on !== prevOn) {
+        for (const c of edgeApproach(spec, on ? t : prevT, on ? prevT : t, valueAt, onFrame)) {
+          pts.push(pointAt(c.t, c.value));
+        }
+      }
+      pts.push(pointAt(t, on ? value : NaN));
+      prevT = t; prevOn = on;
     }
     out.push({ kind, label, pts });
   };
@@ -1228,7 +1529,15 @@ export function latticeLabels(spec: ChartSpec, curves: LatticeCurve[]): LatticeL
   for (const cv of curves) {
     // Family curves are named at their start, sweep curves at their end.
     const order = cv.kind === 'family' ? cv.pts : [...cv.pts].reverse();
-    const p = order.find(q => Number.isFinite(q.value));
+    // The first point that is actually ON the page, not merely drawable. The
+    // samplers keep a 10% grace outside the ordinate so a curve can CROSS the
+    // frame line instead of stopping on it, and the crossing point is often
+    // the outermost one a curve has -- but a number placed there sits outside
+    // the plot and is clipped away, which is how Figure 2.31's H = 4, H = 8,
+    // A = 0.2 and A = 0.1 curves came to be drawn and left unnamed. The plate
+    // names all four, just above the axis floor. So does this.
+    const p = order.find(q => Number.isFinite(q.value) &&
+      q.value >= spec.value.min && q.value <= spec.value.max);
     if (p) out.push({ kind: cv.kind, label: cv.label, x: p.x, value: p.value });
   }
   return out;

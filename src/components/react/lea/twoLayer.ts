@@ -62,9 +62,25 @@ export function verticalStressProfile(
  * @param aOverH1 contact radius divided by layer-1 thickness
  */
 export function interfaceStressRatio(modulusRatio: number, aOverH1: number): number {
+  return interfaceStressRatioAt(modulusRatio, aOverH1, 0);
+}
+
+/**
+ * The same interface stress, at a radial offset r/a rather than on the axis.
+ *
+ * Huang draws Figure 2.15 on the axis only, because that is where sigma_c is
+ * largest and the design check is the maximum. But the subgrade under a wheel
+ * is not loaded at one point: the stress spreads, and how fast it falls off
+ * with r is what decides whether the wheels of a dual overlap at the top of
+ * the subgrade. That question is a slice of the same solve, so it costs the
+ * chart nothing but the curves to draw it.
+ */
+export function interfaceStressRatioAt(
+  modulusRatio: number, aOverH1: number, rOverA: number
+): number {
   if (!(aOverH1 > 0)) return NaN;
   const h1 = 1 / aOverH1;
-  const R = leaResponse(system(modulusRatio, h1), 1, 1, 0, h1);
+  const R = leaResponse(system(modulusRatio, h1), 1, 1, Math.max(0, rOverA), h1);
   return R ? R.sigZ : NaN;
 }
 

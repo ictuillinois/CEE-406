@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..', '..');
@@ -166,4 +166,57 @@ test('the reader survives a spec whose family is empty', () => {
   // than throw if one is ever added mid-edit.
   const spec = { ...mod.CHARTS[0], id: 'empty', family: { ...mod.CHARTS[0].family, values: [] } };
   assert.doesNotThrow(() => renderToString(React.createElement(mod.ChartReader, { spec })));
+});
+
+/* ── TeX in a TypeScript string literal ─────────────────────────────────
+ * A TeX command starts with a backslash and a TS string literal eats one, so
+ * every backslash in a `tex:` literal has to be written twice. Get it wrong
+ * and NOTHING complains: `\frac` becomes a form feed and `\sigma` becomes the
+ * letters "sigma". KaTeX's throwOnError:false renders both without an
+ * exception, the build passes, this file's render tests pass, and the page
+ * ships with an equation that is quietly wrong.
+ *
+ * That happened while the One-layer module was being written — nine of its
+ * equations lost a level of escaping in an editing pass and rendered as red
+ * KaTeX parse errors in the browser and nowhere else. So the invariant is
+ * checked where it actually lives: inside a `tex:` literal, backslashes come
+ * in pairs, and the string the literal produces is printable.
+ */
+test('every TeX literal escapes its backslashes', () => {
+  const BS = String.fromCharCode(92);
+  const files = [
+    join(ROOT, 'src', 'components', 'react', 'lea', 'modules', 'OneLayerModule.tsx'),
+  ];
+  const CONTROL = new RegExp('[' + BS + 'u0000-' + BS + 'u001f]');
+
+  let checked = 0;
+  for (const file of files) {
+    const src = readFileSync(file, 'utf8');
+    src.split('\n').forEach((line, i) => {
+      const m = /(?:^|\s)tex:\s*'([^']*)'/.exec(line);
+      if (!m) return;
+      checked++;
+      const body = m[1];
+      const where = `${file.split(/[\\/]/).pop()}:${i + 1}`;
+
+      assert.ok(body.includes(BS),
+        `${where}: a tex literal with no backslash is not TeX -- ${body}`);
+
+      // Every run of backslashes must be even: an odd one is a backslash the
+      // string literal consumes before KaTeX ever sees it.
+      for (const run of body.match(new RegExp(BS + BS + '+', 'g')) ?? []) {
+        assert.equal(run.length % 2, 0,
+          `${where}: ${run.length} backslashes in a row -- TeX inside a TS ` +
+          `literal needs them doubled. Line: ${line.trim()}`);
+      }
+
+      // And the value the literal produces must be printable: an
+      // under-escaped \f, \n, \t, \b, \v or \r becomes a control character,
+      // which is how this defect shows itself first.
+      const value = body.split(BS + BS).join(BS);
+      assert.doesNotMatch(value, CONTROL,
+        `${where}: the tex literal produces a control character`);
+    });
+  }
+  assert.ok(checked >= 20, `expected to find the module's equations, found ${checked}`);
 });

@@ -32,6 +32,20 @@
 //
 // Sign convention: COMPRESSION POSITIVE, matching Huang's Chapter 2 and the
 // rest of this site. Displacements are positive downward/outward.
+//
+// Three cases share this file, because they are one case with one factor
+// changed: a CONCENTRATED load (Boussinesq's original, and the kernel every
+// integral here integrates), a FLEXIBLE circular plate (a tire: uniform q),
+// and a RIGID one (a plate bearing test: Huang Eq. 2.9). See `Plate` below.
+//
+// A defect fixed here, silent and shipped: at z = 0 outside the loaded
+// circle, sigma_r and sigma_t carried the wrong sign — compression radially
+// where the answer is TENSION. The quadrature disagreed with the closed form
+// at every Poisson ratio, and nothing noticed, because the difference is
+// identically zero at nu = 0.5 and nu = 0.5 is the only ratio the charts use
+// and the only one the suite tested out there. `surface` is now derived from
+// one identity that covers both plates, and the test asserts the integral
+// converges on it.
 import { besselJ0, besselJ1, besselJ0Zero, besselJ1Zero } from './bessel.ts';
 
 export interface PointResponse {
@@ -104,23 +118,43 @@ function mRange(a: number, r: number, z: number): number {
 }
 
 /**
- * Panel breakpoints for ∫₀^M f(m) dm where f oscillates at the zeros of
- * J1(ma) and (off the axis) of J0(mr) and J1(mr).
+ * WHICH LOAD sits on the surface -- the only thing that changes between a tire
+ * and a plate bearing test.
+ *
+ * Everything below the surface is the same half-space, so the two cases differ
+ * in exactly one factor of the Hankel integrand: the transform of the surface
+ * traction. Writing p(s) for the pressure and P(m) = ∫ p(s) J0(ms) s ds, every
+ * response is ∫ m P(m) (...) dm, so
+ *
+ *   'disc'   uniform q over s < a          ->  P = q a J1(ma)/m    -> J1(ma)
+ *   'punch'  Huang Eq. 2.9, qa/(2*sqrt(a*a - s*s))
+ *                                          ->  P = q a sin(ma)/2m  -> sin(ma)/2
+ *
+ * using ∫₀^a s J0(ms)/sqrt(a²-s²) ds = sin(ma)/m. That is the whole of the
+ * rigid-plate implementation: one factor of the integrand, and the panel
+ * breakpoints that go with it (sin has its zeros at kπ/a, J1 at
+ * j₁,ₖ/a, which is about (k + 1/4)π/a).
+ */
+export type Plate = 'disc' | 'punch';
+
+/**
+ * Panel breakpoints for ∫₀^M f(m) dm where f oscillates at the zeros of the
+ * load factor above and (off the axis) of J0(mr) and J1(mr).
  *
  * Every family runs out to the SAME M, so no panel ever spans more than half
- * an oscillation of any factor in it. Cached on (a, r, M), because a chart
+ * an oscillation of any factor in it. Cached on (kind, a, r, M), because a chart
  * redraws the same handful of stations hundreds of times.
  */
 const panelCache = new Map<string, number[]>();
 
-function panels(a: number, r: number, mMax: number): number[] {
-  const key = `${a}|${r}|${mMax.toFixed(4)}`;
+function panels(a: number, r: number, mMax: number, kind: Plate): number[] {
+  const key = `${kind}|${a}|${r}|${mMax.toFixed(4)}`;
   const hit = panelCache.get(key);
   if (hit) return hit;
 
   const brk = new Set<number>();
   for (let k = 1; ; k++) {
-    const zk = besselJ1Zero(k) / a;
+    const zk = (kind === 'punch' ? k * Math.PI : besselJ1Zero(k)) / a;
     if (zk > mMax) break;
     brk.add(zk);
   }
@@ -150,8 +184,10 @@ function panels(a: number, r: number, mMax: number): number[] {
  * six times the Bessel calls for the same nodes, which is the difference
  * between a chart that redraws in 50 ms and one that redraws in 300.
  */
-function integrate(a: number, r: number, z: number, nu: number): PointResponse {
-  const nodes = panels(a, r, mRange(a, r, z));
+function integrate(
+  a: number, r: number, z: number, nu: number, kind: Plate = 'disc'
+): PointResponse {
+  const nodes = panels(a, r, mRange(a, r, z), kind);
   const onAxis = r < 1e-12;
 
   let iZ = 0, iR = 0, iT = 0, iS = 0, iW = 0, iU = 0;
@@ -167,7 +203,7 @@ function integrate(a: number, r: number, z: number, nu: number): PointResponse {
       if (m <= 0) continue;
       const wq = GL_W[g] * half;
 
-      const Ja = besselJ1(m * a);
+      const Ja = kind === 'punch' ? 0.5 * Math.sin(m * a) : besselJ1(m * a);
       const damp = Math.exp(-m * z);
       if (Ja === 0 || damp === 0) continue;
       const base = Ja * damp * wq;
@@ -224,17 +260,39 @@ function elliptic(k: number): { K: number; E: number } {
 
 /**
  * At the surface the integrals lose their e^(-mz) damping and converge only
- * conditionally, so z = 0 is taken from the closed forms instead.
+ * conditionally, so z = 0 is taken from the closed forms instead — and both
+ * plates come out of ONE identity, so neither can drift from the other.
  *
- * Stresses. Inside the loaded circle the plate pressure is carried directly:
- * σz = q, and σr = σt = q(1+2ν)/2 (Huang Eq. 2.3 at z = 0). Outside it
- * σz = 0, and integrating the Boussinesq point-load surface stresses over
- * the disc leaves σr = -σt = q(1-2ν)a²/(2r²) — which vanishes at ν = 0.5,
- * the Poisson ratio Foster and Ahlvin drew every chart for, and is why every
- * curve in Figure 2.3 runs off the left edge as z/a → 0. On the rim the
- * pressure is discontinuous and σz is its mean, q/2.
+ * Set z = 0 in the integrands at the top of this file. The 2ν J0 and the
+ * (1-2ν) J0 collapse together, and what is left of each horizontal stress is
+ * the vertical stress plus one more integral:
  *
- * Vertical displacement, in complete elliptic integrals of modulus k:
+ *   σz(r,0) = ∫ m P̃ J0(mr) dm  =  p(r)          (Hankel inversion: the plate
+ *                                                 pressure, carried directly)
+ *   σr(r,0) = p(r)  - (1-2ν)·T,   T ≡ (1/r)∫ P̃(m) J1(mr) dm
+ *   σt(r,0) = 2ν p(r) + (1-2ν)·T
+ *   u (r,0) = -(1-2ν)(1+ν)·T·r/E
+ *
+ * so a plate is described here by exactly two numbers, p(r) and T(r):
+ *
+ *   FLEXIBLE  p = q inside, 0 outside;  T = q/2 inside, q a²/(2r²) outside,
+ *             from ∫ J1(ma)J1(mr)/m dm = r/(2a) and a/(2r).
+ *   RIGID     p = qa/(2√(a²-r²)) (Eq. 2.9);  T = (qa/2)(a-√(a²-r²))/r²
+ *             inside and the same q a²/(2r²) outside, from
+ *             ∫ sin(ma)J1(mr)/m dm = a/r and (a-√(a²-r²))/r.
+ *
+ * Inside a flexible plate this gives σr = σt = q(1+2ν)/2, which is Huang
+ * Eq. 2.3 at z = 0. OUTSIDE it gives σr = -q(1-2ν)a²/(2r²) — NEGATIVE, i.e.
+ * radial TENSION, with σt its compressive mirror. That sign is the whole
+ * mechanics of the surface around a wheel: the bowl stretches the surface
+ * radially and squeezes it circumferentially, which is why a punch cracks a
+ * half-space radially. This module shipped it the other way round for both
+ * stresses, and nothing caught it: the quadrature disagrees at every ν, but
+ * the disagreement vanishes identically at ν = 0.5, and ν = 0.5 is the only
+ * Poisson ratio Foster and Ahlvin drew a chart for and the only one the
+ * suite tested outside the load. The far-field check below is the fix's gate.
+ *
+ * Vertical displacement, flexible, in complete elliptic integrals:
  *
  *   r ≤ a:   w = 4(1-ν²)qa/(πE) · E(r/a)
  *   r ≥ a:   w = 4(1-ν²)qr/(πE) · [ E(a/r) - (1 - a²/r²) K(a/r) ]
@@ -242,37 +300,60 @@ function elliptic(k: number): { K: number; E: number } {
  * At r = 0, E(0) = π/2 and this collapses to Huang Eq. 2.8, w₀ = 2(1-ν²)qa/E.
  * The two branches agree at r = a, where E(1) = 1 and the K term drops out.
  *
- * Radial displacement. The point-load surface kernel is (1-2ν)(1+ν)P/(2πEr),
- * a 1/r field, so an annulus exerts no pull on a point inside it and only the
- * load within radius r counts. Both branches vanish at ν = 0.5.
+ * Rigid, the classical flat punch: the plate settles as a unit, so w is
+ * CONSTANT under it — that flat top against the flexible plate's dish is
+ * Huang's Figure 2.9, and it is the reason Eq. 2.10 is 79% of Eq. 2.8.
+ *
+ *   r ≤ a:   w = w₀ = π(1-ν²)qa/(2E)          (Eq. 2.10)
+ *   r ≥ a:   w = (2 w₀/π) · asin(a/r)
  */
-function surface(q: number, a: number, r: number, E: number, nu: number): PointResponse {
+function surface(
+  q: number, a: number, r: number, E: number, nu: number, kind: Plate = 'disc'
+): PointResponse {
   const inside = r < a - 1e-12;
   const onRim = Math.abs(r - a) <= 1e-12;
+  const rigid = kind === 'punch';
 
-  const sigZ = inside ? q : onRim ? q / 2 : 0;
-  let sigR: number, sigT: number;
-  if (inside || onRim) {
-    sigR = sigT = (q * (1 + 2 * nu)) / 2;
+  /* p(r): the pressure the plate actually applies. Uniform under a tire;
+     Eq. 2.9 under a rigid plate, which is q/2 at the center and unbounded at
+     the rim, where the plate's edge digs in. */
+  const sigZ = rigid
+    ? (inside ? (q * a) / (2 * Math.sqrt(a * a - r * r)) : onRim ? Infinity : 0)
+    : (inside ? q : onRim ? q / 2 : 0);
+
+  // T = (1/r) ∫ P̃ J1(mr) dm, the one extra number the horizontal state needs.
+  let T: number;
+  if (r <= a + 1e-12) {
+    T = rigid
+      // (qa/2)(a - √(a²-r²))/r², whose r -> 0 limit is q/4.
+      ? (r < 1e-9
+          ? q / 4
+          : (q * a * (a - Math.sqrt(Math.max(0, a * a - r * r)))) / (2 * r * r))
+      : q / 2;
   } else {
-    const t = (q * (1 - 2 * nu) * a * a) / (2 * r * r);
-    sigR = t;
-    sigT = -t;
+    T = (q * a * a) / (2 * r * r);
   }
 
-  const c = (4 * (1 - nu * nu) * q) / (Math.PI * E);
+  const k = 1 - 2 * nu;
+  const sigR = sigZ - k * T;
+  const sigT = 2 * nu * sigZ + k * T;
+
   let w: number;
-  if (r <= a) {
-    w = c * a * elliptic(r / a).E;
+  if (rigid) {
+    const w0 = (Math.PI * (1 - nu * nu) * q * a) / (2 * E);
+    w = r <= a ? w0 : ((2 * w0) / Math.PI) * Math.asin(a / r);
   } else {
-    const k = a / r;
-    const { K, E: Ek } = elliptic(k);
-    w = c * r * (Ek - (1 - k * k) * K);
+    const c = (4 * (1 - nu * nu) * q) / (Math.PI * E);
+    if (r <= a) {
+      w = c * a * elliptic(r / a).E;
+    } else {
+      const kk = a / r;
+      const { K, E: Ek } = elliptic(kk);
+      w = c * r * (Ek - (1 - kk * kk) * K);
+    }
   }
 
-  const u = r <= a
-    ? -((1 - 2 * nu) * (1 + nu) * q * r) / (2 * E)
-    : -((1 - 2 * nu) * (1 + nu) * q * a * a) / (2 * E * r);
+  const u = -(k * (1 + nu) * T * r) / E;
 
   return { sigZ, sigR, sigT, tauRZ: 0, w, u };
 }
@@ -287,14 +368,16 @@ function surface(q: number, a: number, r: number, E: number, nu: number): PointR
  * @param a  contact radius
  * @param E  elastic modulus, same pressure unit as q
  * @param nu Poisson's ratio
+ * @param kind 'disc' for a tire (uniform q), 'punch' for a rigid plate (Eq. 2.9)
  */
 export function oneLayerResponse(
-  r: number, z: number, q: number, a: number, E: number, nu: number
+  r: number, z: number, q: number, a: number, E: number, nu: number,
+  kind: Plate = 'disc'
 ): PointResponse | null {
   if (!(a > 0 && E > 0 && r >= 0 && z >= 0 && Number.isFinite(q))) return null;
-  if (z <= 1e-12) return surface(q, a, r, E, nu);
+  if (z <= 1e-12) return surface(q, a, r, E, nu, kind);
 
-  const n = integrate(a, r, z, nu);
+  const n = integrate(a, r, z, nu, kind);
   return {
     sigZ: q * n.sigZ,
     sigR: q * n.sigR,
@@ -304,6 +387,80 @@ export function oneLayerResponse(
     u: (q * (1 + nu) * n.u) / E,
   };
 }
+
+/**
+ * The same half-space under a RIGID plate — a plate bearing test rather than
+ * a tire. Same arguments, and `q` is again the AVERAGE pressure, total load
+ * over plate area, exactly as Huang defines it under Eq. 2.9.
+ *
+ * The plate settles as a unit, so it cannot apply a uniform pressure: it
+ * sheds load to its rim (Eq. 2.9, q/2 at the center and unbounded at r = a)
+ * and settles only π/4 of the flexible plate (Eq. 2.10). Both facts are the
+ * same fact, and both come out of the one changed factor in the integrand.
+ */
+export const rigidPlateResponse = (
+  r: number, z: number, q: number, a: number, E: number, nu: number
+) => oneLayerResponse(r, z, q, a, E, nu, 'punch');
+
+/* ── Boussinesq's original: a CONCENTRATED load ──────────────────────────
+ * Huang opens §2.1 with it: "The original Boussinesq (1885) theory was based
+ * on a concentrated load applied on an elastic half space. The stresses,
+ * strains, and deflections due to a concentrated load can be integrated to
+ * obtain those due to a circular loaded area."
+ *
+ * So this is the kernel every integral above is an integral OF, and the book
+ * prints no equations for it — it goes straight to the circle. Everything
+ * here is elementary, with R = √(r² + z²):
+ *
+ *   σz  = 3P z³ / (2π R⁵)
+ *   σr  = (P/2π) [ 3r²z/R⁵ - (1-2ν)/(R(R+z)) ]
+ *   σt  = (P/2π)(1-2ν) [ 1/(R(R+z)) - z/R³ ]
+ *   τrz = 3P r z² / (2π R⁵)
+ *   w   = P(1+ν)/(2πER) [ 2(1-ν) + z²/R² ]
+ *   u   = P(1+ν)r/(2πE) [ z/R³ - (1-2ν)/(R(R+z)) ]
+ *
+ * Two readings worth having in front of a student:
+ *
+ *   ON THE AXIS   σz = 3P/(2πz²) = 0.4775 P/z², independent of E and ν and of
+ *                 anything about the material — the same statement Huang
+ *                 makes under Eq. 2.3, in its simplest form.
+ *   ON THE SURFACE  w = P(1-ν²)/(πEr), and σr is NEGATIVE while σt is its
+ *                 mirror: tension radially, compression circumferentially.
+ *
+ * The load is a singularity, so the origin has no value; every quantity runs
+ * to infinity there. `pointLoadResponse` returns null at R = 0 rather than
+ * Infinity, so a caller cannot plot it by accident.
+ */
+export function pointLoadResponse(
+  r: number, z: number, P: number, E: number, nu: number
+): PointResponse | null {
+  if (!(E > 0 && r >= 0 && z >= 0 && Number.isFinite(P))) return null;
+  const R = Math.hypot(r, z);
+  if (R < 1e-12) return null;
+
+  const c = P / (2 * Math.PI);
+  const R3 = R * R * R, R5 = R3 * R * R;
+  const k = 1 - 2 * nu;
+  // 1/(R(R+z)) is well conditioned everywhere the half-space exists: R+z ≥ R.
+  const g = 1 / (R * (R + z));
+
+  return {
+    sigZ: (3 * c * z * z * z) / R5,
+    sigR: c * ((3 * r * r * z) / R5 - k * g),
+    sigT: c * k * (g - z / R3),
+    tauRZ: (3 * c * r * z * z) / R5,
+    w: ((P * (1 + nu)) / (2 * Math.PI * E * R)) * (2 * (1 - nu) + (z * z) / (R * R)),
+    u: ((P * (1 + nu)) / (2 * Math.PI * E)) * ((r * z) / R3 - k * r * g),
+  };
+}
+
+/** σz on the axis under a point load: 0.4775 P/z², whatever the material. */
+export const pointLoadAxisStress = (z: number, P: number) =>
+  (3 * P) / (2 * Math.PI * z * z);
+
+/** Surface deflection under a point load, Boussinesq: w = P(1-ν²)/(πEr). */
+export const pointLoadSurfaceDeflection = (r: number, P: number, E: number, nu: number) =>
+  (P * (1 - nu * nu)) / (Math.PI * E * r);
 
 /* ── The five quantities Foster and Ahlvin charted ────────────────────────
  * Each is dimensionless in (r/a, z/a) alone — which is why one chart serves

@@ -44,7 +44,87 @@ export interface Tool {
   imageAlt?: string;
 }
 
+/**
+ * ORDER IS DISPLAY ORDER. The landing page and the tools index both filter
+ * this array by the release gate and render what survives, in place, so the
+ * sequence here is the sequence a student sees. The four released tools lead,
+ * in the order the course wants them shown; everything still locked follows in
+ * homework order. Releasing a tool means deciding where in the lead it goes,
+ * not just flipping its flag in release.ts.
+ */
 export const tools: Tool[] = [
+  {
+    name: 'Cross-Section Studio',
+    slug: 'cross-section-studio',
+    color: '#14B489',
+    hws: ['Figures', 'Ch. 1'],
+    ref: 'FAA P-401 · P-209 · P-154 · P-501',
+    image: 'cross-section-studio.webp',
+    imageAlt: 'A true-to-scale 3-D pavement cross section: asphalt surface over base, subbase and subgrade, each layer rendered with its own procedural material.',
+    desc: 'The figure every write-up needs and nobody wants to redraw: a true-to-scale 3-D pavement section, eighteen procedural materials, thirteen airfield and highway templates, and the PNG copied straight to your clipboard, with or without a background.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path class="anim" d="M14 15h70l14-8H28z"/>
+      <path d="M14 15v6h70v-6"/>
+      <path d="M14 21v8h76v-8" opacity="0.7"/>
+      <path d="M14 29v9h82v-9" opacity="0.45"/>
+      <path d="M90 29l10-6M96 38l10-6" opacity="0.3" stroke-width="1.5"/>
+    </svg>`,
+  },
+  {
+    name: 'Gear3D',
+    slug: 'gear3d',
+    color: '#10b981',
+    hws: ['HW4', 'HW5', 'Ch. 6'],
+    ref: 'FHWA classes 1–13 · FAA Order 5300.7',
+    image: 'gear3d.webp',
+    imageAlt: 'A dual-tandem axle rendered in 3-D on a measurement grid, with the dual spacing, track width and axle spacing called out as dimension lines in millimeters.',
+    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions, and contact-patch corner coordinates exported in millimeters for a finite-element pre-processor.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 12h74l10 9v8H18z" opacity="0.5"/>
+      <circle class="anim" cx="34" cy="31" r="7"/>
+      <circle cx="76" cy="31" r="7"/>
+      <circle cx="92" cy="31" r="7"/>
+      <path d="M34 31h0M76 31h0M92 31h0" stroke-width="3"/>
+      <path d="M34 40h58" opacity="0.35" stroke-width="1.5"/>
+      <path d="M34 37v6M92 37v6" opacity="0.35" stroke-width="1.5"/>
+    </svg>`,
+  },
+  {
+    name: 'Contact Stress Visualizer',
+    slug: 'contact-stress',
+    color: '#E87722',
+    hws: ['HW3', 'HW4', 'Ch. 1'],
+    ref: 'Lang et al. 2026 · phyContactGAN · Huang Eq. 1.1',
+    image: 'contact-stress.webp',
+    imageAlt: 'The predicted contact patch of a truck tire in plan view: five orange ribs of vertical stress, with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
+    desc: 'The 3-D contact stresses a truck tire really applies (vertical, longitudinal and transverse), from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
+      <path d="M26 34 V16 M38 34 V9 M50 34 V6 M62 34 V6 M74 34 V9 M86 34 V16" opacity="0.5"/>
+      <path class="anim" d="M20 30 Q32 12 44 7 T68 7 Q80 12 92 30"/>
+      <ellipse cx="56" cy="34" rx="36" ry="5" opacity="0.3" stroke-dasharray="3 3"/>
+    </svg>`,
+  },
+  {
+    name: 'Layered Elastic Analysis',
+    slug: 'lea',
+    color: '#0ea5e9',
+    hws: ['HW3', 'HW4'],
+    ref: 'Huang Ch. 2 · Boussinesq to Burmister',
+    image: 'lea.webp',
+    imageAlt: 'Figure 2.2 redrawn as log paper: seventeen curves of vertical stress against depth ' +
+      'in a boxed frame with tick values on all four sides, each curve numbered in a gap in its ' +
+      'own ink, and a dashed curve for an r/a the book never printed.',
+    desc: "The whole of Chapter 2 in five modules: Boussinesq's half-space, Burmister's two layers, Jones' three, the general N-layer solve, and every design chart in the chapter redrawn from the equations behind it and readable backwards as well as forwards.",
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M10 10 H110" opacity="0.5" stroke-width="3"/>
+      <path d="M10 20 H110" opacity="0.35"/>
+      <path d="M10 30 H110" opacity="0.25"/>
+      <path class="anim" d="M52 4 Q60 16 68 4" opacity="0.9"/>
+      <path d="M44 6 Q60 30 76 6" opacity="0.55"/>
+      <path d="M36 8 Q60 42 84 8" opacity="0.3"/>
+    </svg>`,
+  },
   {
     name: 'Resilient Modulus Fitter',
     slug: 'mr-fitter',
@@ -72,26 +152,6 @@ export const tools: Tool[] = [
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M20 37 C34 36 44 26 60 18 C76 11 92 9 106 8"/>
       <path d="M28 38 L74 10" opacity="0.5" stroke-dasharray="3 3"/>
-    </svg>`,
-  },
-  {
-    name: 'Layered Elastic Analysis',
-    slug: 'lea',
-    color: '#0ea5e9',
-    hws: ['HW3', 'HW4'],
-    ref: 'Huang Ch. 2 · Boussinesq to Burmister',
-    image: 'lea.webp',
-    imageAlt: 'Figure 2.2 redrawn as log paper: seventeen curves of vertical stress against depth ' +
-      'in a boxed frame with tick values on all four sides, each curve numbered in a gap in its ' +
-      'own ink, and a dashed curve for an r/a the book never printed.',
-    desc: "The whole of Chapter 2 in five modules: Boussinesq's half-space, Burmister's two layers, Jones' three, the general N-layer solve, and every design chart in the chapter redrawn from the equations behind it and readable backwards as well as forwards.",
-    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <path d="M10 10 H110" opacity="0.5" stroke-width="3"/>
-      <path d="M10 20 H110" opacity="0.35"/>
-      <path d="M10 30 H110" opacity="0.25"/>
-      <path class="anim" d="M52 4 Q60 16 68 4" opacity="0.9"/>
-      <path d="M44 6 Q60 30 76 6" opacity="0.55"/>
-      <path d="M36 8 Q60 42 84 8" opacity="0.3"/>
     </svg>`,
   },
   {
@@ -304,58 +364,6 @@ export const tools: Tool[] = [
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 9 H106" opacity="0.3" stroke-dasharray="3 4" stroke-width="1.5"/>
       <path class="anim" d="M14 36 L44 9 L44 36 L74 9 L74 36 L104 9"/>
-    </svg>`,
-  },
-  {
-    name: 'Cross-Section Studio',
-    slug: 'cross-section-studio',
-    color: '#14B489',
-    hws: ['Figures', 'Ch. 1'],
-    ref: 'FAA P-401 · P-209 · P-154 · P-501',
-    image: 'cross-section-studio.webp',
-    imageAlt: 'A true-to-scale 3-D pavement cross section: asphalt surface over base, subbase and subgrade, each layer rendered with its own procedural material.',
-    desc: 'The figure every write-up needs and nobody wants to redraw: a true-to-scale 3-D pavement section, eighteen procedural materials, thirteen airfield and highway templates, and the PNG copied straight to your clipboard, with or without a background.',
-    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path class="anim" d="M14 15h70l14-8H28z"/>
-      <path d="M14 15v6h70v-6"/>
-      <path d="M14 21v8h76v-8" opacity="0.7"/>
-      <path d="M14 29v9h82v-9" opacity="0.45"/>
-      <path d="M90 29l10-6M96 38l10-6" opacity="0.3" stroke-width="1.5"/>
-    </svg>`,
-  },
-  {
-    name: 'Contact Stress Visualizer',
-    slug: 'contact-stress',
-    color: '#E87722',
-    hws: ['HW3', 'HW4', 'Ch. 1'],
-    ref: 'Lang et al. 2026 · phyContactGAN · Huang Eq. 1.1',
-    image: 'contact-stress.webp',
-    imageAlt: 'The predicted contact patch of a truck tire in plan view: five orange ribs of vertical stress, with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
-    desc: 'The 3-D contact stresses a truck tire really applies (vertical, longitudinal and transverse), from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
-    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
-      <path d="M26 34 V16 M38 34 V9 M50 34 V6 M62 34 V6 M74 34 V9 M86 34 V16" opacity="0.5"/>
-      <path class="anim" d="M20 30 Q32 12 44 7 T68 7 Q80 12 92 30"/>
-      <ellipse cx="56" cy="34" rx="36" ry="5" opacity="0.3" stroke-dasharray="3 3"/>
-    </svg>`,
-  },
-  {
-    name: 'Gear3D',
-    slug: 'gear3d',
-    color: '#10b981',
-    hws: ['HW4', 'HW5', 'Ch. 6'],
-    ref: 'FHWA classes 1–13 · FAA Order 5300.7',
-    image: 'gear3d.webp',
-    imageAlt: 'A dual-tandem axle rendered in 3-D on a measurement grid, with the dual spacing, track width and axle spacing called out as dimension lines in millimeters.',
-    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions, and contact-patch corner coordinates exported in millimeters for a finite-element pre-processor.',
-    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M18 12h74l10 9v8H18z" opacity="0.5"/>
-      <circle class="anim" cx="34" cy="31" r="7"/>
-      <circle cx="76" cy="31" r="7"/>
-      <circle cx="92" cy="31" r="7"/>
-      <path d="M34 31h0M76 31h0M92 31h0" stroke-width="3"/>
-      <path d="M34 40h58" opacity="0.35" stroke-width="1.5"/>
-      <path d="M34 37v6M92 37v6" opacity="0.35" stroke-width="1.5"/>
     </svg>`,
   },
 ];
