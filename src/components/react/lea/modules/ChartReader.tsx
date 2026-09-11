@@ -29,6 +29,7 @@ import {
   sampleCurve, invertFamily, nearestCurve,
   curveLabelSpots, emptiestCorner, CORNER_XY,
   sampleLattice, latticeLabels, latticeX, invertLattice, latticeCorner, LATTICE_RANGE,
+  drawnValue,
 } from '../charts.ts';
 
 /** Which ramp carries which chart, per the §B4 semantic binding. */
@@ -147,7 +148,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
     if (!Number.isFinite(familyValue) || !Number.isFinite(sweepValue)) {
       return drawn.map(() => NaN);
     }
-    return drawn.map(d => spec.evaluate(familyValue, sweepValue, d.pv));
+    return drawn.map(d => drawnValue(spec, spec.evaluate(familyValue, sweepValue, d.pv)));
   }, [spec, familyValue, sweepValue, drawn]);
   const markerValue = markerValues[0];
 
@@ -368,7 +369,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         }
 
         // The caption has to name both families, and which side each is on —
-        // and it has to keep off the bottom centre, where both plates print
+        // and it has to keep off the bottom center, where both plates print
         // their two extreme labels together at the apex of the mesh.
         const nomoCorner = CORNER_XY[latticeCorner(spec, lattice!, { w: 0.46, h: 0.13 })];
         annotations.push({
@@ -411,7 +412,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
             y: annY(putY(spot.value, spot.sweep)),
             text: fmtParam(spot.fv),
             showarrow: false,
-            // A number centred on a curve that runs along the frame edge
+            // A number centered on a curve that runs along the frame edge
             // would hang half outside it; near an edge the label pushes in.
             xanchor: spot.sx < 0.09 ? 'left' : spot.sx > 0.91 ? 'right' : 'center',
             yanchor: spot.sy < 0.07 ? 'top' : spot.sy > 0.93 ? 'bottom' : 'middle',
@@ -608,7 +609,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       label: d.label,
       rows: stations.slice(0, 8).map(s => ({
         sweep: s,
-        values: spec.family.values.map(fv => spec.evaluate(fv, s, d.pv)),
+        values: spec.family.values.map(fv => drawnValue(spec, spec.evaluate(fv, s, d.pv))),
       })),
     }));
   }, [spec, drawn, curveSets]);
@@ -736,8 +737,8 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         <p>
           <strong>Read it like the page.</strong>{' '}
           {spec.nomograph
-            ? `Find where your ${spec.family.symbol} curve crosses your ${spec.sweep.label} curve, and run left to the ordinate. The frame is boxed and the ordinate is repeated on the right, so the shorter run is always available; the faint divisions between the labelled ticks are the ruled paper the figure was printed on.`
-            : 'The frame is boxed and the tick values are repeated on all four sides, so a point in the middle can be run out to a number in whichever direction is shorter; the faint divisions between the labelled ticks are the ruled paper the figure was printed on, and they are what makes a value between two labels readable rather than guessable. Each curve is named in a gap in its own ink, the way a contour is.'}
+            ? `Find where your ${spec.family.symbol} curve crosses your ${spec.sweep.label} curve, and run left to the ordinate. The frame is boxed and the ordinate is repeated on the right, so the shorter run is always available; the faint divisions between the labeled ticks are the ruled paper the figure was printed on.`
+            : 'The frame is boxed and the tick values are repeated on all four sides, so a point in the middle can be run out to a number in whichever direction is shorter; the faint divisions between the labeled ticks are the ruled paper the figure was printed on, and they are what makes a value between two labels readable rather than guessable. Each curve is named in a gap in its own ink, the way a contour is.'}
         </p>
         <p>
           <strong>Nothing here is restricted to the {spec.family.values.length} curves that
@@ -889,7 +890,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
                 </button>
                 <span className="cee-anchors__read">
                   {spec.family.symbol} = {a.fv}, {spec.sweep.label} = {a.sv} → reads {a.reads}
-                  {' '}· computed {fmt(spec.evaluate(a.fv, a.sv, a.pv), 4)}
+                  {' '}· computed {fmt(drawnValue(spec, spec.evaluate(a.fv, a.sv, a.pv)), 4)}
                 </span>
               </li>
             ))}

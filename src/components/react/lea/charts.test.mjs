@@ -12,6 +12,7 @@ import {
   CHARTS, SECTIONS, chartById, sampleCurve, invertFamily, nearestCurve,
   framePoint, curveLabelSpots, emptiestCorner, CORNER_XY,
   latticeAxes, latticeX, sampleLattice, latticeLabels, invertLattice, LATTICE_RANGE,
+  drawnValue,
 } from './charts.ts';
 
 test('the catalog covers every empirical chart in Chapter 2', () => {
@@ -210,16 +211,20 @@ test('the nomographs are flagged, and nothing else is', () => {
 });
 
 test('the lattice abscissa is the sum of the two families\' own positions', () => {
-  // The one line the whole reconstruction rests on. Each family's extremes
-  // sit at 0 and 1 of their own span, so the mesh spans exactly [0, 2] and
-  // its two "middle" corners land together at 1 — which is why Figure 2.31
-  // prints "A = 0.1  H = 8" as one label at the apex.
+  // The one line the whole reconstruction rests on. The mesh spans exactly
+  // [0, 2], and its two "middle" corners — (family high, sweep low) and
+  // (family low, sweep high) — land on the SAME abscissa, which is why
+  // Figure 2.31 prints "A = 0.1  H = 8" as one label at its apex. WHERE that
+  // shared abscissa falls is the two families' relative gain, and it is not
+  // always the middle: the next test pins it.
   for (const c of CHARTS.filter(x => x.nomograph)) {
     const a = latticeAxes(c);
     assert.equal(latticeX(c, a.fLo, a.sLo), 0, `${c.figure}: left corner`);
     assert.equal(latticeX(c, a.fHi, a.sHi), 2, `${c.figure}: right corner`);
-    assert.ok(Math.abs(latticeX(c, a.fHi, a.sLo) - 1) < 1e-12, `${c.figure}: top corner`);
-    assert.ok(Math.abs(latticeX(c, a.fLo, a.sHi) - 1) < 1e-12, `${c.figure}: bottom corner`);
+    const top = latticeX(c, a.fHi, a.sLo), bottom = latticeX(c, a.fLo, a.sHi);
+    assert.ok(Math.abs(top + bottom - 2) < 1e-12,
+      `${c.figure}: the two apex ends must land on one abscissa`);
+    assert.ok(top > 0.2 && top < 1.8, `${c.figure}: the apex is inside the frame`);
     // Monotone in both, or the mesh folds over itself.
     for (let i = 1; i < a.F.length; i++) {
       assert.ok(latticeX(c, a.F[i], a.sLo) > latticeX(c, a.F[i - 1], a.sLo),
@@ -228,6 +233,108 @@ test('the lattice abscissa is the sum of the two families\' own positions', () =
     for (let i = 1; i < a.S.length; i++) {
       assert.ok(latticeX(c, a.fLo, a.S[i]) > latticeX(c, a.fLo, a.S[i - 1]),
         `${c.figure}: the sweep does not advance the abscissa`);
+    }
+  }
+});
+
+test('two log families share one ruler; a mixed pair cannot', () => {
+  /* The abscissa is a ruler both families are laid along, and their relative
+     gain is part of the drawing. Giving each family half the width is only
+     right when the two measure different kinds of thing.
+
+     Figure 2.31's families are both geometric ladders of ratio 2 — H over
+     six doublings, A over five — so ONE doubling is one width in either, and
+     the family takes 6/11 of the abscissa rather than 1/2. That 9% was
+     measured against the plate, not argued: projected onto a 300 dpi scan of
+     panel (a) with the horizontal rulings masked out, the shared ruler puts
+     36 of the 39 crossings Table 2.3 tabulates on drawn ink; half-and-half
+     puts 28, and its misses are the whole middle of the mesh.
+
+     Figure 2.21's sweep h1/a is a LINEAR ladder against a logarithmic
+     family. There is no shared ruler between those, so it keeps half each. */
+  const f31 = chartById('fig-2-31'), a31 = latticeAxes(f31);
+  assert.equal(a31.fLog, true); assert.equal(a31.sLog, true);
+  assert.ok(Math.abs(a31.fWeight - 6 / 11) < 1e-12,
+    `Figure 2.31 gives the family ${a31.fWeight} of the abscissa, not 6/11`);
+  // Six doublings of H and five of A, each the same width.
+  const stepH = latticeX(f31, 0.25, 0.1) - latticeX(f31, 0.125, 0.1);
+  const stepA = latticeX(f31, 0.125, 0.2) - latticeX(f31, 0.125, 0.1);
+  assert.ok(Math.abs(stepH - stepA) < 1e-12, 'a doubling must cost the same in either family');
+  assert.ok(Math.abs(stepH - 2 / 11) < 1e-12);
+  // And the apex where the two extreme labels are printed together.
+  assert.ok(Math.abs(latticeX(f31, 8, 0.1) - 12 / 11) < 1e-12);
+  assert.ok(Math.abs(latticeX(f31, 0.125, 3.2) - 10 / 11) < 1e-12);
+
+  const f21 = chartById('fig-2-21'), a21 = latticeAxes(f21);
+  assert.equal(a21.sLog, false, 'Figure 2.21 sweeps h1/a linearly');
+  assert.equal(a21.fWeight, 0.5, 'a mixed pair has no shared ruler and keeps half each');
+});
+
+test('Figure 2.31 draws the magnitude, because its factor changes sign', () => {
+  /* Table 2.3 tabulates (ZZ1 - RR1) and it goes NEGATIVE over a good part of
+     the chart: for k1 = k2 = 2 and H = 0.125 it is +0.706 at A = 0.1 and
+     -0.289 by A = 3.2. Peattie's ordinate is the other sign again and his
+     axis is logarithmic, so what the plate draws is the absolute value, and
+     it runs straight through the crossing without marking it.
+
+     Returning the signed value to the sampler is what left this chart in
+     pieces: every curve was cut at its first sign change, which on the k1 = 2
+     panels is most of them. The sign is kept on `evaluate` so the sampler can
+     find the zero; `drawnValue` is what reaches the page. */
+  const c = chartById('fig-2-31');
+  assert.equal(c.magnitude, true);
+  assert.deepEqual(CHARTS.filter(x => x.magnitude).map(x => x.figure), ['Figure 2.31'],
+    'no other chart draws a magnitude');
+  assert.match(c.value.label, /^\|/, 'the ordinate has to say it is a magnitude');
+
+  // Half of Table 2.3's H = 0.125, k1 = k2 = 2 row, straight off page 72.
+  const table = [[0.1, 0.70622], [0.2, 0.97956], [0.4, 0.70970],
+                 [0.8, 0.22319], [1.6, -0.19982], [3.2, -0.28916]];
+  for (const [A, zz1rr1] of table) {
+    const raw = c.evaluate(0.125, A, 202);
+    assert.ok(Math.abs(raw - zz1rr1 / 2) < 0.006,
+      `A = ${A}: solver ${raw} against Jones' ${zz1rr1 / 2}`);
+    assert.ok(drawnValue(c, raw) >= 0, 'the page never draws a negative');
+    assert.ok(Math.abs(drawnValue(c, raw) - Math.abs(zz1rr1 / 2)) < 0.006);
+  }
+  // The two negatives are the ones the old signed evaluate threw away.
+  assert.ok(c.evaluate(0.125, 3.2, 202) < 0);
+  assert.ok(drawnValue(c, c.evaluate(0.125, 3.2, 202)) > c.value.min);
+});
+
+test('no lattice curve stops in open space', () => {
+  /* The plates are closed meshes: a curve runs to the end of its own
+     parameter range, or it leaves through the frame, and there is no third
+     way for one to end. This is the check the instructor's own reading of
+     Figure 2.31 came down to, and it failed in two different ways at once —
+     curves cut at a sign change, and curves whose run-out to the border gave
+     up a third of a decade short of it. */
+  for (const spec of CHARTS.filter(c => c.nomograph)) {
+    const a = latticeAxes(spec);
+    const FLOOR = spec.value.min, CEIL = spec.value.max;
+    for (const pv of spec.panel ? spec.panel.values : [undefined]) {
+      for (const cv of sampleLattice(spec, pv)) {
+        // The abscissas this curve's own parameters can reach.
+        const ends = cv.kind === 'family'
+          ? [latticeX(spec, cv.label, a.sLo), latticeX(spec, cv.label, a.sHi)]
+          : [latticeX(spec, a.fLo, cv.label), latticeX(spec, a.fHi, cv.label)];
+        const runs = [];
+        let run = null;
+        for (const p of cv.pts) {
+          if (Number.isFinite(p.value)) (run ??= []).push(p);
+          else if (run) { runs.push(run); run = null; }
+        }
+        if (run) runs.push(run);
+        for (const r of runs) {
+          for (const p of [r[0], r[r.length - 1]]) {
+            const ok = p.value <= FLOOR * 1.05 || p.value >= CEIL * 0.95 ||
+              ends.some(e => Math.abs(p.x - e) < 1e-6);
+            assert.ok(ok, `${spec.figure} ${pv ?? ''} ${cv.kind} ${cv.label}: ` +
+              `a segment ends at x = ${p.x.toFixed(4)}, value ${p.value.toExponential(3)}, ` +
+              `which is neither the frame nor the end of its own range`);
+          }
+        }
+      }
     }
   }
 });
@@ -247,7 +354,8 @@ test('the mesh is the two families, and every crossing carries the true value', 
           `${c.figure}: a mesh point at x = ${p.x} is off the frame`);
         if (!Number.isFinite(p.value)) continue;
         // The drawn point must BE the function, not an interpolation of it.
-        const truth = c.evaluate(p.family, p.sweep, pv);
+        // On a magnitude chart "the function" is what the plate draws.
+        const truth = drawnValue(c, c.evaluate(p.family, p.sweep, pv));
         assert.ok(Math.abs(truth - p.value) < 1e-9 * Math.max(1, Math.abs(truth)),
           `${c.figure}: the mesh draws ${p.value} where the solver gives ${truth}`);
         assert.ok(Math.abs(latticeX(c, p.family, p.sweep) - p.x) < 1e-12,
@@ -260,7 +368,7 @@ test('the mesh is the two families, and every crossing carries the true value', 
     let crossings = 0;
     for (const fv of a.F) {
       for (const sv of a.S) {
-        const v = c.evaluate(fv, sv, pv);
+        const v = drawnValue(c, c.evaluate(fv, sv, pv));
         if (Number.isFinite(v) && v >= c.value.min && v <= c.value.max) crossings++;
       }
     }
@@ -319,7 +427,7 @@ test('a point in the mesh solves back to the pair that made it', () => {
     let checked = 0;
     for (const fv of a.F) {
       for (const sv of a.S) {
-        const value = c.evaluate(fv, sv, pv);
+        const value = drawnValue(c, c.evaluate(fv, sv, pv));
         if (!Number.isFinite(value) || value < c.value.min || value > c.value.max) continue;
         const x = latticeX(c, fv, sv);
         const roots = invertLattice(c, x, value, pv);
@@ -338,7 +446,7 @@ test('a point in the mesh solves back to the pair that made it', () => {
 
 test('Figure 2.31 reproduces the corners Peattie printed', () => {
   // Panel (a), k1 = 2, k2 = 2 — the first plate on page 75. Its mesh is a
-  // narrow diamond: the H = 0.125 curve is labelled just above 0.3 at the
+  // narrow diamond: the H = 0.125 curve is labeled just above 0.3 at the
   // left, and the apex where H = 8 meets A = 0.1 falls through the 0.001
   // floor, which is why the printed lattice closes to a point there.
   const c = chartById('fig-2-31');
@@ -421,13 +529,13 @@ test('every curve gets exactly one label, and it sits on its own curve', () => {
     const spots = curveLabelSpots(c, drawn);
 
     assert.equal(spots.length, drawable.length,
-      `${c.figure}: ${drawable.length} curves are drawn but ${spots.length} were labelled`);
+      `${c.figure}: ${drawable.length} curves are drawn but ${spots.length} were labeled`);
     assert.equal(new Set(spots.map(s => s.fv)).size, spots.length,
       `${c.figure}: two labels claim the same curve`);
 
     for (const s of spots) {
       // The label must name the curve it is printed on. A label that has
-      // drifted onto a neighbour is the one failure a reader cannot detect.
+      // drifted onto a neighbor is the one failure a reader cannot detect.
       const truth = c.evaluate(s.fv, s.sweep, pv);
       const rel = Math.abs(truth - s.value) / Math.max(Math.abs(truth), 1e-9);
       assert.ok(rel < 1e-6,
@@ -505,7 +613,7 @@ test('Figure 2.2 labels the r/a = 0 to 10 curves the book prints', () => {
   assert.match(c.family.label, /^Numbers on curves indicate /,
     'the caption is the book’s own wording, and the reader prints it verbatim');
 
-  // Both axes are ruled paper, so a value between two labelled ticks can be
+  // Both axes are ruled paper, so a value between two labeled ticks can be
   // read rather than guessed.
   assert.equal(c.value.minorDtick, 'D1', 'the stress axis is three-cycle log paper');
   assert.ok(typeof c.sweep.minorDtick === 'number' && c.sweep.minorDtick > 0);

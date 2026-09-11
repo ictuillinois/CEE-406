@@ -44,10 +44,10 @@ export interface AxisSpec {
   /** The tick values the book prints, so a redraw reads like the original. */
   ticks?: number[];
   /**
-   * The division between labelled ticks, drawn as a faint minor grid — the
+   * The division between labeled ticks, drawn as a faint minor grid — the
    * ruled paper the chart was originally printed on. A number on a linear
    * axis; 'D1' (every mantissa) or 'D2' (2 and 5 only) on a log one. Omit
-   * where the labelled ticks are already dense enough to interpolate between.
+   * where the labeled ticks are already dense enough to interpolate between.
    */
   minorDtick?: number | string;
   /** Depth-like axes run down the page. */
@@ -125,6 +125,22 @@ export interface ChartSpec {
   /** value = evaluate(family, sweep, panel). */
   evaluate: (fv: number, sv: number, pv?: number) => number;
   /**
+   * `evaluate` is SIGNED and the page draws its magnitude.
+   *
+   * Figure 2.31 only. Peattie's quantity changes sign — a layer 1 much
+   * thinner than layer 2 under a wide load does not bend, so its underside
+   * goes into compression — and the ordinate is logarithmic, so the plate
+   * draws the absolute value. The sign is kept here rather than thrown away
+   * in `evaluate`, because the samplers need it: |v| has a cusp at the sign
+   * change and where that cusp falls between two samples decides whether the
+   * drawn curve shows a notch of one decade, of two, or of none at all. That
+   * depth would be an artifact of the sample count. Knowing the sign, the
+   * sampler can find the zero itself and take the curve to the axis floor
+   * there, which is the one honest depth and the same treatment the apex
+   * curves already get.
+   */
+  magnitude?: boolean;
+  /**
    * Drawn as a LATTICE rather than as a plot: two families crossing over an
    * abscissa that carries no variable. Figures 2.21 and 2.31 only. See
    * sampleLattice for how the mesh is built and why it is the book's mesh.
@@ -175,7 +191,7 @@ const percentAxis = (label: string): AxisSpec => ({
   label, log: true, min: 0.1, max: 100, ticks: PERCENT_TICKS,
   // Foster and Ahlvin drew these on three-cycle semilog paper. 'D1' is that
   // paper: a line at every mantissa, which is what makes a value between two
-  // labelled decades readable rather than guessable.
+  // labeled decades readable rather than guessable.
   minorDtick: 'D1',
 });
 
@@ -743,7 +759,7 @@ const FIG_2_31: ChartSpec = {
     "interpolating Jones' four-way table.",
   equation: 'εr = (q/E₁) · (RR1 − ZZ1)/2  (Eq. 2.25)',
   value: {
-    label: '(RR1 − ZZ1)/2', log: true, min: 0.001, max: 100,
+    label: '|(RR1 − ZZ1)/2|', log: true, min: 0.001, max: 100,
     ticks: [0.001, 0.01, 0.1, 1, 10, 100],
     minorDtick: 'D2',
   },
@@ -761,6 +777,26 @@ const FIG_2_31: ChartSpec = {
     values: [202, 220, 2002, 2020, 20002, 20020],
     name: v => `k₁ = ${Math.floor(v / 100)}, k₂ = ${v % 100}`,
   },
+  /**
+   * The MAGNITUDE, which is what the plate draws.
+   *
+   * Table 2.3 tabulates (ZZ1 - RR1) and it goes negative over a good part
+   * of the chart: for k1 = k2 = 2 and H = 0.125 it is +0.706 at A = 0.1 and
+   * -0.289 by A = 3.2. Peattie's ordinate is 1/2(RR1 - ZZ1), the other sign
+   * again, and a logarithmic axis can draw neither of them everywhere. What
+   * he printed is the magnitude, and the printed lattice runs straight
+   * through the sign change without marking it: the H = 0.125 curve of
+   * panel (a) passes 0.353, 0.490, 0.355, 0.112 and then 0.100 and 0.145,
+   * and those last two are the tabulated NEGATIVES read as magnitudes.
+   *
+   * Returning the signed value instead is what left this chart in pieces.
+   * Every curve was cut at its first sign change, which on the k1 = 2
+   * panels is most of them, so eight of the thirteen stopped in open space
+   * in the middle of the mesh and the woven diamonds the plate is made of
+   * never closed. The sign is not lost: it is stated in the notes, and
+   * `radialStrainBottomLayer1` carries it into the strain itself.
+   */
+  magnitude: true,
   evaluate: (H, A, panel) => {
     const k1 = Math.floor((panel ?? 202) / 100), k2 = (panel ?? 202) % 100;
     const f = stressFactors({ k1, k2, A, H });
@@ -771,13 +807,15 @@ const FIG_2_31: ChartSpec = {
   notes: [
     'Huang reprints only the realistic panels: k₁ ∈ {2, 20, 200} and k₂ ∈ {2, 20}. Jones’ ' +
     'own tables also carry 0.2, for a layer softer than the one beneath it.',
-    'The factor goes NEGATIVE in one corner: a layer 1 much thinner than layer 2 under a very ' +
-    'wide load does not bend, so its underside is in compression, not tension. A log axis ' +
-    'cannot draw that, which is why the printed lattice closes to a point instead of continuing. ' +
-    'Here those curves dive to the axis floor and leave the frame, which is the same statement ' +
-    'the plate makes by ending them on the border.',
-    'The plotted quantity is the positive magnitude, as Huang draws it. The strain itself is ' +
-    'tension.',
+    'The plotted quantity is the MAGNITUDE, as Peattie plots it. The factor changes sign over ' +
+    'part of the chart: a layer 1 much thinner than layer 2 under a wide load does not bend, so ' +
+    'its underside goes into compression rather than tension. Table 2.3 prints those entries ' +
+    'negative, and the plate draws them at their absolute value without marking the crossing. ' +
+    'So does this. Read the sign from the section, not from the chart: below about A = 1 the ' +
+    'strain at the bottom of layer 1 is tension, above it, on a thin layer 1, compression.',
+    'The mesh is a closed lattice because both families run their whole range. What leaves the ' +
+    'frame leaves it at the bottom, where the magnitude itself is under 0.001 — the A = 0.1 and ' +
+    'H = 8 curves at the apex, which is exactly where the plate runs them off the border.',
   ],
 };
 
@@ -862,8 +900,14 @@ function edgeApproach(
   onFrame: (v: number) => boolean
 ): { t: number; value: number }[] {
   const { min, max, log } = spec.value;
+  // Near enough to the bound to stop bisecting. On a log axis this used to
+  // read `min * 2`, which is a third of a decade — 19 px of a five-decade
+  // frame, so the curve stopped visibly short of the border instead of
+  // crossing it. `frameTest` keeps 10% of grace outside the axis, so the
+  // target is just BELOW the floor: the point is drawn, Plotly clips the
+  // segment, and the curve leaves the page through the frame line.
   const atEdge = (v: number) => (log
-    ? v <= min * 2 || v >= max / 2
+    ? v <= min * 0.95 || v >= max * 1.05
     : v <= min + 0.02 * (max - min) || v >= max - 0.02 * (max - min));
 
   let a = tIn, b = tOut, va = value(tIn);
@@ -880,6 +924,37 @@ function edgeApproach(
   }
   out.push({ t: a, value: va });
   return tIn < tOut ? out : out.reverse();
+}
+
+/**
+ * What the page shows for a computed value. The identity everywhere except
+ * Figure 2.31, whose plate draws a magnitude — see `magnitude` on ChartSpec.
+ */
+export const drawnValue = (spec: ChartSpec, v: number) =>
+  (spec.magnitude ? Math.abs(v) : v);
+
+/**
+ * The parameter at which a sign change happens, or null when the two ends do
+ * not straddle one.
+ *
+ * Only meaningful on a `magnitude` chart, where the drawn value has a cusp
+ * down to zero there. Bisection rather than interpolation: the factor is not
+ * linear across the crossing, and the point of finding it exactly is that the
+ * drawn notch should not depend on how many samples the chart can afford.
+ */
+function signChange(
+  raw: (t: number) => number, ta: number, tb: number, steps = 24
+): number | null {
+  let va = raw(ta), vb = raw(tb);
+  if (!Number.isFinite(va) || !Number.isFinite(vb) || va === 0 || vb === 0) return null;
+  if ((va > 0) === (vb > 0)) return null;
+  let a = ta, b = tb;
+  for (let k = 0; k < steps; k++) {
+    const m = 0.5 * (a + b), vm = raw(m);
+    if (!Number.isFinite(vm)) return null;
+    if ((vm > 0) === (va > 0)) { a = m; va = vm; } else { b = m; }
+  }
+  return 0.5 * (a + b);
 }
 
 /**
@@ -910,24 +985,29 @@ export function sampleCurve(spec: ChartSpec, familyValue: number, panelValue?: n
   const hi = log ? Math.log(max) : max;
 
   const sweepAt = (t: number) => (log ? Math.exp(lo + t * (hi - lo)) : lo + t * (hi - lo));
-  const valueAt = (t: number) => spec.evaluate(familyValue, sweepAt(t), panelValue);
+  const rawAt = (t: number) => spec.evaluate(familyValue, sweepAt(t), panelValue);
+  const valueAt = (t: number) => drawnValue(spec, rawAt(t));
   const onFrame = frameTest(spec);
 
   const out: CurvePoint[] = [];
   let prevT = 0, prevOn = false;
   for (let i = 0; i <= n; i++) {
     const t = i / n;
-    const value = valueAt(t);
-    const on = onFrame(value);
-    // The curve enters or leaves the frame somewhere in this interval; find
-    // where, so it runs to the edge instead of stopping at the last sample.
-    if (i > 0 && on !== prevOn) {
-      for (const c of edgeApproach(spec, on ? t : prevT, on ? prevT : t, valueAt, onFrame)) {
-        out.push({ sweep: sweepAt(c.t), value: c.value });
+    // A magnitude chart's drawn value dives to zero at a sign change. Put a
+    // sample ON the zero, so the run-out below is found by bisection rather
+    // than by whichever sample happened to land nearest it.
+    const zero = i > 0 && spec.magnitude ? signChange(rawAt, prevT, t) : null;
+    for (const t2 of zero !== null ? [zero, t] : [t]) {
+      const value = valueAt(t2);
+      const on = onFrame(value);
+      if ((i > 0 || t2 !== t) && on !== prevOn) {
+        for (const c of edgeApproach(spec, on ? t2 : prevT, on ? prevT : t2, valueAt, onFrame)) {
+          out.push({ sweep: sweepAt(c.t), value: c.value });
+        }
       }
+      out.push({ sweep: sweepAt(t2), value: on ? value : NaN });
+      prevT = t2; prevOn = on;
     }
-    out.push({ sweep: sweepAt(t), value: on ? value : NaN });
-    prevT = t; prevOn = on;
   }
   return out;
 }
@@ -954,8 +1034,11 @@ export function invertFamily(
     ? Math.exp(Math.log(lo) + t * (Math.log(hi) - Math.log(lo)))
     : lo + t * (hi - lo));
 
+  // Against the DRAWN value: on a magnitude chart the reader clicked on |v|,
+  // and solving the signed factor against it would answer for a branch that
+  // is not on the page.
   const f = (t: number) => {
-    const v = spec.evaluate(toX(t), sweepValue, panelValue);
+    const v = drawnValue(spec, spec.evaluate(toX(t), sweepValue, panelValue));
     return Number.isFinite(v) ? v - targetValue : NaN;
   };
 
@@ -971,7 +1054,7 @@ export function invertFamily(
     // corner case here: the family values are round numbers and the scan is a
     // round division, so they coincide constantly — r/a = 2.5 on a 240-step
     // scan of [0, 12] is step 50 exactly, and the inverse of the chart's own
-    // labelled curve came back empty.
+    // labeled curve came back empty.
     if (fv === 0) {
       roots.push(toX(t));
     } else if (Number.isFinite(prevF) && Number.isFinite(fv) && prevF * fv < 0) {
@@ -1038,11 +1121,11 @@ export function nearestCurve(
  * A printed design chart carries seventeen curves and no legend. It does not
  * need one: each curve is named where it runs, in a gap in its own ink, and a
  * caption in a corner of the frame says what the numbers mean. That is a
- * contour plot's labelling, and it is the only scheme that survives this many
+ * contour plot's labeling, and it is the only scheme that survives this many
  * series — a legend of seventeen entries is a lookup table, not a key.
  *
  * Placing them is the hard half. Huang's engraver put each number where that
- * curve had room, which is a judgement about the whole drawing rather than
+ * curve had room, which is a judgment about the whole drawing rather than
  * about one curve: on Figure 2.2 the r/a = 0 through 0.75 curves are the same
  * line near the surface and only separate with depth, so their labels have to
  * go deep even though the top of the chart looks emptier. So the placement
@@ -1055,7 +1138,7 @@ export function nearestCurve(
 const xAxisOf = (spec: ChartSpec) => (spec.valueOnX ? spec.value : spec.sweep);
 const yAxisOf = (spec: ChartSpec) => (spec.valueOnX ? spec.sweep : spec.value);
 
-/** Fraction from the axis's own start to its end, honouring a reversed axis. */
+/** Fraction from the axis's own start to its end, honoring a reversed axis. */
 function along(a: AxisSpec, v: number): number {
   const n = a.log
     ? (Math.log(Math.max(v, 1e-12)) - Math.log(Math.max(a.min, 1e-12))) /
@@ -1147,7 +1230,7 @@ export function curveLabelSpots(
   const out: (CurveLabel | null)[] = onFrame.map(() => null);
 
   for (const i of order) {
-    // A curve that never reaches the interior is still labelled — at its own
+    // A curve that never reaches the interior is still labeled — at its own
     // best point rather than not at all, which is what the book does with the
     // curves that only clip a corner of the frame.
     const pool = interior[i].length ? interior[i] : thin(onFrame[i].pts, 60);
@@ -1266,20 +1349,35 @@ export function freestCorner(
  *
  *     x = (position of the family value) + (position of the sweep value)
  *
- * with each position the value's normalized place along its own family, log
- * or linear as that family is spaced. Everything about both printed figures
- * follows from that one line and nothing else has to be assumed:
+ * with each position the value's place along its own family, log or linear
+ * as that family is spaced. Everything about both printed figures follows
+ * from that one line and one more, about the RELATIVE gain of the two —
+ * see latticeWeight. Both families of Figure 2.31 are doubling ladders, so
+ * one doubling is one width in either and the family takes 6/11 of the
+ * abscissa; Figure 2.21 pairs a log family with a linear sweep, which have
+ * no shared ruler, so it takes half. With that:
  *
  *   · Figure 2.31's H labels sit down the LEFT edge — those are the curve
- *     ends at A = 0.1, whose x is the H position alone, running 0 → 1.
- *   · Its A labels sit down the RIGHT — the ends at H = 8, x running 1 → 2.
+ *     ends at A = 0.1, whose x is the H position alone, running 0 → 12/11.
+ *   · Its A labels sit down the RIGHT — the ends at H = 8, x running
+ *     12/11 → 2.
  *   · "A = 0.1  H = 8" is printed together at the bottom apex, because both
- *     of those ends land on the same x = 1. They do, here, exactly.
- *   · Figure 2.21's four corners are (1, 0.25) far left, (200, 0.25) top
- *     centre, (0.25, 4) bottom centre and (200, 4) far right — which is the
+ *     of those ends land on the same x. They do, here, exactly.
+ *   · Figure 2.21's four corners are (0.25, 0.25) far left, (200, 0.25) top
+ *     center, (0.25, 4) bottom center and (200, 4) far right — which is the
  *     rhombus on the page, and it is where this puts them.
  *   · The scalloped arches across the top of 2.31 are the H curves turning
- *     over: H = 0.125 peaks at 13.6 near A = 0.8 and falls to 5.9 by A = 3.2.
+ *     over: H = 0.125 peaks at 13.6 near A = 0.8 and falls to 5.9 by A = 3.2
+ *     on panel (e), and each arch peaks one A step later than the one before
+ *     it, which is what makes the printed mesh a regular weave.
+ *
+ * The mesh is checked against the plate rather than eyeballed: every one of
+ * the 39 crossings Table 2.3 tabulates for panel (a), projected onto a
+ * 300 dpi scan with the horizontal rulings masked out, lands on drawn ink
+ * (36 of 39 within 8 px; the three that miss are an arch top and two label
+ * leaders). That is how the 6/11 was found, and it is why the earlier
+ * half-and-half split — 28 of 39, missing the whole middle of the mesh —
+ * was wrong.
  *
  * So the mesh is the book's mesh, every crossing carries the true computed
  * value, and the abscissa is still what it was on the page: a spreading
@@ -1303,17 +1401,56 @@ function spanVal(t: number, lo: number, hi: number, log: boolean): number {
 export function latticeAxes(spec: ChartSpec) {
   const F = spec.family.values;
   const S = spec.sweep.ticks ?? [spec.sweep.min, spec.sweep.max];
-  return {
-    F, S,
-    fLo: F[0], fHi: F[F.length - 1], fLog: spec.family.logSearch === true,
-    sLo: S[0], sHi: S[S.length - 1], sLog: spec.sweep.log,
-  };
+  const fLo = F[0], fHi = F[F.length - 1], fLog = spec.family.logSearch === true;
+  const sLo = S[0], sHi = S[S.length - 1], sLog = spec.sweep.log;
+  return { F, S, fLo, fHi, fLog, sLo, sHi, sLog, fWeight: latticeWeight(fLo, fHi, fLog, sLo, sHi, sLog) };
 }
 
-/** The abscissa of the lattice. Carries no variable; spreads the two families. */
+/**
+ * How much of the abscissa the FAMILY gets. The sweep gets the rest.
+ *
+ * The abscissa is a ruler both families are laid along, and the relative
+ * gain of the two is part of the drawing rather than a free choice. This
+ * used to give each family half the width — normalize both to 0..1 and add
+ * — which is only right when the two are measured in different kinds of
+ * thing and there is nothing better available.
+ *
+ * When BOTH families are logarithmic there IS something better: ONE shared
+ * log ruler, so a doubling costs the same width whichever family you move
+ * along. That is what Peattie drew. Figure 2.31's ladders are H 0.125 -> 8
+ * (six doublings) and A 0.1 -> 3.2 (five), so the family takes 6/11 of the
+ * width and the sweep 5/11, not half each.
+ *
+ * That 9% is not cosmetic, and it is measured rather than argued. Scored
+ * against the ink of the printed plate — every one of the 39 crossings
+ * Table 2.3 tabulates for panel (a), projected onto a 300 dpi scan with the
+ * horizontal rulings masked out — the shared ruler lands 36 on a drawn
+ * curve. Half and half lands 28, and its misses are the whole middle of the
+ * mesh: every crossing drifts, because the sweep is being stretched 6/5
+ * against the family.
+ *
+ * Figure 2.21's sweep is h1/a on a LINEAR ladder and its family is a
+ * logarithmic one. There is no shared ruler between those two, so it keeps
+ * unit width each, which is what its rhombus shows and what it had before.
+ */
+function latticeWeight(
+  fLo: number, fHi: number, fLog: boolean,
+  sLo: number, sHi: number, sLog: boolean
+): number {
+  if (!fLog || !sLog) return 0.5;
+  const f = Math.log(fHi / fLo), s = Math.log(sHi / sLo);
+  return f + s > 0 ? f / (f + s) : 0.5;
+}
+
+/**
+ * The abscissa of the lattice. Carries no variable; spreads the two
+ * families. Kept on 0..2 whatever the weighting, because the drawn range,
+ * the caption placement and the reader's cursor all measure against it.
+ */
 export function latticeX(spec: ChartSpec, familyValue: number, sweepValue: number): number {
   const a = latticeAxes(spec);
-  return spanPos(familyValue, a.fLo, a.fHi, a.fLog) + spanPos(sweepValue, a.sLo, a.sHi, a.sLog);
+  return 2 * (a.fWeight * spanPos(familyValue, a.fLo, a.fHi, a.fLog)
+    + (1 - a.fWeight) * spanPos(sweepValue, a.sLo, a.sHi, a.sLog));
 }
 
 /** A hair of room at each end so the corner labels are not clipped. */
@@ -1345,10 +1482,11 @@ export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurv
     at: (t: number) => [number, number]
   ) => {
     const paramAt = (t: number) => at(spanVal(t, lo, hi, log));
-    const valueAt = (t: number) => {
+    const rawAt = (t: number) => {
       const [fv, sv] = paramAt(t);
       return spec.evaluate(fv, sv, panelValue);
     };
+    const valueAt = (t: number) => drawnValue(spec, rawAt(t));
     const pointAt = (t: number, value: number): LatticePoint => {
       const [fv, sv] = paramAt(t);
       return { x: latticeX(spec, fv, sv), family: fv, sweep: sv, value };
@@ -1358,19 +1496,24 @@ export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurv
     let prevT = 0, prevOn = false;
     for (let i = 0; i <= n; i++) {
       const t = i / n;
-      const value = valueAt(t);
-      const on = onFrame(value);
-      // The lattice is a CLOSED mesh on the page: every curve runs to a label
-      // or off the frame, and none of them stops in open space. Inserting the
-      // boundary crossing is what keeps that true when the factor dives
-      // through zero between two samples.
-      if (i > 0 && on !== prevOn) {
-        for (const c of edgeApproach(spec, on ? t : prevT, on ? prevT : t, valueAt, onFrame)) {
-          pts.push(pointAt(c.t, c.value));
+      // The drawn magnitude dives to zero wherever the factor changes sign.
+      // Sample the zero itself, so the notch is bisected to the axis floor
+      // and is the same notch at any sample count.
+      const zero = i > 0 && spec.magnitude ? signChange(rawAt, prevT, t) : null;
+      for (const t2 of zero !== null ? [zero, t] : [t]) {
+        const value = valueAt(t2);
+        const on = onFrame(value);
+        // The lattice is a CLOSED mesh on the page: every curve runs to a
+        // label or off the frame, and none of them stops in open space.
+        // Inserting the boundary crossing is what keeps that true.
+        if ((i > 0 || t2 !== t) && on !== prevOn) {
+          for (const c of edgeApproach(spec, on ? t2 : prevT, on ? prevT : t2, valueAt, onFrame)) {
+            pts.push(pointAt(c.t, c.value));
+          }
         }
+        pts.push(pointAt(t2, on ? value : NaN));
+        prevT = t2; prevOn = on;
       }
-      pts.push(pointAt(t, on ? value : NaN));
-      prevT = t; prevOn = on;
     }
     out.push({ kind, label, pts });
   };
@@ -1401,22 +1544,25 @@ export function invertLattice(
   const a = latticeAxes(spec);
 
   /* The scan runs over the SLICE of the family that can reach this abscissa,
-     not over the whole of it. By construction the family's own position is
-     the scan parameter, so x = t + (sweep position) puts the reachable t in
-     [x - 1, x] clipped to [0, 1] — and scanning that interval directly is
+     not over the whole of it. The family's own position is the scan
+     parameter, and the abscissa is w*t + (1 - w)*(sweep position) doubled,
+     so requiring the sweep position to stay in [0, 1] puts the reachable t
+     in [(x/2 - (1 - w))/w, x/2/w] clipped to [0, 1] — and scanning that
+     interval directly is
      what makes a point on the EDGE of the mesh findable. Scanning the whole
      family and discarding the part where the sweep position falls outside
      [0, 1] leaves the root sitting exactly on the discard boundary, where
      the residual never changes sign because the function stops instead: a
      point typed straight off the left edge of Figure 2.21 came back as "no
      such section". */
-  const tLo = Math.max(0, xAt - 1);
-  const tHi = Math.min(1, xAt);
+  const w = a.fWeight, u = xAt / 2;      // u = w*fPos + (1 - w)*sPos
+  const tLo = Math.max(0, (u - (1 - w)) / w);
+  const tHi = Math.min(1, u / w);
   if (tHi < tLo) return [];
 
   const at = (t: number) => {
     const fv = spanVal(t, a.fLo, a.fHi, a.fLog);
-    const sPos = Math.min(1, Math.max(0, xAt - t));
+    const sPos = Math.min(1, Math.max(0, (u - w * t) / (1 - w)));
     return { fv, sv: spanVal(sPos, a.sLo, a.sHi, a.sLog) };
   };
 
@@ -1425,7 +1571,7 @@ export function invertLattice(
     // reaches x = 0, and one x = 2. There is no interval to bisect, so the
     // corner is reported when the ordinate is its ordinate and not otherwise.
     const p = at(tLo);
-    const v = spec.evaluate(p.fv, p.sv, panelValue);
+    const v = drawnValue(spec, spec.evaluate(p.fv, p.sv, panelValue));
     const scale = Math.max(Math.abs(valueAt), Math.abs(v), 1e-12);
     return Number.isFinite(v) && Math.abs(v - valueAt) <= 1e-6 * scale
       ? [{ family: p.fv, sweep: p.sv }]
@@ -1433,7 +1579,7 @@ export function invertLattice(
   }
   const f = (t: number) => {
     const p = at(t);
-    const v = spec.evaluate(p.fv, p.sv, panelValue);
+    const v = drawnValue(spec, spec.evaluate(p.fv, p.sv, panelValue));
     return Number.isFinite(v) ? v - valueAt : NaN;
   };
   const step = (i: number) => tLo + (i / scanSteps) * (tHi - tLo);
@@ -1549,7 +1695,7 @@ export function latticeLabels(spec: ChartSpec, curves: LatticeCurve[]): LatticeL
  *
  * It matters more here than on a Cartesian chart. Both plates print their two
  * extreme curve labels together at the bottom apex — "A = 0.1  H = 8" on
- * Figure 2.31 — so a caption parked at the bottom centre lands exactly on the
+ * Figure 2.31 — so a caption parked at the bottom center lands exactly on the
  * two labels a reader needs most.
  */
 export function latticeCorner(

@@ -50,7 +50,12 @@ export interface ThreeLayerFactors {
   ZZ2: number;
   ZZ1_RR1: number;
   ZZ2_RR2: number;
-  /** The quantity Peattie's Figure 2.31 plots: (RR1 - ZZ1)/2, as drawn. */
+  /**
+   * HALF of the tabulated (ZZ1 - RR1), which is the NEGATIVE of the
+   * 1/2(RR1 - ZZ1) Peattie prints on Figure 2.31's ordinate. The chart draws
+   * the magnitude, because this changes sign: Table 2.3 gives +0.706 at
+   * k1 = k2 = 2, H = 0.125, A = 0.1 and -0.289 by A = 3.2.
+   */
   peattie: number;
 }
 
