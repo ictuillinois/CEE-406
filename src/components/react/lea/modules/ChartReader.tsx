@@ -24,13 +24,97 @@ import {
   rampSeries, hoverLabel, fmt, num, TOKENS,
 } from '../../chartTheme';
 import ChartFigure from '../../ui/ChartFigure';
+import ProgressStrip from '../../ui/ProgressStrip';
 import type { AxisSpec, ChartSpec, CurvePoint, LatticeCurve, StackPanel } from '../charts.ts';
 import {
-  sampleCurve, invertFamily, nearestCurve,
+  sampleCurveGen, invertFamily, nearestCurve,
   curveLabelSpots, emptiestCorner, CORNER_XY,
-  sampleLattice, latticeLabels, latticeX, invertLattice, latticeCorner, LATTICE_RANGE,
-  drawnValue,
+  sampleLatticeGen, latticeLabels, latticeX, invertLattice, latticeCorner, LATTICE_RANGE,
+  drawnValue, chartValue, buildCurveCount, type Sampler,
 } from '../charts.ts';
+
+/* ── Getting off the main thread without leaving it ──────────────────────
+ *
+ * A curve of Figure 2.27 is thirteen critical-strain searches over a
+ * dual-tandem wheel group and the whole figure is sixteen of them. Run
+ * straight through, that is a page that does not scroll, a pointer that does
+ * not move and a progress bar that cannot animate, for ten seconds or more —
+ * which reads as broken rather than as busy.
+ *
+ * The samplers are therefore generators (see charts.ts), and this drives
+ * them against a clock: work for a frame's worth, hand the thread back, and
+ * carry on.
+ *
+ * The primitive is a MessageChannel post, and the two obvious alternatives
+ * are both worse:
+ *
+ *   · `setTimeout(0)` is clamped to 4 ms once a few are nested, so a chart
+ *     that yields three hundred times spends a second of it waiting for the
+ *     clock.
+ *   · `scheduler.yield()` looks like the platform's own answer and is the
+ *     wrong tool HERE. It is defined to resume its continuation ahead of
+ *     other pending tasks of the same priority, which is right for keeping
+ *     one interaction smooth and wrong for a ten-second background build: it
+ *     starved the progress bar's own interval, so the bar's elapsed clock
+ *     never advanced and the strip — which will not appear before its entry
+ *     delay — never appeared at all. Measured, not theorized.
+ *
+ * A plain message post goes to the BACK of the task queue, which is exactly
+ * where a long build belongs: timers, input and paint all go first.
+ *
+ * The slice is small because handing the thread back turns out to be nearly
+ * free: over a full build of Figure 2.27 the 208 yields cost 840 ms against
+ * 24.5 s of arithmetic — 3.3%, about 4 ms each. There is no reason to hold
+ * the thread longer than one frame's worth of work.
+ */
+const SLICE_MS = 24;
+
+/** How long the pointer has to hold still before a light chart inverts. */
+const SETTLE_MS = 90;
+
+/* Built on first use, never at import. A MessagePort with a listener on it
+   holds the event loop open, and this module is imported by render.test.mjs,
+   which server-renders the island under Node: a channel made at module scope
+   is a test run that never exits. Nothing server-side ever yields, so
+   nothing server-side ever builds one. */
+let waiting: (() => void)[] = [];
+let port: MessagePort | null | undefined;
+
+function getPort(): MessagePort | null {
+  if (port !== undefined) return port;
+  if (typeof MessageChannel === 'undefined') { port = null; return port; }
+  const ch = new MessageChannel();
+  ch.port1.onmessage = () => { const q = waiting; waiting = []; for (const f of q) f(); };
+  ch.port1.start();
+  port = ch.port2;
+  return port;
+}
+
+function yieldToBrowser(): Promise<void> {
+  const p = getPort();
+  if (!p) return new Promise(resolve => setTimeout(resolve, 0));
+  return new Promise(resolve => { waiting.push(resolve); p.postMessage(0); });
+}
+
+const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+/**
+ * Run a sampler to the end, handing the thread back whenever this slice has
+ * held it long enough. Resolves null if the caller went away meanwhile — a
+ * chart the reader has already navigated off must not finish drawing itself.
+ */
+async function drain<T>(gen: Sampler<T>, alive: () => boolean): Promise<T | null> {
+  let mark = now();
+  for (;;) {
+    const step = gen.next();
+    if (step.done) return alive() ? step.value : null;
+    if (now() - mark >= SLICE_MS) {
+      await yieldToBrowser();
+      if (!alive()) return null;
+      mark = now();
+    }
+  }
+}
 
 /** Which ramp carries which chart, per the §B4 semantic binding. */
 function rampFor(spec: ChartSpec) {
@@ -148,11 +232,37 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
   const [sweepStr, setSweepStr] = useState('');
   const [hover, setHover] = useState<Reading | null>(null);
   const [pinned, setPinned] = useState<Reading | null>(null);
-  const [busy, setBusy] = useState(false);
   // Only the four percent charts read this; every other spec ignores it.
   const [qStr, setQStr] = useState('50');
-  const [curveSets, setCurveSets] = useState<{ fv: number; pts: { sweep: number; value: number }[] }[][]>([]);
-  const [lattice, setLattice] = useState<LatticeCurve[] | null>(null);
+
+  /**
+   * The figure as it is being built.
+   *
+   * `curveSets` fills in as the curves arrive rather than appearing whole,
+   * which on a chart that takes ten seconds is the difference between
+   * watching it draw and watching nothing. `done` counts the same unit the
+   * progress bar does.
+   */
+  const [build, setBuild] = useState<{
+    curveSets: { fv: number; pts: CurvePoint[] }[][];
+    lattice: LatticeCurve[] | null;
+    /** The book's own reads, computed with the curves rather than in render. */
+    anchors: number[];
+    done: number;
+    total: number;
+    started: number;
+    stopped: boolean;
+  }>({
+    curveSets: [], lattice: null, anchors: [],
+    done: 0, total: 1, started: 0, stopped: false,
+  });
+  const { curveSets, lattice } = build;
+  const busy = !build.stopped && build.done < build.total;
+  /** Every curve is in. Labels, the caption and the table wait for this. */
+  const settled = build.done >= build.total;
+  /** Bumped to start the build over — see the Resume button. */
+  const [attempt, setAttempt] = useState(0);
+  const stopRef = useRef(false);
 
   // A fresh chart starts on its first anchor when it has one, so the tool
   // opens on a case the book has already worked out.
@@ -177,45 +287,128 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
 
   const familyValue = Number(familyStr);
   const sweepValue = Number(sweepStr);
-  /** One marker per drawn panel: the same input, read on each chart. */
-  const markerValues = useMemo(() => {
-    if (!Number.isFinite(familyValue) || !Number.isFinite(sweepValue)) {
-      return drawn.map(() => NaN);
-    }
-    return drawn.map(d => drawnValue(spec, spec.evaluate(familyValue, sweepValue, d.pv)));
-  }, [spec, familyValue, sweepValue, drawn]);
-  const markerValue = markerValues[0];
 
   /* ── Build the curves ────────────────────────────────────────────────────
-   * Heavy charts are seconds of work, so the sampling is pushed off the paint
-   * with a frame's delay and the card shows a loading state meanwhile —
-   * docs/loaders.md. Light charts land inside one frame and never flash it.
+   * One curve at a time, handing the thread back between slices, publishing
+   * each curve as it lands. A light chart finishes inside the entry delay
+   * and never shows a loader; a heavy one draws itself in front of the
+   * reader with a determinate bar over it — docs/loaders.md §7.6.
    */
   useEffect(() => {
     let dead = false;
-    setBusy(true);
-    const build = () => {
+    const alive = () => !dead && !stopRef.current;
+    stopRef.current = false;
+    const total = buildCurveCount(spec, drawn.length);
+    const started = now();
+    setBuild({
+      curveSets: [], lattice: null, anchors: [],
+      done: 0, total, started, stopped: false,
+    });
+
+    /* The book's own checkpoints, once the curves are in. One of these is a
+       full solve on a heavy chart, and they were being recomputed inside
+       every render of the component — including every tick of the progress
+       clock. */
+    const readAnchors = () =>
+      (spec.anchors ?? []).map(a => drawnValue(spec, chartValue(spec, a.fv, a.sv, a.pv)));
+
+    (async () => {
+      // A frame before starting, so the first paint is the card rather than
+      // the card plus a chart's worth of arithmetic.
+      await yieldToBrowser();
+      if (!alive()) return;
+
       if (spec.nomograph) {
-        // The mesh already carries the family curves, sampled the same way,
-        // so the reading machinery below takes them from it rather than
-        // solving the whole family a second time.
-        const mesh = sampleLattice(spec, panelValue);
-        if (dead) return;
-        setLattice(mesh);
-        setCurveSets([mesh.filter(c => c.kind === 'family').map(c => ({
-          fv: c.label,
-          pts: c.pts.map(pt => ({ sweep: pt.sweep, value: pt.value })),
-        }))]);
-        setBusy(false);
+        /* The mesh already carries the family curves, sampled the same way,
+           so the reading machinery below takes them from it rather than
+           solving the whole family a second time. It is built in one pass
+           because a nomograph is both families at once; at a few hundred
+           milliseconds it is well inside the band where a partial draw would
+           be flicker rather than feedback. */
+        const mesh = await drain(sampleLatticeGen(spec, panelValue), alive);
+        if (!mesh || !alive()) return;
+        setBuild(b => ({
+          ...b,
+          lattice: mesh,
+          curveSets: [mesh.filter(c => c.kind === 'family').map(c => ({
+            fv: c.label,
+            pts: c.pts.map(pt => ({ sweep: pt.sweep, value: pt.value })),
+          }))],
+          anchors: readAnchors(),
+          done: total,
+        }));
         return;
       }
-      const out = drawn.map(d =>
-        spec.family.values.map(fv => ({ fv, pts: sampleCurve(spec, fv, d.pv) })));
-      if (!dead) { setLattice(null); setCurveSets(out); setBusy(false); }
-    };
-    const t = window.setTimeout(build, spec.heavy ? 40 : 0);
+
+      /* Publishing a partial figure is only worth its own cost when there is
+         a wait to fill. Each one is a React render plus a full Plotly.react
+         per panel — around a tenth of a second on the stacked conversion
+         charts, which have two frames of ruled paper to redraw — which is
+         nothing against a fourteen-second build and everything against a
+         seventy-millisecond one.
+         So the partials are bounded two ways: never more than PARTIALS over
+         the whole figure, and never inside PUBLISH_MS. Figure 2.2 computes
+         in seventy milliseconds and therefore publishes exactly once, at the
+         end, having never shown a loader either. */
+      const PUBLISH_MS = 500;
+      const PARTIALS = 8;
+      const step = Math.max(1, Math.ceil(total / PARTIALS));
+      const out: { fv: number; pts: CurvePoint[] }[][] = drawn.map(() => []);
+      let count = 0;
+      let published = started + 300;
+      for (let panel = 0; panel < drawn.length; panel++) {
+        for (const fv of spec.family.values) {
+          const pts = await drain(sampleCurveGen(spec, fv, drawn[panel].pv), alive);
+          if (!pts || !alive()) {
+            if (!dead) setBuild(b => ({ ...b, stopped: true, anchors: readAnchors() }));
+            return;
+          }
+          out[panel].push({ fv, pts });
+          count++;
+          const at = count;
+          const last = at === total;
+          if (!last && (at % step !== 0 || now() - published < PUBLISH_MS)) {
+            /* The counter moves on every curve even when the figure does
+               not. It costs a React render and nothing else — the draw
+               effect keys off the identity of `curveSets`, which has not
+               changed — so the bar can be honest at a granularity the
+               redraw could not afford. */
+            setBuild(b => ({ ...b, done: at }));
+            continue;
+          }
+          published = now();
+          // A copy each time: the draw effect keys off identity, and the
+          // panels are being appended to in place.
+          const snapshot = out.map(p => p.slice());
+          const anchors = last ? readAnchors() : [];
+          setBuild(b => ({ ...b, curveSets: snapshot, lattice: null, done: at, anchors }));
+        }
+      }
+    })();
+    return () => { dead = true; };
+  }, [spec, panelValue, drawn, attempt]);
+
+  /* ── The point you typed ──────────────────────────────────────────────
+   * Deferred for the same reason the curves are: on the conversion charts
+   * one marker is a critical-strain search, and computing it inside the
+   * render pass puts that between the keystroke and the character appearing.
+   * `chartValue` makes it free whenever the point is one the curves already
+   * passed through.
+   */
+  const [markerValues, setMarkerValues] = useState<number[]>([]);
+  useEffect(() => {
+    if (!Number.isFinite(familyValue) || !Number.isFinite(sweepValue)) {
+      setMarkerValues(drawn.map(() => NaN));
+      return;
+    }
+    let dead = false;
+    const t = window.setTimeout(() => {
+      const v = drawn.map(d => drawnValue(spec, chartValue(spec, familyValue, sweepValue, d.pv)));
+      if (!dead) setMarkerValues(v);
+    }, spec.heavy ? 260 : 0);
     return () => { dead = true; window.clearTimeout(t); };
-  }, [spec, panelValue, drawn]);
+  }, [spec, familyValue, sweepValue, drawn]);
+  const markerValue = markerValues[0];
 
   const colors = useMemo(
     () => rampSeries(rampFor(spec), theme, spec.family.values.length),
@@ -277,14 +470,29 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       return;
     }
     let dead = false;
-    const t = window.setTimeout(() => {
-      const pts = drawn.map(d => sampleCurve(spec, familyValue, d.pv));
+    const alive = () => !dead;
+    const t = window.setTimeout(async () => {
+      const pts: (CurvePoint[] | null)[] = [];
+      for (const d of drawn) {
+        const c = await drain(sampleCurveGen(spec, familyValue, d.pv), alive);
+        if (!c) return;
+        pts.push(c);
+      }
       if (!dead) setUserCurves(pts);
     }, spec.heavy ? 320 : 140);
     return () => { dead = true; window.clearTimeout(t); };
   }, [spec, familyValue, panelValue, drawn]);
 
-  /* ── Draw ─────────────────────────────────────────────────────────────── */
+  /* ── Draw ─────────────────────────────────────────────────────────────
+   * Note what is NOT in this effect's dependencies: `hover`. It used to be,
+   * and the pointer therefore rebuilt the whole figure on every frame of
+   * travel — seventeen traces, the contour-label solve and a full
+   * Plotly.react, to move one cross a few pixels. On Figure 2.27 that was
+   * 83 ms a mouse move and a long task for every one of them. Now the
+   * pointer changes nothing on the canvas and only the reading card
+   * re-renders; see the pinned-marker note below for why the hover mark is
+   * gone rather than merely cheaper.
+   */
   useEffect(() => {
     if (!curveSets.length || !plotRef.current) return;
     if (spec.nomograph && !lattice) return;
@@ -474,8 +682,15 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
            emptiest corner says what the numbers mean. The placement is
            solved in frame coordinates — see curveLabelSpots — using the
            figure's real aspect ratio, because a horizontal gap between two
-           numbers is worth more pixels than a vertical one. */
-        for (const spot of curveLabelSpots(spec, curves, { aspect })) {
+           numbers is worth more pixels than a vertical one.
+
+           Not while the figure is still filling in. The placement is a
+           judgement about the WHOLE drawing, so solving it against three of
+           sixteen curves puts every number somewhere it will not belong a
+           moment later, and the reader watches the labels walk across the
+           chart. They arrive with the last curve, which is also the first
+           moment they mean anything. */
+        for (const spot of settled ? curveLabelSpots(spec, curves, { aspect }) : []) {
           const i = curves.findIndex(cv => cv.fv === spot.fv);
           annotations.push({
             x: annX(putX(spot.value, spot.sweep)),
@@ -494,16 +709,19 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
           });
         }
 
-        // The caption the printed chart carries instead of a legend.
-        const corner = CORNER_XY[emptiestCorner(spec, curves)];
-        annotations.push({
-          xref: 'x domain', yref: 'y domain',
-          x: corner.x, y: corner.y, xanchor: corner.xanchor, yanchor: corner.yanchor,
-          text: spec.family.label,
-          showarrow: false, align: 'left',
-          font: { family: 'IBM Plex Sans, system-ui, sans-serif', size: 11.5, color: t.secondary },
-          bgcolor: t.surface, bordercolor: t.frame, borderwidth: 1, borderpad: 6,
-        });
+        // The caption the printed chart carries instead of a legend. It
+        // names the emptiest corner, so it waits for the same moment.
+        if (settled) {
+          const corner = CORNER_XY[emptiestCorner(spec, curves)];
+          annotations.push({
+            xref: 'x domain', yref: 'y domain',
+            x: corner.x, y: corner.y, xanchor: corner.xanchor, yanchor: corner.yanchor,
+            text: spec.family.label,
+            showarrow: false, align: 'left',
+            font: { family: 'IBM Plex Sans, system-ui, sans-serif', size: 11.5, color: t.secondary },
+            bgcolor: t.surface, bordercolor: t.frame, borderwidth: 1, borderpad: 6,
+          });
+        }
       }
 
       // The interpolated curve, between the printed ones. On a lattice it
@@ -560,14 +778,28 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         }
       }
 
-      // A ghost marker while the pointer is in the frame.
-      const ghost = (hover ?? pinned);
-      if (ghost && (ghost.panel ?? 0) === panel) {
+      /* ── A mark for the PINNED reading, and nothing for the hovered one ──
+         This used to draw an × wherever the pointer was, which meant the
+         figure was rebuilt on every frame of pointer travel. Moving it to
+         its own trace and restyling that did not fix it: Plotly.restyle is
+         a full replot internally, measured at 43 ms a call on this figure —
+         two panels of it is 86 ms per mouse move, which is the jank it was
+         supposed to remove.
+         And the hover mark was never worth its cost, because it was drawn
+         exactly where the cursor already was. The cursor IS the hover mark;
+         the drag layer's crosshair says the same thing for free, and the
+         reading card carries the numbers. A PINNED reading is different —
+         the pointer has left it, so it needs a mark of its own — and a click
+         is a discrete event that can afford one redraw. */
+      if (pinned && (pinned.panel ?? 0) === panel) {
         traces.push({
-          x: [nomo ? ghost.sweep : putX(ghost.value, ghost.sweep)],
-          y: [nomo ? ghost.value : putY(ghost.value, ghost.sweep)],
-          mode: 'markers', name: 'Reading',
-          marker: { size: 9, color: c.secondary, symbol: 'x-thin', line: { color: c.secondary, width: 2 } },
+          x: [nomo ? pinned.sweep : putX(pinned.value, pinned.sweep)],
+          y: [nomo ? pinned.value : putY(pinned.value, pinned.sweep)],
+          mode: 'markers', name: 'Pinned reading',
+          marker: {
+            size: 9, color: c.secondary, symbol: 'x-thin',
+            line: { color: c.secondary, width: 2 },
+          },
           hoverinfo: 'skip',
         });
       }
@@ -613,7 +845,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
     })();
     return () => { dead = true; };
   }, [curveSets, lattice, userCurves, colors, theme, spec, markerValues, sweepValue,
-      familyValue, hover, pinned, drawn]);
+      familyValue, drawn, settled, pinned]);
 
   /* ── The pointer, which is the whole backwards half ───────────────────── */
   useEffect(() => {
@@ -623,12 +855,13 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       .filter(([el]) => el);
     if (!gds.length) return;
     let frame = 0;
+    let settle = 0;
     // Returns [value, sweep] — and on a nomograph the second slot is the
     // lattice abscissa, which is what invertLattice takes.
     const split = (d: { x: number; y: number }) =>
       (spec.nomograph || !spec.valueOnX ? [d.y, d.x] : [d.x, d.y]) as [number, number];
 
-    const onLeave = () => setHover(null);
+    const onLeave = () => { window.clearTimeout(settle); setHover(null); };
     const handlers = gds.map(([gd, panel]) => {
       const onMove = (e: MouseEvent) => {
         // One reading per animation frame. Without this the handler fires on
@@ -636,10 +869,25 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         if (frame) return;
         frame = requestAnimationFrame(() => {
           frame = 0;
+          window.clearTimeout(settle);
           const d = pointerData(gd, e);
           if (!d) { setHover(null); return; }
           const [value, sweep] = split(d);
-          setHover({ ...read(value, sweep, !spec.heavy, panel), panel });
+          // Where the pointer is, and which printed curve it is nearest,
+          // land on the frame it moved: both read points already on screen.
+          setHover({ ...read(value, sweep, false, panel), panel });
+          /* Solving for the family value does not. It is a 240-step scan of
+             `evaluate` plus a bisection per root, which even on a light
+             chart is thirty milliseconds — half a frame's budget spent
+             answering a question about a pointer that has already moved on.
+             A heavy chart waits for a click, as it always has; a light one
+             waits for the pointer to stop, which it does within a tenth of a
+             second of you meaning it to. */
+          if (spec.heavy) return;
+          settle = window.setTimeout(() => {
+            const solved = { ...read(value, sweep, true, panel), panel };
+            setHover(h => (h && h.value === value && h.sweep === sweep ? solved : h));
+          }, SETTLE_MS);
         });
       };
       const onClick = (e: MouseEvent) => {
@@ -656,6 +904,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
     });
     return () => {
       if (frame) cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
       for (const h of handlers) {
         h.gd.removeEventListener('mousemove', h.onMove);
         h.gd.removeEventListener('mouseleave', onLeave);
@@ -664,6 +913,51 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
     };
   }, [read, spec, drawn]);
 
+  /* ── The clock behind the progress bar ────────────────────────────────
+   * A quarter-second tick, only while there is something to time. It drives
+   * the entry delay (nothing is shown under 300 ms, so a chart that lands in
+   * one frame never flashes a loader), the elapsed readout past ten seconds
+   * and the cancel past fifteen — docs/loaders.md §2.4 and §7.6.
+   */
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!busy) { setTick(0); return; }
+    const id = window.setInterval(() => setTick(now()), 250);
+    return () => window.clearInterval(id);
+  }, [busy, build.started]);
+  const elapsed = busy && tick ? Math.max(0, tick - build.started) : 0;
+
+  const progress = busy ? (
+    <ProgressStrip
+      value={build.done / Math.max(1, build.total)}
+      stage={
+        spec.heavy
+          ? `Solving ${spec.figure} — every point is a full layered-elastic solve`
+          : `Computing ${spec.figure}`
+      }
+      count={{ done: build.done, total: build.total, unit: 'curves' }}
+      elapsed={elapsed}
+      onCancel={() => { stopRef.current = true; setBuild(b => ({ ...b, stopped: true })); }}
+    />
+  ) : build.stopped ? (
+    <div className="cee-progress cee-progress--stopped">
+      <div className="cee-progress__line">
+        <span className="cee-progress__stage">
+          Stopped at {build.done} of {build.total} curves. What is drawn is correct — there is
+          simply less of it.
+        </span>
+        <button type="button" className="cee-btn cee-btn--ghost cee-btn--sm"
+          onClick={() => setAttempt(a => a + 1)}>
+          Finish it
+        </button>
+      </div>
+      <div className="cee-progress__track">
+        <div className="cee-progress__fill"
+          style={{ inlineSize: `${((build.done / Math.max(1, build.total)) * 100).toFixed(1)}%` }} />
+      </div>
+    </div>
+  ) : undefined;
+
   const reading = hover ?? pinned;
   const inFrame = (r: Reading) =>
     r.value >= spec.value.min && r.value <= spec.value.max &&
@@ -671,18 +965,62 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       ? r.sweep >= LATTICE_RANGE[0] && r.sweep <= LATTICE_RANGE[1]
       : r.sweep >= spec.sweep.min && r.sweep <= spec.sweep.max);
 
-  /* ── Table view (§B9 — not optional) ──────────────────────────────────── */
+  /* ── Table view (§B9 — not optional) ──────────────────────────────────
+   * Every curve at every printed station, which is eighty points on a
+   * conversion chart — and eighty points there is eighty critical-strain
+   * searches. This used to run inside the render pass, so the browser was
+   * asked to compute seven seconds of arithmetic before it could paint the
+   * card at all, and then again on every keystroke that reached the inputs.
+   *
+   * Now it waits for the figure. By then every station is already a drawn
+   * vertex of some curve, so `chartValue` has all eighty and the table is
+   * free rather than cheap.
+   */
   const tableSets = useMemo(() => {
+    if (!settled) return [];
     const stations = spec.sweep.ticks?.filter(v => v >= spec.sweep.min && v > 0)
       ?? Array.from({ length: 6 }, (_, i) => spec.sweep.min + ((i + 1) / 6) * (spec.sweep.max - spec.sweep.min));
     return drawn.map(d => ({
       label: d.label,
       rows: stations.slice(0, 8).map(s => ({
         sweep: s,
-        values: spec.family.values.map(fv => drawnValue(spec, spec.evaluate(fv, s, d.pv))),
+        values: spec.family.values.map(fv => drawnValue(spec, chartValue(spec, fv, s, d.pv))),
       })),
     }));
-  }, [spec, drawn, curveSets]);
+  }, [spec, drawn, settled]);
+
+  const anchorValues = build.anchors;
+
+  /* The table is up to nine columns by eight rows of formatted numbers, and
+     it does not depend on the pointer at all — but a pointer move re-renders
+     this component, and React would reconcile all seventy-two cells for it.
+     Holding the element steady lets React skip the whole subtree. */
+  const tables = useMemo(() => tableSets.map(set => (
+    <div className="cee-tablewrap" key={set.label || 'only'}>
+      <table className="cee-table">
+        <caption className="cee-table__caption">
+          The chart as numbers: every curve at each printed station of {spec.sweep.label}
+          {set.label ? ` — ${set.label}` : ''}.
+        </caption>
+        <thead>
+          <tr>
+            <th>{spec.sweep.label}</th>
+            {spec.family.values.map(fv => <th key={fv}>{fv}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {set.rows.map(r => (
+            <tr key={r.sweep}>
+              <td>{fmtParam(r.sweep)}</td>
+              {r.values.map((v, i) => (
+                <td key={i}>{Number.isFinite(v) ? fmt(v, 3) : '—'}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )), [tableSets, spec]);
 
   return (
     <>
@@ -788,12 +1126,13 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         plotLabel={spec.stack ? spec.stack[0].label : undefined}
         panels={spec.stack ? [{ label: spec.stack[1].label, plotRef: plotRef2 }] : undefined}
         takeaway={spec.purpose}
-        affordance={busy ? <span className="cee-chip cee-chip--busy">Computing…</span> : undefined}
+        banner={progress}
       >
         <p>
           <strong>Move the pointer over the chart.</strong> The reading below is solved from
           wherever the cursor is, not from the nearest data point, which is the half of a chart
-          a printed page cannot do. Click to pin a reading.
+          a printed page cannot do. <strong>Click to pin it</strong> and the figure marks the
+          spot, so you can take the pointer away and the reading stays.
         </p>
         {spec.stack && (
           <p>
@@ -889,11 +1228,19 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
                 </ul>
               )
             ) : reading.roots === null ? (
-              <p className="cee-hint">
-                <strong>Click to solve for {spec.family.symbol}.</strong> Every point on this chart
-                is a critical-strain search over a whole wheel group, so the inverse does not run
-                while the pointer is moving -- it would be a few hundred solves a frame.
-              </p>
+              spec.heavy ? (
+                <p className="cee-hint">
+                  <strong>Click to solve for {spec.family.symbol}.</strong> Every point on this
+                  chart is a critical-strain search over a whole wheel group, so the inverse does
+                  not run while the pointer is moving -- it would be a few hundred solves a frame.
+                </p>
+              ) : (
+                <p className="cee-hint">
+                  <strong>Hold still to solve for {spec.family.symbol}.</strong> Inverting the
+                  chart is a few hundred evaluations, so it waits for the pointer to stop rather
+                  than spending half a frame on a question the next frame will change.
+                </p>
+              )
             ) : reading.roots.length === 0 ? (
               <p className="cee-warn cee-warn--inline">
                 <span className="cee-warn__icon">⚠️</span>
@@ -948,7 +1295,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
             printed value. That is how you tell this chart is still his chart.
           </p>
           <ul className="cee-anchors">
-            {spec.anchors.map(a => (
+            {spec.anchors.map((a, ai) => (
               <li key={a.label}>
                 <button type="button" className="cee-chip" onClick={() => {
                   setFamilyStr(String(a.fv));
@@ -960,7 +1307,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
                 </button>
                 <span className="cee-anchors__read">
                   {spec.family.symbol} = {a.fv}, {spec.sweep.label} = {a.sv} → reads {a.reads}
-                  {' '}· computed {fmt(drawnValue(spec, spec.evaluate(a.fv, a.sv, a.pv)), 4)}
+                  {anchorValues[ai] !== undefined && <> · computed {fmt(anchorValues[ai], 4)}</>}
                 </span>
               </li>
             ))}
@@ -968,32 +1315,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         </div>
       )}
 
-      {tableSets.map(set => (
-        <div className="cee-tablewrap" key={set.label || 'only'}>
-          <table className="cee-table">
-            <caption className="cee-table__caption">
-              The chart as numbers: every curve at each printed station of {spec.sweep.label}
-              {set.label ? ` — ${set.label}` : ''}.
-            </caption>
-            <thead>
-              <tr>
-                <th>{spec.sweep.label}</th>
-                {spec.family.values.map(fv => <th key={fv}>{fv}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {set.rows.map(r => (
-                <tr key={r.sweep}>
-                  <td>{fmtParam(r.sweep)}</td>
-                  {r.values.map((v, i) => (
-                    <td key={i}>{Number.isFinite(v) ? fmt(v, 3) : '—'}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
+      {tables}
     </>
   );
 }

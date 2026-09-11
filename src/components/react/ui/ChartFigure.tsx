@@ -17,6 +17,14 @@ interface ChartFigureProps {
   /** The encoding explanation (§A2.3) — short, sits under the title. */
   subtitle?: ReactNode;
   affordance?: ReactNode;
+  /**
+   * A strip above the plot, inside the figure — a progress bar while the
+   * figure is being computed, and nothing once it is. It belongs here rather
+   * than above the card because the thing it describes is the plot, and
+   * because reserving the space inside the figure is what keeps the handoff
+   * free of layout shift (docs/loaders.md §7.1).
+   */
+  banner?: ReactNode;
   plotRef: RefObject<HTMLDivElement | null>;
   /**
    * A heading over the main plot. Only for a figure that is a STACK of
@@ -45,6 +53,7 @@ export default function ChartFigure({
   title,
   subtitle,
   affordance,
+  banner,
   plotRef,
   plotLabel,
   panels,
@@ -56,6 +65,7 @@ export default function ChartFigure({
   return (
     <Card title={title} subtitle={subtitle} affordance={affordance}>
       <figure className="cee-figure">
+        {banner}
         {plotLabel && <p className="cee-figure__panel">{plotLabel}</p>}
         <div className="cee-figure__plot cee-animate-in" ref={plotRef} role="img" aria-label={takeaway} />
         {panels?.map(pn => (
