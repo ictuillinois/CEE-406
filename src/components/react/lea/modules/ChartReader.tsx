@@ -330,10 +330,46 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       const traces: any[] = [];
       const annotations: any[] = [];
 
+      /* A nomograph is drawn in the plate's own box.
+         Its abscissa carries no variable, so no part of the data says how
+         wide the frame should be, and the shape is the drawing: Figure
+         2.31's plate is TALLER than it is wide, and the same correct mesh
+         put in the 1.4-to-1 box every other chart uses comes out squashed
+         flat -- shallow arches, shelving legs, diamonds that read as
+         lozenges. The plot area is therefore sized to `plotAspect`, and the
+         width is pinned on the CONTAINER rather than in the layout, because
+         plotConfig is `responsive` and would overwrite a layout.width on the
+         next resize. Pinning the container instead holds the shape at every
+         window size. */
+      const NOMO_PLOT_H = 700;                   // plot area at full width
+      // What Plotly takes for the mirrored tick labels and the axis titles.
+      // An estimate, not a measurement: it depends on the label widths, so
+      // the drawn aspect lands within a few percent of the plate rather than
+      // on it (2.31 to 0.763 against 0.762, 2.21 to 0.893 against 0.873).
+      // Reading the real margin back would need a second relayout pass, and
+      // a few percent is inside the drafting accuracy of the plate itself.
+      const MARGIN_W = 128, MARGIN_H = 60;
+      const nomoAspect = nomo ? spec.plotAspect : undefined;
+
+      // Cleared before measuring, or each render reads back the width the
+      // last one pinned and the figure ratchets itself smaller.
+      el.style.maxWidth = '';
+      const natural = el.clientWidth || 900;
+
+      // On a narrow screen the HEIGHT gives way, not the shape. Pinning the
+      // width alone left a 193 x 700 splinter at phone width: the correct
+      // aspect is the point, so the frame shrinks whole.
+      const nomoPlotH = nomoAspect
+        ? Math.min(NOMO_PLOT_H, Math.max(160, (natural - MARGIN_W) / nomoAspect))
+        : 0;
+      if (nomoAspect) el.style.maxWidth = `${Math.round(nomoPlotH * nomoAspect + MARGIN_W)}px`;
+
       const plotW = el.clientWidth || 900;
       // A stacked pair has to fit two frames on one screen, so each half is
       // shorter — but not so short that the ruled paper stops being readable.
-      const height = drawn.length > 1 ? 400 : 560;
+      const height = nomoAspect
+        ? Math.round(nomoPlotH + MARGIN_H)
+        : (drawn.length > 1 ? 400 : 560);
       const aspect = Math.max(0.6, Math.min(3, (plotW - 110) / (height - 90)));
 
       if (nomo) {

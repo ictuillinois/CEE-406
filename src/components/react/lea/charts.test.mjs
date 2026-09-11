@@ -270,6 +270,26 @@ test('two log families share one ruler; a mixed pair cannot', () => {
   assert.equal(a21.fWeight, 0.5, 'a mixed pair has no shared ruler and keeps half each');
 });
 
+test('a nomograph is drawn in the plate own box', () => {
+  /* The abscissa carries no variable, so nothing in the data says how wide
+     the frame should be: on a nomograph the shape IS the drawing. Put in the
+     1.4-to-1 box the other charts use, Figure 2.31's mesh is mathematically
+     identical and visually wrong -- shallow arches, shelving legs, diamonds
+     that read as lozenges, and a figure a reader cannot lay beside the page
+     it reproduces. Both printed nomographs are TALLER than they are wide.
+     Measured frame line to frame line on a 300 dpi scan. */
+  for (const c of CHARTS) {
+    if (!c.nomograph) {
+      assert.equal(c.plotAspect, undefined, c.figure + ' is not a nomograph and needs no aspect');
+      continue;
+    }
+    assert.ok(c.plotAspect > 0.5 && c.plotAspect < 1,
+      c.figure + ': ' + c.plotAspect + ' -- both printed nomographs are taller than wide');
+  }
+  assert.ok(Math.abs(chartById('fig-2-31').plotAspect - 1068 / 1401) < 1e-9);
+  assert.ok(Math.abs(chartById('fig-2-21').plotAspect - 910.5 / 1042.5) < 1e-9);
+});
+
 test('only a chart that declares a magnitude may put a negative on a log axis', () => {
   /* The defect that broke Figure 2.31 was structural, not local: a
      logarithmic ordinate cannot draw a negative, so a signed evaluator gets
@@ -359,6 +379,25 @@ test('no lattice curve stops in open space', () => {
           else if (run) { runs.push(run); run = null; }
         }
         if (run) runs.push(run);
+
+        /* And on a magnitude chart, ONE curve is ONE stroke with no spike in
+           it. Both failures put the same thing on the page -- a lattice that
+           does not read as a woven mesh -- and both came from the drawn
+           value diving to zero at a sign change: first as a break where the
+           curve left the frame, then as a three-decade notch once the zero
+           was sampled. bridgeSpans is what makes this hold. */
+        if (spec.magnitude) {
+          assert.equal(runs.length, 1,
+            `${spec.figure} ${pv ?? ''} ${cv.kind} ${cv.label}: drawn in ${runs.length} pieces`);
+          const on = runs[0];
+          for (let i = 1; i < on.length - 1; i++) {
+            const dip = Math.min(on[i - 1].value, on[i + 1].value) / on[i].value;
+            assert.ok(dip <= 3,
+              `${spec.figure} ${pv ?? ''} ${cv.kind} ${cv.label}: a ${dip.toFixed(0)}x notch ` +
+              `at x = ${on[i].x.toFixed(3)} -- the plate draws through the sign change`);
+          }
+        }
+
         for (const r of runs) {
           for (const p of [r[0], r[r.length - 1]]) {
             const ok = p.value <= FLOOR * 1.05 || p.value >= CEIL * 0.95 ||
@@ -390,8 +429,29 @@ test('the mesh is the two families, and every crossing carries the true value', 
         // The drawn point must BE the function, not an interpolation of it.
         // On a magnitude chart "the function" is what the plate draws.
         const truth = drawnValue(c, c.evaluate(p.family, p.sweep, pv));
-        assert.ok(Math.abs(truth - p.value) < 1e-9 * Math.max(1, Math.abs(truth)),
-          `${c.figure}: the mesh draws ${p.value} where the solver gives ${truth}`);
+        if (Math.abs(truth - p.value) >= 1e-9 * Math.max(1, Math.abs(truth))) {
+          /* The one exception, and it is bounded rather than waived. Across
+             a sign change the line is the plate's own (see bridgeSpans), so
+             a point there is NOT the function -- but it still may not invent
+             anything: it has to lie between the two tabulated values of the
+             printed stations it sits between. That is the whole content of
+             "this is Peattie's interpolation and nothing more". */
+          assert.ok(c.magnitude, `${c.figure}: the mesh draws ${p.value} where the solver gives ${truth}`);
+          const stations = cv.kind === 'family' ? (c.sweep.ticks ?? []) : c.family.values;
+          const param = cv.kind === 'family' ? p.sweep : p.family;
+          const below = stations.filter(v => v <= param * (1 + 1e-9));
+          const above = stations.filter(v => v >= param * (1 - 1e-9));
+          assert.ok(below.length && above.length,
+            `${c.figure}: a bridged point at ${param} is outside the printed stations`);
+          const ends = [Math.max(...below), Math.min(...above)]
+            .map(v => drawnValue(c, c.evaluate(
+              cv.kind === 'family' ? p.family : v,
+              cv.kind === 'family' ? v : p.sweep, pv)));
+          const lo = Math.min(...ends), hi = Math.max(...ends);
+          assert.ok(p.value >= lo * (1 - 1e-6) && p.value <= hi * (1 + 1e-6),
+            `${c.figure}: a bridged point draws ${p.value}, outside the ` +
+            `[${lo}, ${hi}] its own stations span`);
+        }
         assert.ok(Math.abs(latticeX(c, p.family, p.sweep) - p.x) < 1e-12,
           `${c.figure}: a mesh point is not at its own abscissa`);
       }
@@ -568,13 +628,23 @@ test('every curve gets exactly one label, and it sits on its own curve', () => {
       `${c.figure}: two labels claim the same curve`);
 
     for (const s of spots) {
-      // The label must name the curve it is printed on. A label that has
-      // drifted onto a neighbor is the one failure a reader cannot detect.
-      const truth = c.evaluate(s.fv, s.sweep, pv);
-      const rel = Math.abs(truth - s.value) / Math.max(Math.abs(truth), 1e-9);
-      assert.ok(rel < 1e-6,
-        `${c.figure}: the ${c.family.symbol} = ${s.fv} label sits at ${s.value}, ` +
-        `but that curve passes through ${truth} there`);
+      /* The label must name the curve it is printed on. A label that has
+         drifted onto a neighbor is the one failure a reader cannot detect.
+
+         Checked against the curve AS DRAWN rather than by re-evaluating the
+         solver, because those are not the same thing everywhere any more:
+         Figure 2.31 draws the plate's line across a sign change, and a label
+         parked in that stretch -- which is exactly where the ink is
+         sparsest, so exactly where the placer likes to put one -- is on its
+         own curve while not being on the function. What a reader can check
+         is the drawing. */
+      const own = drawn.find(d => d.fv === s.fv).pts;
+      const onOwn = own.some(q => Number.isFinite(q.value)
+        && Math.abs(q.sweep - s.sweep) <= 1e-9 * Math.max(Math.abs(s.sweep), 1)
+        && Math.abs(q.value - s.value) <= 1e-9 * Math.max(Math.abs(s.value), 1e-12));
+      assert.ok(onOwn,
+        `${c.figure}: the ${c.family.symbol} = ${s.fv} label sits at ` +
+        `(${s.sweep}, ${s.value}), which is not a point of that curve`);
 
       const f = framePoint(c, s.value, s.sweep);
       assert.ok(f.sx >= -0.02 && f.sx <= 1.02 && f.sy >= -0.02 && f.sy <= 1.02,

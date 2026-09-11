@@ -132,14 +132,27 @@ export interface ChartSpec {
    * goes into compression — and the ordinate is logarithmic, so the plate
    * draws the absolute value. The sign is kept here rather than thrown away
    * in `evaluate`, because the samplers need it: |v| has a cusp at the sign
-   * change and where that cusp falls between two samples decides whether the
-   * drawn curve shows a notch of one decade, of two, or of none at all. That
-   * depth would be an artifact of the sample count. Knowing the sign, the
-   * sampler can find the zero itself and take the curve to the axis floor
-   * there, which is the one honest depth and the same treatment the apex
-   * curves already get.
+   * change, and |v| really does dive to zero there -- 1/2(ZZ1 - RR1) passes
+   * through zero between A = 0.8 and A = 1.6 on Peattie's own H = 0.125
+   * curve. The plate does not show it, because Peattie had six points per
+   * curve and drew a smooth line through them. See `bridgeSpans`.
    */
   magnitude?: boolean;
+  /**
+   * The PLOT AREA's width over its height, as the plate draws it.
+   *
+   * Only nomographs carry one, and for them it is not decoration. Their
+   * abscissa carries no variable, so nothing about the data fixes how wide
+   * the frame should be: the shape of the drawing IS a choice the
+   * draughtsman made, and it decides how steep every leg of the mesh looks
+   * and whether the diamonds read as diamonds. Figure 2.31's frame is taller
+   * than it is wide; drawn in the 1.4-to-1 box the other charts use, the
+   * same mathematically correct mesh comes out squashed flat and stops
+   * looking like the page it reproduces.
+   *
+   * Measured off the plates at 300 dpi, frame line to frame line.
+   */
+  plotAspect?: number;
   /**
    * Drawn as a LATTICE rather than as a plot: two families crossing over an
    * abscissa that carries no variable. Figures 2.21 and 2.31 only. See
@@ -565,6 +578,8 @@ const FIG_2_19: ChartSpec = {
 const FIG_2_21: ChartSpec = {
   id: 'fig-2-21',
   figure: 'Figure 2.21',
+  // 910.5 x 1042.5 px at 300 dpi, page 64.
+  plotAspect: 910.5 / 1042.5,
   title: 'Strain factor for a single wheel',
   source: 'After Huang (1973a)',
   section: 'Two layers',
@@ -750,6 +765,8 @@ const FIG_2_27 = conversionChart({
 const FIG_2_31: ChartSpec = {
   id: 'fig-2-31',
   figure: 'Figure 2.31',
+  // 1068 x 1401 px at 300 dpi, panel (a) on page 75.
+  plotAspect: 1068 / 1401,
   title: 'Horizontal strain factor at the bottom of layer 1',
   source: 'After Peattie (1962)',
   section: 'Three layers',
@@ -865,6 +882,19 @@ export interface CurvePoint { sweep: number; value: number }
  * between two samples is under-sampled for a different reason, and no amount
  * of edge-finding would make that curve right.
  */
+/**
+ * Halvings used to pin a root of the inverse.
+ *
+ * It was 40, and 40 is not free: each one is a full evaluate, and on the
+ * heavy charts that is a critical-strain search. It is also 16 steps of
+ * nothing. The scan hands the bisection an interval of 1/240 of the family,
+ * so 24 halvings resolve it to 2e-10 — already past anything the answer is
+ * read to, and past the point where halving a double changes the endpoint.
+ * Taking a magnitude made this matter: |v| meets a target twice as often as
+ * v does, so a slice that used to bisect once now bisects two to four times.
+ */
+const ROOT_STEPS = 24;
+
 const CROSS_STEPS = 10;       // 1/1024 of a sample interval: the usual case
 const CROSS_STEPS_MAX = 40;   // ...and the cap where the function is a cliff
 const CROSS_FILL = 3;         // interior samples along the run out to the edge
@@ -934,8 +964,83 @@ export const drawnValue = (spec: ChartSpec, v: number) =>
   (spec.magnitude ? Math.abs(v) : v);
 
 /**
+ * Where the drawn curve is Peattie's line rather than the computed one.
+ *
+ * On a magnitude chart the plotted value dives to zero wherever the factor
+ * changes sign, and that dive is REAL: for k1 = k2 = 2 and H = 0.125 the
+ * factor is +0.112 at A = 0.8 and -0.0999 at A = 1.6, so between them the
+ * magnitude passes through zero. The printed chart shows none of it. Peattie
+ * had six points per curve -- the six A stations -- and drew a smooth line
+ * through them, so the plate's curve simply crosses that region at about
+ * 0.1 and says nothing.
+ *
+ * Drawing the computed dive instead puts a three-decade spike through the
+ * middle of a mesh whose whole value is that it reads as a woven lattice,
+ * and it is a spike the reader cannot match against the page in front of
+ * them. So the drawing follows the plate across the crossing and the
+ * continuum everywhere else, and the boundary between the two is not a
+ * judgement call: it is the pair of PRINTED STATIONS that bracket the sign
+ * change. Between them the line is Peattie's interpolation, drawn straight
+ * from one tabulated value to the next, which is exactly what the plate is
+ * there. Outside them every point is computed.
+ *
+ * What is lost is stated rather than hidden: the notes say the factor
+ * changes sign, and `signChange` still finds where, so the reader can be
+ * told. Nothing is invented -- both ends of a bridge are tabulated values.
+ *
+ * @param raw signed value at parameter t
+ * @param ts sample parameters, ascending
+ * @param stations parameters of the printed stations, ascending
+ * @returns [lo, hi] parameter spans in which no computed sample is drawn
+ */
+function bridgeSpans(
+  raw: (t: number) => number, ts: number[], stations: number[]
+): [number, number][] {
+  const spans: [number, number][] = [];
+  let prev = raw(ts[0]);
+  for (let i = 1; i < ts.length; i++) {
+    const v = raw(ts[i]);
+    if (Number.isFinite(prev) && Number.isFinite(v) && prev !== 0 && v !== 0
+      && (prev > 0) !== (v > 0)) {
+      // The printed stations on either side of the crossing.
+      let lo = stations[0], hi = stations[stations.length - 1];
+      for (const st of stations) {
+        if (st <= ts[i - 1]) lo = Math.max(lo, st);
+        if (st >= ts[i]) { hi = st; break; }
+      }
+      if (hi > lo) spans.push([lo, hi]);
+    }
+    prev = v;
+  }
+  return spans;
+}
+
+/**
+ * The plate's line across one bridge, read at t.
+ *
+ * Straight between the two tabulated ends -- straight on the page, so
+ * linear in log(value), because the ordinate is logarithmic. Sampled at the
+ * same parameters as everything else rather than left as one long chord:
+ * the curves are drawn as splines, and a single wide segment butting onto
+ * short ones is exactly what makes a spline loop. Evenly spaced points give
+ * it nothing to overshoot.
+ *
+ * @param t parameter inside the span
+ * @param b0 @param b1 the span's ends
+ * @param v0 @param v1 the drawn values there
+ */
+function bridgeValue(t: number, b0: number, b1: number, v0: number, v1: number): number {
+  if (!(v0 > 0 && v1 > 0) || b1 <= b0) return NaN;
+  const u = (t - b0) / (b1 - b0);
+  return Math.exp(Math.log(v0) + u * (Math.log(v1) - Math.log(v0)));
+}
+
+/**
  * The parameter at which a sign change happens, or null when the two ends do
  * not straddle one.
+ *
+ * Used to TELL a reader where the factor changes sign. The drawing does not
+ * dive to it -- see bridgeSpans.
  *
  * Only meaningful on a `magnitude` chart, where the drawn value has a cusp
  * down to zero there. Bisection rather than interpolation: the factor is not
@@ -989,25 +1094,38 @@ export function sampleCurve(spec: ChartSpec, familyValue: number, panelValue?: n
   const valueAt = (t: number) => drawnValue(spec, rawAt(t));
   const onFrame = frameTest(spec);
 
+  // The same two rules the lattice follows, for the same reasons: every
+  // printed station is a drawn vertex, and across a sign change the line is
+  // the plate's own. See bridgeSpans.
+  const toT = (v: number) => (log ? (Math.log(v) - lo) / (hi - lo) : (v - lo) / (hi - lo));
+  const stations = (spec.sweep.ticks ?? [])
+    .map(toT).filter(t => t >= 0 && t <= 1);
+  const ts = [...new Set([
+    ...Array.from({ length: n + 1 }, (_, i) => i / n),
+    ...stations,
+  ])].sort((p, q) => p - q);
+  const bridges = (spec.magnitude && stations.length ? bridgeSpans(rawAt, ts, stations) : [])
+    .map(([b0, b1]) => ({ b0, b1, v0: valueAt(b0), v1: valueAt(b1) }));
+  const spanAt = (t: number) =>
+    bridges.find(({ b0, b1 }) => t > b0 + 1e-12 && t < b1 - 1e-12);
+
   const out: CurvePoint[] = [];
-  let prevT = 0, prevOn = false;
-  for (let i = 0; i <= n; i++) {
-    const t = i / n;
-    // A magnitude chart's drawn value dives to zero at a sign change. Put a
-    // sample ON the zero, so the run-out below is found by bisection rather
-    // than by whichever sample happened to land nearest it.
-    const zero = i > 0 && spec.magnitude ? signChange(rawAt, prevT, t) : null;
-    for (const t2 of zero !== null ? [zero, t] : [t]) {
-      const value = valueAt(t2);
-      const on = onFrame(value);
-      if ((i > 0 || t2 !== t) && on !== prevOn) {
-        for (const c of edgeApproach(spec, on ? t2 : prevT, on ? prevT : t2, valueAt, onFrame)) {
-          out.push({ sweep: sweepAt(c.t), value: c.value });
-        }
+  let prevT = ts[0], prevOn = false, first = true;
+  for (const t of ts) {
+    const span = spanAt(t);
+    const value = span
+      ? bridgeValue(t, span.b0, span.b1, span.v0, span.v1)
+      : valueAt(t);
+    const on = onFrame(value);
+    // The curve enters or leaves the frame somewhere in this interval; find
+    // where, so it runs to the edge instead of stopping at the last sample.
+    if (!first && on !== prevOn) {
+      for (const c of edgeApproach(spec, on ? t : prevT, on ? prevT : t, valueAt, onFrame)) {
+        out.push({ sweep: sweepAt(c.t), value: c.value });
       }
-      out.push({ sweep: sweepAt(t2), value: on ? value : NaN });
-      prevT = t2; prevOn = on;
     }
+    out.push({ sweep: sweepAt(t), value: on ? value : NaN });
+    prevT = t; prevOn = on; first = false;
   }
   return out;
 }
@@ -1060,7 +1178,7 @@ export function invertFamily(
     } else if (Number.isFinite(prevF) && Number.isFinite(fv) && prevF * fv < 0) {
       // Bisect this bracket. 40 halvings is far past what the scan resolves.
       let a = prevT, b = t, fa = prevF;
-      for (let k = 0; k < 40; k++) {
+      for (let k = 0; k < ROOT_STEPS; k++) {
         const m = 0.5 * (a + b);
         const fm = f(m);
         if (!Number.isFinite(fm)) break;
@@ -1486,6 +1604,7 @@ export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurv
   const walk = (
     kind: 'family' | 'sweep', label: number,
     lo: number, hi: number, log: boolean,
+    stationValues: number[],
     at: (t: number) => [number, number]
   ) => {
     const paramAt = (t: number) => at(spanVal(t, lo, hi, log));
@@ -1499,34 +1618,49 @@ export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurv
       return { x: latticeX(spec, fv, sv), family: fv, sweep: sv, value };
     };
 
+    /* Every printed station is a drawn vertex, not merely a place a sample
+       happened to land near. The crossings of this mesh ARE the tabulated
+       values -- it is what the chart is for -- so they are put in the sample
+       set rather than left to the uniform division to approximate. */
+    const stations = stationValues
+      .map(v => spanPos(v, lo, hi, log))
+      .filter(t => t >= 0 && t <= 1);
+    const ts = [...new Set([
+      ...Array.from({ length: n + 1 }, (_, i) => i / n),
+      ...stations,
+    ])].sort((p, q) => p - q);
+
+    // Across a sign change the drawing is the plate's own line: see
+    // bridgeSpans. Nowhere else.
+    const bridges = (spec.magnitude ? bridgeSpans(rawAt, ts, stations) : [])
+      .map(([b0, b1]) => ({ b0, b1, v0: valueAt(b0), v1: valueAt(b1) }));
+    const spanAt = (t: number) =>
+      bridges.find(({ b0, b1 }) => t > b0 + 1e-12 && t < b1 - 1e-12);
+
     const pts: LatticePoint[] = [];
-    let prevT = 0, prevOn = false;
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      // The drawn magnitude dives to zero wherever the factor changes sign.
-      // Sample the zero itself, so the notch is bisected to the axis floor
-      // and is the same notch at any sample count.
-      const zero = i > 0 && spec.magnitude ? signChange(rawAt, prevT, t) : null;
-      for (const t2 of zero !== null ? [zero, t] : [t]) {
-        const value = valueAt(t2);
-        const on = onFrame(value);
-        // The lattice is a CLOSED mesh on the page: every curve runs to a
-        // label or off the frame, and none of them stops in open space.
-        // Inserting the boundary crossing is what keeps that true.
-        if ((i > 0 || t2 !== t) && on !== prevOn) {
-          for (const c of edgeApproach(spec, on ? t2 : prevT, on ? prevT : t2, valueAt, onFrame)) {
-            pts.push(pointAt(c.t, c.value));
-          }
+    let prevT = ts[0], prevOn = false, first = true;
+    for (const t of ts) {
+      const span = spanAt(t);
+      const value = span
+        ? bridgeValue(t, span.b0, span.b1, span.v0, span.v1)
+        : valueAt(t);
+      const on = onFrame(value);
+      // The lattice is a CLOSED mesh on the page: every curve runs to a
+      // label or off the frame, and none of them stops in open space.
+      // Inserting the boundary crossing is what keeps that true.
+      if (!first && on !== prevOn) {
+        for (const c of edgeApproach(spec, on ? t : prevT, on ? prevT : t, valueAt, onFrame)) {
+          pts.push(pointAt(c.t, c.value));
         }
-        pts.push(pointAt(t2, on ? value : NaN));
-        prevT = t2; prevOn = on;
       }
+      pts.push(pointAt(t, on ? value : NaN));
+      prevT = t; prevOn = on; first = false;
     }
     out.push({ kind, label, pts });
   };
 
-  for (const fv of a.F) walk('family', fv, a.sLo, a.sHi, a.sLog, sv => [fv, sv]);
-  for (const sv of a.S) walk('sweep', sv, a.fLo, a.fHi, a.fLog, fv => [fv, sv]);
+  for (const fv of a.F) walk('family', fv, a.sLo, a.sHi, a.sLog, a.S, sv => [fv, sv]);
+  for (const sv of a.S) walk('sweep', sv, a.fLo, a.fHi, a.fLog, a.F, fv => [fv, sv]);
   return out;
 }
 
@@ -1623,7 +1757,7 @@ export function invertLattice(
       if (!near(t2)) found.push(t2);
     } else if (Number.isFinite(f1) && Number.isFinite(f2) && f1 * f2 < 0) {
       let lo = t1, hi = t2, flo = f1;
-      for (let k = 0; k < 40; k++) {
+      for (let k = 0; k < ROOT_STEPS; k++) {
         const m = 0.5 * (lo + hi);
         const fm = f(m);
         if (!Number.isFinite(fm)) break;
