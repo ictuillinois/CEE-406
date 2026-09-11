@@ -851,6 +851,75 @@ export const SECTIONS: ChartSection[] = ['One layer', 'Two layers', 'Three layer
 
 export interface CurvePoint { sweep: number; value: number }
 
+/* ── One value of one chart, remembered ──────────────────────────────────
+ *
+ * `evaluate` is a pure function of (family, sweep, panel), and on a `heavy`
+ * chart one call is a critical-strain search over a whole wheel group — 37
+ * ms on Figure 2.27. The same points are then asked for from five places
+ * that know nothing about each other: the sampler walks the curve,
+ * `bridgeSpans` walks the same sample set first to find the sign change, the
+ * table under the figure reads every curve at every printed station, the
+ * checkpoint list re-evaluates the book's own reads on every render, and
+ * switching panels and coming back redraws a chart that was already drawn.
+ * Of the 288 evaluations one visit to Figure 2.27 used to cost, 80 were the
+ * table alone, and the table's points are a SUBSET of the curves' — it asks
+ * for each printed station, and every printed station is already a drawn
+ * vertex.
+ *
+ * So the catalog remembers. Twelve significant figures in the key is what
+ * makes it land: a sampler reaches a printed station through a parameter
+ * round trip — t = (v − lo)/(hi − lo), then lo + t·(hi − lo) — which does
+ * not always come back to the same double, and a cache the table misses by
+ * one ulp is a cache that does nothing for the slowest chart in the tool.
+ * Twelve figures is far past what any of these quantities is read to, and
+ * past the resolution of every bisection in this file.
+ *
+ * Only `heavy` charts are cached. Everywhere else `evaluate` is 10 to 25
+ * microseconds and the key would cost a measurable fraction of it.
+ *
+ * The INVERSE deliberately does not use this. A 240-step scan lands on 240
+ * parameters nothing else will ever ask for, and on a light chart it runs
+ * once per pointer move — it would push everything worth keeping out of the
+ * map and hit nothing.
+ */
+const CACHE_CAP = 1 << 15;
+let valueCache = new Map<string, number>();
+let valueCacheOld = new Map<string, number>();
+
+/** Twelve significant figures, as a key fragment. */
+const keyNum = (v: number | undefined): string => {
+  if (v === undefined) return '';
+  if (!Number.isFinite(v)) return String(v);
+  return String(+v.toPrecision(12));
+};
+
+/**
+ * `spec.evaluate`, memoized on the heavy charts. Signed, exactly as
+ * `evaluate` is — callers apply `drawnValue` themselves.
+ */
+export function chartValue(
+  spec: ChartSpec, familyValue: number, sweepValue: number, panelValue?: number
+): number {
+  if (!spec.heavy) return spec.evaluate(familyValue, sweepValue, panelValue);
+  const key = `${spec.id}|${keyNum(panelValue)}|${keyNum(familyValue)}|${keyNum(sweepValue)}`;
+  const hit = valueCache.get(key);
+  if (hit !== undefined) return hit;
+  // Two generations rather than one map cleared wholesale: a light chart
+  // must not be able to evict a heavy one's answers just by being drawn.
+  const old = valueCacheOld.get(key);
+  if (old !== undefined) { valueCache.set(key, old); return old; }
+  const v = spec.evaluate(familyValue, sweepValue, panelValue);
+  if (valueCache.size >= CACHE_CAP) { valueCacheOld = valueCache; valueCache = new Map(); }
+  valueCache.set(key, v);
+  return v;
+}
+
+/** Drop everything remembered. Tests only; nothing in the UI needs it. */
+export function clearChartCache(): void {
+  valueCache = new Map();
+  valueCacheOld = new Map();
+}
+
 /* ── Where a curve leaves the page ───────────────────────────────────────
  *
  * A printed curve never stops in mid-air. It runs to a label, or it runs off
@@ -1084,13 +1153,57 @@ function frameTest(spec: ChartSpec) {
  * they leave the frame.
  */
 export function sampleCurve(spec: ChartSpec, familyValue: number, panelValue?: number): CurvePoint[] {
+  return runSampler(sampleCurveGen(spec, familyValue, panelValue));
+}
+
+/* ── Sampling is resumable ───────────────────────────────────────────────
+ *
+ * A curve of Figure 2.27 is thirteen critical-strain searches over a
+ * dual-tandem group, and sixteen of those curves is the figure. That is a
+ * long time to hold the main thread, and holding it is what makes a page
+ * feel broken rather than busy — the pointer stops, the progress bar stops,
+ * and nothing on the card can say how far along it is.
+ *
+ * So the samplers are generators that yield after every vertex, and the two
+ * exported functions drive them to completion synchronously. Tests and any
+ * other caller see exactly what they saw before; the reader drives the same
+ * generator against a clock instead, yielding to the browser whenever it has
+ * held the thread long enough, and publishes the curve when it arrives.
+ *
+ * A yield costs about a tenth of a microsecond against an evaluate that
+ * costs between ten and forty thousand.
+ */
+export type Sampler<T> = Generator<void, T, void>;
+
+/** Run a sampler to the end without yielding. */
+export function runSampler<T>(gen: Sampler<T>): T {
+  let step = gen.next();
+  while (!step.done) step = gen.next();
+  return step.value;
+}
+
+/**
+ * How many curves a full build of this chart draws — the unit the reader
+ * counts progress in, because it is the unit the work actually comes in.
+ */
+export function buildCurveCount(spec: ChartSpec, panels = 1): number {
+  if (spec.nomograph) {
+    const a = latticeAxes(spec);
+    return a.F.length + a.S.length;
+  }
+  return panels * spec.family.values.length;
+}
+
+export function* sampleCurveGen(
+  spec: ChartSpec, familyValue: number, panelValue?: number
+): Sampler<CurvePoint[]> {
   const n = spec.samples ?? 70;
   const { min, max, log } = spec.sweep;
   const lo = log ? Math.log(Math.max(min, 1e-9)) : min;
   const hi = log ? Math.log(max) : max;
 
   const sweepAt = (t: number) => (log ? Math.exp(lo + t * (hi - lo)) : lo + t * (hi - lo));
-  const rawAt = (t: number) => spec.evaluate(familyValue, sweepAt(t), panelValue);
+  const rawAt = (t: number) => chartValue(spec, familyValue, sweepAt(t), panelValue);
   const valueAt = (t: number) => drawnValue(spec, rawAt(t));
   const onFrame = frameTest(spec);
 
@@ -1126,6 +1239,7 @@ export function sampleCurve(spec: ChartSpec, familyValue: number, panelValue?: n
     }
     out.push({ sweep: sweepAt(t), value: on ? value : NaN });
     prevT = t; prevOn = on; first = false;
+    yield;
   }
   return out;
 }
@@ -1596,21 +1710,28 @@ export interface LatticeCurve {
  * the page prints — which is what `sweep.ticks` already are.
  */
 export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurve[] {
+  return runSampler(sampleLatticeGen(spec, panelValue));
+}
+
+/** The mesh, one curve at a time — see the note on `Sampler`. */
+export function* sampleLatticeGen(
+  spec: ChartSpec, panelValue?: number
+): Sampler<LatticeCurve[]> {
   const a = latticeAxes(spec);
   const n = spec.samples ?? 70;
   const onFrame = frameTest(spec);
   const out: LatticeCurve[] = [];
 
-  const walk = (
+  function* walk(
     kind: 'family' | 'sweep', label: number,
     lo: number, hi: number, log: boolean,
     stationValues: number[],
     at: (t: number) => [number, number]
-  ) => {
+  ): Sampler<void> {
     const paramAt = (t: number) => at(spanVal(t, lo, hi, log));
     const rawAt = (t: number) => {
       const [fv, sv] = paramAt(t);
-      return spec.evaluate(fv, sv, panelValue);
+      return chartValue(spec, fv, sv, panelValue);
     };
     const valueAt = (t: number) => drawnValue(spec, rawAt(t));
     const pointAt = (t: number, value: number): LatticePoint => {
@@ -1655,12 +1776,13 @@ export function sampleLattice(spec: ChartSpec, panelValue?: number): LatticeCurv
       }
       pts.push(pointAt(t, on ? value : NaN));
       prevT = t; prevOn = on; first = false;
+      yield;
     }
     out.push({ kind, label, pts });
-  };
+  }
 
-  for (const fv of a.F) walk('family', fv, a.sLo, a.sHi, a.sLog, a.S, sv => [fv, sv]);
-  for (const sv of a.S) walk('sweep', sv, a.fLo, a.fHi, a.fLog, a.F, fv => [fv, sv]);
+  for (const fv of a.F) yield* walk('family', fv, a.sLo, a.sHi, a.sLog, a.S, sv => [fv, sv]);
+  for (const sv of a.S) yield* walk('sweep', sv, a.fLo, a.fHi, a.fLog, a.F, fv => [fv, sv]);
   return out;
 }
 

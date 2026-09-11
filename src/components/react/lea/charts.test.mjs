@@ -12,7 +12,8 @@ import {
   CHARTS, SECTIONS, chartById, sampleCurve, invertFamily, nearestCurve,
   framePoint, curveLabelSpots, emptiestCorner, CORNER_XY,
   latticeAxes, latticeX, sampleLattice, latticeLabels, invertLattice, LATTICE_RANGE,
-  drawnValue,
+  drawnValue, chartValue, clearChartCache, buildCurveCount,
+  sampleCurveGen, sampleLatticeGen, runSampler,
 } from './charts.ts';
 
 test('the catalog covers every empirical chart in Chapter 2', () => {
@@ -912,4 +913,101 @@ test('no curve ends in open space — it runs to a label or off the frame', () =
       }
     }
   }
+});
+
+/* ── The memo ────────────────────────────────────────────────────────────
+ * `chartValue` exists because one point of a conversion chart is 37 ms of
+ * layered-elastic solving and five places in the reader ask for the same
+ * points. Two things have to hold or it is worse than nothing: it must
+ * answer exactly what `evaluate` answers, and the key must actually LAND on
+ * the table's stations, which arrive by a different arithmetic route from
+ * the sampler's.
+ */
+test('the memo answers exactly what evaluate answers', () => {
+  clearChartCache();
+  for (const c of CHARTS) {
+    const pv = c.panel ? c.panel.values[0] : c.stack ? c.stack[0].pv : undefined;
+    for (const fv of c.family.values.slice(0, 3)) {
+      for (const t of [0, 0.37, 1]) {
+        const sv = c.sweep.min + t * (c.sweep.max - c.sweep.min);
+        const direct = c.evaluate(fv, sv, pv);
+        const cold = chartValue(c, fv, sv, pv);
+        const warm = chartValue(c, fv, sv, pv);
+        // Identical, not close: a memo that returns a different number from
+        // the function it stands in for is a bug wearing a cache.
+        assert.ok(Object.is(direct, cold) || direct === cold,
+          `${c.figure}: memo gave ${cold}, evaluate gives ${direct}`);
+        assert.ok(Object.is(cold, warm) || cold === warm,
+          `${c.figure}: the second read gave ${warm}, the first ${cold}`);
+      }
+    }
+  }
+});
+
+test("the table's stations are the curves' own points, so the memo catches them", () => {
+  // The reader draws the curves, then reads a table at every printed station
+  // of the sweep. Those stations are put into the sample set by name, so the
+  // table must be answerable without a single new solve -- which is what
+  // takes Figure 2.27's table from seven seconds to nothing. The sampler
+  // reaches them through a parameter round trip, so this is really a test
+  // that the key's twelve significant figures absorb it.
+  for (const c of CHARTS) {
+    if (!c.heavy) continue;
+    const pv = c.panel ? c.panel.values[0] : c.stack ? c.stack[0].pv : undefined;
+    const stations = (c.sweep.ticks ?? []).filter(v => v >= c.sweep.min && v > 0).slice(0, 8);
+    assert.ok(stations.length, `${c.figure}: no printed stations to check`);
+
+    clearChartCache();
+    let solves = 0;
+    const real = c.evaluate;
+    c.evaluate = (...a) => { solves++; return real(...a); };
+    try {
+      if (c.nomograph) sampleLattice(c, pv);
+      else for (const fv of c.family.values) sampleCurve(c, fv, pv);
+      const afterBuild = solves;
+      for (const s of stations) {
+        for (const fv of c.family.values) chartValue(c, fv, s, pv);
+      }
+      assert.equal(solves, afterBuild,
+        `${c.figure}: the table cost ${solves - afterBuild} fresh solves; ` +
+        'every station should already be a drawn vertex');
+    } finally {
+      c.evaluate = real;
+    }
+  }
+});
+
+test('the progress bar counts a unit the build actually arrives in', () => {
+  // docs/loaders.md §7.6: never fake a bar you cannot honor. The reader's
+  // bar is curves-done over buildCurveCount, so if that count disagrees with
+  // what the build loop produces the bar either stops short of the end or
+  // runs past it. Both are the same defect and neither is visible in CI
+  // unless it is asserted here.
+  for (const c of CHARTS) {
+    const panels = c.stack ? c.stack.length : 1;
+    const pv = c.panel ? c.panel.values[0] : c.stack ? c.stack[0].pv : undefined;
+    const claimed = buildCurveCount(c, panels);
+    const actual = c.nomograph
+      ? sampleLattice(c, pv).length
+      : panels * c.family.values.length;
+    assert.equal(claimed, actual, `${c.figure}: the bar counts ${claimed} curves, the build draws ${actual}`);
+  }
+});
+
+test('a sampler driven by hand gives what the sampler gives', () => {
+  // The reader drives the generators itself so it can hand the thread back
+  // between vertices. Stepping one has to end where running it does, or the
+  // figure the reader draws is not the figure the tests check.
+  for (const c of CHARTS) {
+    if (c.heavy) continue;                    // covered by the pair below
+    const pv = c.panel ? c.panel.values[0] : c.stack ? c.stack[0].pv : undefined;
+    const fv = c.family.values[Math.floor(c.family.values.length / 2)];
+    assert.deepEqual(runSampler(sampleCurveGen(c, fv, pv)), sampleCurve(c, fv, pv),
+      `${c.figure}: the generator and the wrapper disagree`);
+  }
+  const nomo = CHARTS.find(c => c.nomograph);
+  assert.deepEqual(
+    runSampler(sampleLatticeGen(nomo, nomo.panel?.values[0])),
+    sampleLattice(nomo, nomo.panel?.values[0]),
+    `${nomo.figure}: the lattice generator and the wrapper disagree`);
 });
