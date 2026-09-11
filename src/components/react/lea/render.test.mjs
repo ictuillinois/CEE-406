@@ -96,7 +96,7 @@ test('every chart in the catalog renders in the reader', () => {
 /* ── The module gate ─────────────────────────────────────────────────────
  * Which modules of a tab-shell tool are open is `release.ts`'s decision, and
  * on a client island it is enforced nowhere else — there is no route to
- * remove and no file to rename, so if the shell stops honouring the gate a
+ * remove and no file to rename, so if the shell stops honoring the gate a
  * locked module is simply live again and nothing else notices. The failure
  * mode that actually costs something is subtler than that, though: the tool
  * opening on a tab that is locked, which leaves a student on a dimmed,

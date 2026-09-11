@@ -283,7 +283,7 @@ export default function ContactStressApp() {
      currently say. They redraw on a slower schedule than everything else, so
      their headers and their color bars have to be read off the pass that drew
      them: a bar reading ±0.50 over a surface painted on ±0.15 is not a
-     lagging figure, it is a mislabelled one, and the shear bars move with the
+     lagging figure, it is a mislabeled one, and the shear bars move with the
      case. Null until the first pass, which falls back to the live values. */
   const [surfaced, setSurfaced] = useState<{
     lim: Record<'longitudinal' | 'transverse', number>;
@@ -1112,7 +1112,7 @@ export default function ContactStressApp() {
                      not the current slider position — the two are the same
                      within about a tenth of a second, and while they are not,
                      a header and a color bar that ran ahead of their own
-                     surface would be labelling it wrongly rather than late. */
+                     surface would be labeling it wrongly rather than late. */
                   const span = surfaced?.span[ch] ?? result.metrics[ch];
                   const lim = ch === 'vertical' ? 0 : surfaced?.lim[ch] ?? shearLim[ch];
                   return (

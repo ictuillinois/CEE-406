@@ -283,7 +283,7 @@ test('rampSeries stays visible and keeps its ordering in both modes', () => {
       // Light mode is the tight side, exactly as it is for the categorical
       // palette (§B4): the floor here is the emerald 500 stop at 2.14:1 on
       // white. That is under §A11's 3:1 and tolerated for the same reason —
-      // the curves are direct-labelled and every chart keeps its table view,
+      // the curves are direct-labeled and every chart keeps its table view,
       // so hue is never the only encoding. Dark mode clears 2.9:1 throughout.
       const floor = theme === 'light' ? 2.1 : 2.9;
       for (const c of series) {
@@ -386,7 +386,7 @@ test('a paper axis is ruled, and an ordinary axis still is not', () => {
     assert.equal(paper.minor.showgrid, true);
     assert.equal(paper.ticks, 'outside');
     assert.equal(paper.minor.dtick, 0.5);
-    // Two weights, so the labelled divisions read as the labelled ones.
+    // Two weights, so the labeled divisions read as the labeled ones.
     assert.notEqual(paper.gridcolor, paper.minor.gridcolor,
       `${m}: major and minor divisions must not be the same weight`);
     assert.equal(paper.gridcolor, TOKENS[m].gridStrong);
@@ -406,7 +406,7 @@ test('a paper axis is ruled, and an ordinary axis still is not', () => {
 
 test('the graph-paper chrome stays behind the data in both modes', () => {
   // Ruled paper that is louder than the curves drawn on it is worse than no
-  // ruling at all — §A7's actual argument, honoured inside the deviation.
+  // ruling at all — §A7's actual argument, honored inside the deviation.
   for (const m of MODES) {
     const surface = card(m);
     const frame = contrast(TOKENS[m].frame, surface);

@@ -3,7 +3,7 @@
 //
 // The chapter carries twelve of them across three sections, and they are the
 // part of the book a student is most likely to misread: five-decade log paper,
-// seventeen unlabelled curves, and two figures that are not plots at all but
+// seventeen unlabeled curves, and two figures that are not plots at all but
 // nomographs. Each one is picked from a list and rendered by ChartReader,
 // which knows how to draw it and how to read it backwards.
 import { useMemo, useState } from 'react';

@@ -447,7 +447,7 @@ export default function TwoLayerModule() {
                 <p className="cee-note">
                   A conversion factor of essentially 1 means the tandem axle is far enough away to
                   do nothing at this thickness. The compensative effect Huang describes has
-                  cancelled the extra load entirely.
+                  canceled the extra load entirely.
                 </p>
               )}
               <p className="cee-note">

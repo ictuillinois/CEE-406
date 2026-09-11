@@ -535,7 +535,7 @@ export function initStudio(root: HTMLElement): () => void {
     };
 
     const state = {
-        /** Which system the reader is working in. Storage is millimetres
+        /** Which system the reader is working in. Storage is millimeters
             regardless — see section 3b. */
         units: 'mm' as Units,
         section: { ...DEFAULTS.section },
@@ -632,7 +632,7 @@ export function initStudio(root: HTMLElement): () => void {
        ========================================================
        The arithmetic and the reasoning live in units.ts, which imports
        nothing and is tested on its own. What stays here is only the part
-       that needs `state`: reading a stored millimetre length in whatever
+       that needs `state`: reading a stored millimeter length in whatever
        system is showing, and re-designating every length when the reader
        changes systems.
     */
@@ -1360,7 +1360,7 @@ export function initStudio(root: HTMLElement): () => void {
      * Switch systems: re-designate every length, then redraw.
      *
      * `rebuildSection` is not optional even though nothing about the section
-     * has been edited. The stored millimetres really do change — a 75-mm
+     * has been edited. The stored millimeters really do change — a 75-mm
      * layer becomes a 3-in one, which is 76.2 — so the figure is a different
      * figure, by a little, and the export has to agree with the panel.
      */
@@ -1892,7 +1892,7 @@ export function initStudio(root: HTMLElement): () => void {
     selectedId = state.layers[0].id;
 
     /* Adopt the remembered unit before the first draw, so an English reader
-       never sees a frame of millimetres. */
+       never sees a frame of millimeters. */
     try {
         if (localStorage.getItem(UNITS_KEY) === 'in') {
             state.units = 'in';

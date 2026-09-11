@@ -147,7 +147,7 @@ export function rampScale(name: RampName, theme: Mode): [number, string][] {
  * Follows `rampScale`'s §A4.2 reversal, so the far end of the family is always
  * the end that stands off the card. The pale extreme is trimmed: at n > 6 the
  * 100-step is too faint to hold a 2 px line, and a curve nobody can see is
- * worse than a curve that shares a hue with its neighbour.
+ * worse than a curve that shares a hue with its neighbor.
  */
 export function rampSeries(name: RampName, theme: Mode, n: number): string[] {
   const r = RAMPS[name];          // [900, 700, 500, 300, 100]
@@ -381,9 +381,9 @@ export interface PaperAxisOptions {
   tickvals?: number[];
   ticktext?: string[];
   /**
-   * The minor division between labelled ticks: a number on a linear axis,
+   * The minor division between labeled ticks: a number on a linear axis,
    * 'D1' (every mantissa) or 'D2' (2 and 5) on a log one. Omit for no minor
-   * grid — an axis whose labelled ticks are already dense does not want one.
+   * grid — an axis whose labeled ticks are already dense does not want one.
    */
   minorDtick?: number | string;
 }

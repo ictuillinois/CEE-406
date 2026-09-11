@@ -5,7 +5,7 @@
 // 25 rounds a designation and 25.4 draws one. Crossing them is silent — the
 // figure is 1.6% wrong, which nobody sees — and compounding, because the
 // switch would inflate every length a little on each pass. So what is
-// asserted here is the behaviour the switch promises: the soft-conversion
+// asserted here is the behavior the switch promises: the soft-conversion
 // table the specifications print, a round trip that comes back where it
 // started, and geometry that is exactly the size of its own label.
 import test from 'node:test';
@@ -44,7 +44,7 @@ test('the soft-conversion table the specifications print', () => {
 test('what is STORED for an inch designation is exactly that many inches', () => {
     // The whole promise of the tool is that the figure is true to scale. A
     // 3-in layer has to be 3 in tall in the render and in the exported PNG,
-    // which means the stored millimetres are 3 x 25.4 and not 3 x 25.
+    // which means the stored millimeters are 3 x 25.4 and not 3 x 25.
     for (const mm of SHIPPED_MM) {
         const stored = redesignate(mm, 'in');
         const inches = nominalInches(mm);

@@ -362,7 +362,7 @@ export function leaResponse(
     }
     // Stop only once a RUN of panels has stopped contributing, measured
     // against the largest contribution seen rather than against a running
-    // total that may be cancelling to near zero.
+    // total that may be canceling to near zero.
     peak = Math.max(peak, seg);
     quiet = seg < tol * peak ? quiet + 1 : 0;
     if (quiet >= 12) break;

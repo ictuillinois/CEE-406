@@ -158,7 +158,24 @@ const RULES = [
 
     /* verb/noun pairs American English collapses */
     ['stem', 'practising', 'practicing'],
-    ['stem', 'practise', 'practice']
+    ['stem', 'practise', 'practice'],
+
+    /* Two this pass did not have, found the expensive way: the 2026-09
+       Gear3D re-sync pulled them out of engine/** as CHANGES, which means
+       they had been sitting in the repository since the port and every run
+       of this script had walked past them. `-ise` is covered word by word
+       rather than by rule, so a new one is invisible until something else
+       notices it.
+
+       Upstream's own pass also changed `afterwards` to `afterward` and
+       `backwards` to `backward`, and those are NOT added here. American
+       usage prefers the shorter adverb but the -s forms are not errors, the
+       repository has two dozen of them, and a rule that rewrites correct
+       prose is how a mechanical pass loses its authority. The two below are
+       spellings; those two are style. */
+    ['stem', 'parameterise', 'parameterize'],
+    ['stem', 'parameterisation', 'parameterization'],
+    ['stem', 'labour', 'labor']
 ];
 
 const ISE_SUFFIXES = ['e', 'es', 'ed', 'ing', 'ation', 'ations', 'er', 'ers', 'able', 'ably'];

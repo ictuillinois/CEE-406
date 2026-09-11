@@ -1,7 +1,7 @@
 /* ============================================================
    Cross-Section Studio — SI and English
 
-   Every length in the studio's state is stored in MILLIMETRES, always, and
+   Every length in the studio's state is stored in MILLIMETERS, always, and
    the renderer never sees anything else. The unit switch is a presentation
    layer over that, plus the one thing it would be dishonest to leave out: it
    re-rounds the numbers.
@@ -70,7 +70,7 @@ export function nominalMm(inValue: number): number {
 }
 
 /**
- * Re-express one stored millimetre length as a designation in `to`.
+ * Re-express one stored millimeter length as a designation in `to`.
  *
  * Not idempotent, and it must not be: applying the metric-to-English map
  * twice would inflate a length by 1.6% each time, which is exactly the
@@ -99,7 +99,7 @@ export const FIELD_LIMITS = {
     subgrade: { mm: [50, 2000, 25], in: [2, 80, 0.5] },
 } as const;
 
-/** A stored millimetre length, read in `units`. */
+/** A stored millimeter length, read in `units`. */
 export const inUnits = (mmValue: number, units: Units) =>
     units === 'in' ? mmValue / MM_PER_IN : mmValue;
 

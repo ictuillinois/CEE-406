@@ -1229,7 +1229,7 @@ export default function OneLayerModule() {
                 <p>
                   <strong>The load has a sharp edge; the stress does not.</strong> Nothing goes to
                   zero at r = a, which is the whole reason superposition matters: at the depths
-                  that decide a pavement, neighbouring wheels are still reaching each other.
+                  that decide a pavement, neighboring wheels are still reaching each other.
                 </p>
                 {kase === 'rigid' && (
                   <p>

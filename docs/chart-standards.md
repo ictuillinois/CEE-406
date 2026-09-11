@@ -681,7 +681,7 @@ legend:         showlegend: false — see below
    must stay **quieter than the faintest curve it carries** (measured against `rampSeries`, which is
    what an ordered family of design curves is drawn with). Light is the tight side — the frame is
    1.94:1 on white against a faintest ramp stop of 2.14:1. Ruled paper louder than the ink on it is
-   worse than no ruling, which is §A7's own argument, honoured inside the deviation.
+   worse than no ruling, which is §A7's own argument, honored inside the deviation.
 
    Two more rules travel with the frame, both in `lea/charts.ts` and both testable:
 
