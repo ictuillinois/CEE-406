@@ -5,10 +5,13 @@
 **Companion:** `dashboard-visual-language.md`. The two share the `.elx` scope and the `--elx-*` token prefix, so they compose without conflict. This file is also complete on its own — every token it needs has a hardcoded fallback.
 **Version:** 1.0
 
-> **Repo note.** This site currently ships no loading states: every tool computes synchronously
-> in the browser and the only async step is Plotly's dynamic import. §7 below is therefore
-> forward-looking guidance rather than a description of shipped code — with one exception worth
-> acting on, noted at the end of §7.3.
+> **Repo note.** The site ships **one** loading state, and it is the one §7.3 predicted:
+> `lea`'s "Solutions by chart", where a point of Huang's conversion-factor figures is a
+> critical-strain search over a whole wheel group and the figure takes ten seconds or more.
+> It is a determinate bar per §7.6 (`ProgressStrip`, `.cee-progress` in `tools.css`), counted
+> in curves of the figure, over a build that yields the thread between vertices and publishes
+> each curve as it lands. Everything else in the toolbox still computes synchronously, so the
+> rest of §7 remains forward-looking guidance rather than a description of shipped code.
 
 ---
 
@@ -206,13 +209,16 @@ Two consequences worth internalizing:
 - **When a chart already contains an "empty cell" layer — heatmap, hexbin, dot matrix — the skeleton *is* that layer.** Zero layout shift by construction.
 - **Varied bar heights matter.** A row of equal-height gray bars reads as a placeholder grid; varied heights read as data about to arrive.
 
-> **The one case in this repo that earns a loader today.** The layered elastic solver
-> (`src/components/react/lea/lea.ts`) solves a dense linear system at every quadrature node,
-> for every point in a depth profile. On a four-layer section that is thousands of solves, and
-> the profile can take well over a second on a modest laptop — squarely in the 1–4 s band, and
-> past 4 s when the wheel configuration is tandem. It should get a shape-matched depth-profile
-> skeleton behind a `Swap`, and the KPI strip should show skeleton bars rather than stale
-> numbers from the previous input. It currently shows neither.
+> **The one case in this repo that earned a loader — now shipped, and past the band this
+> paragraph guessed at.** The layered elastic solver (`src/components/react/lea/lea.ts`) solves
+> a dense linear system at every quadrature node. This note assumed a depth profile in the
+> 1–4 s band; the real worst case is Huang's Figure 2.27, where each of sixteen curves is
+> thirteen critical-strain searches over a dual-tandem wheel group and the whole figure is
+> **fourteen seconds** of arithmetic even after the solver was made five times faster. That is
+> §7.6 territory, not §7.3's: a determinate bar with a stage label, a counter, an elapsed clock
+> past ten seconds and a cancel past fifteen. It is not a skeleton, because the figure is not
+> deferred — it *streams*, one curve at a time, so §2.2's "partially — content is streaming"
+> row applies and the reader watches the mesh fill in behind the bar.
 
 ### 7.4 Axis and label handling
 
@@ -266,10 +272,12 @@ Reserve the canvas box at its final aspect ratio from first paint.
 ## 8. Source
 
 The complete, copy-ready source for `elx-loaders.css` and `elx-loaders.jsx` is maintained with
-this document. **This repo ships neither yet** — see the repo note at the top. When the first
-loading state lands (§7.3 names the candidate), add the stylesheet as a single scoped block
+this document. **This repo ships the determinate-progress piece of it and nothing else** — see
+the repo note at the top. That piece landed the way this section asks: a single scoped block
 appended to `src/components/react/tools.css` under the `cee-` prefix, matching the binding in
-`chart-standards.md` §B, and port the components into `src/components/react/ui/`.
+`chart-standards.md` §B, with the component in `src/components/react/ui/ProgressStrip.tsx`.
+The skeleton, shimmer and streamed-text families are still unported; when the second loading
+state lands, port them the same way rather than inlining a second set of rules.
 
 The pieces that must survive that port unchanged, because they are the load-bearing engineering
 rather than styling:
