@@ -1430,8 +1430,15 @@ export function latticeAxes(spec: ChartSpec) {
  * against the family.
  *
  * Figure 2.21's sweep is h1/a on a LINEAR ladder and its family is a
- * logarithmic one. There is no shared ruler between those two, so it keeps
- * unit width each, which is what its rhombus shows and what it had before.
+ * logarithmic one. There is no shared ruler between those two, and no
+ * derivation either: any weighting is the draughtsman's choice. Half each
+ * is therefore the honest default rather than a finding, and the plate was
+ * checked against it the same way — its rhombus is far less decisive than
+ * Figure 2.31's mesh (nineteen curves in a crowded frame, so almost any
+ * weight lands on ink), but the scan puts the family between 0.45 and 0.52
+ * and 0.5 sits inside that. Do not narrow it on the strength of one scan:
+ * there is nothing to derive, so a measured 0.47 would be noise wearing a
+ * decimal point.
  */
 function latticeWeight(
   fLo: number, fHi: number, fLog: boolean,

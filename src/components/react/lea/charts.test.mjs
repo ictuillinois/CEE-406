@@ -270,6 +270,40 @@ test('two log families share one ruler; a mixed pair cannot', () => {
   assert.equal(a21.fWeight, 0.5, 'a mixed pair has no shared ruler and keeps half each');
 });
 
+test('only a chart that declares a magnitude may put a negative on a log axis', () => {
+  /* The defect that broke Figure 2.31 was structural, not local: a
+     logarithmic ordinate cannot draw a negative, so a signed evaluator gets
+     silently truncated wherever it changes sign, and the curve simply stops.
+     Swept over every log-axis chart, only 2.31 goes negative — Foster and
+     Ahlvin drew Figures 2.2 to 2.6 at nu = 0.5, where the (1 - 2nu) term
+     that makes the surface radial stress negative vanishes identically — and
+     2.31 declares `magnitude`. This is here so the next chart cannot acquire
+     the same defect quietly. */
+  const offenders = [];
+  for (const c of CHARTS) {
+    if (!c.value.log || c.magnitude) continue;
+    const panels = c.panel ? c.panel.values : [undefined];
+    const S = c.sweep;
+    outer: for (const pv of panels) {
+      for (const fv of c.family.values) {
+        for (let i = 0; i <= 12; i++) {
+          const t = i / 12;
+          const sv = S.log
+            ? Math.exp(Math.log(S.min) + t * (Math.log(S.max) - Math.log(S.min)))
+            : S.min + t * (S.max - S.min);
+          const v = c.evaluate(fv, sv, pv);
+          if (Number.isFinite(v) && v < 0) {
+            offenders.push(`${c.figure}: ${v.toExponential(2)} at ${c.family.symbol} ${fv}, sweep ${sv}`);
+            break outer;
+          }
+        }
+      }
+    }
+  }
+  assert.deepEqual(offenders, [],
+    'a log ordinate cannot draw these, so the curve stops there:\n' + offenders.join('\n'));
+});
+
 test('Figure 2.31 draws the magnitude, because its factor changes sign', () => {
   /* Table 2.3 tabulates (ZZ1 - RR1) and it goes NEGATIVE over a good part of
      the chart: for k1 = k2 = 2 and H = 0.125 it is +0.706 at A = 0.1 and
