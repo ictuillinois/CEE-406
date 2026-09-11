@@ -220,3 +220,32 @@ test('every TeX literal escapes its backslashes', () => {
   }
   assert.ok(checked >= 20, `expected to find the module's equations, found ${checked}`);
 });
+
+test('no curve is labelled in exponent notation', () => {
+  /* These charts carry no legend: a curve's label IS its name, and the
+     reader matches it against the plate. `toPrecision(3)` switches to
+     exponent notation the moment the exponent reaches the precision, so
+     Figure 2.17's family — 1, 2, 5 ... 1000, 2000, 5000, 10000 — had five
+     of its thirteen curves labelled "1.00e+3" through "1.00e+4" where the
+     plate prints 1000 and 10,000.
+
+     Checked here rather than in charts.test.mjs because the formatter lives
+     in ChartReader.tsx and this file already bundles the TSX. */
+  const READER = readFileSync(join(HERE, 'modules', 'ChartReader.tsx'), 'utf8');
+  const m = /const fmtParam = \(v: number\) => \{([\s\S]*?)\n\};/.exec(READER);
+  assert.ok(m, 'fmtParam has moved; update this check');
+  const fmtParam = new Function('v', m[1].replace(/: number/g, ''));
+
+  for (const c of mod.CHARTS) {
+    const values = [...c.family.values, ...(c.sweep.ticks ?? [])];
+    for (const v of values) {
+      const out = fmtParam(v);
+      assert.doesNotMatch(out, /e[+-]/i,
+        `${c.figure}: ${v} is labelled "${out}"`);
+      // ...and it must still BE the number, to a part in a thousand.
+      assert.ok(Math.abs(Number(out) - v) <= 1e-3 * Math.max(Math.abs(v), 1e-9),
+        `${c.figure}: ${v} is labelled "${out}"`);
+    }
+  }
+});
+

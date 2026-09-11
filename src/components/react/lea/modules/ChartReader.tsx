@@ -53,8 +53,28 @@ function rampFor(spec: ChartSpec) {
 const secondRamp = (first: ReturnType<typeof rampFor>) =>
   (first === 'blue' ? 'orange' : 'blue') as 'orange' | 'blue';
 
-const fmtParam = (v: number) =>
-  Math.abs(v) >= 100 || (v !== 0 && Math.abs(v) < 0.01) ? v.toPrecision(3) : String(+v.toFixed(3));
+/**
+ * A family or sweep value, as a label.
+ *
+ * The large branch is not `toPrecision(3)`, and that is the whole point of
+ * it being written out. `toPrecision` switches to exponent notation as soon
+ * as the exponent reaches the precision, so (10000).toPrecision(3) is
+ * "1.00e+4" — and Figure 2.17's family runs 1, 2, 5 ... 2000, 5000, 10000.
+ * Five of its thirteen curves were labelled "1.00e+3" through "1.00e+4"
+ * where the plate prints 1000 and 10,000, on a chart whose curves carry no
+ * legend, so the label IS the curve's name.
+ *
+ * No thousands separator, tempting as it is: this same formatter writes the
+ * inverse readout, where "E1/E2 = 10,000, h1/a = 1.5" has two commas doing
+ * different jobs in one line.
+ */
+const fmtParam = (v: number) => {
+  if (!Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 100) return String(Math.round(v));
+  // Unary plus on the small branch too, or 0.001 prints as "0.00100" and
+  // claims two digits it does not have.
+  return v !== 0 && Math.abs(v) < 0.01 ? String(+v.toPrecision(3)) : String(+v.toFixed(3));
+};
 
 /**
  * Data coordinates under the pointer.
