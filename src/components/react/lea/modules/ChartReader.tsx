@@ -85,6 +85,22 @@ const fmtParam = (v: number) => {
  * objects' p2d converters are internal, so every access is guarded and the
  * feature simply switches itself off if a future Plotly moves them; the typed
  * inputs remain the primary path either way.
+ *
+ * `p2d` takes a pixel measured from the START of the plot area — which is
+ * why `_size.l`/`_size.t` come off the client coordinates first — and it
+ * returns the value in DATA units on every axis type, log included. It is
+ * `l2d(p2l(px))`, and `l2d` is the step that undoes the log.
+ *
+ * That last sentence is the whole of a bug this carried from the day it was
+ * written. It used to raise ten to the power of what p2d returned, on the
+ * reasoning that a log axis speaks log10 — true of `range` and of annotation
+ * positions, and NOT of this. So on the six charts with a logarithmic axis
+ * the middle of the frame read as 775 on an axis that stops at 100, and the
+ * card reported "pointer is outside the chart frame" for almost the whole
+ * page. Reading the chart backwards is the one thing this module does that a
+ * printed page cannot, and on Figures 2.2 to 2.6, 2.17 and 2.31 it was
+ * answering about a point three decades off the sheet. Nothing said so:
+ * every number involved was finite and plausible.
  */
 function pointerData(gd: any, evt: MouseEvent): { x: number; y: number } | null {
   const fl = gd?._fullLayout;
@@ -94,10 +110,8 @@ function pointerData(gd: any, evt: MouseEvent): { x: number; y: number } | null 
   const px = evt.clientX - box.left - fl._size.l;
   const py = evt.clientY - box.top - fl._size.t;
   if (px < 0 || py < 0 || px > fl._size.w || py > fl._size.h) return null;
-  // p2d returns log10 of the value on a log axis.
-  const un = (a: any, v: number) => (a.type === 'log' ? Math.pow(10, v) : v);
-  const x = un(xa, xa.p2d(px));
-  const y = un(ya, ya.p2d(py));
+  const x = xa.p2d(px);
+  const y = ya.p2d(py);
   return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
 }
 
