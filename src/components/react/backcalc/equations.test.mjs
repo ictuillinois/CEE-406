@@ -180,7 +180,15 @@ test('the synthetic preset basin is the forward solution of 420/28/11 ksi', () =
     { h: 0, E: 11000, nu: 0.40 },
   ];
   const w = basin(truth, Q, PLATE.a, OFFSETS).map(x => +(x / 0.001).toFixed(2));
-  assert.deepEqual(w, [25.44, 19.83, 16.33, 12.38, 9.67, 6.43, 3.69]);
+  // The center reads 25.45 and used to read 25.44. That is the solver, not
+  // the preset: `4b9732b` gave lea.ts a common breakpoint ladder for both
+  // Bessel families and a run-based stopping rule, and r = 0 is where that
+  // buys the most — J0(0) = 1, so the integrand decays slowest there and
+  // nothing cancels it. The other six sensors did not move by a hundredth of
+  // a mil. The pin follows the better quadrature; this note is here so the
+  // next person does not read the change as drift in the preset, which is
+  // what this test exists to catch.
+  assert.deepEqual(w, [25.45, 19.83, 16.33, 12.38, 9.67, 6.43, 3.69]);
 });
 
 const THIN = [
