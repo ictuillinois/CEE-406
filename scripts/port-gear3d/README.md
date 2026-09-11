@@ -8,7 +8,7 @@ transforms against a newer upstream**, not by hand-editing the ported files.
 
 | In this repo | Origin | How |
 |---|---|---|
-| `src/components/react/gear3d/engine/**` | upstream `src/**` (36 modules) | plain copy |
+| `src/components/react/gear3d/engine/**` | upstream `src/**` (37 modules) | plain copy |
 | `src/components/react/gear3d/gear3d.js` | upstream `main.js` | `port-main.mjs` |
 | `src/components/react/gear3d/gear3d.css` | upstream `styles.css` | `port-css.mjs` |
 | `public/gear3d/data/**` | upstream `src/data/**` | plain copy |
@@ -67,6 +67,14 @@ it is worth doing before trusting a real one.
 
 ### Testing a sync
 
+`node --test src/components/react/gear3d/units.test.mjs` re-reads the display
+system: that no unit label sits against an interpolated value in the generated
+file, that every function formatting through `UNIT_SYSTEMS` is re-run by
+`setUnitSystem`, that SI comes out byte-identical to `units.js` itself, and
+that every English magnitude the library was cited in survives the rounding in
+`engine/core/readable.js`. Upstream carries the same module and the same checks
+as §15 of its own suite, so a sync that loses either end fails on both sides.
+
 `node --test src/components/react/gear3d/geometry.test.mjs` builds the actual
 tire, rim and hub meshes for every designation in the library. **Nothing else
 in either suite does**: the upstream E-Lab's checks cover the data, the layout
@@ -74,6 +82,15 @@ and the exports, and `render.test.mjs` server-renders the islands but never
 runs a `client:only` island's effects, so it never reaches a line of three.js.
 The one time a merge threw on its first call, all 176 upstream checks passed
 and the tool rendered an empty viewport.
+
+## Anchors are spelled the way UPSTREAM spells
+
+Every `find` string quotes main.js byte for byte, so its spelling tracks
+upstream and never this repository. Upstream spelled British until its own
+American pass (`11f9c56`); the anchors were updated to match in the 2026-09
+sync, and `scripts/us-english.mjs` skips this script — see `SKIP_FILES` —
+precisely so a run of that pass cannot silently break them. If a future
+upstream changes its spelling again, the anchors follow it, not us.
 
 ## Why the transforms assert
 
@@ -88,6 +105,12 @@ The count in each assertion is part of the contract. If upstream adds a tenth
 one also needs scoping to the island root.
 
 ## What the transforms change, and why
+
+Only port concerns. If a change would be right for the standalone E-Lab too,
+it belongs in upstream `main.js` and arrives here through a re-sync — that is
+where the unit-system work went in 2026-09, rather than into an eleventh
+section of this script. A transform that carries product changes stops being
+a transform and becomes a fork.
 
 `port-main.mjs` — 22 rewrites:
 

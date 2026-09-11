@@ -25,7 +25,7 @@ function subRe(label, re, replace, expect) {
 }
 
 /* ---- 1. Engine import paths ------------------------------------------ */
-subRe('import paths ./src/ -> ./engine/', /from '\.\/src\//g, "from './engine/", 26);
+subRe('import paths ./src/ -> ./engine/', /from '\.\/src\//g, "from './engine/", 27);
 
 /* ---- 2. Header -------------------------------------------------------- */
 sub('file header',
@@ -129,20 +129,21 @@ sub('texture basePath',
     });`);
 
 /* ---- 8. Named document keydown handlers, so they can be removed -------- */
-/* `closeCatalogue` is upstream's spelling and both strings below are upstream
-   text — the anchor has to match main.js byte for byte, and the replacement is
-   spliced in beside code that still calls it. The American spelling is applied
-   afterwards, to the whole generated file, by scripts/us-english.mjs, which
-   skips this script for exactly that reason. Do not respell these by hand. */
-sub('catalogue Escape handler',
+/* Both strings below are upstream text: the anchor has to match main.js byte
+   for byte, and the replacement is spliced in beside code that still calls
+   `closeCatalog`. Upstream spelled this `closeCatalogue` until its own
+   American-spelling pass (11f9c56); the spelling of an anchor tracks
+   upstream, never this repository, which is why scripts/us-english.mjs skips
+   this script. Do not respell these by hand. */
+sub('catalog Escape handler',
 `    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !modal.hidden) { closeCatalogue(); e.stopPropagation(); }
+        if (e.key === 'Escape' && !modal.hidden) { closeCatalog(); e.stopPropagation(); }
     }, true);`,
-`    const onCatalogueKey = (e) => {
-        if (e.key === 'Escape' && !modal.hidden) { closeCatalogue(); e.stopPropagation(); }
+`    const onCatalogKey = (e) => {
+        if (e.key === 'Escape' && !modal.hidden) { closeCatalog(); e.stopPropagation(); }
     };
-    document.addEventListener('keydown', onCatalogueKey, true);
-    _docKeys.push([onCatalogueKey, true]);`);
+    document.addEventListener('keydown', onCatalogKey, true);
+    _docKeys.push([onCatalogKey, true]);`);
 
 sub('shortcut map handler open',
 `function setupKeyboard() {

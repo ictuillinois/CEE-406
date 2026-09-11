@@ -82,7 +82,7 @@ export const MATERIAL_SPECS = Object.freeze({
         description: 'The inside of the wheel well. Deliberately NOT the polished disc material: '
             + 'the barrel sits inside the tire, in shadow, and is painted rather than machined. '
             + 'Given the polished treatment it reads as a chrome spool and becomes the brightest '
-            + 'object in the figure, which is exactly backwards — it should recede behind the '
+            + 'object in the figure, which is exactly backward — it should recede behind the '
             + 'tread and the disc face. Drawn DOUBLE-SIDED, because a rim is a thin shell and '
             + 'the hand holes in the disc look straight through it at its inside face; culled '
             + 'to the front only, the barrel simply vanished when seen from within the wheel.'

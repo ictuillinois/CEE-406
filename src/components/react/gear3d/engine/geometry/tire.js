@@ -266,7 +266,7 @@ export function tireMeridian(g, opts = {}) {
  *    every tire in the library. Section width is a published dimension that
  *    the dimension engine draws and the footprint export writes out, so a
  *    tire quietly a millimeter too wide is not a cosmetic matter. Centripetal
- *    parameterisation is the standard cure and removes the overshoot exactly.
+ *    parameterization is the standard cure and removes the overshoot exactly.
  *
  * 2. SAMPLES FOLLOW CURVATURE, NOT SPAN COUNT. Dividing a fixed budget equally
  *    between spans gave the short, tightly curved shoulder the same four
@@ -510,7 +510,7 @@ export function treadSpec(pattern, g, opts = {}) {
         // taking a fifth of the pitch needs about three circumferential
         // samples inside it to survive, so a true pitch would want close to a
         // thousand segments. The true pitch is carried by the tread normal
-        // map instead — which is exactly the division of labour this file's
+        // map instead — which is exactly the division of labor this file's
         // header describes — and the geometry keeps the coarse relief that
         // has to break the silhouette.
         blocks: pattern === 'lug'

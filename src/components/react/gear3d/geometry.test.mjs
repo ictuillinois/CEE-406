@@ -97,7 +97,7 @@ test('no vertex is NaN, and the tire is exactly as wide as its section width', (
         // dimension engine draws that number and the footprint export writes
         // it out. Uniform Catmull-Rom overshot it by 0.6-1.1 mm on every tire
         // here, with the true maximum 11 mm off the station the profile puts
-        // it at; centripetal parameterisation plus a maximum-width control
+        // it at; centripetal parameterization plus a maximum-width control
         // point whose neighbors share an axial station is what removes it.
         t.computeBoundingBox();
         const width = t.boundingBox.max.x - t.boundingBox.min.x;

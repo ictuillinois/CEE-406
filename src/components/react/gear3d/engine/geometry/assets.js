@@ -197,7 +197,7 @@ export class AssetLibrary {
         this.log.push(msg);
         // Scale factors and fallbacks are logged, not swallowed: a figure
         // rendered with a silently substituted or silently stretched mesh is
-        // a figure whose provenance nobody can reconstruct afterwards.
+        // a figure whose provenance nobody can reconstruct afterward.
         console.info(`[Gear3D assets] ${msg}`);
     }
 }

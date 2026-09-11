@@ -67,6 +67,7 @@ export default function Gear3DApp() {
         <div className="cee-howto__body">
           <ol>
             <li><strong>Pick a vehicle.</strong> Choose a domain (truck, aircraft, or a bare gear configuration), then a class and a model. Trucks are FHWA classes 1–13; aircraft come from FAA Order 5300.7 and the manufacturers' own airport planning documents. Every axle in the library carries a cited source, and every load carries the basis it was taken from.</li>
+            <li><strong>Work in SI or English.</strong> The switch at the right of the toolbar converts everything the interface shows: the figure and its dimension lines, the scale bar, the structure tree, the properties panel, the contact patches and the hover readout. The title block says which system is on. SI gives you the number the source cites. English is <em>rounded to three figures</em>, because a dimension recorded in millimeters has no exact inch and a track width printed as 72.99 in claims a precision it does not have. Three figures is also enough to bring back what the source itself printed, and most of this library was converted from English in the first place: 4572 mm reads 180 in, 1372 mm reads 54 in, 44.5 kN reads 10 kip, 13,608 kg reads 30,000 lb. Where the citation really is metric you get an honest reading rather than a tidy one, so a 300 mm tire section is 11.8 in. Data exports do not follow the switch at all. <code>footprint.csv</code>, the FEM deck and the geometry files are always written in millimeters, and each states so in its own header.</li>
             <li><strong>Read the layout, not the picture.</strong> The tool opens in <strong>Quad</strong>, showing plan, 3D, side and front together, because a gear configuration is a plan first, and a single pictorial view is the one arrangement that hides the spacings you need. Click any pane to open it full size.</li>
             <li><strong>Turn on the dimensions you need.</strong> Longitudinal spacings are on by default. Add transverse to get track widths and dual spacings. <strong>Measure</strong> (M) lets you take your own dimension between any two features. Endpoints snap to tire centers and edges, contact patches, and axle centerlines.</li>
             <li><strong>Draw the footprints.</strong> Under Contact patches, tick <em>Draw footprints</em>. Three models are offered because the literature offers three: a rectangle, Huang's rectangle with semicircular ends (Ch. 2), and an ellipse. They give different contact areas for the same load, which is the point. Compare them before you trust one.</li>
@@ -131,7 +132,9 @@ export default function Gear3DApp() {
             </div>
             <div className="g3-tb-cell g3-tb-cell--wide">
               <span className="g3-tb-label">Units</span>
-              <span className="g3-tb-value">mm · kN · kPa</span>
+              {/* Written by syncUnitSystemUi(). The initial text is the SI
+                  default, so the cell is never blank before the first paint. */}
+              <span className="g3-tb-value" id="g3-tb-units">mm · kN · kPa</span>
             </div>
             <div className="g3-tb-cell g3-tb-cell--rev">
               <span className="g3-tb-label">Rev</span>
@@ -177,8 +180,8 @@ export default function Gear3DApp() {
             <input type="file" id="g3-file-input" accept=".gear3d,.json,application/json" hidden />
             <span className="g3-spacer" />
             <div className="g3-unitsys" role="group" aria-label="Display units">
-              <button type="button" className="g3-uswitch is-active" data-units="SI" title="Millimeters, kilonewtons, kilopascals">SI</button>
-              <button type="button" className="g3-uswitch" data-units="US" title="Inches, kips, psi">US</button>
+              <button type="button" className="g3-uswitch is-active" data-units="SI" aria-pressed="true" title="Millimeters, kilonewtons, kilopascals, square millimeters. Every dimension, load and pressure in the interface, including the figure.">SI</button>
+              <button type="button" className="g3-uswitch" data-units="US" aria-pressed="false" title="Inches, kips, psi, square inches. Readings are rounded to three figures, which is all an inch reading of a metric citation is worth, and is enough to bring back the number the source itself printed: 4572 mm reads 180 in, 44.5 kN reads 10 kip. Data exports stay in millimeters and say so.">English</button>
             </div>
             <button type="button" id="g3-reset" className="g3-btn g3-btn--danger" title="Revert to the cited reference configuration"><Icon name="rotate-left" /> Revert</button>
             <button type="button" id="g3-export" className="g3-btn g3-btn--primary" title="Export figure"><Icon name="camera" /> Export</button>

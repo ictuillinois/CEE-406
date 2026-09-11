@@ -99,7 +99,7 @@ export function buildHubGeometry(g, opts = {}) {
     // size is a 220 mm ball sitting on the wheel: it read as a bowling ball
     // bolted to the disc and hid the studs and the hand holes behind it. A
     // hub cap is a shallow pressing, so the sphere is scaled down its own
-    // axis; the merge recomputes normals afterwards, so the non-uniform scale
+    // axis; the merge recomputes normals afterward, so the non-uniform scale
     // costs nothing.
     const capR = bossR * 0.94;
     const cap = new THREE.SphereGeometry(capR, seg, Math.max(6, seg >> 1), 0, Math.PI * 2, 0, Math.PI / 2);
