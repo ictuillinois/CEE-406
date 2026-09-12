@@ -135,6 +135,37 @@ sub('header',
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--cee-secondary);
+}
+
+/* The how-to panel and the link to the manual, on one row. They are two
+   different questions - how to drive the tool, and what the engine does -
+   so the manual is a sibling of the panel rather than a line buried inside
+   it. The button is the height of the CLOSED summary bar and stays at the
+   top when the panel opens, which is what 'flex-start' is for.
+
+   The names are 'lp-shell-*', in the shell's own namespace and not the
+   app's: see the note above about what happened the last time a wrapper
+   wore a class the app had already spent. */
+.cee-tool.lp-shell .lp-shell-help {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.cee-tool.lp-shell .lp-shell-help > .cee-howto { flex: 1 1 22rem; }
+.cee-tool.lp-shell .lp-shell-help > * + * { margin-top: 0; }
+.cee-tool.lp-shell .lp-shell-docs {
+    flex: none;
+    /* The same padding and the same type as '.cee-howto summary', so the two
+       bars are the same height BY CONSTRUCTION rather than by a number that
+       stops being right the first time either font changes. */
+    padding: 1rem 1.25rem;
+    font-family: var(--font-heading);
+    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+    border-radius: var(--cee-radius-card);
+    text-decoration: none;
+    white-space: nowrap;
 }`);
 
 /* ---- 2. The palette, and the theme inversion --------------------------- */

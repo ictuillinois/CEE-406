@@ -14,10 +14,11 @@
 // hands the subtree over once and never touches it again, so there is no
 // reconciliation to lose.
 //
-// Three things are injected into the app, which is why `leaps.js` needs no
+// Four things are injected into the app, which is why `leaps.js` needs no
 // port-time patching of its own:
 //   · Plotly, imported here as a module rather than found on `window`;
 //   · a Worker factory, because Vite resolves a worker URL at build time;
+//   · where the manual lives, which is next door upstream and off-site here;
 //   · the typeface, through the `--lp-font` token in leaps.css.
 // KaTeX is the exception: the app reads `window.katex`, which BaseLayout
 // already loads on every page of this site and the E-Lab page pulls from
@@ -32,6 +33,14 @@ import { initLeaps } from './leaps.js';
 import { LEAPS_MARKUP } from './markup';
 import '../tools.css';
 import './leaps.css';
+
+/* The manual is the standalone E-Lab's own documentation page, and there is
+   deliberately no second copy of it in this repository: it is generated from
+   the same upstream the app is, and two hand-maintained copies of a fifteen-
+   section reference cannot be kept in step any more than two copies of forty
+   element ids can. Linked rather than duplicated, so it is always the manual
+   for the engine that is running. */
+const LEAPS_DOCS_URL = 'https://johann-cardenas.github.io/e-labs/leaps/documentation.html';
 
 export default function LeapsApp() {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -48,13 +57,17 @@ export default function LeapsApp() {
     // app closes over, so filling `plotly` in later is all it takes: the
     // chart path already retries until it has one, exactly as it does on the
     // standalone page where Plotly comes off a deferred CDN tag.
-    const opts: { plotly?: unknown; makeWorker: () => Worker } = {
+    const opts: { plotly?: unknown; makeWorker: () => Worker; docsHref: string } = {
       // The engine is a UMD that assigns itself to `self`, so the worker
       // module reads it back off there. `new URL(..., import.meta.url)` is
       // the form Vite rewrites into a hashed asset URL at build time; a bare
       // path would 404 from inside _astro/.
       makeWorker: () =>
         new Worker(new URL('./engine/worker.ts', import.meta.url), { type: 'module' }),
+      // The app's own link to the manual, in the Performance pane. Upstream
+      // it is the relative `documentation.html` next door, which from
+      // /tools/leaps/ on this site is a 404.
+      docsHref: LEAPS_DOCS_URL,
     };
     try {
       dispose = initLeaps(mount, opts);
@@ -75,153 +88,178 @@ export default function LeapsApp() {
   return (
     <div className="cee-tool lp-shell">
 
-      <details className="cee-howto">
-        <summary>How to use this tool</summary>
-        <div className="cee-howto__body">
-          <ol>
-            <li>
-              <strong>Pick your units first.</strong> LEAPS asks once, before anything is typed,
-              because every number in the workspace is in the system you choose: moduli,
-              thicknesses, pressures and results alike. <strong>SI</strong> is millimeters, newtons
-              and megapascals (1&nbsp;MPa = 1&nbsp;N/mm²), which is what the engine works in
-              internally, so every SI conversion factor is exactly one. <strong>English</strong> is
-              inches, pounds and psi, the column set WinJULEA prints, so a result can be read
-              straight across. The choice is remembered and can be changed from the toolbar.
-            </li>
-            <li>
-              <strong>Start from a template.</strong> Seven ship with the tool: highway flexible,
-              FAA airfield flexible, rigid on a cement-treated base, composite, perpetual deep
-              asphalt, a Boussinesq half-space for checking the engine, and a Saint-Venant case set
-              up to compare the three load idealizations.
-            </li>
-            <li>
-              <strong>Build the structure, on the panel or on the section.</strong> Every layer
-              carries a thickness, a modulus and a Poisson ratio; the bottom one is the
-              semi-infinite subgrade and its thickness is ignored. In the panel: the{' '}
-              <em>+</em> between two rows inserts a layer there, the bin deletes one, the grip
-              restacks, and the <em>…</em> menu renames, duplicates and reorders. On the section:{' '}
-              <strong>drag an interface line to set the thickness above it</strong>, and click a
-              layer to select it in both places at once.
-            </li>
-            <li>
-              <strong>Set the interfaces.</strong> The control is WinJULEA&rsquo;s own{' '}
-              <em>slip</em> value: <strong>0</strong> is fully bonded, <strong>1</strong> is
-              frictionless, and both are exact. Anything between is Goodman&rsquo;s shear spring,
-              k&nbsp;=&nbsp;(G<sub>lower</sub>/a)·(1−s)/s, and the stiffness it implies is printed
-              beside the slider. Every interface also carries a chip on the section itself: one
-              click cycles bonded, partial, free.
-            </li>
-            <li>
-              <strong>Choose the load model.</strong> The switch in the toolbar moves between a{' '}
-              <strong>circular imprint</strong>, a <strong>point load</strong> and a{' '}
-              <strong>line load</strong>. All three carry the same total force, so switching
-              changes only how that force is spread, which is exactly the comparison
-              Saint-Venant&rsquo;s principle is about.
-            </li>
-            <li>
-              <strong>Type any two of load, pressure and area.</strong> They are one equation,
-              F&nbsp;=&nbsp;p·A, and the <em>Solve for</em> switch names which of the three the app
-              computes. The computed one becomes a read-only readout, so there is no state in which
-              three numbers can be typed that do not satisfy the relation. Contact radius is offered
-              alongside area, because a footprint is usually known one way or the other.
-            </li>
-            <li>
-              <strong>Build the gear.</strong> Single, dual, dual tandem, tridem or dual tridem,
-              from the load and the two spacings. Editing any gear parameter lights the{' '}
-              <strong>Build</strong> button: those values seed the loads rather than driving them,
-              so nothing moves until you press it.
-            </li>
-            <li>
-              <strong>Place evaluation points.</strong> These are the columns of the results table.
-              Type them in the panel, double-click the section to drop one, or drag one to move it;
-              points snap to interfaces, which is where the critical responses live.{' '}
-              <em>Critical set</em> drops one at the surface and one at every interface under the
-              first load.
-            </li>
-            <li>
-              <strong>Run.</strong> The badge beside the button is a preflight checklist: a tick for
-              every input that is complete and a cross for anything that needs review. Run opens the
-              list instead of solving if something fails, because a layered-elastic solver returns
-              plausible numbers for a section nobody meant to type.
-            </li>
-            <li>
-              <strong>Read the results.</strong> One column per point, one row per quantity, in
-              WinJULEA row order: position, the six stress components, the six strains, the three
-              displacements, then the principal stresses and principal strains. The groups fold, the
-              quantity column stays put while you scroll sideways, and each cell carries a bar
-              scaled to the largest magnitude in its own row.
-            </li>
-            <li>
-              <strong>Export.</strong> One button writes a single file carrying the preflight, the
-              structure, the interfaces, every load, the solver settings and every response at every
-              evaluation point, in the units on screen. The project file reloads the run exactly; the
-              section PNG goes straight into a report.
-            </li>
-          </ol>
+      <div className="lp-shell-help">
+        <details className="cee-howto">
+          <summary>How to use this tool</summary>
+          <div className="cee-howto__body">
+            <ol>
+              <li>
+                <strong>Pick your units first.</strong> LEAPS asks once, before anything is typed,
+                because every number in the workspace is in the system you choose: moduli,
+                thicknesses, pressures and results alike. <strong>SI</strong> is millimeters, newtons
+                and megapascals (1&nbsp;MPa = 1&nbsp;N/mm²), which is what the engine works in
+                internally, so every SI conversion factor is exactly one. <strong>English</strong> is
+                inches, pounds and psi, the column set WinJULEA prints, so a result can be read
+                straight across. The choice is remembered and can be changed from the toolbar.
+              </li>
+              <li>
+                <strong>Start from a template.</strong> Seven ship with the tool: highway flexible,
+                FAA airfield flexible, rigid on a cement-treated base, composite, perpetual deep
+                asphalt, a Boussinesq half-space for checking the engine, and a Saint-Venant case set
+                up to compare the three load idealizations.
+              </li>
+              <li>
+                <strong>Build the structure, on the panel or on the section.</strong> Every layer
+                carries a thickness, a modulus and a Poisson ratio; the bottom one is the
+                semi-infinite subgrade and its thickness is ignored. In the panel: the{' '}
+                <em>+</em> between two rows inserts a layer there, the bin deletes one, the grip
+                restacks, and the <em>…</em> menu renames, duplicates and reorders. On the section:{' '}
+                <strong>drag an interface line to set the thickness above it</strong>, and click a
+                layer to select it in both places at once.
+              </li>
+              <li>
+                <strong>Set the interfaces.</strong> The control is WinJULEA&rsquo;s own{' '}
+                <em>slip</em> value: <strong>0</strong> is fully bonded, <strong>1</strong> is
+                frictionless, and both are exact. Anything between is Goodman&rsquo;s shear spring,
+                k&nbsp;=&nbsp;(G<sub>lower</sub>/a)·(1−s)/s, and the stiffness it implies is printed
+                beside the slider. Every interface also carries a chip on the section itself: one
+                click cycles bonded, partial, free.
+              </li>
+              <li>
+                <strong>Choose the load model.</strong> The switch in the toolbar moves between a{' '}
+                <strong>circular imprint</strong>, a <strong>point load</strong> and a{' '}
+                <strong>line load</strong>. All three carry the same total force, so switching
+                changes only how that force is spread, which is exactly the comparison
+                Saint-Venant&rsquo;s principle is about.
+              </li>
+              <li>
+                <strong>Type any two of load, pressure and area.</strong> They are one equation,
+                F&nbsp;=&nbsp;p·A, and the <em>Solve for</em> switch names which of the three the app
+                computes. The computed one becomes a read-only readout, so there is no state in which
+                three numbers can be typed that do not satisfy the relation. Contact radius is offered
+                alongside area, because a footprint is usually known one way or the other.
+              </li>
+              <li>
+                <strong>Build the gear.</strong> Single, dual, dual tandem, tridem or dual tridem,
+                from the load and the two spacings. Editing any gear parameter lights the{' '}
+                <strong>Build</strong> button: those values seed the loads rather than driving them,
+                so nothing moves until you press it.
+              </li>
+              <li>
+                <strong>Place evaluation points.</strong> These are the columns of the results table.
+                Type them in the panel, double-click the section to drop one, or drag one to move it;
+                points snap to interfaces, which is where the critical responses live.{' '}
+                <em>Critical set</em> drops one at the surface and one at every interface under the
+                first load.
+              </li>
+              <li>
+                <strong>Run.</strong> The badge beside the button is a preflight checklist: a tick for
+                every input that is complete and a cross for anything that needs review. Run opens the
+                list instead of solving if something fails, because a layered-elastic solver returns
+                plausible numbers for a section nobody meant to type.
+              </li>
+              <li>
+                <strong>Read the results.</strong> One column per point, one row per quantity, in
+                WinJULEA row order: position, the six stress components, the six strains, the three
+                displacements, then the principal stresses and principal strains. The groups fold, the
+                quantity column stays put while you scroll sideways, and each cell carries a bar
+                scaled to the largest magnitude in its own row.
+              </li>
+              <li>
+                <strong>Export.</strong> One button writes a single file carrying the preflight, the
+                structure, the interfaces, every load, the solver settings and every response at every
+                evaluation point, in the units on screen. The project file reloads the run exactly; the
+                section PNG goes straight into a report.
+              </li>
+            </ol>
 
-          <h4>Conventions</h4>
-          <p>
-            Stresses are <strong>tension positive</strong>, so a vertical stress under a wheel is
-            negative. <em>z</em> is measured downward from the surface and{' '}
-            <em>u<sub>z</sub></em> is positive downward. Shear strains are engineering strains,
-            γ&nbsp;=&nbsp;τ/G. These are WinJULEA&rsquo;s conventions, so with the same inputs the
-            two programs produce the same signs as well as the same magnitudes.
-          </p>
+            <h4>Conventions</h4>
+            <p>
+              Stresses are <strong>tension positive</strong>, so a vertical stress under a wheel is
+              negative. <em>z</em> is measured downward from the surface and{' '}
+              <em>u<sub>z</sub></em> is positive downward. Shear strains are engineering strains,
+              γ&nbsp;=&nbsp;τ/G. These are WinJULEA&rsquo;s conventions, so with the same inputs the
+              two programs produce the same signs as well as the same magnitudes.
+            </p>
 
-          <h4>Where the idealizations stop</h4>
-          <p>
-            A point load has no finite stress at the load itself, and a line load none anywhere on
-            its own line at the surface. That is the idealization, not a defect in the solver, and it
-            is the reason design methods spread a wheel over a contact area in the first place.
-            LEAPS marks such a point <em>singular</em> and prints nothing rather than the number a
-            quadrature happens to return. Move the point off the load, or use a circular imprint,
-            which is finite everywhere.
-          </p>
+            <h4>Where the idealizations stop</h4>
+            <p>
+              A point load has no finite stress at the load itself, and a line load none anywhere on
+              its own line at the surface. That is the idealization, not a defect in the solver, and it
+              is the reason design methods spread a wheel over a contact area in the first place.
+              LEAPS marks such a point <em>singular</em> and prints nothing rather than the number a
+              quadrature happens to return. Move the point off the load, or use a circular imprint,
+              which is finite everywhere.
+            </p>
 
-          <h4>Reading this against WinJULEA</h4>
-          <p>
-            Both solve the same problem: an N-layer elastic system under uniform circular contacts,
-            with interfaces from fully bonded to frictionless. Put the same structure, the same
-            loads and the same evaluation points into both and the numbers agree, because the
-            physics is the same physics and both carry it to convergence rather than reading it off
-            a chart. The tests beside this tool pin that: the engine reproduces Boussinesq&rsquo;s
-            closed forms, Burmister&rsquo;s two-layer deflection factor and Jones&rsquo; three-layer
-            table, and is cross-checked point by point against this site&rsquo;s independent
-            Chapter&nbsp;2 solver.
-          </p>
-          <p>Three things to watch:</p>
-          <ul>
-            <li>
-              <strong>Units are yours to keep straight.</strong> WinJULEA is unit-agnostic; it works
-              in whatever consistent set you type. English mode here is the set it is normally
-              driven with: inches, pounds, psi, and a displacement in inches.
-            </li>
-            <li>
-              <strong>Intermediate slip is program-specific.</strong> 0 and 1 are exact in both. A
-              value in between is a shear-spring compliance, and the normalization is each
-              program&rsquo;s own; the stiffness LEAPS uses is printed beside the control so the
-              assumption is on screen rather than buried.
-            </li>
-            <li>
-              <strong>Point and line loads are ours, not WinJULEA&rsquo;s.</strong> They exist to
-              show what the circular imprint is an idealization of. Use the circular model for any
-              comparison against another layered-elastic program.
-            </li>
-          </ul>
+            <h4>Reading this against WinJULEA</h4>
+            <p>
+              Both solve the same problem: an N-layer elastic system under uniform circular contacts,
+              with interfaces from fully bonded to frictionless. Put the same structure, the same
+              loads and the same evaluation points into both and the numbers agree, because the
+              physics is the same physics and both carry it to convergence rather than reading it off
+              a chart. The tests beside this tool pin that: the engine reproduces Boussinesq&rsquo;s
+              closed forms, Burmister&rsquo;s two-layer deflection factor and Jones&rsquo; three-layer
+              table, and is cross-checked point by point against this site&rsquo;s independent
+              Chapter&nbsp;2 solver.
+            </p>
+            <p>Three things to watch:</p>
+            <ul>
+              <li>
+                <strong>Units are yours to keep straight.</strong> WinJULEA is unit-agnostic; it works
+                in whatever consistent set you type. English mode here is the set it is normally
+                driven with: inches, pounds, psi, and a displacement in inches.
+              </li>
+              <li>
+                <strong>Intermediate slip is program-specific.</strong> 0 and 1 are exact in both. A
+                value in between is a shear-spring compliance, and the normalization is each
+                program&rsquo;s own; the stiffness LEAPS uses is printed beside the control so the
+                assumption is on screen rather than buried.
+              </li>
+              <li>
+                <strong>Point and line loads are ours, not WinJULEA&rsquo;s.</strong> They exist to
+                show what the circular imprint is an idealization of. Use the circular model for any
+                comparison against another layered-elastic program.
+              </li>
+            </ul>
 
-          <h4>The engine</h4>
-          <p>
-            Multilayer elastic theory (Burmister) solved in Hankel-transform space: a 4N−2
-            boundary-condition system per transform parameter with scaled exponentials so nothing
-            overflows at any layer thickness, panel-wise Gauss-Legendre quadrature between Bessel
-            zeros, and Wynn ε acceleration on the oscillatory tail. Surface responses use asymptotic
-            subtraction with closed-form Weber-Schafheitlin tails; point loads are integrated as the
-            difference from Boussinesq&rsquo;s half-space with the closed form added back. It runs in
-            a Web Worker, so the section stays interactive while a 61×43 contour grid solves, and it
-            self-checks against Boussinesq at startup. The badge in the status bar is that check.
-          </p>
-        </div>
-      </details>
+            <h4>The engine</h4>
+            <p>
+              Multilayer elastic theory (Burmister) solved in Hankel-transform space: a 4N−2
+              boundary-condition system per transform parameter with scaled exponentials so nothing
+              overflows at any layer thickness, panel-wise Gauss-Legendre quadrature between Bessel
+              zeros, and Wynn ε acceleration on the oscillatory tail. Surface responses use asymptotic
+              subtraction with closed-form Weber-Schafheitlin tails; point loads are integrated as the
+              difference from Boussinesq&rsquo;s half-space with the closed form added back. It runs in
+              a Web Worker, so the section stays interactive while a 61×43 contour grid solves, and it
+              self-checks against Boussinesq at startup. The badge in the status bar is that check.
+            </p>
+          </div>
+        </details>
+
+        {/* The manual, beside the how-to rather than inside it: the panel
+            above is how to DRIVE the tool, and the documentation is the
+            theory, the numerics, the validation cases and the references.
+            It opens in a new tab because the workspace holds a section
+            somebody is part way through typing. */}
+        <a
+          className="cee-btn cee-btn--ghost lp-shell-docs"
+          href={LEAPS_DOCS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg
+            viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"
+            fill="none" stroke="currentColor" strokeWidth="1.8"
+            strokeLinecap="round" strokeLinejoin="round"
+          >
+            <path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H19v14H5.5A1.5 1.5 0 0 0 4 18.5z" />
+            <path d="M4 18.5A1.5 1.5 0 0 0 5.5 20H19v-3" />
+            <path d="M8.5 7.5h6M8.5 11h4" />
+          </svg>
+          Documentation
+        </a>
+      </div>
 
       {failure && (
         <p className="cee-warn" role="alert">{failure}</p>

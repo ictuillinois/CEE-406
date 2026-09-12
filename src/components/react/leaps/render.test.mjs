@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..', '..', '..');
@@ -61,6 +61,25 @@ test('the island renders', () => {
   assert.ok(html.length > 5000, `rendered only ${html.length} characters`);
   assert.ok(html.includes('id="lp-root"'), 'the mount point is missing');
   assert.ok(html.includes('cee-howto'), 'the how-to panel is missing');
+});
+
+test('the manual is one click away, and the link leaves this site', () => {
+  /* Two links point at the documentation and BOTH have to be absolute here:
+   * the button beside the how-to panel, and the app's own line under the
+   * Performance cards. Upstream the second one is the relative
+   * `documentation.html` next door, which from /tools/leaps/ on this site
+   * resolves to a page that does not exist -- so the island injects
+   * `docsHref` the same way it injects Plotly and the Worker. A relative
+   * href in either place is a 404 nobody sees until a student clicks it. */
+  const html = renderToString(React.createElement(mod.LeapsApp));
+  const href = /href="(https:\/\/[^"]*documentation\.html)"/.exec(html);
+  assert.ok(href, 'the Documentation button is missing or its href is not absolute');
+  assert.ok(html.includes('lp-shell-docs'), 'the Documentation button lost its class');
+  assert.ok(/target="_blank"/.test(html), 'the manual should open in a new tab');
+
+  const src = readFileSync(join(HERE, 'LeapsApp.tsx'), 'utf8');
+  assert.match(src, /docsHref:\s*LEAPS_DOCS_URL/,
+    'the app\'s own documentation link must be injected, not left relative');
 });
 
 test('every panel of the workspace is in the markup', () => {

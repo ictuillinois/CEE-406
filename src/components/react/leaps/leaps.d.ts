@@ -16,6 +16,9 @@ export interface LeapsOptions {
     solver?: unknown;
     /** The KaTeX namespace. Defaults to `window.katex`. */
     katex?: unknown;
+    /** Where the manual lives. Defaults to `'documentation.html'`, which is
+     *  next door on the standalone page and a 404 anywhere else. */
+    docsHref?: string;
 }
 
 /** Boots the workspace inside `root` and returns a disposer. */
