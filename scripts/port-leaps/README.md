@@ -21,7 +21,7 @@ that checkable rather than aspirational.
 
 ## Why so little is transformed
 
-Four rewrites in `port-main.mjs`, two in `port-markup.mjs`, three in
+Five rewrites in `port-main.mjs` (two wrappers and three icon forms), two in `port-markup.mjs`, three in
 `port-css.mjs` — and that is the design, not luck. Everything a port would
 normally have to patch is **injected upstream instead**:
 
