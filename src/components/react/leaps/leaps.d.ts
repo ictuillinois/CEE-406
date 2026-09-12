@@ -14,6 +14,8 @@ export interface LeapsOptions {
     makeWorker?: () => Worker;
     /** A main-thread fallback engine, used where a Worker cannot be built. */
     solver?: unknown;
+    /** The KaTeX namespace. Defaults to `window.katex`. */
+    katex?: unknown;
 }
 
 /** Boots the workspace inside `root` and returns a disposer. */
@@ -55,7 +57,7 @@ export interface LeapsLoadKind { id: string; name: string; short: string; icon: 
 export const LOAD_KINDS: LeapsLoadKind[];
 
 export interface LeapsResultRow {
-    g: string; key: string; label: string; q: string;
+    g: string; key: string; sym: string; q: string;
     get: (p: unknown) => number;
 }
 export const RESULT_ROWS: LeapsResultRow[];
@@ -64,10 +66,20 @@ export interface LeapsResultGroup { id: string; name: string; icon: string }
 export const RESULT_GROUPS: LeapsResultGroup[];
 
 export interface LeapsField {
-    id: string; label: string; q: string; div: boolean;
+    id: string; sym: string; name: string; q: string; div: boolean;
     get: (p: unknown) => number;
 }
 export const FIELDS: LeapsField[];
+
+/* The notation table. One spelling per quantity, three renderings. */
+export interface LeapsSymbol { b: string; sub?: string; sup?: string }
+export const SYM: Record<string, LeapsSymbol>;
+/** Markup, for the DOM and for Plotly, which understands sub and sup. */
+export function symHtml(id: string): string;
+/** Flat, for an option element and for a CSV column. */
+export function symText(id: string): string;
+/** The TeX source and plain twin of every equation the app shows. */
+export const EQ: Record<string, { tex: string; plain: string }>;
 
 declare const LEAPS_APP: {
     init: typeof initLeaps;
@@ -78,5 +90,9 @@ declare const LEAPS_APP: {
     RESULT_ROWS: typeof RESULT_ROWS;
     RESULT_GROUPS: typeof RESULT_GROUPS;
     FIELDS: typeof FIELDS;
+    SYM: typeof SYM;
+    EQ: typeof EQ;
+    symHtml: typeof symHtml;
+    symText: typeof symText;
 };
 export default LEAPS_APP;

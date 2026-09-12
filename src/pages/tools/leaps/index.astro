@@ -20,14 +20,13 @@ const base = import.meta.env.BASE_URL;
 
     <header class="tool-head">
       <div>
-        <h1 class="tool-head__title">LEAPS — Linear Elastic Analysis of Pavement Structures</h1>
+        <h1 class="tool-head__title">LEAPS</h1>
         <p class="tool-head__desc">
-          A complete layered-elastic analysis program: any number of layers, interfaces
+          Linear elastic analysis of pavement structures: any number of layers, interfaces
           from fully bonded to frictionless, multi-wheel gears, and the same total load
           applied as a <strong>circular imprint</strong>, a <strong>point load</strong> or a
-          <strong>line load</strong>. Stresses, strains, displacements and principal values
-          at every evaluation point, in <strong>WinJULEA</strong>'s row order and sign
-          conventions, so a run here can be read straight across from one there.
+          <strong>line load</strong>. Results in <strong>WinJULEA</strong>'s row order and
+          sign conventions.
         </p>
       </div>
       <div class="tool-head__hws">
@@ -42,7 +41,18 @@ const base = import.meta.env.BASE_URL;
 </BaseLayout>
 
 <style>
+  /* The workspace is a three-column CAD shell: a 300px model rail, a
+     viewport, and a 320px results rail, over a full-width dock. At the
+     site's 1280px container that leaves the viewport under 500px wide,
+     which is narrower than the standalone page and narrow enough that the
+     section stops being readable. This page, and only this page, opens the
+     container out to the width the app was drawn for.
+
+     `min()` rather than a bare max-width: the container's own 1.5rem side
+     padding has to survive, or the card runs into the window edge on a
+     laptop screen between the two figures. */
   .tool-page {
+    max-width: min(1680px, 100vw);
     padding-top: 2rem;
     padding-bottom: 5rem;
   }
@@ -59,13 +69,14 @@ const base = import.meta.env.BASE_URL;
   .tool-head__title {
     font-size: clamp(1.625rem, 3.5vw, 2.25rem);
     margin: 0 0 0.5rem;
+    letter-spacing: 0.01em;
   }
 
   .tool-head__desc {
     font-size: 0.9rem;
     line-height: 1.65;
     color: var(--color-text-muted);
-    max-width: 46rem;
+    max-width: 52rem;
     margin: 0;
   }
 

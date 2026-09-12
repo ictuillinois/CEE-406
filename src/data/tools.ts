@@ -135,7 +135,7 @@ export const tools: Tool[] = [
     imageAlt: 'A pavement section in the LEAPS workspace: four layers under a dual wheel, ' +
       'the vertical-stress bulb contoured through them, the deflected surface drawn above, ' +
       'and a results table below with one column per evaluation point.',
-    desc: 'A full layered-elastic analysis program in the browser — any number of layers, interfaces from bonded to frictionless, and the same load applied as a circular imprint, a point or a line. Results come out in the rows, units and sign conventions WinJULEA prints, so a run here reads straight across from one there.',
+    desc: 'A full layered-elastic analysis program in the browser: any number of layers, interfaces from bonded to frictionless, and the same load applied as a circular imprint, a point or a line. Results come out in the rows, units and sign conventions WinJULEA prints, so a run here reads straight across from one there.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M10 14 H110" opacity="0.6"/>
       <path d="M10 22 H110" opacity="0.4"/>

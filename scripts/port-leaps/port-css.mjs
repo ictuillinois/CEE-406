@@ -51,11 +51,11 @@ function sub(label, find, replace, expect = 1) {
 /* ---- 1. Header --------------------------------------------------------- */
 sub('header',
 `/* =====================================================================
- * LEAPS — Linear Elastic Analysis of Pavement Structures
+ * LEAPS: Linear Elastic Analysis of Pavement Structures
  * Workspace stylesheet. Dark-first; light theme via [data-theme="light"].
  * ===================================================================== */`,
 `/* =====================================================================
- * LEAPS — Linear Elastic Analysis of Pavement Structures
+ * LEAPS: Linear Elastic Analysis of Pavement Structures
  * Workspace stylesheet (CEE 406 island port).
  * Prefix: lp-
  * ---------------------------------------------------------------------
@@ -79,12 +79,22 @@ sub('header',
    20rem-rail-plus-results grid every ordinary tool uses, so it opts out of
    .cee-tool's layout while keeping its tokens (the how-to panel and the
    notes around it need them). Two classes beat the one-class media query
-   in tools.css outright. */
-.cee-tool.lp-tool {
+   in tools.css outright.
+
+   The class is 'lp-shell', NOT 'lp-tool', and that is not a naming
+   preference. Upstream already spends '.lp-tool' on the little icon
+   buttons in every toolbar, and that rule carries 'height: 2.1em'. A
+   wrapper wearing the same name inherited it: the island root was pinned
+   to 28.55px, its 1,480px of content spilled out of the flow, and the page
+   painted the workspace straight over the site footer. Two classes beat
+   one on 'display', which is why it LOOKED fine, and lost on 'height',
+   which is why it was not. A port must not reuse its own prefix for both
+   an app class and the shell that hosts it. */
+.cee-tool.lp-shell {
     display: block;
     grid-template-columns: none;
 }
-.cee-tool.lp-tool > * + * { margin-top: 1.25rem; }
+.cee-tool.lp-shell > * + * { margin-top: 1.25rem; }
 
 /* One 24-unit grid at 1.75 weight, the same hand as Icon.astro. Sized in
    em so a glyph tracks the text it sits beside. */
@@ -102,23 +112,30 @@ sub('header',
    .cee-card of prose — and tools.css styles cards, not the paragraphs
    inside them. Every other tool's card body is a chart or a table, so
    nothing has needed this before. */
-.cee-tool.lp-tool .cee-card__body > * + * { margin-top: 0.9rem; }
-.cee-tool.lp-tool .cee-card__body p,
-.cee-tool.lp-tool .cee-card__body li {
+.cee-tool.lp-shell .cee-card__body > * + * { margin-top: 0.9rem; }
+.cee-tool.lp-shell .cee-card__body p,
+.cee-tool.lp-shell .cee-card__body li {
     margin: 0;
     font-family: var(--font-body);
     font-size: 0.875rem;
     line-height: 1.7;
     color: var(--cee-secondary);
 }
-.cee-tool.lp-tool .cee-card__body ul {
+.cee-tool.lp-shell .cee-card__body ul {
     margin: 0;
     padding-left: 1.15rem;
     display: grid;
     gap: 0.55rem;
 }
-.cee-tool.lp-tool .cee-card__body strong { color: var(--cee-ink); font-weight: 600; }
-.cee-tool.lp-tool .cee-howto__body p { margin: 0.9rem 0 0; }`);
+.cee-tool.lp-shell .cee-card__body strong { color: var(--cee-ink); font-weight: 600; }
+.cee-tool.lp-shell .cee-howto__body p { margin: 0.9rem 0 0; }
+.cee-tool.lp-shell .cee-howto__body h4 {
+    margin: 1.4rem 0 0.35rem;
+    font-size: 0.8125rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--cee-secondary);
+}`);
 
 /* ---- 2. The palette, and the theme inversion --------------------------- */
 sub('light palette on the bare selector',
@@ -147,6 +164,11 @@ sub('light palette on the bare selector',
     --lp-radius: 10px;
     --lp-mono: ui-monospace, "Cascadia Code", Consolas, "SF Mono", Menlo, monospace;
     --lp-font: "Source Sans Pro", Helvetica, Arial, sans-serif;
+
+    /* the key-response cards, and only them */
+    --lp-key-bg: #13233c;
+    --lp-key-bg-lead: #143140;
+    --lp-key-line: #27405e;
 }`,
 `.lp-app {
     --lp-bg0: #eceff4;      /* viewport void            */
@@ -176,6 +198,16 @@ sub('light palette on the bare selector',
     --lp-radius: 10px;
     --lp-mono: var(--font-mono, ui-monospace, "IBM Plex Mono", Consolas, monospace);
     --lp-font: var(--font-body, "IBM Plex Sans", system-ui, sans-serif);
+
+    /* The key-response cards, and only them. Everything else in the right
+       rail is panel-colored, so a filled card in a rail of unfilled ones
+       is the whole signal that these five are the numbers a decision gets
+       made on. A brand wash rather than a second neutral: they have to
+       read as a different KIND of thing, not a slightly different shade
+       of the same one. */
+    --lp-key-bg: #fdf6f0;
+    --lp-key-bg-lead: #fceede;
+    --lp-key-line: #f0dcc6;
 }`);
 
 sub('dark palette on the theme override',
@@ -197,6 +229,10 @@ sub('dark palette on the theme override',
     --lp-cat3: #b45309;
     --lp-cat4: #be185d;
     --lp-shadow: 0 10px 26px rgba(23, 37, 60, 0.12);
+
+    --lp-key-bg: #eef6f5;
+    --lp-key-bg-lead: #e3f2f0;
+    --lp-key-line: #c9e2de;
 }`,
 `[data-theme="dark"] .lp-app {
     --lp-bg0: #0b1424;
@@ -223,6 +259,10 @@ sub('dark palette on the theme override',
     --lp-cat3: #2fc79c;
     --lp-cat4: #a78bfa;
     --lp-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+
+    --lp-key-bg: #1c2639;
+    --lp-key-bg-lead: #2a2a37;
+    --lp-key-line: #34455f;
 }`);
 
 writeFileSync(OUT, s);

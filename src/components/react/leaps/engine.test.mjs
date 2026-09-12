@@ -367,10 +367,112 @@ test('every glyph the app names exists in the icon set', () => {
 test('the markup mounts one root and the stylesheet opts out of the tool grid', () => {
     assert.ok(markupSrc.includes('id="lp-root"'), 'markup.ts lost the mount point');
     assert.equal(markupSrc.split('id="lp-root"').length - 1, 1, 'more than one mount point');
-    assert.match(cssSrc, /\.cee-tool\.lp-tool \{\s*display: block;/,
+    assert.match(cssSrc, /\.cee-tool\.lp-shell \{\s*display: block;/,
         'leaps.css must opt out of the .cee-tool two-column grid');
+    /* The shell class must not collide with an app class, or a single-class
+       app rule lands on the island root. `.lp-tool` is the toolbar button,
+       carries height: 2.1em, and pinned the root to 28px while its content
+       spilled over the site footer. */
+    assert.ok(!/\.cee-tool\.lp-tool\b/.test(cssSrc),
+        'the island shell must not reuse an app class name');
     assert.match(cssSrc, /\[data-theme="dark"\] \.lp-app \{/,
         'leaps.css must define the dark theme as an override, not as the default');
     assert.ok(!/\[data-theme="light"\]/.test(cssSrc),
         'the port should have inverted the themes: light is the base here');
+});
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 5. Notation, and the table it prints
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+test('every symbol the app names exists in the notation table', () => {
+    /* `symOf` falls back to the id itself, which is the right thing to do at
+     * runtime and the wrong thing to leave unchecked: a mistyped id renders
+     * as the letters "sxz" where the tau belongs, in the results table, the
+     * field picker and the colorbar at once, and nothing throws. */
+    const table = appSrc.match(/var SYM = \{([\s\S]*?)\n {4}\};/);
+    assert.ok(table, 'the SYM table moved');
+    const defined = new Set(
+        [...table[1].matchAll(/(?:^|[\s{,])([A-Za-z][A-Za-z0-9]*)\s*:\s*\{/g)].map(m => m[1])
+    );
+    assert.ok(defined.size > 30, `only found ${defined.size} symbols in SYM`);
+
+    const named = new Set();
+    for (const m of appSrc.matchAll(/\bsym: '([A-Za-z0-9]+)'/g)) named.add(m[1]);
+    for (const m of appSrc.matchAll(/\bsym(?:Html|Text)\('([A-Za-z0-9]+)'/g)) named.add(m[1]);
+    for (const m of appSrc.matchAll(/\bdrawSym\([A-Za-z]+, '([A-Za-z0-9]+)'/g)) named.add(m[1]);
+    assert.ok(named.size > 20, `only found ${named.size} symbol references`);
+
+    const missing = [...named].filter(n => !defined.has(n));
+    assert.deepEqual(missing, [],
+        `the app names symbols the table does not define: ${missing.join(', ')}`);
+});
+
+test('the results table is in WinJULEA row order', () => {
+    /* The order is the contract, not a preference: it is the order WinJULEA
+     * prints, so a run can be read across the two programs line by line.
+     * Reordering a group here silently breaks that comparison and the CSV
+     * anybody has already written a script against. */
+    const block = appSrc.match(/var RESULT_ROWS = \[([\s\S]*?)\n {4}\];/);
+    assert.ok(block, 'RESULT_ROWS moved');
+    const keys = [...block[1].matchAll(/key: '([a-z0-9]+)'/g)].map(m => m[1]);
+    assert.deepEqual(keys, [
+        'x', 'y', 'z',
+        'sxx', 'syy', 'szz', 'sxz', 'syz', 'sxy',
+        'exx', 'eyy', 'ezz', 'gxz', 'gyz', 'gxy',
+        'ux', 'uy', 'uz',
+        's1', 's2', 's3',
+        'e1', 'e2', 'e3'
+    ]);
+});
+
+test('every equation is typeset-safe and carries a plain twin', () => {
+    /* The trap `Equation.tsx` documents, one file over: TeX in a JavaScript
+     * string literal needs its backslashes doubled, and nothing catches a
+     * single one. `\pi` becomes nothing at all and `\frac` becomes a form
+     * feed, so the equation renders as wrong mathematics rather than as an
+     * error. The plain twin is what shows before KaTeX arrives, so an entry
+     * without one is a blank line on a slow connection. */
+    const block = appSrc.match(/var EQ = \{([\s\S]*?)\n {4}\};/);
+    assert.ok(block, 'the EQ table moved');
+    const entries = [...block[1].matchAll(/(\w+): \{\s*tex: '([^']*)',\s*plain: '([^']*)'/g)];
+    assert.ok(entries.length >= 5, `only found ${entries.length} equations`);
+    for (const [, name, tex, plain] of entries) {
+        for (const run of tex.match(/\+/g) || []) {
+            assert.equal(run.length % 2, 0,
+                `EQ.${name} has an odd run of ${run.length} backslashes: ${tex}`);
+        }
+        assert.ok(plain.trim().length > 0, `EQ.${name} has no plain-text twin`);
+    }
+});
+
+test('nothing the app puts on screen uses a long hyphen', () => {
+    /* A standing request, and worth a test rather than a proofread: an em
+     * dash is one keystroke from a hyphen in an editor that autocorrects,
+     * and in the middle of a label or a units string it reads as a
+     * different character than the one that was meant. Comment lines are
+     * exempt, which is also what lets the generated banner keep its own. */
+    const speech = (src, lineComments) => {
+        let out = '', i = 0;
+        const n = src.length;
+        while (i < n) {
+            const c = src[i], d = src[i + 1];
+            if (c === '/' && d === '*') { const e = src.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; continue; }
+            if (lineComments && c === '/' && d === '/') { const e = src.indexOf('\n', i); i = e < 0 ? n : e; continue; }
+            if (c === "'" || c === '"' || c === '`') {
+                out += c; i++;
+                while (i < n && src[i] !== c) {
+                    if (src[i] === '\\') { out += src[i]; i++; }
+                    if (i < n) { out += src[i]; i++; }
+                }
+                i++; continue;
+            }
+            out += c; i++;
+        }
+        return out;
+    };
+    for (const [name, src, lc] of [['leaps.js', appSrc, true], ['markup.ts', markupSrc, true], ['leaps.css', cssSrc, false]]) {
+        const bad = [...speech(src, lc).matchAll(/.{0,40}[–—].{0,40}/g)].map(m => m[0].trim());
+        assert.deepEqual(bad, [], `${name} uses a long hyphen: ${bad.join(' | ')}`);
+    }
 });

@@ -97,7 +97,11 @@ test('every released slug actually names something that exists', () => {
  * front page rather than a build error.
  */
 test('every released tool ships a miniature, and no locked one does', () => {
-    const src = readFileSync(join(ROOT, 'src', 'data', 'tools.ts'), 'utf8');
+    // Normalized, because the split below anchors on a line that holds only
+    // an opening brace: on a Windows checkout with core.autocrlf the \r sits
+    // between the brace and the newline, the whole file parses as ONE entry,
+    // and the gate passes nothing rather than failing loudly.
+    const src = readFileSync(join(ROOT, 'src', 'data', 'tools.ts'), 'utf8').split('\r\n').join('\n');
 
     // One entry per tool, split on the slug line so alt text with braces in
     // it cannot confuse a brace-counting parse.

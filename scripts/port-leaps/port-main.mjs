@@ -42,6 +42,15 @@ function subRe(label, re, replace, expect) {
     s = s.replace(re, replace);
     log.push(`${String(n).padStart(2)} x  ${label}`);
 }
+/* Same, but the count is reported rather than asserted. Use it where the
+   pattern is generic and the real contract is checked another way. */
+function subReMin(label, re, replace) {
+    const m = s.match(re);
+    const n = m ? m.length : 0;
+    if (n < 1) throw new Error(`[${label}] matched nothing`);
+    s = s.replace(re, replace);
+    log.push(`${String(n).padStart(2)} x  ${label}`);
+}
 
 /* ---- 1. The module wrapper ---------------------------------------------
    Upstream is a UMD so that the same file serves a <script> tag, a Worker
@@ -78,7 +87,11 @@ sub('UMD footer -> named exports',
         LOAD_KINDS: LOAD_KINDS,
         RESULT_ROWS: RESULT_ROWS,
         RESULT_GROUPS: RESULT_GROUPS,
-        FIELDS: FIELDS
+        FIELDS: FIELDS,
+        SYM: SYM,
+        EQ: EQ,
+        symHtml: symHtml,
+        symText: symText
     };
 });`,
 `    return {
@@ -89,7 +102,11 @@ sub('UMD footer -> named exports',
         LOAD_KINDS: LOAD_KINDS,
         RESULT_ROWS: RESULT_ROWS,
         RESULT_GROUPS: RESULT_GROUPS,
-        FIELDS: FIELDS
+        FIELDS: FIELDS,
+        SYM: SYM,
+        EQ: EQ,
+        symHtml: symHtml,
+        symText: symText
     };
 })();
 
@@ -101,6 +118,10 @@ export const LOAD_KINDS = LEAPS_APP.LOAD_KINDS;
 export const RESULT_ROWS = LEAPS_APP.RESULT_ROWS;
 export const RESULT_GROUPS = LEAPS_APP.RESULT_GROUPS;
 export const FIELDS = LEAPS_APP.FIELDS;
+export const SYM = LEAPS_APP.SYM;
+export const EQ = LEAPS_APP.EQ;
+export const symHtml = LEAPS_APP.symHtml;
+export const symText = LEAPS_APP.symText;
 export default LEAPS_APP;`);
 
 /* ---- 2. Icons -----------------------------------------------------------
@@ -113,15 +134,18 @@ export default LEAPS_APP;`);
    All fifteen occurrences sit inside single-quoted JS string literals, in
    one of three shapes. The counts are asserted, so a fourth shape upstream
    stops the build. */
-subRe('icon with a title attribute',
+subReMin('icon with a title attribute',
     /<i class="fas (fa-[a-z0-9-]+)" title="([^"]*)"><\/i>/g,
-    `' + iconHtml('$1', '$2') + '`, 1);
-subRe('icon, dynamic name',
+    `' + iconHtml('$1', '$2') + '`);
+subReMin('icon, dynamic name',
     /<i class="fas ' \+ (.+?) \+ '"><\/i>/g,
-    `' + iconHtml($1) + '`, 5);
-subRe('icon, literal name',
+    `' + iconHtml($1) + '`);
+subReMin('icon, literal name',
     /<i class="fas (fa-[a-z0-9-]+)"><\/i>/g,
-    `' + iconHtml('$1') + '`, 9);
+    `' + iconHtml('$1') + '`);
+
+/* The invariant, which the counts were only ever standing in for. */
+if (/<i class="fas/.test(s)) throw new Error('an icon shape was not recognized');
 
 writeFileSync(OUT, s);
 console.log(`port-main: ${SRC} -> ${OUT}`);

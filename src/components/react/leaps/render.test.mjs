@@ -73,6 +73,11 @@ test('every panel of the workspace is in the markup', () => {
     'data-dpane="points"', 'data-dpane="profiles"', 'data-dpane="layers"', 'data-dpane="performance"',
     'lp-exp-analysis', 'lp-exp-json', 'lp-exp-grid', 'lp-exp-png',
     'lp-unitgate', 'data-units="SI"', 'data-units="US"',
+    // the preflight: the badge, the popover it opens and the list inside it.
+    // Run refuses to solve when a check fails, so losing the popover would
+    // leave a button that declines and never says why.
+    'lp-checks-btn', 'lp-checks-pop', 'lp-checks-list',
+    'lp-kind-note',
   ]) {
     assert.ok(mod.LEAPS_MARKUP.includes(needle), `the workspace markup lost ${needle}`);
   }
