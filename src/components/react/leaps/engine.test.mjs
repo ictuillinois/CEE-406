@@ -476,3 +476,24 @@ test('nothing the app puts on screen uses a long hyphen', () => {
         assert.deepEqual(bad, [], `${name} uses a long hyphen: ${bad.join(' | ')}`);
     }
 });
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 6. The 3-D view
+ *
+ * The PROJECTION is checked in render.test.mjs, which bundles the module
+ * and can therefore call it; `leaps.js` imports './icons' extensionless
+ * and Node cannot resolve that on its own. What belongs here is the half
+ * that is a source fact: the switch the port has to carry across.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+test('the two views are one switch, and the switch is in the markup', () => {
+    /* The 3-D view is a mode of the same canvas, not a second canvas, so
+     * the only thing holding it together across the port is the id and the
+     * two data-view values the app reads back. */
+    assert.match(appSrc, /state\.settings\.view3d/, 'the view mode left the settings');
+    assert.ok(markupSrc.includes('id="lp-viewmode"'), 'the view switch is missing from the markup');
+    assert.ok(markupSrc.includes('data-view=\\"2d\\"') || markupSrc.includes('data-view="2d"'),
+        'the section button lost its data-view');
+    assert.ok(markupSrc.includes('data-view=\\"3d\\"') || markupSrc.includes('data-view="3d"'),
+        'the 3D button lost its data-view');
+});

@@ -156,6 +156,11 @@ export const LEAPS_MARKUP = `
                                 <button id="lp-zin" class="lp-tool" title="Zoom in">${iconHtml('fa-search-plus')}</button>
                                 <button id="lp-zout" class="lp-tool" title="Zoom out">${iconHtml('fa-search-minus')}</button>
                                 <span class="lp-sep"></span>
+                                <div class="lp-seg lp-seg-sm" id="lp-viewmode">
+                                    <button class="lp-seg-btn is-active" data-view="2d" title="The cut itself: the x-z plane at the section line">Section</button>
+                                    <button class="lp-seg-btn" data-view="3d" title="The same structure in the box it sits in, cut open at the section line. Drag to orbit.">3D</button>
+                                </div>
+                                <span class="lp-sep"></span>
                                 <label class="lp-check lp-check-tool" title="Overlay the deflected surface, exaggerated">
                                     <input type="checkbox" id="lp-show-basin" checked /> ${iconHtml('fa-water')}
                                 </label>

@@ -146,6 +146,15 @@ export default function LeapsApp() {
                 so nothing moves until you press it.
               </li>
               <li>
+                <strong>Switch views.</strong> <strong>Section</strong> is the cut itself, to scale,
+                with a ruler for x, the depth rail for z, and a corner gnomon carrying all three
+                axes and the y of the cut. <strong>3D</strong> is the same model in the box it sits
+                in, opened at the section line: the far half solid and carrying the contour on the
+                exposed face, the near half drawn as the glass it was cut from so the wheels on it
+                stay put. Drag to orbit, scroll to zoom. It is the view that answers where the
+                section is, which matters the moment a gear has wheels on both sides of it.
+              </li>
+              <li>
                 <strong>Place evaluation points.</strong> These are the columns of the results table.
                 Type them in the panel, double-click the section to drop one, or drag one to move it;
                 points snap to interfaces, which is where the critical responses live.{' '}

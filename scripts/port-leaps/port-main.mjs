@@ -91,7 +91,8 @@ sub('UMD footer -> named exports',
         SYM: SYM,
         EQ: EQ,
         symHtml: symHtml,
-        symText: symText
+        symText: symText,
+        axonometric: axonometric
     };
 });`,
 `    return {
@@ -106,7 +107,8 @@ sub('UMD footer -> named exports',
         SYM: SYM,
         EQ: EQ,
         symHtml: symHtml,
-        symText: symText
+        symText: symText,
+        axonometric: axonometric
     };
 })();
 
@@ -122,6 +124,7 @@ export const SYM = LEAPS_APP.SYM;
 export const EQ = LEAPS_APP.EQ;
 export const symHtml = LEAPS_APP.symHtml;
 export const symText = LEAPS_APP.symText;
+export const axonometric = LEAPS_APP.axonometric;
 export default LEAPS_APP;`);
 
 /* ---- 2. Icons -----------------------------------------------------------

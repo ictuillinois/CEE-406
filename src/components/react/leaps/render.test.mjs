@@ -185,3 +185,68 @@ test('every template builds a section the solver can take', () => {
     }
   }
 });
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * The 3-D view's projection
+ *
+ * The scene is drawn on a 2-D canvas by hand, so the projection is the one
+ * piece of it that can be checked without pixels, and two of its properties
+ * are load-bearing rather than incidental.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 6. The 3-D view's projection
+ *
+ * The scene is drawn on a 2-D canvas by hand, so the projection is the one
+ * piece of it that can be checked without pixels, and two of its properties
+ * are load-bearing rather than incidental.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+test('the z axis projects straight down the page, at every camera angle', () => {
+    /* This is what keeps DEPTH reading as depth: a drop line from an
+     * evaluation point to the surface is plumb, a layer is a band rather
+     * than a wedge, and the contour poured onto the cut plane is not
+     * sheared out of square with the layers it sits in. Yaw the camera and
+     * it must still hold; there is no angle at which a pavement layer may
+     * lean. */
+    for (const az of [0, 12, 34, 45, 78, 90, 137, 215, 359]) {
+        for (const el of [6, 12, 26, 45, 72]) {
+            const B = mod.app.axonometric(az, el, 1);
+            assert.equal(B.ez[0], 0, `z leans at az=${az}, el=${el}`);
+            assert.ok(B.ez[1] > 0, `z must point DOWN the page at az=${az}, el=${el}`);
+        }
+    }
+});
+
+test('the projection is affine and orthographic', () => {
+    /* Affine is what lets the contour image be poured onto the cut face
+     * with one ctx.transform rather than resampled point by point, so it is
+     * a performance contract as much as a geometric one. Orthographic is
+     * what lets the figure be measured: the same length must project to the
+     * same number of pixels wherever in the box it sits, which a
+     * perspective camera would not do. */
+    const B = mod.app.axonometric(34, 26, 1);
+    const P = (x, y, z) => [
+        x * B.ex[0] + y * B.ey[0] + z * B.ez[0],
+        x * B.ex[1] + y * B.ey[1] + z * B.ez[1]
+    ];
+    const a = P(-300, 120, 50), b = P(700, -40, 900);
+    const mid = P((-300 + 700) / 2, (120 - 40) / 2, (50 + 900) / 2);
+    assert.ok(Math.abs(mid[0] - (a[0] + b[0]) / 2) < 1e-9, 'midpoints must map to midpoints');
+    assert.ok(Math.abs(mid[1] - (a[1] + b[1]) / 2) < 1e-9, 'midpoints must map to midpoints');
+
+    // the same vector, twice, in two places: the same screen displacement
+    const d1 = P(150, 0, 0), d0 = P(0, 0, 0);
+    const e1 = P(150 + 900, 400, 600), e0 = P(900, 400, 600);
+    assert.ok(Math.abs((d1[0] - d0[0]) - (e1[0] - e0[0])) < 1e-9, 'a length must not depend on where it is');
+    assert.ok(Math.abs((d1[1] - d0[1]) - (e1[1] - e0[1])) < 1e-9, 'a length must not depend on where it is');
+});
+
+test('scale is a multiplier on the whole basis', () => {
+    const a = mod.app.axonometric(40, 30, 1), b = mod.app.axonometric(40, 30, 7);
+    ['ex', 'ey', 'ez'].forEach(k => {
+        assert.ok(Math.abs(b[k][0] - 7 * a[k][0]) < 1e-12, `${k} x is not linear in scale`);
+        assert.ok(Math.abs(b[k][1] - 7 * a[k][1]) < 1e-12, `${k} y is not linear in scale`);
+    });
+});
