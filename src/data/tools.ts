@@ -126,6 +126,28 @@ export const tools: Tool[] = [
     </svg>`,
   },
   {
+    name: 'LEAPS',
+    slug: 'leaps',
+    color: '#8B5CF6',
+    hws: ['HW3', 'HW4', 'Ch. 2'],
+    ref: 'Burmister N-layer · WinJULEA-compatible',
+    image: 'leaps.webp',
+    imageAlt: 'A pavement section in the LEAPS workspace: four layers under a dual wheel, ' +
+      'the vertical-stress bulb contoured through them, the deflected surface drawn above, ' +
+      'and a results table below with one column per evaluation point.',
+    desc: 'A full layered-elastic analysis program in the browser — any number of layers, interfaces from bonded to frictionless, and the same load applied as a circular imprint, a point or a line. Results come out in the rows, units and sign conventions WinJULEA prints, so a run here reads straight across from one there.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 14 H110" opacity="0.6"/>
+      <path d="M10 22 H110" opacity="0.4"/>
+      <path d="M10 32 H110" opacity="0.25"/>
+      <path d="M52 4 h16 v8 h-16z" opacity="0.8"/>
+      <path class="anim" d="M60 14 Q44 24 60 40 Q76 24 60 14z"/>
+      <path d="M60 14 Q50 22 60 32 Q70 22 60 14z" opacity="0.5"/>
+      <path d="M14 14 Q34 18 52 14" opacity="0.45" stroke-dasharray="3 3"/>
+      <path d="M68 14 Q86 18 106 14" opacity="0.45" stroke-dasharray="3 3"/>
+    </svg>`,
+  },
+  {
     name: 'Resilient Modulus Fitter',
     slug: 'mr-fitter',
     color: '#E87722',
