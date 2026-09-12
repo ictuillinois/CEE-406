@@ -634,13 +634,20 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
         for (const l of latticeLabels(spec, lattice!)) {
           const group = l.kind === 'family' ? fam : swp;
           const i = group.findIndex(cv => cv.label === l.label);
+          /* Outside the mesh, the way the plate sets them — except at the
+             two extreme corners, where the curve ends ON the frame line and
+             a number outside it would be clipped. There the label pushes
+             in, which is what the page does with "0.125" and "3.2" too. */
+          const atEdge = l.x - LATTICE_RANGE[0] < 0.03 ? 'left'
+            : LATTICE_RANGE[1] - l.x < 0.03 ? 'right' : null;
+          const side = atEdge ?? (l.kind === 'family' ? 'right' : 'left');
           annotations.push({
             x: annX(l.x), y: annY(l.value),
             text: fmtParam(l.label),
             showarrow: false,
-            xanchor: l.kind === 'family' ? 'right' : 'left',
+            xanchor: side,
             yanchor: 'middle',
-            xshift: l.kind === 'family' ? -3 : 3,
+            xshift: side === 'right' ? -3 : 3,
             font: { family: 'IBM Plex Mono, monospace', size: 10.5, color: inkOf(l.kind, i) },
             bgcolor: t.surface, borderpad: 2,
           });

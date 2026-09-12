@@ -287,8 +287,16 @@ test('a nomograph is drawn in the plate own box', () => {
     assert.ok(c.plotAspect > 0.5 && c.plotAspect < 1,
       c.figure + ': ' + c.plotAspect + ' -- both printed nomographs are taller than wide');
   }
-  assert.ok(Math.abs(chartById('fig-2-31').plotAspect - 1068 / 1401) < 1e-9);
+  /* Both numbers are frame-line centres on a 300 dpi render of the page.
+     2.31's was 1068/1401 = 0.762 and the HEIGHT of that pair was wrong: the
+     same scan gives 535 x 733.5 = 0.729, and measuring 2.21 the same way
+     reproduces its shipped number to 0.3%, so the method is sound and the
+     old value was not. Four percent on a nomograph is visible -- the mesh
+     came out wider than the plate's. */
+  assert.ok(Math.abs(chartById('fig-2-31').plotAspect - 535 / 733.5) < 1e-9);
   assert.ok(Math.abs(chartById('fig-2-21').plotAspect - 910.5 / 1042.5) < 1e-9);
+  assert.ok(Math.abs(chartById('fig-2-21').plotAspect - 756 / 868) < 0.005,
+    'Figure 2.21 re-measured: 756 x 868 frame-line centres');
 });
 
 test('only a chart that declares a magnitude may put a negative on a log axis', () => {
@@ -358,17 +366,26 @@ test('Figure 2.31 draws the magnitude, because its factor changes sign', () => {
 });
 
 test('no lattice curve stops in open space', () => {
-  /* The plates are closed meshes: a curve runs to the end of its own
-     parameter range, or it leaves through the frame, and there is no third
-     way for one to end. This is the check the instructor's own reading of
-     Figure 2.31 came down to, and it failed in two different ways at once —
-     curves cut at a sign change, and curves whose run-out to the border gave
-     up a third of a decade short of it. */
+  /* The plates are closed meshes. A curve runs to the end of its own
+     parameter range, or it leaves through the frame, or -- on a magnitude
+     chart -- it stops where the factor stops being tensile, and THAT end
+     lands on another curve of the mesh rather than in open space. There is
+     no fourth way for one to end.
+     The third case is the one that decides whether Figure 2.31 looks like
+     its plate. Peattie drew no compressive part of a tensile strain factor,
+     so the printed mesh has a scalloped upper-left boundary, and every curve
+     stopped that way ends exactly where a neighbour ends or crosses: the
+     H = 0.125 curve of panel (a) stops at (A = 0.8, 0.1116), which is
+     precisely where the A = 0.8 curve begins. Asserting that is what stops
+     the truncation from ever becoming a set of loose ends. */
   for (const spec of CHARTS.filter(c => c.nomograph)) {
     const a = latticeAxes(spec);
     const FLOOR = spec.value.min, CEIL = spec.value.max;
     for (const pv of spec.panel ? spec.panel.values : [undefined]) {
-      for (const cv of sampleLattice(spec, pv)) {
+      const mesh = sampleLattice(spec, pv);
+      // Everything the mesh draws, for the "ends on another curve" test.
+      const others = mesh.map(cv => cv.pts.filter(p => Number.isFinite(p.value)));
+      for (const [ci, cv] of mesh.entries()) {
         // The abscissas this curve's own parameters can reach.
         const ends = cv.kind === 'family'
           ? [latticeX(spec, cv.label, a.sLo), latticeX(spec, cv.label, a.sHi)]
@@ -386,7 +403,8 @@ test('no lattice curve stops in open space', () => {
            does not read as a woven mesh -- and both came from the drawn
            value diving to zero at a sign change: first as a break where the
            curve left the frame, then as a three-decade notch once the zero
-           was sampled. bridgeSpans is what makes this hold. */
+           was sampled. Stopping at the last tensile station is what makes
+           this hold; the curve never reaches the zero to dive into. */
         if (spec.magnitude) {
           assert.equal(runs.length, 1,
             `${spec.figure} ${pv ?? ''} ${cv.kind} ${cv.label}: drawn in ${runs.length} pieces`);
@@ -399,13 +417,20 @@ test('no lattice curve stops in open space', () => {
           }
         }
 
+        // Does any OTHER curve of the mesh pass through this point?
+        const onNeighbour = (p) => others.some((pts, oi) => oi !== ci && pts.some(q =>
+          Math.abs(q.x - p.x) < 1e-6 &&
+          Math.abs(q.value - p.value) <= 1e-6 * Math.max(q.value, p.value)));
+
         for (const r of runs) {
           for (const p of [r[0], r[r.length - 1]]) {
             const ok = p.value <= FLOOR * 1.05 || p.value >= CEIL * 0.95 ||
-              ends.some(e => Math.abs(p.x - e) < 1e-6);
+              ends.some(e => Math.abs(p.x - e) < 1e-6) ||
+              (spec.magnitude && onNeighbour(p));
             assert.ok(ok, `${spec.figure} ${pv ?? ''} ${cv.kind} ${cv.label}: ` +
               `a segment ends at x = ${p.x.toFixed(4)}, value ${p.value.toExponential(3)}, ` +
-              `which is neither the frame nor the end of its own range`);
+              `which is neither the frame, nor the end of its own range, nor a ` +
+              `point another curve of the mesh passes through`);
           }
         }
       }

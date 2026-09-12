@@ -130,12 +130,13 @@ export interface ChartSpec {
    * Figure 2.31 only. Peattie's quantity changes sign — a layer 1 much
    * thinner than layer 2 under a wide load does not bend, so its underside
    * goes into compression — and the ordinate is logarithmic, so the plate
-   * draws the absolute value. The sign is kept here rather than thrown away
-   * in `evaluate`, because the samplers need it: |v| has a cusp at the sign
-   * change, and |v| really does dive to zero there -- 1/2(ZZ1 - RR1) passes
-   * through zero between A = 0.8 and A = 1.6 on Peattie's own H = 0.125
-   * curve. The plate does not show it, because Peattie had six points per
-   * curve and drew a smooth line through them. See `bridgeSpans`.
+   * draws the absolute value of what it draws at all.
+   *
+   * The sign is kept here rather than thrown away in `evaluate`, because
+   * the samplers need it for something more important than the absolute
+   * value: it is what says where the curve STOPS. The chart is a tensile
+   * strain factor, and Peattie drew no compressive part of it — see
+   * `tensileSpan`, which is the whole shape of the printed mesh.
    */
   magnitude?: boolean;
   /**
@@ -765,8 +766,17 @@ const FIG_2_27 = conversionChart({
 const FIG_2_31: ChartSpec = {
   id: 'fig-2-31',
   figure: 'Figure 2.31',
-  // 1068 x 1401 px at 300 dpi, panel (a) on page 75.
-  plotAspect: 1068 / 1401,
+  /* Panel (a) on page 75, frame line CENTRES at 300 dpi: x 514.5 to 1049.5,
+     y 245.5 to 979. This was 1068/1401 = 0.762, and the height was the part
+     that was wrong -- the same page measured for width to within two pixels.
+     0.762 drew the mesh 4% wider than the plate, which on a figure whose
+     whole shape is the draughtsman's choice is the difference between
+     arches that match the page and arches that do not.
+     Cross-checked the other way: with this frame, 37 of the 39 crossings
+     Table 2.3 prints for panel (a) land on drawn ink, and Figure 2.21
+     measured by the same method comes out at 0.871 against its shipped
+     0.873 -- so the method is sound and 2.31's old number was not. */
+  plotAspect: 535 / 733.5,
   title: 'Horizontal strain factor at the bottom of layer 1',
   source: 'After Peattie (1962)',
   section: 'Three layers',
@@ -824,15 +834,20 @@ const FIG_2_31: ChartSpec = {
   notes: [
     'Huang reprints only the realistic panels: k₁ ∈ {2, 20, 200} and k₂ ∈ {2, 20}. Jones’ ' +
     'own tables also carry 0.2, for a layer softer than the one beneath it.',
-    'The plotted quantity is the MAGNITUDE, as Peattie plots it. The factor changes sign over ' +
-    'part of the chart: a layer 1 much thinner than layer 2 under a wide load does not bend, so ' +
-    'its underside goes into compression rather than tension. Table 2.3 prints those entries ' +
-    'negative, and the plate draws them at their absolute value without marking the crossing. ' +
-    'So does this. Read the sign from the section, not from the chart: below about A = 1 the ' +
-    'strain at the bottom of layer 1 is tension, above it, on a thin layer 1, compression.',
-    'The mesh is a closed lattice because both families run their whole range. What leaves the ' +
-    'frame leaves it at the bottom, where the magnitude itself is under 0.001 — the A = 0.1 and ' +
-    'H = 8 curves at the apex, which is exactly where the plate runs them off the border.',
+    'This is a TENSILE strain factor, and it is drawn only where the strain is tensile. The ' +
+    'factor changes sign over part of every k₁ = 2 or 20 panel: a layer 1 much thinner than ' +
+    'layer 2 under a wide load does not bend, so its underside goes into compression instead. ' +
+    'Table 2.3 prints those entries negative and Peattie drew none of them, which is why the ' +
+    'mesh has a scalloped upper-left edge rather than running to the frame on every curve. ' +
+    'Each curve here stops at the last station where it is still tension, exactly as the plate ' +
+    'does — so a section that falls in the compressive region has no curve to read, and that ' +
+    'is the chart telling you the answer is not a tension.',
+    'The mesh is still a closed lattice. Every curve that stops at the sign change stops ' +
+    'exactly where a neighbour begins or crosses — on panel (a) the H = 0.125 curve ends at ' +
+    'A = 0.8, which is precisely where the A = 0.8 curve starts — so the stopped ends are the ' +
+    'V-corners of the weave, not loose ends. What leaves the frame leaves it at the bottom, ' +
+    'where the factor itself is under 0.001: the A = 0.1 and H = 8 curves at the apex, which ' +
+    'is exactly where the plate runs them off the border.',
   ],
 };
 
@@ -857,7 +872,7 @@ export interface CurvePoint { sweep: number; value: number }
  * chart one call is a critical-strain search over a whole wheel group — 37
  * ms on Figure 2.27. The same points are then asked for from five places
  * that know nothing about each other: the sampler walks the curve,
- * `bridgeSpans` walks the same sample set first to find the sign change, the
+ * `tensileSpan` walks the printed stations first to find where it stops, the
  * table under the figure reads every curve at every printed station, the
  * checkpoint list re-evaluates the book's own reads on every render, and
  * switching panels and coming back redraws a chart that was already drawn.
@@ -1033,102 +1048,70 @@ export const drawnValue = (spec: ChartSpec, v: number) =>
   (spec.magnitude ? Math.abs(v) : v);
 
 /**
- * Where the drawn curve is Peattie's line rather than the computed one.
+ * The stations a magnitude chart's curve is actually DRAWN between.
  *
- * On a magnitude chart the plotted value dives to zero wherever the factor
- * changes sign, and that dive is REAL: for k1 = k2 = 2 and H = 0.125 the
- * factor is +0.112 at A = 0.8 and -0.0999 at A = 1.6, so between them the
- * magnitude passes through zero. The printed chart shows none of it. Peattie
- * had six points per curve -- the six A stations -- and drew a smooth line
- * through them, so the plate's curve simply crosses that region at about
- * 0.1 and says nothing.
+ * Figure 2.31 only, and it is the whole shape of the plate's mesh.
  *
- * Drawing the computed dive instead puts a three-decade spike through the
- * middle of a mesh whose whole value is that it reads as a woven lattice,
- * and it is a spike the reader cannot match against the page in front of
- * them. So the drawing follows the plate across the crossing and the
- * continuum everywhere else, and the boundary between the two is not a
- * judgement call: it is the pair of PRINTED STATIONS that bracket the sign
- * change. Between them the line is Peattie's interpolation, drawn straight
- * from one tabulated value to the next, which is exactly what the plate is
- * there. Outside them every point is computed.
+ * Peattie's quantity changes sign over part of every k1 = 2 or 20 panel: a
+ * layer 1 much thinner than layer 2 under a wide load does not bend, so its
+ * underside goes into compression rather than tension. The chart is a
+ * TENSILE strain factor -- Eq. 2.25 reads it as one -- and where the factor
+ * turns compressive Peattie simply stopped drawing. That is why the printed
+ * mesh has a scalloped upper-left boundary instead of running to the frame
+ * on every curve.
  *
- * What is lost is stated rather than hidden: the notes say the factor
- * changes sign, and `signChange` still finds where, so the reader can be
- * told. Nothing is invented -- both ends of a bridge are tabulated values.
+ * The rule is measured off the plate, not guessed. Projected onto a 300 dpi
+ * scan of panel (a) with the horizontal rulings masked out, 37 of the 39
+ * crossings that lie inside the frame land on drawn ink -- and the one real
+ * miss is H = 0.125 at A = 1.6, the first COMPRESSIVE crossing on that
+ * curve. Scoring the whole polyline says the same thing louder: every curve
+ * of the panel sits within a few pixels of the plate's ink except H = 0.125,
+ * whose tail past A = 0.8 is 19 px out at the ninetieth percentile because
+ * there is no ink under it at all.
+ *
+ * What makes this certain rather than plausible is that the mesh CLOSES.
+ * Each curve stopped this way ends exactly where another curve ends or
+ * crosses -- H = 0.125 stops at (A = 0.8, 0.1116), which is precisely where
+ * the A = 0.8 curve begins -- so the dropped ends become the V-corners of
+ * the printed lattice rather than loose ends in open space. That holds on
+ * every panel of the figure, and `charts.test.mjs` asserts it.
+ *
+ * The curve ends AT a printed station, not at the zero. Peattie had six
+ * points per curve and drew a line through them; the factor reaches zero
+ * somewhere between two of them, and following it there would put a
+ * three-decade dive through a mesh whose whole value is that it reads as a
+ * woven lattice.
+ *
+ * Earlier this was read the other way -- that the plate drew |v| straight
+ * through the sign change -- and the curve was carried across it on a chord
+ * between the two bracketing stations. That is what put a flat run and a
+ * small arch through the middle of panel (a), on ink that is not there.
  *
  * @param raw signed value at parameter t
- * @param ts sample parameters, ascending
  * @param stations parameters of the printed stations, ascending
- * @returns [lo, hi] parameter spans in which no computed sample is drawn
+ * @returns [tMin, tMax] the parameter span to draw, or null to draw none
  */
-function bridgeSpans(
-  raw: (t: number) => number, ts: number[], stations: number[]
-): [number, number][] {
-  const spans: [number, number][] = [];
-  let prev = raw(ts[0]);
-  for (let i = 1; i < ts.length; i++) {
-    const v = raw(ts[i]);
-    if (Number.isFinite(prev) && Number.isFinite(v) && prev !== 0 && v !== 0
-      && (prev > 0) !== (v > 0)) {
-      // The printed stations on either side of the crossing.
-      let lo = stations[0], hi = stations[stations.length - 1];
-      for (const st of stations) {
-        if (st <= ts[i - 1]) lo = Math.max(lo, st);
-        if (st >= ts[i]) { hi = st; break; }
-      }
-      if (hi > lo) spans.push([lo, hi]);
+function tensileSpan(
+  raw: (t: number) => number, stations: number[]
+): [number, number] | null {
+  if (stations.length < 2) return null;
+  const v = stations.map(raw);
+  // The longest run of stations where the factor is tensile. A run rather
+  // than "the first positive to the last positive": a curve that changed
+  // sign twice would otherwise be drawn straight through the compressive
+  // middle of itself.
+  let bestLo = -1, bestHi = -1;
+  let lo = -1;
+  for (let i = 0; i <= v.length; i++) {
+    const on = i < v.length && Number.isFinite(v[i]) && v[i] > 0;
+    if (on && lo < 0) lo = i;
+    if (!on && lo >= 0) {
+      if (i - 1 - lo > bestHi - bestLo) { bestLo = lo; bestHi = i - 1; }
+      lo = -1;
     }
-    prev = v;
   }
-  return spans;
-}
-
-/**
- * The plate's line across one bridge, read at t.
- *
- * Straight between the two tabulated ends -- straight on the page, so
- * linear in log(value), because the ordinate is logarithmic. Sampled at the
- * same parameters as everything else rather than left as one long chord:
- * the curves are drawn as splines, and a single wide segment butting onto
- * short ones is exactly what makes a spline loop. Evenly spaced points give
- * it nothing to overshoot.
- *
- * @param t parameter inside the span
- * @param b0 @param b1 the span's ends
- * @param v0 @param v1 the drawn values there
- */
-function bridgeValue(t: number, b0: number, b1: number, v0: number, v1: number): number {
-  if (!(v0 > 0 && v1 > 0) || b1 <= b0) return NaN;
-  const u = (t - b0) / (b1 - b0);
-  return Math.exp(Math.log(v0) + u * (Math.log(v1) - Math.log(v0)));
-}
-
-/**
- * The parameter at which a sign change happens, or null when the two ends do
- * not straddle one.
- *
- * Used to TELL a reader where the factor changes sign. The drawing does not
- * dive to it -- see bridgeSpans.
- *
- * Only meaningful on a `magnitude` chart, where the drawn value has a cusp
- * down to zero there. Bisection rather than interpolation: the factor is not
- * linear across the crossing, and the point of finding it exactly is that the
- * drawn notch should not depend on how many samples the chart can afford.
- */
-function signChange(
-  raw: (t: number) => number, ta: number, tb: number, steps = 24
-): number | null {
-  let va = raw(ta), vb = raw(tb);
-  if (!Number.isFinite(va) || !Number.isFinite(vb) || va === 0 || vb === 0) return null;
-  if ((va > 0) === (vb > 0)) return null;
-  let a = ta, b = tb;
-  for (let k = 0; k < steps; k++) {
-    const m = 0.5 * (a + b), vm = raw(m);
-    if (!Number.isFinite(vm)) return null;
-    if ((vm > 0) === (va > 0)) { a = m; va = vm; } else { b = m; }
-  }
-  return 0.5 * (a + b);
+  if (bestLo < 0 || bestHi <= bestLo) return null;
+  return [stations[bestLo], stations[bestHi]];
 }
 
 /**
@@ -1208,27 +1191,23 @@ export function* sampleCurveGen(
   const onFrame = frameTest(spec);
 
   // The same two rules the lattice follows, for the same reasons: every
-  // printed station is a drawn vertex, and across a sign change the line is
-  // the plate's own. See bridgeSpans.
+  // printed station is a drawn vertex, and a magnitude chart's curve is
+  // drawn only where the factor stays tensile. See tensileSpan.
   const toT = (v: number) => (log ? (Math.log(v) - lo) / (hi - lo) : (v - lo) / (hi - lo));
   const stations = (spec.sweep.ticks ?? [])
     .map(toT).filter(t => t >= 0 && t <= 1);
+  const span = spec.magnitude ? tensileSpan(rawAt, stations) : null;
+  if (spec.magnitude && !span) return [];
+  const [tMin, tMax] = span ?? [0, 1];
   const ts = [...new Set([
-    ...Array.from({ length: n + 1 }, (_, i) => i / n),
-    ...stations,
+    ...Array.from({ length: n + 1 }, (_, i) => tMin + (i / n) * (tMax - tMin)),
+    ...stations.filter(t => t >= tMin && t <= tMax),
   ])].sort((p, q) => p - q);
-  const bridges = (spec.magnitude && stations.length ? bridgeSpans(rawAt, ts, stations) : [])
-    .map(([b0, b1]) => ({ b0, b1, v0: valueAt(b0), v1: valueAt(b1) }));
-  const spanAt = (t: number) =>
-    bridges.find(({ b0, b1 }) => t > b0 + 1e-12 && t < b1 - 1e-12);
 
   const out: CurvePoint[] = [];
   let prevT = ts[0], prevOn = false, first = true;
   for (const t of ts) {
-    const span = spanAt(t);
-    const value = span
-      ? bridgeValue(t, span.b0, span.b1, span.v0, span.v1)
-      : valueAt(t);
+    const value = valueAt(t);
     const on = onFrame(value);
     // The curve enters or leaves the frame somewhere in this interval; find
     // where, so it runs to the edge instead of stopping at the last sample.
@@ -1692,8 +1671,19 @@ export function latticeX(spec: ChartSpec, familyValue: number, sweepValue: numbe
     + (1 - a.fWeight) * spanPos(sweepValue, a.sLo, a.sHi, a.sLog));
 }
 
-/** A hair of room at each end so the corner labels are not clipped. */
-export const LATTICE_RANGE: [number, number] = [-0.05, 2.05];
+/**
+ * The abscissa, exactly as wide as the mesh.
+ *
+ * This carried a hair of padding at each end so the two corner labels would
+ * not be clipped, and the cost was that the mesh floated inside its frame
+ * with 2.4% of dead width on either side. The plate has none: the H = 0.125
+ * curve begins ON the left frame line and the A = 3.2 curve ends ON the
+ * right one, and a nomograph drawn in the plate's own box should fill it the
+ * way the plate does. The two labels are pushed inside instead — which is
+ * also what the page does with them, and what `curveLabelSpots` already does
+ * for a Cartesian curve that runs along an edge.
+ */
+export const LATTICE_RANGE: [number, number] = [0, 2];
 
 export interface LatticePoint { x: number; family: number; sweep: number; value: number }
 
@@ -1746,25 +1736,23 @@ export function* sampleLatticeGen(
     const stations = stationValues
       .map(v => spanPos(v, lo, hi, log))
       .filter(t => t >= 0 && t <= 1);
-    const ts = [...new Set([
-      ...Array.from({ length: n + 1 }, (_, i) => i / n),
-      ...stations,
-    ])].sort((p, q) => p - q);
 
-    // Across a sign change the drawing is the plate's own line: see
-    // bridgeSpans. Nowhere else.
-    const bridges = (spec.magnitude ? bridgeSpans(rawAt, ts, stations) : [])
-      .map(([b0, b1]) => ({ b0, b1, v0: valueAt(b0), v1: valueAt(b1) }));
-    const spanAt = (t: number) =>
-      bridges.find(({ b0, b1 }) => t > b0 + 1e-12 && t < b1 - 1e-12);
+    /* And the curve is drawn only between the stations where the factor is
+       tensile -- see tensileSpan. That is what gives the printed mesh its
+       scalloped upper-left boundary, and why each stopped curve ends on
+       another curve rather than in open space. */
+    const span = spec.magnitude ? tensileSpan(rawAt, stations) : null;
+    if (spec.magnitude && !span) { out.push({ kind, label, pts: [] }); return; }
+    const [tMin, tMax] = span ?? [0, 1];
+    const ts = [...new Set([
+      ...Array.from({ length: n + 1 }, (_, i) => tMin + (i / n) * (tMax - tMin)),
+      ...stations.filter(t => t >= tMin && t <= tMax),
+    ])].sort((p, q) => p - q);
 
     const pts: LatticePoint[] = [];
     let prevT = ts[0], prevOn = false, first = true;
     for (const t of ts) {
-      const span = spanAt(t);
-      const value = span
-        ? bridgeValue(t, span.b0, span.b1, span.v0, span.v1)
-        : valueAt(t);
+      const value = valueAt(t);
       const on = onFrame(value);
       // The lattice is a CLOSED mesh on the page: every curve runs to a
       // label or off the frame, and none of them stops in open space.
