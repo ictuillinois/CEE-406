@@ -427,3 +427,98 @@ test('every face the reader can see is lit', () => {
     return [-Math.sin(aL) * ce, -Math.cos(aL) * ce, -Math.sin(eL)];
   }
 });
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * The drawn wheels
+ *
+ * A radius that looks right under a single wheel puts the three axles of a
+ * tridem through each other, which is how this was found: the test is the
+ * gear, not the wheel. `tireFit` scales one tire for the whole set until
+ * every pair of them clears, so the property to assert is exactly that -
+ * over every layout the gear generator builds, at spacings from a cramped
+ * truck to a wide-body aircraft.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* the five layouts, in the geometry `gearLayout` builds them from */
+const GEARS = {
+  single: (Sd, St) => [[0, 0]],
+  dual: (Sd, St) => [[-Sd / 2, 0], [Sd / 2, 0]],
+  'dual-tandem': (Sd, St) => [
+    [-Sd / 2, -St / 2], [Sd / 2, -St / 2], [-Sd / 2, St / 2], [Sd / 2, St / 2]],
+  tridem: (Sd, St) => [[0, -St], [0, 0], [0, St]],
+  'dual-tridem': (Sd, St) => [
+    [-Sd / 2, -St], [Sd / 2, -St], [-Sd / 2, 0], [Sd / 2, 0], [-Sd / 2, St], [Sd / 2, St]],
+};
+
+function overlaps(fit, wheels) {
+  // a wheel occupies 2w across the track and 2R along it
+  for (let i = 0; i < wheels.length; i++) {
+    for (let j = i + 1; j < wheels.length; j++) {
+      const dx = Math.abs(wheels[i][0] - wheels[j][0]);
+      const dy = Math.abs(wheels[i][1] - wheels[j][1]);
+      if (dx < 2 * fit.w && dy < 2 * fit.R) return `${i}-${j} (dx=${dx}, dy=${dy})`;
+    }
+  }
+  return null;
+}
+
+test('no two drawn tires overlap, in any gear the generator builds', () => {
+  const cases = [
+    // the shipped truck default, whose tandem spacing is what found this
+    { Sd: 350, St: 350, a: 95.4, why: 'shipped default' },
+    // the FAA B737 template: 185 kN at 1.413 MPa
+    { Sd: 864, St: 350, a: 204.2, why: 'FAA B737 dual' },
+    // a wide-body tridem: metres apart, and a big patch
+    { Sd: 1400, St: 1450, a: 230, why: 'wide-body tridem' },
+    // a light axle: small patch, ordinary spacings
+    { Sd: 300, St: 1300, a: 60, why: 'light truck tandem' },
+    // deliberately tight in both directions
+    { Sd: 240, St: 260, a: 90, why: 'cramped' },
+  ];
+  for (const c of cases) {
+    for (const [name, make] of Object.entries(GEARS)) {
+      const wheels = make(c.Sd, c.St);
+      const fit = mod.app.tireFit(wheels.map(([x, y]) => ({ x, y })), c.a);
+      if (!fit) continue;               // too cramped for a tire: none is drawn
+      const bad = overlaps(fit, wheels);
+      assert.equal(bad, null,
+        `${name} at Sd=${c.Sd} St=${c.St} a=${c.a} (${c.why}) overlaps at ${bad}`);
+    }
+  }
+});
+
+test('a tire keeps its proportions however far it has to shrink', () => {
+  /* One factor scales width and radius together, so a squeezed gear gets
+   * smaller wheels rather than differently-shaped ones. */
+  const loose = mod.app.tireFit([{ x: 0, y: 0 }], 100);
+  const tight = mod.app.tireFit(GEARS.tridem(350, 350).map(([x, y]) => ({ x, y })), 95.4);
+  assert.ok(loose && tight);
+  assert.ok(Math.abs(loose.R / loose.w - tight.R / tight.w) < 1e-9,
+    'the aspect ratio moved when the tire shrank');
+  assert.ok(tight.R < loose.R * (95.4 / 100), 'the tridem tire should have been cut down');
+});
+
+test('the flat a tire stands on is the contact it is standing on', () => {
+  /* Where the gear leaves room, the flattened bottom of the wheel is
+   * exactly the contact patch: the deformation IS the imprint, which is
+   * the one place the drawing and the model touch. The axle then rides at
+   * sqrt(R^2 - flat^2), which is what puts the wheel ON the ground rather
+   * than tangent to it. */
+  const fit = mod.app.tireFit([{ x: 0, y: 0 }], 120);
+  assert.ok(Math.abs(fit.flat - 120) < 1e-9, 'a roomy gear should flatten by the whole patch');
+  assert.ok(Math.abs(fit.h - Math.sqrt(fit.R * fit.R - fit.flat * fit.flat)) < 1e-9);
+  assert.ok(fit.h > 0 && fit.h < fit.R, 'the axle must sit inside the wheel');
+
+  // and where it is cramped the flat is capped, so the wheel is never a pancake
+  const tight = mod.app.tireFit(GEARS.tridem(350, 350).map(([x, y]) => ({ x, y })), 95.4);
+  assert.ok(tight.flat < tight.a, 'a cramped wheel should cap its flat');
+  assert.ok(tight.flat / tight.R <= 0.4201, 'the flat must stay a minority of the radius');
+});
+
+test('wheels closer together than wheels can be get no tire at all', () => {
+  // coincident loads, and a tridem at a spacing no axle has
+  assert.equal(mod.app.tireFit([{ x: 0, y: 0 }, { x: 0, y: 0 }], 100), null);
+  assert.equal(mod.app.tireFit(GEARS.tridem(300, 120).map(([x, y]) => ({ x, y })), 100), null);
+  // but an ordinary gear must never fall back
+  assert.ok(mod.app.tireFit(GEARS['dual-tridem'](350, 350).map(([x, y]) => ({ x, y })), 95.4));
+});
