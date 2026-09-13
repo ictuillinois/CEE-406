@@ -35,6 +35,9 @@ import {
   useTheme, chartColors, baseLayout, plotConfig, num, fmt,
   axis, gridAxis, hueFor, rampSeries, withAlpha, hoverLabel,
 } from '../../chartTheme';
+import {
+  frameTop, deflFrame, halfWidths, stations, isMirrorable, MILS,
+} from '../frames';
 import ChartFigure from '../../ui/ChartFigure';
 import KpiStrip, { Kpi } from '../../ui/KpiStrip';
 import Equation from '../../ui/Equation';
@@ -370,13 +373,6 @@ interface Preset {
   sweepVar: SweepVar; sweepVals: string; resp: Resp;
 }
 
-/** Inches to mils. Deflections are printed in mils because that is the unit
- *  a deflection is reported in — an FWD basin, a plate test, a Benkelman
- *  beam. Three decimals of an inch is the same number read three times. */
-const MILS = 1000;
-
-/** The deflection frame from its floor: top, bottom. */
-const wFrameOf = (bot: number): [number, number] => [-bot / 3, bot];
 
 const PRESETS: Preset[] = [
   {
@@ -463,20 +459,6 @@ interface Params { P: number; q: number; a: number; E: number; nu: number }
  *  from -rMax to +rMax, so a curve carries 2*SAMPLES-1 points. */
 const SAMPLES = 61;
 
-/**
- * The smallest round number at or above `v`, for a frame top.
- *
- * The ladder is deliberately coarser than the one `contact-stress` uses for a
- * color ramp: a frame wants few, round gridlines, and a stop at 9 would put
- * the top of a 90 psi figure at 90 rather than at 100.
- */
-const FRAME_STOPS = [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
-function frameTop(v: number): number {
-  if (!Number.isFinite(v) || v <= 0) return 1;
-  const decade = 10 ** Math.floor(Math.log10(v));
-  const m = v / decade;
-  return (FRAME_STOPS.find(x => m <= x * (1 + 1e-9)) ?? 10) * decade;
-}
 const MAX_CURVES = 6;
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -638,7 +620,7 @@ export default function OneLayerModule() {
   const [spStr, setSp] = useState(PRESETS[4].spacing);
   const [depthStr, setDepths] = useState(PRESETS[4].depths);
   const [rMaxStr, setRMax] = useState(PRESETS[4].rMax);
-  const [wFrame, setWFrame] = useState<[number, number]>(wFrameOf(PRESETS[4].wBot));
+  const [wFrame, setWFrame] = useState<[number, number]>(deflFrame(PRESETS[4].wBot));
   const [logY, setLogY] = useState(false);
   const [sweepVar, setSweepVar] = useState<SweepVar>(PRESETS[4].sweepVar);
   const [sweepStr, setSweep] = useState(PRESETS[4].sweepVals);
@@ -666,7 +648,7 @@ export default function OneLayerModule() {
     setP(x); setKase(x.kase);
     setPLoad(x.P); setQ(x.q); setA(x.a); setE(x.E); setNu(x.nu);
     setR(x.r); setZ(x.z); setTwin(x.twin); setSp(x.spacing);
-    setDepths(x.depths); setRMax(x.rMax); setWFrame(wFrameOf(x.wBot)); setLogY(false);
+    setDepths(x.depths); setRMax(x.rMax); setWFrame(deflFrame(x.wBot)); setLogY(false);
     setSweepVar(x.sweepVar); setSweep(x.sweepVals); setResp(x.resp);
   };
 
@@ -715,17 +697,27 @@ export default function OneLayerModule() {
 
   const curves = useMemo(() => {
     if (!valid || depths.length === 0) return [];
-    const N = 2 * SAMPLES - 1;
+    const rs = stations(rMax, SAMPLES);
+    // A single load is axisymmetric, so only the half of the curve right of
+    // the axis is solved and the other half is that one read backwards. It is
+    // a reflection of the ANSWER, not an assumption about it: the three
+    // closed forms take |r| and nothing else. A pair is solved in full,
+    // because at -r its far circle is r + s away and at +r it is |r - s|.
+    const mirror = isMirrorable(superposed);
+    const mid = SAMPLES - 1;
     return depths.map(zz => {
-      const rs: number[] = [], sig: (number | null)[] = [], def: (number | null)[] = [];
-      for (let i = 0; i < N; i++) {
-        // exactly 0 at the midpoint, so the load axis is a sample and not a
-        // chord between the two points either side of it
-        const rr = -rMax + (i / (N - 1)) * 2 * rMax;
-        const R = field(rr, zz);
-        rs.push(rr);
-        sig.push(R && Number.isFinite(R.sigZ) ? R.sigZ : null);
-        def.push(R && Number.isFinite(R.w) ? R.w * MILS : null);
+      const sig: (number | null)[] = new Array(rs.length);
+      const def: (number | null)[] = new Array(rs.length);
+      for (let i = mirror ? mid : 0; i < rs.length; i++) {
+        const R = field(rs[i], zz);
+        sig[i] = R && Number.isFinite(R.sigZ) ? R.sigZ : null;
+        def[i] = R && Number.isFinite(R.w) ? R.w * MILS : null;
+      }
+      if (mirror) {
+        for (let i = 0; i < mid; i++) {
+          sig[i] = sig[rs.length - 1 - i];
+          def[i] = def[rs.length - 1 - i];
+        }
       }
       return { z: zz, r: rs, sigZ: sig, w: def };
     });
@@ -774,14 +766,39 @@ export default function OneLayerModule() {
      That difference is the whole of why an FWD has seven sensors. A PAIR of
      loads spans the reach itself, so there the stress figure keeps the full
      width or it would cut the second circle off the page. */
-  const rStress = superposed ? rMax : rMax / 2;
+  const { stress: rStress, defl: rDefl } = halfWidths(rMax, superposed);
   const [wTop, wBot] = wFrame;
+
+  /**
+   * The probe point, as a point ON the two figures.
+   *
+   * Everything below the charts — the KPI strip, the twenty-four-row table,
+   * the principal stresses — is one point, and until now the figures never
+   * said which. A reader got σz = 14.6 psi out of the table with no way to
+   * see whether that is the peak of the curve it came from, its shoulder or
+   * its tail. It is deliberately NOT held to a drawn depth: z = 7 lies
+   * between the z = 5 and z = 10 curves, and a marker floating between two
+   * of them is the honest picture of a point the family does not pass
+   * through — which is what reading between the curves of a printed chart
+   * amounts to.
+   */
+  const probeMark = useMemo(() => {
+    if (!valid) return null;
+    const R = field(r, z);
+    if (!R) return null;
+    return {
+      r, z,
+      sigZ: Number.isFinite(R.sigZ) ? R.sigZ : null,
+      w: Number.isFinite(R.w) ? R.w * MILS : null,
+    };
+    // `field` closes over exactly these, so listing them is listing it.
+  }, [valid, r, z, kase, base.P, base.q, base.a, base.E, base.nu, superposed, spacing]);
 
   /** Curves that leave their own frame, so the figure can say so instead of
    *  clipping them silently. A fixed frame is only honest if it admits what
    *  it is hiding. */
   const offFrame = useMemo(() => {
-    const out: { stress: number[]; defl: number[] } = { stress: [], defl: [] };
+    const out = { stress: [] as number[], defl: [] as number[] };
     for (const c of curves) {
       for (let i = 0; i < c.r.length; i++) {
         const sv = c.sigZ[i], wv = c.w[i];
@@ -793,6 +810,16 @@ export default function OneLayerModule() {
     }
     return out;
   }, [curves, rStress, stressTop, wTop, wBot]);
+
+  /** Is the probe marker itself outside a frame? It is data too, and the
+   *  stress figure is drawn to half the reach, so a radius typed past the
+   *  edge takes the marker off the page. Saying so beats letting it vanish. */
+  const probeOff = useMemo(() => ({
+    stress: !!probeMark && (probeMark.r > rStress
+      || (probeMark.sigZ != null && probeMark.sigZ > stressTop)),
+    defl: !!probeMark && (probeMark.r > rDefl
+      || (probeMark.w != null && (probeMark.w > wBot || probeMark.w < wTop))),
+  }), [probeMark, rStress, rDefl, stressTop, wTop, wBot]);
 
   /* ── The point state, for the table ──────────────────────────────────── */
 
@@ -909,6 +936,27 @@ export default function OneLayerModule() {
             }] : []),
           ];
 
+      /**
+       * The probe marker: its own trace rather than an annotation, so it is
+       * hoverable and so both figures mark the same point with one object
+       * each. A ring in the surface color with an ink edge reads over a curve
+       * of any hue, which a filled dot in the series color does not.
+       */
+      const markOf = (v: number | null, unit: string) =>
+        v == null || !probeMark ? [] : [{
+          x: [probeMark.r], y: [v],
+          mode: 'markers' as const,
+          marker: {
+            symbol: 'circle' as const, size: 11,
+            color: c.surface, line: { color: c.ink, width: 2 },
+          },
+          name: 'Probe',
+          showlegend: false,
+          hovertemplate:
+            'probe  r = ' + fmt(probeMark.r, 2) + ', z = ' + fmt(probeMark.z, 2) +
+            '<br>%{y:.4g} ' + unit + '<extra></extra>',
+        }];
+
       const family = (key: 'sigZ' | 'w', hues: string[], unit: string) =>
         curves.map((cv, i) => ({
           x: cv.r,
@@ -926,7 +974,10 @@ export default function OneLayerModule() {
       // same reversal is asked for by name, because a range cannot be given
       // for a quantity whose decades are the point.
       if (stressRef.current) {
-        await Plotly.react(stressRef.current, family('sigZ', stressHues, 'psi'), baseLayout(theme, {
+        await Plotly.react(stressRef.current, [
+          ...family('sigZ', stressHues, 'psi'),
+          ...markOf(probeMark?.sigZ ?? null, 'psi'),
+        ], baseLayout(theme, {
           height: 360,
           xaxis: axis(theme, 'Radial distance r  (in)', { range: [-rStress, rStress] }),
           yaxis: gridAxis(theme, 'Vertical stress σz  (psi)', logY
@@ -938,9 +989,12 @@ export default function OneLayerModule() {
       }
 
       if (deflRef.current) {
-        await Plotly.react(deflRef.current, family('w', deflHues, 'mils'), baseLayout(theme, {
+        await Plotly.react(deflRef.current, [
+          ...family('w', deflHues, 'mils'),
+          ...markOf(probeMark?.w ?? null, 'mils'),
+        ], baseLayout(theme, {
           height: 360,
-          xaxis: axis(theme, 'Radial distance r  (in)', { range: [-rMax, rMax] }),
+          xaxis: axis(theme, 'Radial distance r  (in)', { range: [-rDefl, rDefl] }),
           yaxis: gridAxis(theme, 'Vertical deflection w  (mils)', logY
             ? { type: 'log', autorange: 'reversed' }
             : { range: [wBot, wTop] }),
@@ -993,7 +1047,7 @@ export default function OneLayerModule() {
       }
     })();
     return () => { dead = true; };
-  }, [curves, sweepRows, theme, logY, stressTop, rStress, rMax, wTop, wBot,
+  }, [curves, sweepRows, theme, logY, stressTop, rStress, rDefl, wTop, wBot, probeMark,
       kase, base.a, spacing, superposed,
       activeResp, sweepDef.label, respHue]);
 
@@ -1323,17 +1377,27 @@ export default function OneLayerModule() {
                 }))}
                 takeaway="Vertical stress spreads sideways as it goes down: the peak under the load falls fast with depth while the curve gets wider, so a deep point feels a broad, gentle bulb rather than the sharp edge of the load."
               >
-                {offFrame.stress.length > 0 && (
+                {(offFrame.stress.length > 0 || probeOff.stress) && (
                   <p className="cee-warn">
-                    {offFrame.stress.map(zz => `z = ${fmt(zz, 1)}`).join(', ')}{' '}
-                    {offFrame.stress.length === 1 ? 'runs' : 'run'} off the bottom of the
-                    frame, which stops at {fmt(stressTop, 0)} psi.
+                    {offFrame.stress.length > 0 && <>
+                      {offFrame.stress.map(zz => `z = ${fmt(zz, 1)}`).join(', ')}{' '}
+                      {offFrame.stress.length === 1 ? 'runs' : 'run'} off the bottom of the
+                      frame, which stops at {fmt(stressTop, 0)} psi.{' '}
+                    </>}
+                    {probeOff.stress && <>The probe point is outside this figure, which is
+                      drawn to r = {fmt(rStress, 0)}; it is still on the deflection figure
+                      below and in every card.</>}
                   </p>
                 )}
                 <p>
                   <strong>The load has a sharp edge; the stress does not.</strong> Nothing goes to
                   zero at r = a, which is the whole reason superposition matters: at the depths
                   that decide a pavement, neighboring wheels are still reaching each other.
+                </p>
+                <p>
+                  The ringed marker is the <strong>probe point</strong>, the one point every card
+                  and every row below is about. It is not held to a drawn depth, so it floats
+                  between two curves whenever z is not one of them.
                 </p>
                 {kase === 'rigid' && hasSurface && (
                   <p>
@@ -1370,13 +1434,17 @@ export default function OneLayerModule() {
                   ? 'The deflection under a rigid plate is flat: the same at the center as at the rim, which is the definition of the plate being rigid and the reason its settlement is only 79% of a flexible plate of the same average pressure.'
                   : 'The deflection basin is far wider than the load and falls off slowly, so a deflection measured well outside the load still carries information about the material under it.'}
               >
-                {offFrame.defl.length > 0 && (
+                {(offFrame.defl.length > 0 || probeOff.defl) && (
                   <p className="cee-warn">
-                    {offFrame.defl.map(zz => `z = ${fmt(zz, 1)}`).join(', ')}{' '}
-                    {offFrame.defl.length === 1 ? 'leaves' : 'leave'} the frame, which runs{' '}
-                    {fmt(wTop, 0)} to {fmt(wBot, 0)} mils. The frame is fixed for the case
-                    rather than fitted to the curves, so a change of modulus moves the basin
-                    instead of moving the axis.
+                    {offFrame.defl.length > 0 && <>
+                      {offFrame.defl.map(zz => `z = ${fmt(zz, 1)}`).join(', ')}{' '}
+                      {offFrame.defl.length === 1 ? 'leaves' : 'leave'} the frame, which runs{' '}
+                      {fmt(wTop, 0)} to {fmt(wBot, 0)} mils. The frame is fixed for the case
+                      rather than fitted to the curves, so a change of modulus moves the basin
+                      instead of moving the axis.{' '}
+                    </>}
+                    {probeOff.defl && <>The probe point is outside this figure; its value is
+                      in the cards below.</>}
                   </p>
                 )}
                 <p>
