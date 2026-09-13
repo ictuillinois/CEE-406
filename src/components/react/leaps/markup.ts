@@ -55,7 +55,7 @@ export const LEAPS_MARKUP = `
                             <div id="lp-kind"></div>
                         </div>
                         <div class="lp-topbar-spacer"></div>
-                        <div class="lp-topbar-group">
+                        <div class="lp-topbar-group lp-topbar-run">
                             <div class="lp-progress" id="lp-progress" hidden><div class="lp-progress-fill" id="lp-progress-fill"></div></div>
                             <select id="lp-units" class="lp-select" title="Unit system. Every input and result follows it.">
                                 <option value="SI" selected>SI (mm, N, MPa)</option>

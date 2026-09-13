@@ -331,3 +331,40 @@ test('the design study is in the markup, and can be reached', () => {
     assert.ok(mod.LEAPS_MARKUP.includes(needle), `the study lost ${needle}`);
   }
 });
+
+test('the grid mirror applies the reflection the engine would', () => {
+  /* `mirrorXPoint` is what makes half a contour grid enough. The physics
+   * half of this is in engine.test.mjs, which checks that the ENGINE gives
+   * a mirror-symmetric field under a mirror-symmetric gear; this is the
+   * other half: that the app's reflection does what a reflection does. */
+  const p = {
+    x: 420, y: 90, z: 100, li: 0,
+    sig: { xx: 1, yy: 2, zz: 3, xy: 4, xz: 5, yz: 6 },
+    eps: { xx: 7, yy: 8, zz: 9, xy: 10, xz: 11, yz: 12 },
+    disp: { ux: 13, uy: 14, uz: 15 },
+    principal: { s1: 3, s2: 2, s3: 1 }, epsPrincipal: { e1: 9, e2: 8, e3: 7 },
+    vm: 16, tauMax: 17, tauOct: 18, meanStress: 19, bulkStress: 20,
+    converged: true, singular: false,
+  };
+  const m = mod.app.mirrorXPoint(p);
+  assert.equal(m.x, -420, 'the point moves to the other side');
+  assert.equal(m.y, 90);
+  assert.equal(m.z, 100);
+  assert.equal(m.li, 0, 'the layer it sits in does not change');
+
+  // one x index flips, two or none does not
+  assert.deepEqual(m.sig, { xx: 1, yy: 2, zz: 3, xy: -4, xz: -5, yz: 6 });
+  assert.deepEqual(m.eps, { xx: 7, yy: 8, zz: 9, xy: -10, xz: -11, yz: 12 });
+  assert.deepEqual(m.disp, { ux: -13, uy: 14, uz: 15 });
+
+  // an orthogonal map leaves every invariant alone
+  assert.deepEqual(m.principal, p.principal);
+  assert.deepEqual(m.epsPrincipal, p.epsPrincipal);
+  assert.equal(m.vm, 16);
+  assert.equal(m.tauMax, 17);
+  assert.equal(m.meanStress, 19);
+
+  // and it is a copy: the half that was solved must not be rewritten
+  assert.equal(p.sig.xz, 5, 'the source point was mutated');
+  assert.equal(p.disp.ux, 13, 'the source point was mutated');
+});

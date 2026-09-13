@@ -497,3 +497,86 @@ test('the two views are one switch, and the switch is in the markup', () => {
     assert.ok(markupSrc.includes('data-view=\\"3d\\"') || markupSrc.includes('data-view="3d"'),
         'the 3D button lost its data-view');
 });
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 7. The mirrored half of the contour grid
+ *
+ * The grid is the most expensive thing the app asks for, and half of it is
+ * redundant whenever the gear is its own mirror image in x, which is every
+ * gear the generator builds. Half is therefore solved and half reflected,
+ * and a reflection is only free if its sign rules are right: a shear bulb
+ * with the wrong sign on one side looks entirely plausible and is wrong.
+ * So the reflection is checked against the engine, not against itself.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+test('reflecting a solved point gives what the engine gives at -x', async () => {
+    const { mirrorXPoint } = await import('./leaps.js').catch(() => ({}));
+    // leaps.js imports './icons' extensionless, which Node cannot resolve;
+    // render.test.mjs bundles it and runs the same check there. Here we
+    // check the PHYSICS the reflection relies on, which needs no app code:
+    // a mirror-symmetric gear must produce a mirror-symmetric field.
+    void mirrorXPoint;
+
+    const a = 95.4, p = 0.7;
+    const job = {
+        layers: [
+            { h: 100, E: 3000, nu: 0.35 }, { h: 200, E: 300, nu: 0.35 },
+            { h: 300, E: 150, nu: 0.35 }, { h: 0, E: 60, nu: 0.4 },
+        ],
+        interfaces: [{ slip: 0 }, { slip: 0.4 }, { slip: 1 }],
+        // symmetric in x about 0, asymmetric in y, and the section is off
+        // the gear axis: the mirror is in x alone and must not need more
+        loads: [
+            { kind: 'circle', x: -175, y: -175, p, a },
+            { kind: 'circle', x: 175, y: -175, p, a },
+            { kind: 'circle', x: -175, y: 300, p, a },
+            { kind: 'circle', x: 175, y: 300, p, a },
+        ],
+        points: [],
+        options: { tol: 1e-8, aRef: a },
+    };
+    const probes = [];
+    for (const x of [40, 175, 420, 900]) {
+        for (const z of [0, 60, 100, 460, 700]) probes.push([x, z]);
+    }
+    for (const [x, z] of probes) {
+        job.points.push({ x, y: 90, z });
+        job.points.push({ x: -x, y: 90, z });
+    }
+    const out = LEAPS.solve(job).points;
+
+    /* Scaled on the contact pressure and on the largest deflection in the
+       set, never on the local value: between the wheels at the surface
+       sigma_zz is a rounding error away from zero, and a relative test
+       there is a test of the quadrature's noise floor. The two sides are
+       not bit-identical - the four loads are summed in a different order -
+       so the bar is the last few bits of the answer, not zero. */
+    let wRef = 0;
+    out.forEach(q => { wRef = Math.max(wRef, Math.abs(q.disp.uz)); });
+    const sTol = 1e-11 * p, wTol = 1e-11 * wRef;
+
+    for (let k = 0; k < probes.length; k++) {
+        const q = out[2 * k], m = out[2 * k + 1];      // at +x and at -x
+        const [x, z] = probes[k];
+        const at = `x=${x} z=${z}`;
+        // unchanged by the reflection
+        for (const c of ['xx', 'yy', 'zz', 'yz']) {
+            assert.ok(Math.abs(q.sig[c] - m.sig[c]) < sTol, `sig.${c} at ${at}`);
+        }
+        assert.ok(Math.abs(q.disp.uz - m.disp.uz) < wTol, `uz at ${at}`);
+        assert.ok(Math.abs(q.disp.uy - m.disp.uy) < wTol, `uy at ${at}`);
+        // reversed by it
+        for (const c of ['xy', 'xz']) {
+            assert.ok(Math.abs(q.sig[c] + m.sig[c]) < sTol, `sig.${c} must flip at ${at}`);
+        }
+        assert.ok(Math.abs(q.disp.ux + m.disp.ux) < wTol, `ux must flip at ${at}`);
+        // invariants stay invariant
+        assert.ok(Math.abs(q.principal.s1 - m.principal.s1) < sTol, `s1 at ${at}`);
+        assert.ok(Math.abs(q.vm - m.vm) < sTol, `von Mises at ${at}`);
+    }
+
+    /* And the shear really is nonzero off the axis, or the flip test above
+       would be satisfied by a field that is zero everywhere. */
+    const off = out[2 * probes.findIndex(([x, z]) => x === 420 && z === 100)];
+    assert.ok(Math.abs(off.sig.xz) > 1e-4 * p, 'the probe set must reach a real shear');
+});
