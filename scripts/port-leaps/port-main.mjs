@@ -96,7 +96,9 @@ sub('UMD footer -> named exports',
         fatigueLife: fatigueLife,
         ruttingLife: ruttingLife,
         governingLife: governingLife,
-        mirrorXPoint: mirrorXPoint
+        mirrorXPoint: mirrorXPoint,
+        viewDir3: viewDir3,
+        lambert3: lambert3
     };
 });`,
 `    return {
@@ -116,7 +118,9 @@ sub('UMD footer -> named exports',
         fatigueLife: fatigueLife,
         ruttingLife: ruttingLife,
         governingLife: governingLife,
-        mirrorXPoint: mirrorXPoint
+        mirrorXPoint: mirrorXPoint,
+        viewDir3: viewDir3,
+        lambert3: lambert3
     };
 })();
 
@@ -137,6 +141,8 @@ export const fatigueLife = LEAPS_APP.fatigueLife;
 export const ruttingLife = LEAPS_APP.ruttingLife;
 export const governingLife = LEAPS_APP.governingLife;
 export const mirrorXPoint = LEAPS_APP.mirrorXPoint;
+export const viewDir3 = LEAPS_APP.viewDir3;
+export const lambert3 = LEAPS_APP.lambert3;
 export default LEAPS_APP;`);
 
 /* ---- 2. Icons -----------------------------------------------------------

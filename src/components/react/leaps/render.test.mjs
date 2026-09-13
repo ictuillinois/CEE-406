@@ -368,3 +368,62 @@ test('the grid mirror applies the reflection the engine would', () => {
   assert.equal(p.sig.xz, 5, 'the source point was mutated');
   assert.equal(p.disp.ux, 13, 'the source point was mutated');
 });
+
+test('the view direction is the one the projection actually has', () => {
+  /* Back-face culling asks "is this face turned away", and it asks it with
+   * `viewDir3` while the picture is drawn with `axonometric`. If the two
+   * ever disagree, faces of the box vanish or the inside of a tire is drawn
+   * over its outside, at some camera angles and not others - which is the
+   * worst kind of bug to find by looking.
+   *
+   * They agree if and only if moving a point ALONG the view direction does
+   * not move it on screen, which is the definition of the direction an
+   * orthographic camera looks in. */
+  for (const az of [12, 30, 45, 60, 78]) {
+    for (const el of [12, 26, 35.264, 50, 72]) {
+      const B = mod.app.axonometric(az, el, 1);
+      const w = mod.app.viewDir3(az, el);
+      const P = (x, y, z) => [
+        x * B.ex[0] + y * B.ey[0] + z * B.ez[0],
+        x * B.ex[1] + y * B.ey[1] + z * B.ez[1],
+      ];
+      const p0 = P(120, -300, 40);
+      for (const t of [-900, -1, 1, 500]) {
+        const p1 = P(120 + t * w[0], -300 + t * w[1], 40 + t * w[2]);
+        assert.ok(Math.abs(p1[0] - p0[0]) < 1e-9,
+          `moving along the view direction moved x on screen at az=${az} el=${el}`);
+        assert.ok(Math.abs(p1[1] - p0[1]) < 1e-9,
+          `moving along the view direction moved y on screen at az=${az} el=${el}`);
+      }
+      // and it points INTO the scene: a camera above the pavement looks down
+      assert.ok(w[2] > 0, `the camera must look downward at el=${el}`);
+      // the top face, whose outward normal is -z, must therefore be visible
+      assert.ok(-w[2] < 0, 'the top of the box must never be culled');
+    }
+  }
+});
+
+test('every face the reader can see is lit', () => {
+  /* The light follows the camera on purpose: a fixed world light puts a
+   * face of the box into the dark the moment the camera swings past it, and
+   * a drawing whose material nobody can read is worse than one that is not
+   * physically shaded. The ambient floor is what guarantees it. */
+  for (const az of [12, 30, 45, 60, 78]) {
+    for (const el of [12, 26, 35.264, 50, 72]) {
+      const w = mod.app.viewDir3(az, el);
+      const faces = [[0, 0, -1], [0, -1, 0], [0, 1, 0], [-1, 0, 0], [1, 0, 0]];
+      for (const n of faces) {
+        if (n[0] * w[0] + n[1] * w[1] + n[2] * w[2] >= 0) continue;   // turned away
+        const k = mod.app.lambert3(n, mod.app.axonometric ? lightOf(az, el) : null);
+        assert.ok(k >= 0.55 && k <= 1.06,
+          `a visible face came out at ${k} at az=${az} el=${el}`);
+      }
+    }
+  }
+  function lightOf(az, el) {
+    const aL = (az - 25) * Math.PI / 180;
+    const eL = Math.min(Math.max(el + 35, 30), 80) * Math.PI / 180;
+    const ce = Math.cos(eL);
+    return [-Math.sin(aL) * ce, -Math.cos(aL) * ce, -Math.sin(eL)];
+  }
+});
