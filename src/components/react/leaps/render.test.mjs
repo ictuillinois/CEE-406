@@ -250,3 +250,84 @@ test('scale is a multiplier on the whole basis', () => {
         assert.ok(Math.abs(b[k][1] - 7 * a[k][1]) < 1e-12, `${k} y is not linear in scale`);
     });
 });
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * The distress transfer functions
+ *
+ * They were written inline in the panel that printed them until the design
+ * study needed the same numbers, and a calibration constant that exists in
+ * two places is one that will eventually differ in two places. Pinned here
+ * against the Asphalt Institute forms and against a case the tool itself
+ * prints, so the two panels can never drift apart silently.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+test('the Asphalt Institute fatigue equation, as printed', () => {
+  // Nf = 0.0796 (eps_t)^-3.291 (E)^-0.854, strain dimensionless, E in psi.
+  // The tool's own AASHTO template: eps_t = 237.7 ue at E1 = 3000 MPa, which
+  // the Performance card prints as 1.03e6 repetitions.
+  const Nf = mod.app.fatigueLife(237.7e-6, 3000);
+  assert.ok(Math.abs(Nf / 1.03e6 - 1) < 0.01, `fatigue life came out ${Nf.toExponential(3)}`);
+
+  // The conversion to psi happens inside, so a caller cannot forget it:
+  // passing psi where MPa belongs must NOT quietly agree.
+  const wrong = mod.app.fatigueLife(237.7e-6, 3000 * 145.0377377);
+  assert.ok(wrong < Nf / 3, 'the modulus argument is megapascals, and the units must matter');
+
+  // the exponent is what it is: halving the strain must multiply the life
+  // by 2^3.291
+  const half = mod.app.fatigueLife(118.85e-6, 3000);
+  assert.ok(Math.abs(half / Nf - Math.pow(2, 3.291)) / Math.pow(2, 3.291) < 1e-9);
+});
+
+test('the subgrade rutting equation, as printed', () => {
+  // Nr = 1.365e-9 (eps_v)^-4.477. The same template: 344.2 ue at the top of
+  // the subgrade, which the Performance card prints as 4.36e6 repetitions.
+  const Nr = mod.app.ruttingLife(344.2e-6);
+  assert.ok(Math.abs(Nr / 4.36e6 - 1) < 0.01, `rutting life came out ${Nr.toExponential(3)}`);
+  const half = mod.app.ruttingLife(172.1e-6);
+  assert.ok(Math.abs(half / Nr - Math.pow(2, 4.477)) / Math.pow(2, 4.477) < 1e-9);
+});
+
+test('a pavement fails by whichever mechanism gets there first', () => {
+  const g1 = mod.app.governingLife(1e5, 4e6);
+  assert.equal(g1.N, 1e5);
+  assert.equal(g1.by, 'Fatigue cracking');
+  const g2 = mod.app.governingLife(4e6, 1e5);
+  assert.equal(g2.N, 1e5);
+  assert.equal(g2.by, 'Subgrade rutting');
+  // an unbound surface has no fatigue life, and that is not a reason to
+  // report no life at all
+  assert.equal(mod.app.governingLife(null, 7e5).N, 7e5);
+  assert.equal(mod.app.governingLife(null, null), null);
+
+  // the shipped AASHTO template, end to end: 237.7 ue at the base of the
+  // asphalt and 344.2 ue on the subgrade, which the tool prints as a
+  // 1.03e6-repetition pavement governed by fatigue
+  const g = mod.app.governingLife(
+    mod.app.fatigueLife(237.7e-6, 3000),
+    mod.app.ruttingLife(344.2e-6));
+  assert.equal(g.by, 'Fatigue cracking');
+  assert.ok(Math.abs(g.N / 1.03e6 - 1) < 0.01, `governing life came out ${g.N.toExponential(3)}`);
+});
+
+test('a life is null rather than infinite where there is no strain', () => {
+  // A zero or negative strain is not a pavement that lasts forever, it is a
+  // response that was not found; the panels print a blank for it.
+  assert.equal(mod.app.fatigueLife(0, 3000), null);
+  assert.equal(mod.app.fatigueLife(-1e-4, 3000), null);
+  assert.equal(mod.app.fatigueLife(2e-4, 0), null);
+  assert.equal(mod.app.ruttingLife(0), null);
+});
+
+test('the design study is in the markup, and can be reached', () => {
+  /* One canvas, five panes, and the study is the only one that solves
+   * sections other than the one on screen -- so if its controls are lost in
+   * a re-sync the tab is there and does nothing. */
+  for (const needle of [
+    'data-dtab="study"', 'data-dpane="study"',
+    'lp-study-var', 'lp-study-from', 'lp-study-to', 'lp-study-steps',
+    'lp-study-run', 'lp-study-resp', 'lp-study-target', 'lp-chart-study', 'lp-study-note',
+  ]) {
+    assert.ok(mod.LEAPS_MARKUP.includes(needle), `the study lost ${needle}`);
+  }
+});

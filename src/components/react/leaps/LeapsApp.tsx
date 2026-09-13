@@ -175,6 +175,14 @@ export default function LeapsApp() {
                 scaled to the largest magnitude in its own row.
               </li>
               <li>
+                <strong>Ask the design question.</strong> The <strong>Design study</strong> tab
+                sweeps one quantity, any layer's thickness or modulus, an interface's slip, the
+                wheel load or the contact pressure, and solves a whole range of sections rather
+                than one. Every step uses the same critical points and the same transfer functions
+                the panels use. Give a life a target and it solves the crossing for you: the
+                thickness that buys the repetitions, printed in words under the chart.
+              </li>
+              <li>
                 <strong>Export.</strong> One button writes a single file carrying the preflight, the
                 structure, the interfaces, every load, the solver settings and every response at every
                 evaluation point, in the units on screen. The project file reloads the run exactly; the

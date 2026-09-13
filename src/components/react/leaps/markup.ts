@@ -210,6 +210,7 @@ export const LEAPS_MARKUP = `
                             <button class="lp-dtab" data-dtab="profiles" role="tab">${iconHtml('fa-chart-line')} Profiles</button>
                             <button class="lp-dtab" data-dtab="layers" role="tab">${iconHtml('fa-table-cells')} Layer responses</button>
                             <button class="lp-dtab" data-dtab="performance" role="tab">${iconHtml('fa-gauge-high')} Performance</button>
+                            <button class="lp-dtab" data-dtab="study" role="tab">${iconHtml('fa-sliders-h')} Design study</button>
                             <div class="lp-dock-spacer"></div>
                             <button class="lp-dock-collapse" id="lp-dock-collapse" title="Collapse or expand the dock">${iconHtml('fa-chevron-down')}</button>
                         </div>
@@ -261,6 +262,37 @@ export const LEAPS_MARKUP = `
                             <div class="lp-dpane" data-dpane="layers">
                                 <p class="lp-hint">Maxima across every evaluated load station. Tension positive.</p>
                                 <div id="lp-layer-table"></div>
+                            </div>
+
+                            <div class="lp-dpane" data-dpane="study">
+                                <div class="lp-study-row">
+                                    <label class="lp-field lp-field-inline lp-study-wide"><span>Vary</span>
+                                        <select id="lp-study-var" class="lp-select" title="One quantity, swept across a range. Every step is a full solve."></select>
+                                    </label>
+                                    <label class="lp-field lp-field-inline lp-study-num"><span>From <em id="lp-study-unit"></em></span>
+                                        <input id="lp-study-from" type="number" step="any" />
+                                    </label>
+                                    <label class="lp-field lp-field-inline lp-study-num"><span>To</span>
+                                        <input id="lp-study-to" type="number" step="any" />
+                                    </label>
+                                    <label class="lp-field lp-field-inline lp-study-num"><span>Steps</span>
+                                        <input id="lp-study-steps" type="number" min="3" max="41" step="1" value="13" />
+                                    </label>
+                                    <button id="lp-study-run" class="lp-btn" title="Solve the whole range">${iconHtml('fa-play')} Run study</button>
+                                    <button id="lp-study-csv" class="lp-btn" title="Every step, every critical response">${iconHtml('fa-file-csv')} CSV</button>
+                                </div>
+                                <div class="lp-study-row">
+                                    <label class="lp-field lp-field-inline lp-study-wide"><span>Plot</span>
+                                        <select id="lp-study-resp" class="lp-select"></select>
+                                    </label>
+                                    <label class="lp-field lp-field-inline lp-study-num" id="lp-study-target-wrap"><span>Target repetitions</span>
+                                        <input id="lp-study-target" type="number" step="any" min="1" value="1000000" title="A horizontal line, and the crossing solved for" />
+                                    </label>
+                                </div>
+                                <div class="lp-chart-card lp-chart-card-wide">
+                                    <div id="lp-chart-study" class="lp-chart lp-chart-tall"></div>
+                                </div>
+                                <p class="lp-hint" id="lp-study-note"></p>
                             </div>
 
                             <div class="lp-dpane" data-dpane="performance">
