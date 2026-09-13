@@ -352,8 +352,31 @@ interface Preset {
   r: string; z: string;
   twin: boolean; spacing: string;
   depths: string; rMax: string;
+  /**
+   * The bottom of the deflection frame, in MILS, and the one figure setting
+   * that is not read off the data.
+   *
+   * The stress figure's ceiling is the contact pressure, a number the reader
+   * typed, so scaling it to the field is scaling it to an input. A basin's
+   * depth is an OUTPUT and it moves by a factor of eight across the very
+   * sweep these presets exist to run (E = 5k to 40k is 197 mils down to 25),
+   * so a frame that followed it would draw four identical pictures and put
+   * the whole comparison in the axis labels. Fixed per case, the picture is
+   * what changes. The top of the frame is minus a third of this, which is
+   * headroom rather than physics: nothing here deflects upward, and a basin
+   * that runs along the frame line cannot be read off it.
+   */
+  wBot: number;
   sweepVar: SweepVar; sweepVals: string; resp: Resp;
 }
+
+/** Inches to mils. Deflections are printed in mils because that is the unit
+ *  a deflection is reported in — an FWD basin, a plate test, a Benkelman
+ *  beam. Three decimals of an inch is the same number read three times. */
+const MILS = 1000;
+
+/** The deflection frame from its floor: top, bottom. */
+const wFrameOf = (bot: number): [number, number] => [-bot / 3, bot];
 
 const PRESETS: Preset[] = [
   {
@@ -362,7 +385,7 @@ const PRESETS: Preset[] = [
     kase: 'flexible',
     P: '9000', q: '50', a: '5', E: '10000', nu: '0.5',
     r: '0', z: '10', twin: true, spacing: '20',
-    depths: '0, 5, 10, 20', rMax: '35',
+    depths: '0, 5, 10, 20', rMax: '35', wBot: 50,
     sweepVar: 'E', sweepVals: '5000, 10000, 20000, 40000', resp: 'w0',
   },
   {
@@ -371,7 +394,7 @@ const PRESETS: Preset[] = [
     kase: 'flexible',
     P: '9000', q: '50', a: '5', E: '10000', nu: '0.3',
     r: '0', z: '10', twin: false, spacing: '20',
-    depths: '0, 5, 10, 20', rMax: '25',
+    depths: '0, 5, 10, 20', rMax: '25', wBot: 60,
     sweepVar: 'nu', sweepVals: '0.2, 0.3, 0.4, 0.5', resp: 'w0',
   },
   {
@@ -380,7 +403,7 @@ const PRESETS: Preset[] = [
     kase: 'flexible',
     P: '314', q: '100', a: '1', E: '1000', nu: '0.5',
     r: '1', z: '2', twin: false, spacing: '20',
-    depths: '0, 1, 2, 4', rMax: '6',
+    depths: '0, 1, 2, 4', rMax: '6', wBot: 200,
     sweepVar: 'nu', sweepVals: '0.3, 0.4, 0.5', resp: 'sigZ',
   },
   {
@@ -389,7 +412,7 @@ const PRESETS: Preset[] = [
     kase: 'rigid',
     P: '8000', q: '70.74', a: '6', E: '5600', nu: '0.4',
     r: '0', z: '6', twin: false, spacing: '20',
-    depths: '0, 3, 6, 12, 24', rMax: '30',
+    depths: '0, 3, 6, 12, 24', rMax: '30', wBot: 120,
     sweepVar: 'E', sweepVals: '2500, 5600, 10000, 20000', resp: 'w0',
   },
   {
@@ -398,7 +421,7 @@ const PRESETS: Preset[] = [
     kase: 'flexible',
     P: '10179', q: '90', a: '6', E: '10000', nu: '0.3',
     r: '0', z: '12', twin: false, spacing: '20',
-    depths: '0, 6, 12, 24, 36', rMax: '36',
+    depths: '1, 5, 10, 15, 20, 30', rMax: '60', wBot: 60,
     sweepVar: 'E', sweepVals: '5000, 10000, 20000, 40000', resp: 'w0',
   },
   {
@@ -407,7 +430,7 @@ const PRESETS: Preset[] = [
     kase: 'point',
     P: '9000', q: '80', a: '6', E: '10000', nu: '0.5',
     r: '0', z: '24', twin: false, spacing: '20',
-    depths: '6, 12, 24, 36, 48', rMax: '48',
+    depths: '6, 12, 24, 36, 48', rMax: '48', wBot: 100,
     sweepVar: 'E', sweepVals: '5000, 10000, 20000, 40000', resp: 'w',
   },
 ];
@@ -436,7 +459,24 @@ const clampNu = (v: number) => Math.min(0.499, Math.max(0, v));
 /** The four numbers a case is solved from, so a sweep can override one. */
 interface Params { P: number; q: number; a: number; E: number; nu: number }
 
+/** Samples per side of the axis. The families are drawn across the load,
+ *  from -rMax to +rMax, so a curve carries 2*SAMPLES-1 points. */
 const SAMPLES = 61;
+
+/**
+ * The smallest round number at or above `v`, for a frame top.
+ *
+ * The ladder is deliberately coarser than the one `contact-stress` uses for a
+ * color ramp: a frame wants few, round gridlines, and a stop at 9 would put
+ * the top of a 90 psi figure at 90 rather than at 100.
+ */
+const FRAME_STOPS = [1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+function frameTop(v: number): number {
+  if (!Number.isFinite(v) || v <= 0) return 1;
+  const decade = 10 ** Math.floor(Math.log10(v));
+  const m = v / decade;
+  return (FRAME_STOPS.find(x => m <= x * (1 + 1e-9)) ?? 10) * decade;
+}
 const MAX_CURVES = 6;
 
 /* ════════════════════════════════════════════════════════════════════════
@@ -598,6 +638,7 @@ export default function OneLayerModule() {
   const [spStr, setSp] = useState(PRESETS[4].spacing);
   const [depthStr, setDepths] = useState(PRESETS[4].depths);
   const [rMaxStr, setRMax] = useState(PRESETS[4].rMax);
+  const [wFrame, setWFrame] = useState<[number, number]>(wFrameOf(PRESETS[4].wBot));
   const [logY, setLogY] = useState(false);
   const [sweepVar, setSweepVar] = useState<SweepVar>(PRESETS[4].sweepVar);
   const [sweepStr, setSweep] = useState(PRESETS[4].sweepVals);
@@ -625,7 +666,7 @@ export default function OneLayerModule() {
     setP(x); setKase(x.kase);
     setPLoad(x.P); setQ(x.q); setA(x.a); setE(x.E); setNu(x.nu);
     setR(x.r); setZ(x.z); setTwin(x.twin); setSp(x.spacing);
-    setDepths(x.depths); setRMax(x.rMax); setLogY(false);
+    setDepths(x.depths); setRMax(x.rMax); setWFrame(wFrameOf(x.wBot)); setLogY(false);
     setSweepVar(x.sweepVar); setSweep(x.sweepVals); setResp(x.resp);
   };
 
@@ -636,9 +677,15 @@ export default function OneLayerModule() {
    */
   const fieldOf = (k: Case, o: Params, useTwin: boolean) =>
     (rr: number, zz: number): PointResponse | null => {
-      if (k === 'point') return pointLoadResponse(rr, zz, o.P, o.E, o.nu);
-      if (k === 'rigid') return rigidPlateResponse(rr, zz, o.q, o.a, o.E, o.nu);
-      if (!useTwin) return oneLayerResponse(rr, zz, o.q, o.a, o.E, o.nu);
+      // A single load is axisymmetric, so the three closed forms are
+      // functions of |r| and the curve across the axis is the profile
+      // mirrored. A PAIR is not: at -r the far circle is r + s away and at
+      // +r it is |r - s|, so the superposition is evaluated where it is
+      // asked rather than reflected, and the figure is honestly lopsided.
+      const rA = Math.abs(rr);
+      if (k === 'point') return pointLoadResponse(rA, zz, o.P, o.E, o.nu);
+      if (k === 'rigid') return rigidPlateResponse(rA, zz, o.q, o.a, o.E, o.nu);
+      if (!useTwin) return oneLayerResponse(rA, zz, o.q, o.a, o.E, o.nu);
       const S = superposeOneLayer(
         [{ x: 0, y: 0 }, { x: spacing, y: 0 }], { x: rr, y: 0, z: zz },
         o.q, o.a, o.E, o.nu
@@ -663,16 +710,22 @@ export default function OneLayerModule() {
   const droppedSurface =
     kase === 'point' && parseList(depthStr, MAX_CURVES, 0).some(v => v === 0);
 
+  /** Is the surface curve on the figure? Only then can the captions read it. */
+  const hasSurface = depths.includes(0);
+
   const curves = useMemo(() => {
     if (!valid || depths.length === 0) return [];
+    const N = 2 * SAMPLES - 1;
     return depths.map(zz => {
       const rs: number[] = [], sig: (number | null)[] = [], def: (number | null)[] = [];
-      for (let i = 0; i < SAMPLES; i++) {
-        const rr = (i / (SAMPLES - 1)) * rMax;
+      for (let i = 0; i < N; i++) {
+        // exactly 0 at the midpoint, so the load axis is a sample and not a
+        // chord between the two points either side of it
+        const rr = -rMax + (i / (N - 1)) * 2 * rMax;
         const R = field(rr, zz);
         rs.push(rr);
         sig.push(R && Number.isFinite(R.sigZ) ? R.sigZ : null);
-        def.push(R && Number.isFinite(R.w) ? R.w : null);
+        def.push(R && Number.isFinite(R.w) ? R.w * MILS : null);
       }
       return { z: zz, r: rs, sigZ: sig, w: def };
     });
@@ -680,14 +733,19 @@ export default function OneLayerModule() {
   }, [valid, depths, rMax, kase, base.P, base.q, base.a, base.E, base.nu, superposed, spacing]);
 
   /**
-   * Where to stop the stress axis.
+   * Where to stop the stress axis — which on an inverted frame is the BOTTOM
+   * of it, zero being at the top.
    *
    * Eq. 2.9 is UNBOUNDED at the rim of a rigid plate, so a sample that lands
    * near r = a would set the scale for every other curve and squash the whole
-   * figure into the bottom pixel. The axis is therefore taken from the field
-   * away from the rim, and the surface curve is left to run off the top of
-   * the frame — which is the correct picture: the pressure really does go to
-   * infinity there, and a curve leaving the frame says so.
+   * figure into one pixel. The axis is therefore taken from the field away
+   * from the rim, and the surface curve is left to run off the frame — which
+   * is the correct picture: the pressure really does go to infinity there,
+   * and a curve leaving the frame says so.
+   *
+   * Rounding up to a round number rather than padding by a fixed fraction is
+   * what makes the gridlines readable: a 90 psi field gets a frame at 100
+   * with ticks on the twenties, not one at 100.3.
    */
   const stressTop = useMemo(() => {
     let top = 0;
@@ -695,13 +753,46 @@ export default function OneLayerModule() {
       for (let i = 0; i < c.r.length; i++) {
         const v = c.sigZ[i];
         if (v == null) continue;
+        const rA = Math.abs(c.r[i]);
         if (kase === 'rigid' && c.z === 0 &&
-            c.r[i] > 0.9 * base.a && c.r[i] < 1.1 * base.a) continue;
+            rA > 0.9 * base.a && rA < 1.1 * base.a) continue;
         if (v > top) top = v;
       }
     }
-    return top > 0 ? top * 1.12 : 1;
+    return frameTop(top);
   }, [curves, kase, base.a]);
+
+  /* ── The two figure frames ───────────────────────────────────────────────
+     Both are drawn with the response increasing DOWNWARD, the way a pressure
+     bulb and a deflection basin are drawn on paper and the way the section
+     under them runs. Zero is the top edge in both, so the surface of the
+     half-space is the top of the frame and the curves hang from it.
+
+     Stress is read across half the reach deflection is: sigma_z off the axis
+     falls away like a Boussinesq 1/R^3 and is spent within a few radii, while
+     the basin goes as 1/r and is still measurable where the stress is gone.
+     That difference is the whole of why an FWD has seven sensors. A PAIR of
+     loads spans the reach itself, so there the stress figure keeps the full
+     width or it would cut the second circle off the page. */
+  const rStress = superposed ? rMax : rMax / 2;
+  const [wTop, wBot] = wFrame;
+
+  /** Curves that leave their own frame, so the figure can say so instead of
+   *  clipping them silently. A fixed frame is only honest if it admits what
+   *  it is hiding. */
+  const offFrame = useMemo(() => {
+    const out: { stress: number[]; defl: number[] } = { stress: [], defl: [] };
+    for (const c of curves) {
+      for (let i = 0; i < c.r.length; i++) {
+        const sv = c.sigZ[i], wv = c.w[i];
+        if (sv != null && Math.abs(c.r[i]) <= rStress && sv > stressTop
+            && !out.stress.includes(c.z)) out.stress.push(c.z);
+        if (wv != null && (wv > wBot || wv < wTop)
+            && !out.defl.includes(c.z)) out.defl.push(c.z);
+      }
+    }
+    return out;
+  }, [curves, rStress, stressTop, wTop, wBot]);
 
   /* ── The point state, for the table ──────────────────────────────────── */
 
@@ -808,7 +899,7 @@ export default function OneLayerModule() {
         : [
             {
               type: 'rect' as const, xref: 'x' as const, yref: 'paper' as const,
-              x0: 0, x1: base.a, y0: 0, y1: 1,
+              x0: -base.a, x1: base.a, y0: 0, y1: 1,
               fillcolor: withAlpha(c.orange, 0.1), line: { width: 0 }, layer: 'below' as const,
             },
             ...(superposed ? [{
@@ -818,7 +909,7 @@ export default function OneLayerModule() {
             }] : []),
           ];
 
-      const family = (key: 'sigZ' | 'w', hues: string[]) =>
+      const family = (key: 'sigZ' | 'w', hues: string[], unit: string) =>
         curves.map((cv, i) => ({
           x: cv.r,
           y: cv[key],
@@ -826,28 +917,33 @@ export default function OneLayerModule() {
           mode: 'lines' as const,
           line: { color: hues[i], width: 2.4 },
           connectgaps: false,
-          hovertemplate: `z = ${fmt(cv.z, 1)}<br>r = %{x:.2f}<br>%{y:.4g}<extra></extra>`,
+          hovertemplate:
+            `z = ${fmt(cv.z, 1)}<br>r = %{x:.2f}<br>%{y:.4g} ${unit}<extra></extra>`,
         }));
 
+      // Both frames run zero at the TOP and the response downward, so the
+      // figure reads the way the half-space under it does. On a log axis the
+      // same reversal is asked for by name, because a range cannot be given
+      // for a quantity whose decades are the point.
       if (stressRef.current) {
-        await Plotly.react(stressRef.current, family('sigZ', stressHues), baseLayout(theme, {
+        await Plotly.react(stressRef.current, family('sigZ', stressHues, 'psi'), baseLayout(theme, {
           height: 360,
-          xaxis: axis(theme, 'Radial distance r  (in / mm)'),
-          yaxis: gridAxis(theme, 'Vertical stress σz', logY
-            ? { type: 'log' }
-            : { range: [0, stressTop] }),
+          xaxis: axis(theme, 'Radial distance r  (in)', { range: [-rStress, rStress] }),
+          yaxis: gridAxis(theme, 'Vertical stress σz  (psi)', logY
+            ? { type: 'log', autorange: 'reversed' }
+            : { range: [stressTop, 0] }),
           hovermode: 'closest', hoverlabel: hoverLabel(theme),
           shapes: bands,
         }), plotConfig);
       }
 
       if (deflRef.current) {
-        await Plotly.react(deflRef.current, family('w', deflHues), baseLayout(theme, {
+        await Plotly.react(deflRef.current, family('w', deflHues, 'mils'), baseLayout(theme, {
           height: 360,
-          xaxis: axis(theme, 'Radial distance r  (in / mm)'),
-          yaxis: gridAxis(theme, 'Vertical deflection w', logY
-            ? { type: 'log' }
-            : { rangemode: 'tozero' }),
+          xaxis: axis(theme, 'Radial distance r  (in)', { range: [-rMax, rMax] }),
+          yaxis: gridAxis(theme, 'Vertical deflection w  (mils)', logY
+            ? { type: 'log', autorange: 'reversed' }
+            : { range: [wBot, wTop] }),
           hovermode: 'closest', hoverlabel: hoverLabel(theme),
           shapes: bands,
         }), plotConfig);
@@ -897,7 +993,8 @@ export default function OneLayerModule() {
       }
     })();
     return () => { dead = true; };
-  }, [curves, sweepRows, theme, logY, stressTop, kase, base.a, spacing, superposed,
+  }, [curves, sweepRows, theme, logY, stressTop, rStress, rMax, wTop, wBot,
+      kase, base.a, spacing, superposed,
       activeResp, sweepDef.label, respHue]);
 
   /* ── Headline numbers ────────────────────────────────────────────────── */
@@ -1020,7 +1117,7 @@ export default function OneLayerModule() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="ol-rmax">
-              <span>Max radius<Tip text="How far out to draw. The stress bulb has no edge, so there is always something out there — it just gets small." /></span>
+              <span>Max radius<Tip text="Half the width of the figures, drawn each side of the load axis. The deflection basin takes the whole of it; the stress figure takes half, because σz off the axis is spent within a few radii while the basin is still measurable out where the stress is gone. A pair of loads spans the reach itself, so there both figures keep the full width." /></span>
               <span className="cee-field__unit">in / mm</span>
             </label>
             <input id="ol-rmax" className="cee-input" type="number" step="6" min="1" value={rMaxStr}
@@ -1218,7 +1315,7 @@ export default function OneLayerModule() {
             <div className="cee-eqrow">
               <ChartFigure
                 title="Vertical stress across the radius"
-                subtitle={`σz against r, one curve per depth. ${
+                subtitle={`σz in psi against r in inches, one curve per depth, drawn across the load. Zero is the TOP of the frame and stress increases downward, the way the section under it runs. ${
                   kase === 'point' ? 'The dotted line is the load axis.' : 'The tinted band is the loaded circle.'}`}
                 plotRef={stressRef}
                 legend={curves.map((cv, i) => ({
@@ -1226,12 +1323,19 @@ export default function OneLayerModule() {
                 }))}
                 takeaway="Vertical stress spreads sideways as it goes down: the peak under the load falls fast with depth while the curve gets wider, so a deep point feels a broad, gentle bulb rather than the sharp edge of the load."
               >
+                {offFrame.stress.length > 0 && (
+                  <p className="cee-warn">
+                    {offFrame.stress.map(zz => `z = ${fmt(zz, 1)}`).join(', ')}{' '}
+                    {offFrame.stress.length === 1 ? 'runs' : 'run'} off the bottom of the
+                    frame, which stops at {fmt(stressTop, 0)} psi.
+                  </p>
+                )}
                 <p>
                   <strong>The load has a sharp edge; the stress does not.</strong> Nothing goes to
                   zero at r = a, which is the whole reason superposition matters: at the depths
                   that decide a pavement, neighboring wheels are still reaching each other.
                 </p>
-                {kase === 'rigid' && (
+                {kase === 'rigid' && hasSurface && (
                   <p>
                     The <strong>z = 0 curve is Eq. 2.9 itself</strong> — the pressure the plate
                     applies. It starts at q/2 under the center and leaves the top of the frame
@@ -1255,9 +1359,9 @@ export default function OneLayerModule() {
               <ChartFigure
                 title="Vertical deflection across the radius"
                 subtitle={
-                  kase === 'point'
-                    ? 'w against r, one curve per depth.'
-                    : 'w against r, one curve per depth. The z = 0 curve is the surface deflection.'}
+                  `w in mils (thousandths of an inch) against r in inches, one curve per depth, drawn across the load. Zero is the top of the frame and the basin hangs below it.${
+                    hasSurface && kase !== 'point'
+                      ? ' The z = 0 curve is the surface deflection.' : ''}`}
                 plotRef={deflRef}
                 legend={curves.map((cv, i) => ({
                   label: `z = ${fmt(cv.z, 1)}`, color: deflHues[i],
@@ -1266,12 +1370,30 @@ export default function OneLayerModule() {
                   ? 'The deflection under a rigid plate is flat: the same at the center as at the rim, which is the definition of the plate being rigid and the reason its settlement is only 79% of a flexible plate of the same average pressure.'
                   : 'The deflection basin is far wider than the load and falls off slowly, so a deflection measured well outside the load still carries information about the material under it.'}
               >
+                {offFrame.defl.length > 0 && (
+                  <p className="cee-warn">
+                    {offFrame.defl.map(zz => `z = ${fmt(zz, 1)}`).join(', ')}{' '}
+                    {offFrame.defl.length === 1 ? 'leaves' : 'leave'} the frame, which runs{' '}
+                    {fmt(wTop, 0)} to {fmt(wBot, 0)} mils. The frame is fixed for the case
+                    rather than fitted to the curves, so a change of modulus moves the basin
+                    instead of moving the axis.
+                  </p>
+                )}
                 <p>
                   <strong>The basin is much wider than the load.</strong> That is what an FWD
                   exploits: sensors set out to 6 ft are still reading a deflection, and the shape
-                  of the basin, not its depth alone, is what backcalculation reads.
+                  of the basin, not its depth alone, is what backcalculation reads. Note the
+                  reach: this figure is twice as wide as the stress figure above it and the
+                  curves have still not closed, while the stress was finished in a few radii.
                 </p>
-                {isCircular(kase) && (
+                <p>
+                  <strong>This frame does not follow the curves.</strong> Deflection goes as 1/E,
+                  so a sweep of modulus over the range a subgrade actually covers moves the basin
+                  by a factor of eight — and an axis that rescaled itself each time would draw
+                  eight identical pictures and put the whole result in the tick labels. Change E
+                  and watch the basin move through a frame that stays where it is.
+                </p>
+                {isCircular(kase) && hasSurface && (
                   <p>
                     Compare the <strong>z = 0 curve</strong> across the two plates.{' '}
                     {kase === 'rigid'
