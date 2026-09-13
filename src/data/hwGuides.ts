@@ -37,7 +37,7 @@ export const hwGuides: Record<string, HwGuide> = {
         kind: 'equation',
         title: 'Tire contact: pressure and area',
         body: '$$A_c = \\frac{P}{p} \\qquad p \\approx p_{tire}$$',
-        where: '<dl class="doc-equation__defs"><dt>A_c</dt><dd>contact area</dd><dt>P</dt><dd>wheel load</dd><dt>p</dt><dd>contact pressure, <em>assumed</em> equal to tire inflation pressure. Q7 is partly about how far that assumption holds.</dd></dl>',
+        where: '<dl class="doc-equation__defs"><dt>\$</dt><dd>contact area</dd><dt>P</dt><dd>wheel load</dd><dt>p</dt><dd>contact pressure, <em>assumed</em> equal to tire inflation pressure. Q7 is partly about how far that assumption holds.</dd></dl>',
       },
       {
         kind: 'concept',
@@ -67,7 +67,7 @@ export const hwGuides: Record<string, HwGuide> = {
         kind: 'equation',
         title: 'Generalized resilient modulus model (MEPDG form)',
         body: '$$M_r = k_1\\, p_a \\left(\\frac{\\theta}{p_a}\\right)^{k_2} \\left(\\frac{\\tau_{oct}}{p_a} + 1\\right)^{k_3}$$',
-        where: '<dl class="doc-equation__defs"><dt>&theta;</dt><dd>bulk stress &sigma;&#8321;+&sigma;&#8322;+&sigma;&#8323; (triaxial: &sigma;<sub>d</sub> + 3&sigma;&#8323;)</dd><dt>&tau;<sub>oct</sub></dt><dd>octahedral shear (triaxial: &radic;2&thinsp;&sigma;<sub>d</sub>/3)</dd><dt>p_a</dt><dd>atmospheric pressure, 101.325 kPa (14.7 psi)</dd><dt>k&#8321;, k&#8322;, k&#8323;</dt><dd>regression constants (k&#8322; &ge; 0, k&#8323; &le; 0)</dd></dl>',
+        where: '<dl class="doc-equation__defs"><dt>&theta;</dt><dd>bulk stress &sigma;&#8321;+&sigma;&#8322;+&sigma;&#8323; (triaxial: &sigma;<sub>d</sub> + 3&sigma;&#8323;)</dd><dt>&tau;<sub>oct</sub></dt><dd>octahedral shear (triaxial: &radic;2&thinsp;&sigma;<sub>d</sub>/3)</dd><dt>\$</dt><dd>atmospheric pressure, 101.325 kPa (14.7 psi)</dd><dt>k&#8321;, k&#8322;, k&#8323;</dt><dd>regression constants (k&#8322; &ge; 0, k&#8323; &le; 0)</dd></dl>',
       },
       {
         kind: 'concept',

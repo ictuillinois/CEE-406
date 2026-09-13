@@ -1451,10 +1451,28 @@
 }
 
 .cee-readout__eq {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
   color: var(--cee-muted);
 }
+
+/* Smaller than the One-layer rail's: this one sits under a figure inside a
+   readout, not in a card of its own. */
+.cee-readout__eq .cee-math .katex { font-size: 0.92em; }
+.cee-readout__eq .cee-math--block { flex: 1 1 auto; min-width: 0; }
+
+/* A citation is not part of the equation and must not be set as if it were —
+   "(Eq. 2.13)" inside the math would be typeset in italic math letters. */
+.cee-readout__eqnote,
+.cee-chartmeta__eqnote {
+  font-size: 0.72rem;
+  color: var(--cee-secondary);
+  white-space: nowrap;
+}
+
+.cee-chartmeta__eqnote { margin-left: 0.5rem; }
 
 /* The backwards half — roots, and the nearest printed curve. */
 .cee-card--reading .cee-reading__at { margin: 0 0 0.5rem; font-size: 0.875rem; }

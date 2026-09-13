@@ -30,7 +30,10 @@ test('the catalog covers every empirical chart in Chapter 2', () => {
   for (const c of CHARTS) {
     assert.ok(SECTIONS.includes(c.section), `${c.id} has an unknown section`);
     assert.ok(c.purpose.length > 20, `${c.id} needs a purpose`);
-    assert.ok(c.equation.includes('='), `${c.id} needs the equation that uses it`);
+    // The equation is a typeset pair now: both forms must be there and both
+    // must actually be an equation, or one of the two is a caption.
+    assert.ok(c.equation.tex.includes('='), `${c.id} needs the equation that uses it`);
+    assert.ok(c.equation.plain.includes('='), `${c.id}: the plain twin is not an equation`);
     assert.ok(c.family.values.length >= 2, `${c.id} needs a curve family`);
     assert.ok(c.value.max > c.value.min && c.sweep.max > c.sweep.min, `${c.id} has a bad axis`);
     // A log axis cannot start at zero.
@@ -819,9 +822,17 @@ test('the percent charts name the two steps between a read and a stress', () => 
   // chart that says "/100" in its equation but declares no `percent` would
   // leave the reader to do the arithmetic the readout exists to do.
   for (const c of CHARTS) {
-    const equationDivides = c.equation.includes('/100');
-    assert.equal(!!c.percent, equationDivides,
-      `${c.id}: equation says "${c.equation}" but percent is ${JSON.stringify(c.percent)}`);
+    // The equation is typeset now, so the division shows up as a \dfrac over
+    // 100 in the TeX and as "/ 100" in its plain twin. Both must agree, or
+    // one of the two forms is describing a different equation.
+    // The numerator is `\text{chart value}`, which has braces of its own, so
+    // the denominator is matched at the end rather than by balancing them.
+    const texDivides = /\\dfrac\{.*\}\{100\}/.test(c.equation.tex);
+    const plainDivides = /\/\s*100\b/.test(c.equation.plain);
+    assert.equal(texDivides, plainDivides,
+      `${c.id}: the tex and its plain twin disagree about dividing by 100`);
+    assert.equal(!!c.percent, texDivides,
+      `${c.id}: equation is "${c.equation.plain}" but percent is ${JSON.stringify(c.percent)}`);
     if (!c.percent) continue;
     assert.ok(c.value.label.includes('100'),
       `${c.id}: declares percent but its axis is not a percentage`);

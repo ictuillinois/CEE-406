@@ -24,6 +24,7 @@ import {
   rampSeries, hoverLabel, fmt, num, TOKENS,
 } from '../../chartTheme';
 import ChartFigure from '../../ui/ChartFigure';
+import Equation from '../../ui/Equation';
 import ProgressStrip from '../../ui/ProgressStrip';
 import type { AxisSpec, ChartSpec, CurvePoint, LatticeCurve, StackPanel } from '../charts.ts';
 import {
@@ -1105,7 +1106,12 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
             </span>
           </div>
         )}
-        <div className="cee-readout__eq">{spec.equation}</div>
+        <div className="cee-readout__eq">
+          <Equation tex={spec.equation.tex} plain={spec.equation.plain} display />
+          {spec.equation.note && (
+            <span className="cee-readout__eqnote">{spec.equation.note}</span>
+          )}
+        </div>
         {Number.isFinite(markerValue) &&
           (markerValue < spec.value.min || markerValue > spec.value.max) && (
           <p className="cee-warn cee-warn--inline">

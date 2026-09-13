@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.160.0",
+    "katex": "0.16.22",
     "pagefind": "^1.4.0"
   }
 }

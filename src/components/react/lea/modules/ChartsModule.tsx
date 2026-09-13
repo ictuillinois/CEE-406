@@ -10,6 +10,7 @@ import { useMemo, useState } from 'react';
 import Tip from '../../Tip';
 import { CHARTS, SECTIONS, type ChartSpec } from '../charts.ts';
 import ChartReader from './ChartReader';
+import Equation from '../../ui/Equation';
 
 export default function ChartsModule() {
   const [id, setId] = useState(CHARTS[0].id);
@@ -57,7 +58,13 @@ export default function ChartsModule() {
               {spec.family.values.length} printed values of <code>{spec.family.symbol}</code>;
               any value in [{spec.family.range[0]}, {spec.family.range[1]}] can be drawn
             </dd>
-            <dt>Applies as</dt><dd><code>{spec.equation}</code></dd>
+            <dt>Applies as</dt>
+            <dd>
+              <Equation tex={spec.equation.tex} plain={spec.equation.plain} />
+              {spec.equation.note && (
+                <span className="cee-chartmeta__eqnote">{spec.equation.note}</span>
+              )}
+            </dd>
             {spec.nomograph && (<><dt>Note</dt><dd>Nomograph: a lattice of two crossing families, drawn as printed</dd></>)}
           </dl>
         </div>

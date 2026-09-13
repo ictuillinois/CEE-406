@@ -1,3 +1,4 @@
+import type { EqItem } from '../ui/math';
 // The Chapter 2 chart catalog — every empirical design chart in Huang (2004)
 // Chapter 2, described well enough to be redrawn and read in both directions.
 //
@@ -93,8 +94,18 @@ export interface ChartSpec {
   section: ChartSection;
   /** One sentence: what a reader comes to this chart for. */
   purpose: string;
-  /** The equation that turns the chart value into an answer. */
-  equation: string;
+  /**
+   * The equation that turns the chart value into an answer.
+   *
+   * Typeset, not spelled: it is displayed under the figure and in the spec
+   * list, which is the same job the One-layer module's rail does, and a
+   * reader moving between those two tabs should not find one of them setting
+   * exponents in Unicode. This field carried
+   * 'Nd = 4.873×10⁻⁵ σc⁻³·⁷³⁴ E₂³·⁵⁸³', in which the decimal point of an
+   * exponent had to be a MIDDLE DOT because Unicode has no superscript
+   * period. That is the whole argument for typesetting in one line.
+   */
+  equation: EqItem;
   /**
    * Foster and Ahlvin's four stress charts put sigma/q x 100 on the abscissa,
    * so a read is two steps and BOTH are places to slip: divide by 100 to get
@@ -238,7 +249,10 @@ const FIG_2_2: ChartSpec = {
   purpose:
     'The vertical stress anywhere in a half-space under a circular load: the quantity ' +
     'that decides how much load reaches the subgrade.',
-  equation: 'σz = q · (chart value)/100',
+  equation: {
+    tex: '\\sigma_z = q \\cdot \\dfrac{\\text{chart value}}{100}',
+    plain: 'sigma_z = q x (chart value) / 100',
+  },
   percent: { ratio: 'σz/q', stress: 'σz' },
   value: percentAxis('σz/q × 100 (%)'),
   sweep: depthAxis(10),
@@ -263,7 +277,10 @@ const FIG_2_3: ChartSpec = {
   section: 'One layer',
   purpose:
     'The radial stress, which with σz and σt gives the strains through Eq. 2.1.',
-  equation: 'σr = q · (chart value)/100',
+  equation: {
+    tex: '\\sigma_r = q \\cdot \\dfrac{\\text{chart value}}{100}',
+    plain: 'sigma_r = q x (chart value) / 100',
+  },
   percent: { ratio: 'σr/q', stress: 'σr' },
   value: percentAxis('σr/q × 100 (%)'),
   sweep: depthAxis(10),
@@ -290,7 +307,10 @@ const FIG_2_4: ChartSpec = {
   source: 'After Foster and Ahlvin (1954)',
   section: 'One layer',
   purpose: 'The circumferential stress: the third normal stress Eq. 2.1 needs.',
-  equation: 'σt = q · (chart value)/100',
+  equation: {
+    tex: '\\sigma_t = q \\cdot \\dfrac{\\text{chart value}}{100}',
+    plain: 'sigma_t = q x (chart value) / 100',
+  },
   percent: { ratio: 'σt/q', stress: 'σt' },
   value: percentAxis('σt/q × 100 (%)'),
   sweep: depthAxis(5),
@@ -320,7 +340,10 @@ const FIG_2_5: ChartSpec = {
   purpose:
     'The shear stress in the r–z plane, which vanishes on the axis and peaks near the edge ' +
     'of the load. That is the reason a critical tensile strain can move off the axis.',
-  equation: 'τrz = q · (chart value)/100',
+  equation: {
+    tex: '\\tau_{rz} = q \\cdot \\dfrac{\\text{chart value}}{100}',
+    plain: 'tau_rz = q x (chart value) / 100',
+  },
   percent: { ratio: 'τrz/q', stress: 'τrz' },
   value: percentAxis('ΤRZ/q × 100 (%)'),
   sweep: depthAxis(10),
@@ -346,7 +369,10 @@ const FIG_2_6: ChartSpec = {
   section: 'One layer',
   purpose:
     'The deflection factor F: what an FWD sensor at radius r would read over a half-space.',
-  equation: 'w = (q·a/E) · F',
+  equation: {
+    tex: 'w = \\dfrac{q\\,a}{E}\\,F',
+    plain: 'w = (q a / E) F',
+  },
   value: {
     label: 'Deflection factor F', log: true, min: 0.1, max: 3,
     ticks: [0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.5, 2, 3],
@@ -386,7 +412,10 @@ const FIG_2_14: ChartSpec = {
   purpose:
     'What a stiff surface layer does to the vertical stress below it: the argument for ' +
     'building a pavement at all, in one picture.',
-  equation: 'σz = q · (chart value)',
+  equation: {
+    tex: '\\sigma_z = q \\cdot (\\text{chart value})',
+    plain: 'sigma_z = q x (chart value)',
+  },
   value: {
     label: 'σz/q', log: false, min: 0, max: 1,
     ticks: [0, 0.2, 0.4, 0.6, 0.8, 1], minorDtick: 0.05,
@@ -417,7 +446,12 @@ const FIG_2_15: ChartSpec = {
   purpose:
     'The vertical stress delivered to the top of the subgrade: the quantity a thickness ' +
     'is designed to limit.',
-  equation: 'σc = q · (chart value);  Nd = 4.873×10⁻⁵ σc⁻³·⁷³⁴ E₂³·⁵⁸³ (Eq. 2.13)',
+  equation: {
+    tex: '\\sigma_c = q \\cdot (\\text{chart value}) \\qquad '
+      + 'N_d = 4.873\\times10^{-5}\\,\\sigma_c^{-3.734}\\,E_2^{3.583}',
+    plain: 'sigma_c = q x (chart value);  Nd = 4.873e-5 sigma_c^-3.734 E2^3.583',
+    note: 'Eq. 2.13',
+  },
   value: {
     label: 'σc/q', log: false, min: 0, max: 0.9,
     ticks: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], minorDtick: 0.025,
@@ -477,7 +511,11 @@ const FIG_2_15R: ChartSpec = {
   purpose:
     'How far sideways the vertical stress at the top of the subgrade reaches: the ' +
     'off-axis half of Figure 2.15, which the printed page draws only on the axis.',
-  equation: 'σc = q · (chart value), at radius r from the load axis',
+  equation: {
+    tex: '\\sigma_c = q \\cdot (\\text{chart value})',
+    plain: 'sigma_c = q x (chart value)',
+    note: 'at radius r from the load axis',
+  },
   value: FIG_2_15.value,
   sweep: FIG_2_15.sweep,
   valueOnX: false,
@@ -509,7 +547,12 @@ const FIG_2_17: ChartSpec = {
   purpose:
     'Surface deflection under the load, and, read backwards, the modulus a plate bearing ' +
     'test implies.',
-  equation: 'w₀ = 1.5·q·a·F₂/E₂  (flexible plate, Eq. 2.14);  1.18·q·a·F₂/E₂  (rigid, Eq. 2.15)',
+  equation: {
+    tex: 'w_0 = 1.5\\,\\dfrac{q\\,a\\,F_2}{E_2}\\ \\text{(flexible)} \\qquad '
+      + 'w_0 = 1.18\\,\\dfrac{q\\,a\\,F_2}{E_2}\\ \\text{(rigid)}',
+    plain: 'w0 = 1.5 q a F2 / E2 (flexible);  1.18 q a F2 / E2 (rigid)',
+    note: 'Eqs. 2.14 and 2.15',
+  },
   value: {
     label: 'Deflection factor F₂', log: true, min: 0.02, max: 1,
     ticks: [0.02, 0.03, 0.04, 0.05, 0.06, 0.08, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1],
@@ -543,7 +586,10 @@ const FIG_2_19: ChartSpec = {
   purpose:
     'Deflection on the layer-1/layer-2 interface at any radius, and superposable, which is how ' +
     'Example 2.7 handles a dual.',
-  equation: 'w = (q·a/E₂) · F',
+  equation: {
+    tex: 'w = \\dfrac{q\\,a}{E_2}\\,F',
+    plain: 'w = (q a / E2) F',
+  },
   value: {
     label: 'Deflection factor F', log: false, min: 0, max: 1.5,
     ticks: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5],
@@ -588,7 +634,11 @@ const FIG_2_21: ChartSpec = {
   purpose:
     'The critical tensile strain at the bottom of layer 1: the number a fatigue transfer ' +
     'function consumes.',
-  equation: 'e = (q/E₁) · Fe  (Eq. 2.17)',
+  equation: {
+    tex: 'e = \\dfrac{q}{E_1}\\,F_e',
+    plain: 'e = (q / E1) Fe',
+    note: 'Eq. 2.17',
+  },
   value: {
     label: 'Strain factor Fe', log: true, min: 0.01, max: 20,
     ticks: [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20],
@@ -661,7 +711,12 @@ function conversionChart(o: {
     source: 'After Huang (1973a)',
     section: 'Two layers',
     purpose: o.purpose,
-    equation: 'Fe(group) = C · Fe(single);  C = C₁ + 0.2(a′ − 3)(C₂ − C₁)  (Eq. 2.19)',
+    equation: {
+      tex: 'F_e(\\text{group}) = C\\,F_e(\\text{single}) \\qquad '
+        + "C = C_1 + 0.2\\,(a' - 3)(C_2 - C_1)",
+      plain: "Fe(group) = C Fe(single);  C = C1 + 0.2 (a' - 3)(C2 - C1)",
+      note: 'Eq. 2.19',
+    },
     value: {
       label: 'Conversion factor C', log: false, min: 1, max: 1.8,
       ticks: [1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8], minorDtick: 0.025,
@@ -784,7 +839,15 @@ const FIG_2_31: ChartSpec = {
   purpose:
     'The tensile strain under the surface course of a three-layer section, without ' +
     "interpolating Jones' four-way table.",
-  equation: 'εr = (q/E₁) · (RR1 − ZZ1)/2  (Eq. 2.25)',
+  equation: {
+    // RR1 and ZZ1 are Jones' own names for the table's columns, not
+    // subscripted variables, so they are set upright and read across to
+    // Table 2.3 the way this chart's own axis label does.
+    tex: '\\varepsilon_r = \\dfrac{q}{E_1}\\cdot'
+      + '\\dfrac{\\mathrm{RR1} - \\mathrm{ZZ1}}{2}',
+    plain: 'epsilon_r = (q / E1) (RR1 - ZZ1) / 2',
+    note: 'Eq. 2.25',
+  },
   value: {
     label: '|(RR1 − ZZ1)/2|', log: true, min: 0.001, max: 100,
     ticks: [0.001, 0.01, 0.1, 1, 10, 100],
