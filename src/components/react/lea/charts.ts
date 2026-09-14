@@ -32,7 +32,7 @@ import {
   interfaceDeflectionFactor, strainFactor, conversionFactor,
   CHART_SD, CHART_RADII,
 } from './twoLayer.ts';
-import { stressFactors } from './threeLayer.ts';
+import { peattieFactor } from './threeLayer.ts';
 
 export type ChartSection = 'One layer' | 'Two layers' | 'Three layers';
 
@@ -135,21 +135,13 @@ export interface ChartSpec {
   panel?: PanelSpec;
   /** value = evaluate(family, sweep, panel). */
   evaluate: (fv: number, sv: number, pv?: number) => number;
-  /**
-   * `evaluate` is SIGNED and the page draws its magnitude.
-   *
-   * Figure 2.31 only. Peattie's quantity changes sign — a layer 1 much
-   * thinner than layer 2 under a wide load does not bend, so its underside
-   * goes into compression — and the ordinate is logarithmic, so the plate
-   * draws the absolute value of what it draws at all.
-   *
-   * The sign is kept here rather than thrown away in `evaluate`, because
-   * the samplers need it for something more important than the absolute
-   * value: it is what says where the curve STOPS. The chart is a tensile
-   * strain factor, and Peattie drew no compressive part of it — see
-   * `tensileSpan`, which is the whole shape of the printed mesh.
-   */
+  /** Display a signed factor as a magnitude; the evaluator retains its sign. */
   magnitude?: boolean;
+  /** Last sweep station of each family curve, in family order.
+   * Both families are clipped to this same monotone staircase of stations.
+   * This is the printed nomograph's domain, not a limit on the solver.
+   */
+  latticeEnds?: (panel?: number) => readonly number[];
   /**
    * The PLOT AREA's width over its height, as the plate draws it.
    *
@@ -818,6 +810,15 @@ const FIG_2_27 = conversionChart({
    §2.2.2 — Three-layer systems
    ═══════════════════════════════════════════════════════════════════════ */
 
+const PEATTIE_ENDS: Readonly<Record<number, readonly number[]>> = {
+  202:   [0.2, 0.4, 0.8, 1.6, 3.2, 3.2, 3.2],
+  220:   [0.2, 0.4, 0.8, 1.6, 3.2, 3.2, 3.2],
+  2002:  [0.4, 0.8, 1.6, 3.2, 3.2, 3.2, 3.2],
+  2020:  [0.4, 1.6, 3.2, 3.2, 3.2, 3.2, 3.2],
+  20002: [0.8, 1.6, 3.2, 3.2, 3.2, 3.2, 3.2],
+  20020: [1.6, 3.2, 3.2, 3.2, 3.2, 3.2, 3.2],
+};
+
 const FIG_2_31: ChartSpec = {
   id: 'fig-2-31',
   figure: 'Figure 2.31',
@@ -867,50 +868,29 @@ const FIG_2_31: ChartSpec = {
     values: [202, 220, 2002, 2020, 20002, 20020],
     name: v => `k₁ = ${Math.floor(v / 100)}, k₂ = ${v % 100}`,
   },
-  /**
-   * The MAGNITUDE, which is what the plate draws.
-   *
-   * Table 2.3 tabulates (ZZ1 - RR1) and it goes negative over a good part
-   * of the chart: for k1 = k2 = 2 and H = 0.125 it is +0.706 at A = 0.1 and
-   * -0.289 by A = 3.2. Peattie's ordinate is 1/2(RR1 - ZZ1), the other sign
-   * again, and a logarithmic axis can draw neither of them everywhere. What
-   * he printed is the magnitude, and the printed lattice runs straight
-   * through the sign change without marking it: the H = 0.125 curve of
-   * panel (a) passes 0.353, 0.490, 0.355, 0.112 and then 0.100 and 0.145,
-   * and those last two are the tabulated NEGATIVES read as magnitudes.
-   *
-   * Returning the signed value instead is what left this chart in pieces.
-   * Every curve was cut at its first sign change, which on the k1 = 2
-   * panels is most of them, so eight of the thirteen stopped in open space
-   * in the middle of the mesh and the woven diamonds the plate is made of
-   * never closed. The sign is not lost: it is stated in the notes, and
-   * `radialStrainBottomLayer1` carries it into the strain itself.
-   */
   magnitude: true,
+  // End stations read from the six supplied Figure 2.31 panels. Continuing
+  // to the last tensile station folds extra branches over the printed grid.
+  // Panel (f)'s first curve ends before its row maximum: maximizing each
+  // row independently therefore does not reconstruct the printed domain.
+  latticeEnds: panel => PEATTIE_ENDS[panel ?? 202] ?? [],
   evaluate: (H, A, panel) => {
     const k1 = Math.floor((panel ?? 202) / 100), k2 = (panel ?? 202) % 100;
-    const f = stressFactors({ k1, k2, A, H });
-    return f ? f.peattie : NaN;
+    return peattieFactor({ k1, k2, A, H });
   },
   samples: 22,
   heavy: true,
   notes: [
     'Huang reprints only the realistic panels: k₁ ∈ {2, 20, 200} and k₂ ∈ {2, 20}. Jones’ ' +
     'own tables also carry 0.2, for a layer softer than the one beneath it.',
-    'This is a TENSILE strain factor, and it is drawn only where the strain is tensile. The ' +
-    'factor changes sign over part of every k₁ = 2 or 20 panel: a layer 1 much thinner than ' +
-    'layer 2 under a wide load does not bend, so its underside goes into compression instead. ' +
-    'Table 2.3 prints those entries negative and Peattie drew none of them, which is why the ' +
-    'mesh has a scalloped upper-left edge rather than running to the frame on every curve. ' +
-    'Each curve here stops at the last station where it is still tension, exactly as the plate ' +
-    'does — so a section that falls in the compressive region has no curve to read, and that ' +
-    'is the chart telling you the answer is not a tension.',
-    'The mesh is still a closed lattice. Every curve that stops at the sign change stops ' +
-    'exactly where a neighbour begins or crosses — on panel (a) the H = 0.125 curve ends at ' +
-    'A = 0.8, which is precisely where the A = 0.8 curve starts — so the stopped ends are the ' +
-    'V-corners of the weave, not loose ends. What leaves the frame leaves it at the bottom, ' +
-    'where the factor itself is under 0.001: the A = 0.1 and H = 8 curves at the apex, which ' +
-    'is exactly where the plate runs them off the border.',
+    'The plotted mesh follows the station boundaries of the six printed panels. ' +
+    'Extending every curve through all tensile values adds overlapping branches above ' +
+    'the mesh. Each H curve ends at a shared A station, and the A curves start at the ' +
+    'first retained H station. Curves below 0.001 are clipped at the frame.',
+    'Values on the mesh are calculated from the elastic solution, rather than digitized ' +
+    'from the scan. The solver also covers sections outside the printed mesh; a positive ' +
+    'factor denotes tension and a negative factor denotes compression under the site’s ' +
+    'compression-positive strain convention.',
   ],
 };
 
@@ -1110,49 +1090,8 @@ function edgeApproach(
 export const drawnValue = (spec: ChartSpec, v: number) =>
   (spec.magnitude ? Math.abs(v) : v);
 
-/**
- * The stations a magnitude chart's curve is actually DRAWN between.
- *
- * Figure 2.31 only, and it is the whole shape of the plate's mesh.
- *
- * Peattie's quantity changes sign over part of every k1 = 2 or 20 panel: a
- * layer 1 much thinner than layer 2 under a wide load does not bend, so its
- * underside goes into compression rather than tension. The chart is a
- * TENSILE strain factor -- Eq. 2.25 reads it as one -- and where the factor
- * turns compressive Peattie simply stopped drawing. That is why the printed
- * mesh has a scalloped upper-left boundary instead of running to the frame
- * on every curve.
- *
- * The rule is measured off the plate, not guessed. Projected onto a 300 dpi
- * scan of panel (a) with the horizontal rulings masked out, 37 of the 39
- * crossings that lie inside the frame land on drawn ink -- and the one real
- * miss is H = 0.125 at A = 1.6, the first COMPRESSIVE crossing on that
- * curve. Scoring the whole polyline says the same thing louder: every curve
- * of the panel sits within a few pixels of the plate's ink except H = 0.125,
- * whose tail past A = 0.8 is 19 px out at the ninetieth percentile because
- * there is no ink under it at all.
- *
- * What makes this certain rather than plausible is that the mesh CLOSES.
- * Each curve stopped this way ends exactly where another curve ends or
- * crosses -- H = 0.125 stops at (A = 0.8, 0.1116), which is precisely where
- * the A = 0.8 curve begins -- so the dropped ends become the V-corners of
- * the printed lattice rather than loose ends in open space. That holds on
- * every panel of the figure, and `charts.test.mjs` asserts it.
- *
- * The curve ends AT a printed station, not at the zero. Peattie had six
- * points per curve and drew a line through them; the factor reaches zero
- * somewhere between two of them, and following it there would put a
- * three-decade dive through a mesh whose whole value is that it reads as a
- * woven lattice.
- *
- * Earlier this was read the other way -- that the plate drew |v| straight
- * through the sign change -- and the curve was carried across it on a chord
- * between the two bracketing stations. That is what put a flat run and a
- * small arch through the middle of panel (a), on ink that is not there.
- *
- * @param raw signed value at parameter t
- * @param stations parameters of the printed stations, ascending
- * @returns [tMin, tMax] the parameter span to draw, or null to draw none
+/** Longest tensile station run for Cartesian magnitude curves.
+ * Nomographs with latticeEnds instead use their shared printed domain.
  */
 function tensileSpan(
   raw: (t: number) => number, stations: number[]
@@ -1240,6 +1179,21 @@ export function buildCurveCount(spec: ChartSpec, panels = 1): number {
   return panels * spec.family.values.length;
 }
 
+/** Interpolate the printed boundary in log parameter space for a user curve. */
+function latticeFamilyEnd(spec: ChartSpec, family: number, panel?: number): number {
+  const ends = spec.latticeEnds?.(panel);
+  if (!ends?.length) return spec.sweep.max;
+  const F = spec.family.values;
+  if (family <= F[0]) return ends[0];
+  for (let i = 1; i < F.length; i++) {
+    if (family <= F[i]) {
+      const t = spanPos(family, F[i - 1], F[i], spec.family.logSearch === true);
+      return spanVal(t, ends[i - 1], ends[i], spec.sweep.log);
+    }
+  }
+  return ends[ends.length - 1];
+}
+
 export function* sampleCurveGen(
   spec: ChartSpec, familyValue: number, panelValue?: number
 ): Sampler<CurvePoint[]> {
@@ -1259,13 +1213,15 @@ export function* sampleCurveGen(
   const toT = (v: number) => (log ? (Math.log(v) - lo) / (hi - lo) : (v - lo) / (hi - lo));
   const stations = (spec.sweep.ticks ?? [])
     .map(toT).filter(t => t >= 0 && t <= 1);
-  const span = spec.magnitude ? tensileSpan(rawAt, stations) : null;
+  const span: [number, number] | null = spec.latticeEnds
+    ? [0, toT(latticeFamilyEnd(spec, familyValue, panelValue))]
+    : spec.magnitude ? tensileSpan(rawAt, stations) : null;
   if (spec.magnitude && !span) return [];
   const [tMin, tMax] = span ?? [0, 1];
   const ts = [...new Set([
     ...Array.from({ length: n + 1 }, (_, i) => tMin + (i / n) * (tMax - tMin)),
     ...stations.filter(t => t >= tMin && t <= tMax),
-  ])].sort((p, q) => p - q);
+  ])].sort((p, q) => p - q).filter((t, i, all) => i === 0 || t - all[i - 1] > 1e-12);
 
   const out: CurvePoint[] = [];
   let prevT = ts[0], prevOn = false, first = true;
@@ -1645,18 +1601,9 @@ export function freestCorner(
  *     on panel (e), and each arch peaks one A step later than the one before
  *     it, which is what makes the printed mesh a regular weave.
  *
- * The mesh is checked against the plate rather than eyeballed: every one of
- * the 39 crossings Table 2.3 tabulates for panel (a), projected onto a
- * 300 dpi scan with the horizontal rulings masked out, lands on drawn ink
- * (36 of 39 within 8 px; the three that miss are an arch top and two label
- * leaders). That is how the 6/11 was found, and it is why the earlier
- * half-and-half split — 28 of 39, missing the whole middle of the mesh —
- * was wrong.
- *
- * So the mesh is the book's mesh, every crossing carries the true computed
- * value, and the abscissa is still what it was on the page: a spreading
- * coordinate with no units, drawn without ticks because there is nothing on
- * it to read.
+ * The spreading coordinate preserves the printed station spacing. The
+ * domain of the mesh is specified separately by latticeEnds; a correct
+ * coordinate transform alone does not prevent overlapping folded branches.
  */
 
 /** Where a value sits along its own family, 0 at the first, 1 at the last. */
@@ -1775,6 +1722,19 @@ export function* sampleLatticeGen(
   const onFrame = frameTest(spec);
   const out: LatticeCurve[] = [];
 
+  const ends = spec.latticeEnds?.(panelValue);
+  if (ends && (ends.length !== a.F.length || ends.some((v, i) =>
+    !a.S.includes(v) || (i > 0 && v < ends[i - 1])))) {
+    throw new Error(`${spec.id}: invalid lattice station boundary`);
+  }
+
+  // The table includes stations outside the drawn domain. Prime those too,
+  // with cooperative yields, so opening the table never starts more solves.
+  if (ends) for (const fv of a.F) for (const sv of a.S) {
+    chartValue(spec, fv, sv, panelValue);
+    yield;
+  }
+
   function* walk(
     kind: 'family' | 'sweep', label: number,
     lo: number, hi: number, log: boolean,
@@ -1800,17 +1760,24 @@ export function* sampleLatticeGen(
       .map(v => spanPos(v, lo, hi, log))
       .filter(t => t >= 0 && t <= 1);
 
-    /* And the curve is drawn only between the stations where the factor is
-       tensile -- see tensileSpan. That is what gives the printed mesh its
-       scalloped upper-left boundary, and why each stopped curve ends on
-       another curve rather than in open space. */
-    const span = spec.magnitude ? tensileSpan(rawAt, stations) : null;
-    if (spec.magnitude && !span) { out.push({ kind, label, pts: [] }); return; }
-    const [tMin, tMax] = span ?? [0, 1];
+    // Use one shared station domain, rather than choosing each curve's
+    // tensile run independently. Every truncated end is an exact crossing.
+    let span: [number, number] | null;
+    if (ends) {
+      const first = kind === 'sweep' ? ends.findIndex(v => v >= label) : 0;
+      if (first < 0) { out.push({ kind, label, pts: [] }); return; }
+      span = kind === 'family'
+        ? [0, spanPos(ends[a.F.indexOf(label)], lo, hi, log)]
+        : [spanPos(a.F[first], lo, hi, log), 1];
+    } else {
+      span = spec.magnitude ? tensileSpan(rawAt, stations) : [0, 1];
+    }
+    if (!span) { out.push({ kind, label, pts: [] }); return; }
+    const [tMin, tMax] = span;
     const ts = [...new Set([
       ...Array.from({ length: n + 1 }, (_, i) => tMin + (i / n) * (tMax - tMin)),
       ...stations.filter(t => t >= tMin && t <= tMax),
-    ])].sort((p, q) => p - q);
+    ])].sort((p, q) => p - q).filter((t, i, all) => i === 0 || t - all[i - 1] > 1e-12);
 
     const pts: LatticePoint[] = [];
     let prevT = ts[0], prevOn = false, first = true;
@@ -1828,6 +1795,34 @@ export function* sampleLatticeGen(
       pts.push(pointAt(t, on ? value : NaN));
       prevT = t; prevOn = on; first = false;
       yield;
+    }
+    if (ends) {
+      // Refine in the coordinates actually drawn (x, log(value)). This
+      // avoids spline overshoot and keeps exact shared station vertices.
+      const refined: LatticePoint[] = [];
+      function* refine(p: LatticePoint, q: LatticePoint, depth = 0): Sampler<void> {
+        if (Number.isFinite(p.value) && Number.isFinite(q.value) && depth < 8) {
+          const pv = kind === 'family' ? p.sweep : p.family;
+          const qv = kind === 'family' ? q.sweep : q.family;
+          const tm = (spanPos(pv, lo, hi, log) + spanPos(qv, lo, hi, log)) / 2;
+          const vm = valueAt(tm);
+          yield;
+          const ordinate = (v: number) => spec.value.log ? Math.log10(v) : v;
+          const error = Math.abs(ordinate(vm) - (ordinate(p.value) + ordinate(q.value)) / 2);
+          const range = ordinate(spec.value.max) - ordinate(spec.value.min);
+          if (Number.isFinite(vm) && vm > 0 && error > range * 0.0004) {
+            const m = pointAt(tm, vm);
+            yield* refine(p, m, depth + 1);
+            yield* refine(m, q, depth + 1);
+            return;
+          }
+        }
+        refined.push(q);
+      }
+      if (pts.length) refined.push(pts[0]);
+      for (let i = 1; i < pts.length; i++) yield* refine(pts[i - 1], pts[i]);
+      out.push({ kind, label, pts: refined });
+      return;
     }
     out.push({ kind, label, pts });
   }

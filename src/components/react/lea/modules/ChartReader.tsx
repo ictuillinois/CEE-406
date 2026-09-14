@@ -289,6 +289,21 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
   const familyValue = Number(familyStr);
   const sweepValue = Number(sweepStr);
 
+  // A nomograph's height depends on available width. Plotly's responsive
+  // handler alone does not recompute our aspect ratio and can collapse the
+  // plot on a desktop-to-phone resize. Observe the parent, not the plot we
+  // size, and redraw the existing mesh without rebuilding the solver data.
+  const [availableWidth, setAvailableWidth] = useState(0);
+  useEffect(() => {
+    const parent = plotRef.current?.parentElement;
+    if (!spec.nomograph || !parent || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      setAvailableWidth(Math.round(parent.clientWidth));
+    });
+    observer.observe(parent);
+    return () => observer.disconnect();
+  }, [spec]);
+
   /* ── Build the curves ────────────────────────────────────────────────────
    * One curve at a time, handing the thread back between slices, publishing
    * each curve as it lands. A light chart finishes inside the entry delay
@@ -593,6 +608,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
       const height = nomoAspect
         ? Math.round(nomoPlotH + MARGIN_H)
         : (drawn.length > 1 ? 400 : 560);
+      if (nomoAspect) el.style.height = `${height}px`;
       const aspect = Math.max(0.6, Math.min(3, (plotW - 110) / (height - 90)));
 
       if (nomo) {
@@ -617,7 +633,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
               y: cv.pts.map(p => p.value),
               mode: 'lines',
               name: `${symbol} = ${cv.label}`,
-              line: { color: ramp[i], width: 1.7, shape, smoothing: 0.6 },
+              line: { color: ramp[i], width: 1.7, shape: spec.latticeEnds ? 'linear' : shape, smoothing: 0.6 },
               customdata: cv.pts.map(p => (cv.kind === 'family' ? p.sweep : p.family)),
               hovertemplate:
                 `${symbol} = ${cv.label}<br>${other} = %{customdata:.3g}` +
@@ -853,7 +869,7 @@ export default function ChartReader({ spec }: { spec: ChartSpec }) {
     })();
     return () => { dead = true; };
   }, [curveSets, lattice, userCurves, colors, theme, spec, markerValues, sweepValue,
-      familyValue, drawn, settled, pinned]);
+      familyValue, drawn, settled, pinned, availableWidth]);
 
   /* ── The pointer, which is the whole backwards half ───────────────────── */
   useEffect(() => {

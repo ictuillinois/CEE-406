@@ -369,18 +369,9 @@ test('Figure 2.31 draws the magnitude, because its factor changes sign', () => {
 });
 
 test('no lattice curve stops in open space', () => {
-  /* The plates are closed meshes. A curve runs to the end of its own
-     parameter range, or it leaves through the frame, or -- on a magnitude
-     chart -- it stops where the factor stops being tensile, and THAT end
-     lands on another curve of the mesh rather than in open space. There is
-     no fourth way for one to end.
-     The third case is the one that decides whether Figure 2.31 looks like
-     its plate. Peattie drew no compressive part of a tensile strain factor,
-     so the printed mesh has a scalloped upper-left boundary, and every curve
-     stopped that way ends exactly where a neighbour ends or crosses: the
-     H = 0.125 curve of panel (a) stops at (A = 0.8, 0.1116), which is
-     precisely where the A = 0.8 curve begins. Asserting that is what stops
-     the truncation from ever becoming a set of loose ends. */
+  // Endpoint incidence is necessary, but not sufficient: the former
+  // sign-only clipping passed this check while drawing folded branches.
+  // figure231.test.mjs also checks the reference panel station domains.
   for (const spec of CHARTS.filter(c => c.nomograph)) {
     const a = latticeAxes(spec);
     const FLOOR = spec.value.min, CEIL = spec.value.max;
@@ -416,7 +407,7 @@ test('no lattice curve stops in open space', () => {
             const dip = Math.min(on[i - 1].value, on[i + 1].value) / on[i].value;
             assert.ok(dip <= 3,
               `${spec.figure} ${pv ?? ''} ${cv.kind} ${cv.label}: a ${dip.toFixed(0)}x notch ` +
-              `at x = ${on[i].x.toFixed(3)} -- the plate draws through the sign change`);
+              `at x = ${on[i].x.toFixed(3)} -- the printed domain must not approach a sign change`);
           }
         }
 

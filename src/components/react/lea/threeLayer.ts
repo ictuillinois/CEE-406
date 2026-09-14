@@ -50,12 +50,7 @@ export interface ThreeLayerFactors {
   ZZ2: number;
   ZZ1_RR1: number;
   ZZ2_RR2: number;
-  /**
-   * HALF of the tabulated (ZZ1 - RR1), which is the NEGATIVE of the
-   * 1/2(RR1 - ZZ1) Peattie prints on Figure 2.31's ordinate. The chart draws
-   * the magnitude, because this changes sign: Table 2.3 gives +0.706 at
-   * k1 = k2 = 2, H = 0.125, A = 0.1 and -0.289 by A = 3.2.
-   */
+  /** Half of (ZZ1 - RR1). Positive denotes bottom-layer tensile strain. */
   peattie: number;
 }
 
@@ -98,6 +93,14 @@ export function stressFactors(p: ThreeLayerParams): ThreeLayerFactors | null {
   const ZZ1_RR1 = R1.sigZ - R1.sigR;
   const ZZ2_RR2 = R2.sigZ - R2.sigR;
   return { ZZ1, ZZ2, ZZ1_RR1, ZZ2_RR2, peattie: ZZ1_RR1 / 2 };
+}
+
+/** Figure 2.31 needs only the bottom of layer 1, not the second interface. */
+export function peattieFactor(p: ThreeLayerParams): number {
+  if (![p.k1, p.k2, p.A, p.H].every(v => Number.isFinite(v) && v > 0)) return NaN;
+  const { layers, a } = systemFor(p);
+  const r = leaResponse(layers, 1, a, 0, p.H * (1 - 1e-9));
+  return r ? (r.sigZ - r.sigR) / 2 : NaN;
 }
 
 /** Everything Example 2.11 asks for, at both interfaces and on both sides. */
