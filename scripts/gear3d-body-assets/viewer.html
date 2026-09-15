@@ -1,0 +1,28 @@
+<!doctype html><html><head><script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script></head><body style="margin:0"><script type="module">
+import * as THREE from 'three';
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+window.THREE=THREE;
+window.loadModel=async(url)=>{
+ if(url.endsWith('.obj')) return new OBJLoader().parse(await (await fetch(url)).text());
+ const b=await (await fetch(url)).arrayBuffer(), d=new DataView(b);
+ const j=JSON.parse(new TextDecoder().decode(new Uint8Array(b,20,d.getUint32(12,true))));
+ const start=20+d.getUint32(12,true); const bin=new Uint8Array(b,start+8,d.getUint32(start,true));
+ j.buffers=[{byteLength:bin.length,uri:URL.createObjectURL(new Blob([bin]))}];
+ delete j.images;delete j.textures;delete j.materials;
+ for(const m of j.meshes)for(const p of m.primitives)delete p.material;
+ const g=await new GLTFLoader().parseAsync(JSON.stringify(j),'');
+ g.scene.traverse(o=>{if(o.isMesh)o.material=new THREE.MeshStandardMaterial({color:0x889bad,roughness:.8,side:THREE.DoubleSide})});
+ return g.scene;
+};
+window.renderModel=async(url,view='iso')=>{
+ const model=await window.loadModel(url); const scene=new THREE.Scene(); scene.background=new THREE.Color('white');scene.add(model);
+ const b=new THREE.Box3().setFromObject(model), size=b.getSize(new THREE.Vector3()), center=b.getCenter(new THREE.Vector3());
+ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(700,550);document.body.replaceChildren(renderer.domElement);
+ const camera=new THREE.PerspectiveCamera(35,700/550,.001,10000);
+ const dir=view==='top'?[0,1,0.001]:view==='side'?[1,0,0]:[1,.65,1];
+ camera.position.copy(center).add(new THREE.Vector3(...dir).normalize().multiplyScalar(Math.max(...size.toArray())*2));camera.lookAt(center);
+ scene.add(new THREE.HemisphereLight(0xffffff,0x707070,2));const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(10,20,10);scene.add(light);renderer.render(scene,camera);
+ return {size:size.toArray(),center:center.toArray(),nodes:model.children.map(n=>n.name)};
+};window.ready=true;
+</script></body></html>

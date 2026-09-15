@@ -28,6 +28,7 @@ import { engToRender } from '../core/coords.js';
 import { buildTireGeometry, treadPatternFor, pickQuality } from './tire.js';
 import { buildRimBarrel, buildRimDisc } from './rim.js';
 import { buildHubGeometry } from './hub.js';
+import { buildVehicleBody } from './vehicleBody.js';
 import { chassisEnvelope } from './chassis.js';
 import { buildAxleBeam, buildGearStrut } from './axle.js';
 
@@ -54,6 +55,7 @@ export const MM_TO_SCENE = 0.001;
 export function buildAssembly(layout, materials, opts = {}) {
     /** @type {any} assigned at the end; setWheelFilter runs before it exists. */
     let api;
+    let vehicleBody = null;
     const root = new THREE.Group();
     root.name = 'assembly';
     root.scale.setScalar(MM_TO_SCENE);
@@ -284,7 +286,15 @@ export function buildAssembly(layout, materials, opts = {}) {
     function setWheelFilter(pred, opts = {}) {
         packSets(instanceSets, pred, true);
         packSets(ghostSets, (w) => !pred(w), !!opts.ghost);
-        chassisGroup.visible = !!opts.chassis && chassisGroup.children.length > 0;
+        if (opts.vehicleBody && !vehicleBody) {
+            vehicleBody = buildVehicleBody(layout);
+            if (vehicleBody) {
+                root.add(vehicleBody);
+                ownedMaterials.push(vehicleBody.children[0].material);
+            }
+        }
+        if (vehicleBody) vehicleBody.visible = !!opts.vehicleBody;
+        chassisGroup.visible = !opts.vehicleBody && !!opts.chassis && chassisGroup.children.length > 0;
 
         // Axle beams and struts follow their own wheels. Deriving the set
         // rather than filtering structure separately makes it impossible for
@@ -318,7 +328,12 @@ export function buildAssembly(layout, materials, opts = {}) {
 
     /** @returns {THREE.Box3} */
     function bounds() {
-        return new THREE.Box3().setFromObject(root);
+        const box = new THREE.Box3();
+        root.updateWorldMatrix(false, true);
+        for (const child of root.children) {
+            if (child !== vehicleBody || child.visible) box.expandByObject(child);
+        }
+        return box;
     }
 
     /**
@@ -346,6 +361,7 @@ export function buildAssembly(layout, materials, opts = {}) {
         for (const node of structureGroup.children) {
             if (node.visible) box.expandByObject(node);
         }
+        if (vehicleBody?.visible) box.expandByObject(vehicleBody);
         return box.isEmpty() ? bounds() : box;
     }
 
@@ -364,6 +380,7 @@ export function buildAssembly(layout, materials, opts = {}) {
         /** The chassis envelope actually built, or null. Lets the UI say what
          *  was drawn from cited data and what was representative. */
         chassis: envelope,
+        hasVehicleBody: () => !!vehicleBody,
         hasChassis: () => chassisGroup.children.length > 0,
         /** Fired after every isolation change. The viewport installs itself
          *  here so the lighting rig can follow what is on screen. */

@@ -273,6 +273,12 @@ export default function Gear3DApp() {
                     <input type="checkbox" id="g3-ghost" /> Ghost hidden parts
                   </label>
                 </div>
+                <div className="g3-field">
+                  <label className="g3-check" htmlFor="g3-vehicle-body">
+                    <input type="checkbox" id="g3-vehicle-body" /> Show vehicle body
+                  </label>
+                </div>
+                <p className="g3-note">A dimmed, illustrative body puts the axles in context. Body proportions are approximate; bare gear configurations have no body. <a href={`${base}gear3d/bodies/CREDITS.md`} target="_blank" rel="noreferrer">Model sources and licenses</a>.</p>
                 <div id="g3-chassis-notice" className="g3-badge-assumed" hidden />
                 <p className="g3-note">Click an axle in the viewport to isolate it. <kbd>Esc</kbd> steps back one level.</p>
               </div>

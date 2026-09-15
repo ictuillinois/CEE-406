@@ -1,0 +1,38 @@
+[
+  {
+    "file": "B737.glb",
+    "url": "https://raw.githubusercontent.com/amvlab/aircraft-models/main/models/B737_nologo.glb",
+    "sha256": "fa1f96261ac9e29d0c7c9ce239fde72f1109029527e1540794e237d581435d2d"
+  },
+  {
+    "file": "A380.glb",
+    "url": "https://raw.githubusercontent.com/amvlab/aircraft-models/main/models/A380_nologo.glb",
+    "sha256": "785045c8467e8db10ba3b89a01a2d3c0184669b977964487a3a57825fa7c4619"
+  },
+  {
+    "file": "B787.glb",
+    "url": "https://raw.githubusercontent.com/amvlab/aircraft-models/main/models/B787_nologo.glb",
+    "sha256": "3d7e235d73f071fee1c93bd751fc537416cac26540152464bd584133f0afc2d8"
+  },
+  {
+    "file": "B747.glb",
+    "url": "https://raw.githubusercontent.com/bilawalsidhu/gods-eye-view/main/public/models/airplane.glb",
+    "sha256": "6780e81a4ce48c04e4c36404bf8bdd2e647933b2995f8cc62a81f9b9d9caf91f"
+  },
+  {
+    "file": "car-kit.zip",
+    "url": "https://kenney.nl/media/pages/assets/car-kit/1a312ec241-1775131960/kenney_car-kit.zip",
+    "extractTo": "kenney",
+    "sha256": "fac7dacac5c7874348cf19729af3ef205f3d366493edaf0a827d93f4fdf3d0c4"
+  },
+  {
+    "file": "Bus.obj",
+    "url": "https://drive.google.com/uc?export=download&id=1jVrZEPeLP0Inr4oVurmKDF1vAbJwAIOp",
+    "sha256": "04120821058586326c4db9abb455f8d680d2aadf6e2d59a6bf3e1ac0f3f74490"
+  },
+  {
+    "file": "motorcycle.glb",
+    "url": "https://static.poly.pizza/3ff04d85-dfe6-487c-b01d-5ce92103cf30.glb",
+    "sha256": "86219f3bd3c14d50f822def3ce080db11b3d0f45123db5f3b9ace4d7b44a8124"
+  }
+]

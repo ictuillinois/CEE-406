@@ -71,6 +71,7 @@ import { MaterialLibrary, MATERIAL_SPECS } from './engine/scene/materials.js';
 import { LIGHTING_PRESETS } from './engine/scene/lighting.js';
 import { Viewport, RENDER_TIERS } from './engine/scene/renderer.js';
 import { VIEW_META } from './engine/scene/cameras.js';
+import { ensureVehicleBody, vehicleBodyStatus, vehicleBodySpec, disposeVehicleBodies } from './engine/geometry/vehicleBody.js';
 import { buildAssembly } from './engine/geometry/assembly.js';
 
 import {
@@ -163,6 +164,7 @@ function defaultView() {
         // has looked like for as long as there have been gear drawings.
         // Clicking any pane still opens it full size.
         mode: 'quad',
+        showVehicleBody: false,
         unitSystem: 'SI',
         precision: 0,
         dualUnits: false,
@@ -444,11 +446,29 @@ function rebuild(opts = {}) {
    5. Isolation
    ============================================================ */
 
+function bodyAwareBounds(iso) {
+    if (app.store.view.showVehicleBody && app.assembly?.hasVehicleBody()) {
+        const b = app.assembly.visibleBounds();
+        return { minX: b.min.z * 1000, maxX: b.max.z * 1000,
+            minY: b.min.x * 1000, maxY: b.max.x * 1000,
+            minZ: b.min.y * 1000, maxZ: b.max.y * 1000 };
+    }
+    return isolationBounds(iso, app.layout);
+}
+
 function applyIsolation(opts = {}) {
     if (!app.assembly) return;
     const iso = app.store.view.isolation;
+    if (app.store.view.showVehicleBody && vehicleBodyStatus(app.store.doc.unit) === 'loading') {
+        const unit = app.store.doc.unit;
+        ensureVehicleBody(unit, ASSET_BASE).then(() => {
+            if (!_disposed && app?.store?.doc.unit === unit && app.store.view.showVehicleBody)
+                applyIsolation({ frame: true });
+        });
+    }
     app.assembly.setWheelFilter(wheelPredicate(iso), {
         ghost: iso.ghost,
+        vehicleBody: app.store.view.showVehicleBody,
         chassis: showChassis(iso)
     });
     // Snap targets follow visibility — see rebuildSnapPoints. The chassis is
@@ -458,7 +478,7 @@ function applyIsolation(opts = {}) {
     renderChassisNotice();
 
     if (opts.frame) {
-        const b = isolationBounds(iso, app.layout);
+        const b = bodyAwareBounds(iso);
         if (b) app.viewport.frameEngineering(b);
     }
     app.viewport.invalidate();
@@ -715,6 +735,15 @@ function renderChassisNotice() {
     if (!box) return;
     const iso = app.store.view.isolation;
     const env = app.assembly?.chassis;
+    $('g3-vehicle-body').checked = !!app.store.view.showVehicleBody;
+    if (app.store.view.showVehicleBody) {
+        box.hidden = false;
+        const status = vehicleBodyStatus(app.store.doc.unit);
+        box.textContent = status === 'loading' ? 'Loading vehicle body...' : status === 'failed' ? 'Vehicle body could not load. Reload the page to retry.' : app.assembly?.hasVehicleBody()
+            ? `${vehicleBodySpec(app.store.doc.unit)?.label}. Illustrative overlay: proportions and body placement are approximate. Axle and gear coordinates remain those of the selected layout. Body surfaces cannot be measured.`
+            : 'No vehicle body for this bare or unsupported gear configuration.';
+        return;
+    }
 
     if (iso.level !== 'unit') { box.hidden = true; return; }
 
@@ -722,8 +751,7 @@ function renderChassisNotice() {
         box.hidden = false;
         box.innerHTML = iconHtml('info-circle') + '<span>'
             + (app.layout?.domain === 'aircraft'
-                ? 'No fuselage silhouette: nothing in the sourced data constrains an aircraft body, '
-                + 'so drawing one would be invention. The gear is shown alone.'
+                ? 'Enable Show vehicle body for an illustrative aircraft overlay.'
                 : 'This unit has no chassis silhouette.')
             + '</span>';
         return;
@@ -1123,7 +1151,7 @@ function setupToolbar() {
     });
 
     $('g3-fit').addEventListener('click', () => {
-        const b = isolationBounds(app.store.view.isolation, app.layout);
+        const b = bodyAwareBounds(app.store.view.isolation);
         if (b) app.viewport.frameEngineering(b);
     });
     $('g3-undo').addEventListener('click', () => { if (app.store.undo()) rebuild(); });
@@ -1217,7 +1245,7 @@ function setViewMode(mode) {
     }
     $('g3-hud-right').textContent = viewportHint(mode, quad);
 
-    const b = isolationBounds(app.store.view.isolation, app.layout);
+    const b = bodyAwareBounds(app.store.view.isolation);
     if (b) app.viewport.frameEngineering(b);
     updateStatus();
 }
@@ -1995,6 +2023,11 @@ function setupIsolationPanel() {
     sel.addEventListener('change', () => {
         app.store.view.isolation = { ...app.store.view.isolation, level: sel.value, targetId: null };
         applyIsolation({ frame: true });
+    });
+    $('g3-vehicle-body').addEventListener('change', (e) => {
+        app.store.view.showVehicleBody = e.target.checked;
+        applyIsolation({ frame: true });
+        scheduleAutosave();
     });
     $('g3-ghost').addEventListener('change', (e) => {
         app.store.view.isolation.ghost = /** @type {HTMLInputElement} */(e.target).checked;
@@ -2956,6 +2989,7 @@ function currentState() {
             showScaleBar: v.showScaleBar,
             annotations: v.annotations,
             showGrid: v.showGrid,
+            showVehicleBody: v.showVehicleBody,
             materials: v.materials,
             isolation: v.isolation
         }
@@ -2983,6 +3017,7 @@ function applyProject(p) {
         // A project records the view it was saved with, so that wins; the
         // fallback follows whatever the app's current default is.
         mode: p.view?.mode || defaultView().mode,
+        showVehicleBody: p.view?.showVehicleBody === true,
         lighting: p.view?.lighting || { ...LIGHTING_PRESETS.studio },
         background: p.view?.background || 'white',
         backgroundColor: p.view?.backgroundColor || '#eef1f4',
@@ -3244,6 +3279,7 @@ function esc(s) {
 return function dispose() {
     if (_disposed) return;
     _disposed = true;
+    disposeVehicleBodies();
 
     for (const [fn, capture] of _docKeys) document.removeEventListener('keydown', fn, capture);
     _docKeys.length = 0;

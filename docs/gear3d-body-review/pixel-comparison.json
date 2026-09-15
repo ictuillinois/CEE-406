@@ -1,0 +1,299 @@
+[
+  {
+    "id": "B737",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B737",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B737",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A380",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A380",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A380",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B787",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B787",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B787",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B747",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B747",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B747",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "sedan",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "sedan",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "sedan",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "truck",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "truck",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "truck",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "delivery",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "delivery",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "delivery",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "delivery-flat",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "delivery-flat",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "delivery-flat",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "trailer",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "trailer",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "trailer",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "bus",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "bus",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "bus",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "motorcycle",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "motorcycle",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "motorcycle",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  }
+]

@@ -1,0 +1,36 @@
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const browser=await chromium.launch({channel:'chrome',headless:true});try {
+const page=await browser.newPage({viewport:{width:1600,height:1100},acceptDownloads:true});const errors=[],requests=[];
+page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.url().includes('/bodies/')&&r.url().endsWith('.glb')) requests.push(r.url());});
+await page.goto(process.argv[2] || 'http://localhost:4321/tools/gear3d/');await page.waitForFunction(()=>window.gear3d?.assembly);
+assert.equal(await page.locator('#g3-vehicle-body').isChecked(),false);assert.equal(requests.length,0);
+await page.locator('#g3-vehicle-body').check();await page.waitForFunction(()=>gear3d.assembly.hasVehicleBody());
+const downloadPromise=page.waitForEvent('download');await page.locator('#g3-save').click();const download=await downloadPromise;const project=JSON.parse(fs.readFileSync(await download.path(),'utf8'));
+assert.equal(project.view.showVehicleBody,true);
+await page.locator('#g3-vehicle-body').uncheck();
+await page.locator('#g3-file-input').setInputFiles({name:'review.gear3d',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(project))});
+await page.waitForFunction(()=>gear3d.store.view.showVehicleBody&&gear3d.assembly.hasVehicleBody());assert.equal(await page.locator('#g3-vehicle-body').isChecked(),true);
+await page.locator('#g3-isolation').selectOption('axle');assert.equal(await page.evaluate(()=>gear3d.assembly.root.getObjectByName('vehicle-body').visible),true);
+await page.locator('#g3-domain').selectOption('generic');await page.waitForFunction(()=>gear3d.store.doc.unit.kind==='schematic');assert.equal(await page.evaluate(()=>gear3d.assembly.hasVehicleBody()),false);
+assert.match(await page.locator('#g3-chassis-notice').innerText(),/No vehicle body/);
+await page.locator('#g3-domain').selectOption('aircraft');await page.locator('#g3-unit').selectOption('a380-800');await page.waitForFunction(()=>gear3d.assembly.hasVehicleBody());
+await page.locator('[data-view="quad"]').click();await page.waitForTimeout(300);
+await page.locator('.g3-app').screenshot({path:'docs/gear3d-body-review/app-a380-quad.png'});
+await page.locator('#g3-vehicle-body').uncheck();assert.equal(await page.evaluate(()=>gear3d.assembly.root.getObjectByName('vehicle-body').visible),false);
+delete project.view.showVehicleBody;
+await page.locator('#g3-file-input').setInputFiles({name:'legacy.gear3d',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(project))});
+await page.waitForFunction(()=>gear3d.store.doc.unit.domain==='truck'&&!gear3d.store.view.showVehicleBody);
+assert.equal(await page.locator('#g3-vehicle-body').isChecked(),false);
+const failed=await browser.newPage();
+await failed.route('**/bodies/*.glb',route=>route.abort());
+await failed.goto(process.argv[2] || 'http://localhost:4321/tools/gear3d/');
+await failed.waitForFunction(()=>window.gear3d?.assembly);
+await failed.locator('#g3-vehicle-body').check();
+await failed.waitForFunction(()=>document.getElementById('g3-chassis-notice').textContent.includes('could not load'));
+assert.equal(await failed.evaluate(()=>gear3d.assembly.hasVehicleBody()),false);
+assert.ok(await failed.evaluate(()=>gear3d.layout.wheels.length>0));
+assert.deepEqual(errors,[]);
+console.log('PASS: default off/no body request, enable, save/reopen, legacy project, isolation, bare gear, aircraft switch, quad view, disable, failed asset preserves gear, zero page errors');
+} finally { await browser.close(); }
