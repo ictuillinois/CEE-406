@@ -116,6 +116,23 @@ with sync_playwright() as p:
         return t?.line.dash === 'dash' && t.x[0] === p.layout.xaxis.range[0]
           && t.x[1] === p.layout.xaxis.range[1];
     }''')
+    page.wait_for_function("""() => {
+        const p = document.querySelector('.js-plotly-plot');
+        const band = p.layout.shapes.find(s => s.type === 'rect');
+        const arrow = p.layout.annotations.find(a => a.showarrow);
+        return Math.abs(band.x1 - .04) < 1e-10 && band.x0 === 0
+          && Math.abs(arrow.ax - .1) < 1e-10 && Math.abs(arrow.x - .14) < 1e-10;
+    }""")
+    expect(page.get_by_text('underestimates CBR', exact=False)).to_be_visible()
+    page.get_by_label('Explore a standard penetration').select_option('0.2')
+    page.wait_for_function("Math.abs(document.querySelector('.js-plotly-plot').layout.annotations.find(a => a.showarrow).x - .24) < 1e-10")
+    page.set_viewport_size({'width': 390, 'height': 844})
+    page.wait_for_timeout(300)
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), 'correction explanation overflows on mobile'
+    page.evaluate("document.documentElement.dataset.theme = 'dark'")
+    page.wait_for_timeout(250)
+    page.evaluate("document.documentElement.dataset.theme = 'light'")
+    page.set_viewport_size({'width': 1312, 'height': 788})
     for target, lo, hi in [('0.10','3','4'),('0.20','5','6')]:
         page.get_by_label('Lower reading for ' + target).select_option(lo)
         page.get_by_label('Upper reading for ' + target).select_option(hi)
@@ -125,6 +142,9 @@ with sync_playwright() as p:
     expect(results).to_contain_text('6.53333')
     page.get_by_role('spinbutton', name=re.compile('^Origin correction')).fill('0')
     expect(results).not_to_contain_text('7.2')
+    page.wait_for_function("document.querySelector('.js-plotly-plot').layout.shapes.length === 0")
+    expect(page.get_by_label('Explore a standard penetration')).to_have_count(0)
+
     page.get_by_label('Lower reading for 0.10').select_option('1')
     page.get_by_label('Upper reading for 0.10').select_option('4')
     page.get_by_role('button', name='Calculate CBR 0.10').click()

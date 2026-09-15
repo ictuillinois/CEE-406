@@ -18,6 +18,8 @@ export default function FittingPlot({
   controls,
   xRange,
   yRange,
+  shapes,
+  annotations,
 }: {
   title: string;
   subtitle: string;
@@ -29,6 +31,8 @@ export default function FittingPlot({
   controls?: ReactNode;
   xRange?: [number, number];
   yRange?: [number, number];
+  shapes?: Record<string, unknown>[];
+  annotations?: Record<string, unknown>[];
 }) {
   const ref = useRef<HTMLDivElement>(null),
     theme = useTheme();
@@ -44,6 +48,8 @@ export default function FittingPlot({
           traces,
           baseLayout(theme, {
             height,
+            shapes,
+            annotations,
             xaxis: fitterAxis(theme, xTitle, xRange),
             yaxis: fitterAxis(theme, yTitle, yRange),
             showlegend: false,
@@ -60,7 +66,7 @@ export default function FittingPlot({
     return () => {
       cancelled = true;
     };
-  }, [traces, theme, height, xTitle, yTitle, xRange, yRange]);
+  }, [traces, theme, height, xTitle, yTitle, xRange, yRange, shapes, annotations]);
   useEffect(() => {
     const el = ref.current;
     return () => {

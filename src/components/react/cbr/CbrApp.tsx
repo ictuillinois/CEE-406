@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme, fitterColors, chartColors } from "../chartTheme";
+import { useTheme, fitterColors, chartColors, withAlpha } from "../chartTheme";
 import Card from "../ui/Card";
 import Equation from "../ui/Equation";
 import DataEditor from "../fitting/DataEditor";
@@ -34,6 +34,7 @@ const equations = [
 ];
 export default function CbrApp() {
   const [rows, setRows] = useState(() => makeRows(HW2_CBR));
+  const [visualTarget, setVisualTarget] = useState(0.1);
   const [origin, setOrigin] = useState("0");
   const [start, setStart] = useState(""),
     [end, setEnd] = useState("");
@@ -103,11 +104,13 @@ export default function CbrApp() {
       marker: { color: colors.emerald, size: 9, symbol: "square", line: { color: ink.ink, width: 1.2 } },
       hovertemplate: "Corrected %{x:.4f} in<br>%{y:.2f} psi<extra></extra>",
     });
+  const showCorrection = usable && validOrigin && offset > 0;
+  const measuredTarget = visualTarget + offset;
   const xMin = usable ? Math.min(0, points[0].pen - (validOrigin ? offset : 0), tangent?.origin ?? 0) : 0;
-  const xMax = usable ? Math.max(...points.map((p) => p.pen)) : 1;
+  const xMax = usable ? Math.max(...points.map((p) => p.pen), showCorrection ? measuredTarget : 0) : 1;
   const xPad = Math.max(xMax - xMin, 0.01) * 0.04;
   const xRange: [number, number] = [xMin - xPad, xMax + xPad];
-  const yMax = usable ? Math.max(1, ...points.map((p) => p.load)) * 1.08 : 1;
+  const yMax = usable ? Math.max(1, ...points.map((p) => p.load)) * (showCorrection ? 1.3 : 1.08) : 1;
   if (tangent) {
     traces.push({
       x: xRange,
@@ -127,6 +130,23 @@ export default function CbrApp() {
       hovertemplate: "Intercept %{x:.5f} in<extra></extra>",
     });
   }
+  const correctionShapes: Record<string, unknown>[] = showCorrection ? [
+    { type: "rect", xref: "x", yref: "paper", x0: 0, x1: offset, y0: 0, y1: 1,
+      fillcolor: withAlpha(colors.orange, 0.16), line: { width: 0 }, layer: "below" },
+    { type: "line", xref: "x", yref: "paper", x0: offset, x1: offset, y0: 0, y1: 1,
+      line: { color: colors.orange, width: 1.5, dash: "dot" }, layer: "below" },
+    ...[visualTarget, measuredTarget].map((x, i) => ({
+      type: "line", xref: "x", yref: "y", x0: x, x1: x, y0: 0, y1: yMax * 0.87,
+      line: { color: i === 0 ? ink.secondary : colors.blue, width: 1.5, dash: i === 0 ? "dot" : "dash" }, layer: "below",
+    })),
+  ] : [];
+  const correctionAnnotations: Record<string, unknown>[] = showCorrection ? [
+    { xref: "x", yref: "y", axref: "x", ayref: "y", x: measuredTarget, ax: visualTarget,
+      y: yMax * 0.87, ay: yMax * 0.87, text: "", showarrow: true, arrowhead: 3, arrowwidth: 2, arrowcolor: colors.blue },
+    { xref: "paper", yref: "paper", x: 0.98, y: 0.99, xanchor: "right", yanchor: "top",
+      text: "Read farther along the measured curve →", showarrow: false,
+      font: { size: 11, color: ink.ink }, bgcolor: ink.surface, borderpad: 4 },
+  ] : [];
   const calculate = (i: number) => {
     const c = choices[i],
       a = points.findIndex((p) => String(p.id) === c.lower),
@@ -274,10 +294,29 @@ export default function CbrApp() {
           xTitle="Penetration (in)"
           yTitle="Piston pressure (psi)"
           traces={traces}
-          height={440}
+          height={showCorrection ? 480 : 440}
+          shapes={correctionShapes}
+          annotations={correctionAnnotations}
+          controls={showCorrection ? (
+            <div className="fit-response-controls" aria-live="polite">
+              <strong>What did the first {fmt(offset, 5)} in measure?</strong>
+              <p className="cee-hint">The shaded interval represents travel attributed to piston seating or a surface irregularity by your correction. It is excluded from the soil penetration used for CBR.</p>
+              <label className="fit-field">
+                Explore a standard penetration
+                <select className="cee-input" value={visualTarget} onChange={(e) => setVisualTarget(Number(e.target.value))}>
+                  <option value={0.1}>0.10 in</option>
+                  <option value={0.2}>0.20 in</option>
+                </select>
+              </label>
+              <p className="cee-hint"><strong>{visualTarget.toFixed(2)} in corrected = {fmt(measuredTarget, 6)} in measured.</strong> Follow the arrow on the blue measured curve. The dotted guide at {visualTarget.toFixed(2)} in reads it too early; the dashed guide includes the seating allowance. On the green corrected curve, read at {visualTarget.toFixed(2)} in directly.</p>
+              <p className="cee-hint">Where pressure rises over this interval, reading too early gives a lower pressure and underestimates CBR.</p>
+              {measuredTarget > points[points.length - 1].pen && <p className="fit-status">The shifted target is beyond the measured data. The guide shows its location; pressure and CBR are not extrapolated.</p>}
+            </div>
+          ) : undefined}
           xRange={xRange}
           yRange={[-0.04 * yMax, yMax]}
           legend={[
+            ...(showCorrection ? [{ label: "Seating / surface allowance δ₀", color: colors.orange }] : []),
             { label: "Measured", color: colors.blue },
             ...(validOrigin && offset !== 0
               ? [
