@@ -31,3 +31,8 @@ export const HW2_MR = [
   [137.90, 124.45, 0.000350],
   [137.90, 249.38, 0.000600],
 ] as const;
+
+// Nominal HW2 confinement levels; grouping is for display only.
+export const HW2_CONFINEMENTS = [20.68, 34.47, 68.95, 103.42, 137.90] as const;
+export const displayConfinement = (s3: number, nominal = true) =>
+  nominal && s3 === 104.11 ? 103.42 : s3;

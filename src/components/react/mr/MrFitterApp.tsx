@@ -6,7 +6,7 @@ import KpiStrip, { Kpi } from "../ui/KpiStrip";
 import DataEditor from "../fitting/DataEditor";
 import FittingPlot from "../fitting/FittingPlot";
 import { makeRows, numberOrNaN, fmt, type EditRow } from "../fitting/shared.ts";
-import { HW2_MR } from "./data.ts";
+import { HW2_MR, HW2_CONFINEMENTS, displayConfinement } from "./data.ts";
 import {
   fitModulus,
   invariants,
@@ -59,7 +59,8 @@ const equations = [
 export default function MrFitterApp() {
   const [rows, setRows] = useState(() => makeRows(HW2_MR));
   const [model, setModel] = useState<Model | "">("");
-  const [responseView, setResponseView] = useState<"normalized" | "raw">("normalized");
+  const [responseView, setResponseView] = useState<"normalized" | "raw">("raw");
+  const [nominalGrouping, setNominalGrouping] = useState(true);
   const [pa, setPa] = useState("101.325");
   const [fits, setFits] = useState<Partial<Record<Model, Fit>>>({});
   const [error, setError] = useState("");
@@ -127,43 +128,52 @@ export default function MrFitterApp() {
   const normalized = fit?.model === "generalized" && responseView === "normalized";
   const displayModulus = (value: number, deviator: number) =>
     (normalized ? shearNormalizedModulus(fit!, value, deviator) : value) / 1000;
-  const responseLegend: { label: string; color: string; shape?: "line" | "dash" }[] = [];
-  const traces: any[] = [
-    {
-      x: points.map((p) => p.theta),
-      y: points.map((p) => displayModulus(p.mr, p.sd)),
-      mode: "markers",
-      name: normalized ? "Shear-normalized readings" : "Included readings",
-      text: points.map((p) => `ID ${p.id} · σ₃ ${p.s3} kPa · σd ${p.sd} kPa<br>Measured Mr ${fmt(p.mr / 1000, 5)} MPa`),
-      hovertemplate:
-        `%{text}<br>θ %{x:.2f} kPa<br>${normalized ? "Normalized Mr" : "Mr"} %{y:.3f} MPa<extra></extra>`,
-      marker: { color: colors.blue, size: 9, line: { color: ink.ink, width: 1.2 } },
-    },
-  ];
+  const confinement = (s3: number) => displayConfinement(s3, nominalGrouping);
+  const levels = [...new Set(points.map((p) => confinement(p.s3)))].sort((a, b) => a - b);
+  // Reserve the five preset colors, even when a group is excluded.
+  const colorLevels = [...HW2_CONFINEMENTS, ...[...new Set(rows.map((r) => confinement(numberOrNaN(r.values[0]))))]
+    .filter((s3) => Number.isFinite(s3) && s3 >= 0 && !HW2_CONFINEMENTS.includes(s3 as typeof HW2_CONFINEMENTS[number]))
+    .sort((a, b) => a - b)];
+  const palette = [colors.blue, colors.emerald, colors.orange, colors.violet, colors.pink];
+  const symbols = ["circle", "square", "diamond", "triangle-up", "hexagon"];
+  const groupColor = (s3: number) => palette[colorLevels.indexOf(confinement(s3)) % palette.length];
+  const groupSymbol = (s3: number) => symbols[colorLevels.indexOf(confinement(s3)) % symbols.length];
+  const groupLabel = (s3: number) => `σ₃ = ${fmt(s3, 6)} kPa`;
+  const responseLegend: { label: string; color: string; shape?: "line" | "dash" }[] = levels.map((s3) => ({
+    label: groupLabel(s3), color: groupColor(s3),
+  }));
+  const traces: any[] = levels.map((s3) => {
+    const group = points.filter((p) => confinement(p.s3) === s3);
+    return {
+      x: group.map((p) => p.theta),
+      y: group.map((p) => displayModulus(p.mr, p.sd)),
+      mode: "markers", name: `${groupLabel(s3)} · readings`, legendgroup: String(s3),
+      text: group.map((p) => `ID ${p.id} · recorded σ₃ ${p.s3} kPa · σd ${p.sd} kPa${p.s3 !== s3 ? `<br>Display group: nominal σ₃ ${s3} kPa` : ""}<br>Measured Mr ${fmt(p.mr / 1000, 5)} MPa`),
+      hovertemplate: `%{text}<br>θ %{x:.2f} kPa<br>${normalized ? "Normalized Mr" : "Mr"} %{y:.3f} MPa<extra></extra>`,
+      marker: { color: groupColor(s3), symbol: groupSymbol(s3), size: 9, line: { color: ink.ink, width: 1.2 } },
+    };
+  });
   if (fit) {
     const lo = Math.min(...points.map((p) => p.theta));
     const hi = Math.max(...points.map((p) => p.theta));
     // The normalized generalized model and the bulk model each have ONE
     // continuous power curve. Raw generalized data require stress slices.
-    const confinements = [...new Set(points.map((p) => p.s3))].sort((a, b) => a - b);
-    const slices = normalized || fit.model === "bulk"
-      ? [0]
-      : [confinements[0], confinements[Math.floor((confinements.length - 1) / 2)], confinements[confinements.length - 1]];
-    for (const [index, s3] of [...new Set(slices)].entries()) {
+    const slices = normalized || fit.model === "bulk" ? [0] : levels;
+    for (const s3 of slices) {
       const start = normalized || fit.model === "bulk" ? lo : Math.max(lo, 3 * s3);
       if (start >= hi) continue;
       const x = Array.from({ length: 401 }, (_, i) => start + (hi - start) * i / 400);
-      const color = normalized || fit.model === "bulk" ? colors.emerald : [colors.emerald, colors.violet, colors.orange][index];
+      const color = normalized || fit.model === "bulk" ? ink.ink : groupColor(s3);
       const name = normalized ? "Generalized power curve · shear normalized"
         : fit.model === "bulk" ? "Bulk-stress power curve" : `Model slice · σ₃ = ${fmt(s3)} kPa`;
       traces.unshift({
         x,
         y: x.map((t) => predict(fit, t, normalized ? 0 : Math.max(0, t - 3 * s3)) / 1000),
-        mode: "lines", name,
+        mode: "lines", name, legendgroup: String(s3),
         line: { color, width: 3, simplify: false },
         hovertemplate: "%{x:.2f} kPa<br>%{y:.3f} MPa<extra>%{fullData.name}</extra>",
       });
-      responseLegend.push({ label: name, color, shape: "line" });
+      if (normalized || fit.model === "bulk") responseLegend.push({ label: name, color, shape: "line" });
     }
   }
   if (prediction) {
@@ -194,8 +204,8 @@ export default function MrFitterApp() {
           x: fit.points.map((p) => p.theta),
           y: fit.points.map((p) => p.logResidual),
           mode: "markers",
-          text: fit.points.map((p) => `ID ${p.id}`),
-          marker: { color: colors.blue, size: 9, line: { color: ink.ink, width: 1.2 } },
+          text: fit.points.map((p) => `ID ${p.id} · recorded σ₃ ${p.s3} kPa · ${groupLabel(confinement(p.s3))} group`),
+          marker: { color: fit.points.map((p) => groupColor(p.s3)), symbol: fit.points.map((p) => groupSymbol(p.s3)), size: 9, line: { color: ink.ink, width: 1.2 } },
           hovertemplate:
             "%{text}<br>θ %{x:.2f}<br>log residual %{y:.4f}<extra></extra>",
         },
@@ -226,7 +236,7 @@ export default function MrFitterApp() {
           rows={rows}
           columns={["σ₃ (kPa)", "σd (kPa)", "εr (–)"]}
           onChange={changeRows}
-          reset={() => changeRows(makeRows(HW2_MR))}
+          reset={() => { changeRows(makeRows(HW2_MR)); setNominalGrouping(true); setResponseView("raw"); }}
           exclude
         />
         {invalid.length > 0 && (
@@ -300,27 +310,30 @@ export default function MrFitterApp() {
               ? normalized
                 ? "One continuous power curve after removing the fitted shear effect from each reading."
                 : fit.model === "bulk" ? "One continuous power-law fit through the bulk-stress response."
-                : "Three continuous slices of the fitted response surface at low, middle, and high tested confinement."
+                : `${levels.length} confinement curves from one jointly fitted model. Marker and curve colors identify the same confinement level.`
               : "Raw HW2 readings. Choose a model and fit it to draw the response curves."
           }
           xTitle="Bulk stress θ (kPa)"
           yTitle={normalized ? "Shear-normalized modulus (MPa)" : "Resilient modulus Mr (MPa)"}
-          controls={fit?.model === "generalized" ? (
+          controls={(
             <div className="fit-response-controls">
-              <div className="fit-view-toggle" role="group" aria-label="Stress response view">
-                <button type="button" aria-pressed={normalized} onClick={() => setResponseView("normalized")}>Single power curve</button>
+              {fit?.model === "generalized" && <><div className="fit-view-toggle" role="group" aria-label="Stress response view">
                 <button type="button" aria-pressed={!normalized} onClick={() => setResponseView("raw")}>Raw stress response</button>
+                <button type="button" aria-pressed={normalized} onClick={() => setResponseView("normalized")}>Single power curve</button>
               </div>
               {normalized ? <>
                 <Equation {...{ tex: "M_r^*=\\frac{M_r}{(1+\\tau_{oct}/p_a)^{k_3}}=k_1p_a(\\theta/p_a)^{k_2}", plain: "Shear-normalized modulus equals measured modulus divided by the fitted shear factor; its fitted response is one bulk-stress power curve." }} display />
                 <p className="cee-hint">The vertical axis is adjusted using fitted k₃; original readings and predictions remain in the tables. All three coefficients are fitted together.</p>
-              </> : <p className="cee-hint">The generalized model depends on bulk AND shear stress. Each line holds confinement constant; portions outside that confinement’s measured range are model projections, not additional test data.</p>}
+              </> : <p className="cee-hint">The generalized model depends on bulk AND shear stress. Each line holds confinement constant; portions outside that confinement’s measured range are model projections, not additional test data. All curves share the same k₁, k₂, k₃.</p>}</>}
+              {points.some((p) => p.s3 === 104.11) && <label className="cee-hint fit-grouping-note">
+                <input type="checkbox" checked={nominalGrouping} onChange={(e) => setNominalGrouping(e.target.checked)} />
+                Group 104.11 kPa with nominal 103.42 kPa for display. Regression always uses the recorded stresses.
+              </label>}
             </div>
-          ) : undefined}
+          )}
           traces={traces}
           legend={[
             ...(prediction ? prediction.values.map((p) => ({ label: `${names[p.model]} prediction / dashed path`, color: p.model === "generalized" ? colors.violet : colors.emerald, shape: "dash" as const })) : []),
-            { label: normalized ? "Shear-normalized readings" : "Included readings", color: colors.blue },
             ...responseLegend,
           ]}
         />
@@ -481,7 +494,7 @@ export default function MrFitterApp() {
               yTitle="ln(Mr) − ln(predicted Mr)"
               traces={residualTraces}
               legend={[
-                { label: "Log residual", color: colors.blue },
+                ...levels.map((s3) => ({ label: groupLabel(s3), color: groupColor(s3) })),
                 { label: "Zero residual", color: ink.secondary, shape: "dash" },
               ]}
             />

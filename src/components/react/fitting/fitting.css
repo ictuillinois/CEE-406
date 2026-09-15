@@ -162,3 +162,6 @@
 .fit-response-controls .cee-hint { margin-bottom: 0; }
 .fit-tool .cee-legend { row-gap: 10px; padding-top: 12px; }
 .fit-tool .cee-legend__mark--line, .fit-tool .cee-legend__mark--dash { width: 24px; }
+
+.fit-grouping-note { display: flex; align-items: flex-start; gap: 8px; line-height: 1.6; }
+.fit-grouping-note input { flex: 0 0 auto; margin-top: 4px; }

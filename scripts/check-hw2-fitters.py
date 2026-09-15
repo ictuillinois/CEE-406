@@ -19,7 +19,7 @@ with sync_playwright() as p:
         page.goto(args.base_url.rstrip('/') + url)
         page.wait_for_function("document.querySelector('.js-plotly-plot')?.data?.length > 0")
     go('mr-fitter')
-    expect(page.get_by_role('checkbox')).to_have_count(30)
+    expect(page.get_by_role('checkbox', name=re.compile('^Include point'))).to_have_count(30)
     expect(page.locator('.cee-kpi')).to_have_count(0)
     expect(page.get_by_role('button', name='Fit selected model')).to_be_disabled()
     expect(page.get_by_role('button', name='Calculate prediction')).to_be_disabled()
@@ -29,13 +29,23 @@ with sync_playwright() as p:
     assert page.evaluate('''() => {
         const p = document.querySelector('.js-plotly-plot');
         return ['xaxis','yaxis'].every(a => p._fullLayout[a].showgrid && p._fullLayout[a].minor.showgrid)
-          && p.data.filter(t => t.mode === 'lines').length === 1
+          && p.data.filter(t => t.mode === 'lines').length === 5
           && p.data.filter(t => t.mode === 'lines').every(t => t.x.length === 401)
-          && p.layout.yaxis.title.text.includes('Shear-normalized');
+          && p.data.filter(t => t.mode === 'markers').length === 5
+          && p.data.filter(t => t.mode === 'markers').every(t => t.x.length === 6 && p.data.some(c => c.mode === 'lines' && c.legendgroup === t.legendgroup && c.line.color === t.marker.color))
+          && new Set(p.data.filter(t => t.mode === 'markers').map(t => t.marker.color)).size === 5
+          && !p.layout.yaxis.title.text.includes('Shear-normalized');
     }''')
     expect(page.locator('.katex-error')).to_have_count(0)
-    page.get_by_role('button', name='Raw stress response', exact=True).click()
-    page.wait_for_function("document.querySelector('.js-plotly-plot').data.filter(t => t.mode === 'lines').length === 3")
+    grouping = page.get_by_role('checkbox', name=re.compile('^Group 104.11'))
+    coefficients = page.locator('.cee-kpi').all_text_contents()
+    grouping.uncheck()
+    page.wait_for_function("document.querySelector('.js-plotly-plot').data.filter(t => t.mode === 'lines').length === 6")
+    assert page.locator('.cee-kpi').all_text_contents() == coefficients
+    grouping.check()
+    page.wait_for_function("document.querySelector('.js-plotly-plot').data.filter(t => t.mode === 'lines').length === 5")
+    assert page.locator('.cee-kpi').all_text_contents() == coefficients
+    expect(page.get_by_label('σ₃ (kPa), point 10', exact=True)).to_have_value('104.11')
     page.get_by_role('button', name='Single power curve', exact=True).click()
     page.wait_for_function("document.querySelector('.js-plotly-plot').data.filter(t => t.mode === 'lines').length === 1")
     page.get_by_label('Model to fit').select_option('bulk')
@@ -78,16 +88,16 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Remove point 1000', exact=True).click()
     expect(page.get_by_role('button', name='Fit selected model')).to_be_enabled()
     page.get_by_role('button', name='Load HW2 data').click()
-    expect(page.get_by_role('checkbox')).to_have_count(30)
+    expect(page.get_by_role('checkbox', name=re.compile('^Include point'))).to_have_count(30)
     expect(page.get_by_label('Include point 8', exact=True)).to_be_checked()
     page.get_by_text('Paste a different dataset', exact=True).click()
     page.get_by_label('Paste numeric data').fill('1,2,bad')
     page.get_by_role('button', name='Load pasted data').click()
-    expect(page.get_by_role('checkbox')).to_have_count(30)
+    expect(page.get_by_role('checkbox', name=re.compile('^Include point'))).to_have_count(30)
     expect(page.get_by_role('alert')).to_contain_text('Line 1')
     page.get_by_label('Paste numeric data').fill('10,20,.001\n20,40,.002\n30,50,.003')
     page.get_by_role('button', name='Load pasted data').click()
-    expect(page.get_by_role('checkbox')).to_have_count(3)
+    expect(page.get_by_role('checkbox', name=re.compile('^Include point'))).to_have_count(3)
     print('MR: explicit fits, both-model predictions, exclusions, editing, validation and reset passed')
 
     go('cbr')

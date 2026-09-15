@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fitModulus, predict, shearNormalizedModulus, invariants, KPA_PER_PSI } from '../mr/equations.ts';
-import { HW2_MR } from '../mr/data.ts';
+import { HW2_MR, displayConfinement } from '../mr/data.ts';
 import { HW2_CBR } from '../cbr/data.ts';
 import { fitTangent, calculateCbrBracket } from '../cbr/equations.ts';
 import { makeRows, parseRows, numberOrNaN } from './shared.ts';
@@ -94,4 +94,16 @@ test('normalizing the generalized shear term exposes one continuous power law wi
       }
     }
   }
+});
+
+test('nominal confinement grouping preserves the five test levels and original recorded stresses', () => {
+  const counts = new Map();
+  for (const p of observations) {
+    const level = displayConfinement(p.s3);
+    counts.set(level, (counts.get(level) ?? 0) + 1);
+  }
+  assert.deepEqual([...counts], [[20.68,6],[34.47,6],[68.95,6],[103.42,6],[137.9,6]]);
+  assert.equal(observations[9].s3, 104.11);
+  assert.equal(displayConfinement(104.11, false), 104.11);
+  assert.equal(displayConfinement(104), 104);
 });
