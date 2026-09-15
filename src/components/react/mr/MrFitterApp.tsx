@@ -114,6 +114,14 @@ export default function MrFitterApp() {
     setPrediction(null);
     setError("");
   };
+  const updatePrediction = (nextTheta: string, nextSd: string) => {
+    const t = numberOrNaN(nextTheta), d = numberOrNaN(nextSd);
+    setPrediction(
+      Object.keys(fits).length && Number.isFinite(t) && Number.isFinite(d) && t > 0 && d >= 0 && d <= t
+        ? { theta: t, sd: d, values: (Object.keys(fits) as Model[]).map((m) => ({ model: m, value: predict(fits[m]!, t, d) })) }
+        : null,
+    );
+  };
   const traces: any[] = [
     {
       x: points.map((p) => p.theta),
@@ -123,7 +131,7 @@ export default function MrFitterApp() {
       text: points.map((p) => `ID ${p.id} · σ₃ ${p.s3} kPa · σd ${p.sd} kPa`),
       hovertemplate:
         "%{text}<br>θ %{x:.2f} kPa<br>Mr %{y:.3f} MPa<extra></extra>",
-      marker: { color: colors.orange, size: 7 },
+      marker: { color: colors.blue, size: 9, line: { color: ink.ink, width: 1.2 } },
     },
   ];
   if (fit) {
@@ -133,15 +141,42 @@ export default function MrFitterApp() {
         fit.model === "bulk" ? points : points.filter((p) => p.s3 === s3);
       const lo = Math.min(...subset.map((p) => p.theta)),
         hi = Math.max(...subset.map((p) => p.theta));
-      const x = Array.from({ length: 60 }, (_, i) => lo + ((hi - lo) * i) / 59);
-      traces.unshift({
-        x,
-        y: x.map((t) => predict(fit, t, Math.max(0, t - 3 * s3)) / 1000),
-        mode: "lines",
-        name: fit.model === "bulk" ? "Bulk-stress fit" : `Fit · σ₃ ${s3} kPa`,
-        line: { color: colors.blue, width: 2 },
-        hovertemplate:
-          "%{x:.2f} kPa<br>%{y:.3f} MPa<extra>%{fullData.name}</extra>",
+      const domainLo = Math.max(Math.min(...points.map((p) => p.theta)), 3 * s3);
+      const domainHi = Math.max(...points.map((p) => p.theta));
+      // Evaluate the power law itself, including its physical stress domain.
+      for (const [start, end, extension] of [[domainLo, lo, true], [lo, hi, false], [hi, domainHi, true]] as [number, number, boolean][]) {
+        if (end <= start) continue;
+        const x = Array.from({ length: 241 }, (_, i) => start + (end - start) * i / 240);
+        traces.unshift({
+          x,
+          y: x.map((t) => predict(fit, t, Math.max(0, t - 3 * s3)) / 1000),
+          mode: "lines",
+          name: (fit.model === "bulk" ? "Bulk-stress fit" : `Fit · σ₃ ${s3} kPa`) + (extension ? " · extended" : ""),
+          line: { color: colors.violet, width: extension ? 1.5 : 2.5, dash: extension ? "dash" : "solid" },
+          hovertemplate: "%{x:.2f} kPa<br>%{y:.3f} MPa<extra>%{fullData.name}</extra>",
+        });
+      }
+    }
+  }
+  if (prediction) {
+    const s3 = (prediction.theta - prediction.sd) / 3;
+    for (const p of prediction.values.filter((p) => Number.isFinite(p.value))) {
+      const color = p.model === "generalized" ? colors.violet : colors.emerald;
+      const lo = Math.max(Math.min(...points.map((p) => p.theta), prediction.theta), 3 * s3);
+      const hi = Math.max(...points.map((p) => p.theta), prediction.theta);
+      const x = Array.from({ length: 301 }, (_, i) => lo + (hi - lo) * i / 300);
+      traces.push({
+        x, y: x.map((t) => predict(fits[p.model]!, t, Math.max(0, t - 3 * s3)) / 1000),
+        mode: "lines", name: `${names[p.model]} · prediction path · σ₃ ${fmt(s3)} kPa`,
+        line: { color, width: 2, dash: "dash" },
+        hovertemplate: "%{x:.2f} kPa<br>%{y:.3f} MPa<extra>%{fullData.name}</extra>",
+      }, {
+        x: [0, prediction.theta, prediction.theta], y: [p.value / 1000, p.value / 1000, 0],
+        mode: "lines", name: "Prediction guides", line: { color, width: 1.5, dash: "dash" }, hoverinfo: "skip",
+      }, {
+        x: [prediction.theta], y: [p.value / 1000], mode: "markers", name: `${names[p.model]} prediction`,
+        marker: { color, size: 13, symbol: p.model === "generalized" ? "diamond" : "square", line: { color: ink.ink, width: 1.5 } },
+        hovertemplate: "θ %{x:.2f} kPa<br>Predicted Mr %{y:.3f} MPa<extra>%{fullData.name}</extra>",
       });
     }
   }
@@ -152,7 +187,7 @@ export default function MrFitterApp() {
           y: fit.points.map((p) => p.logResidual),
           mode: "markers",
           text: fit.points.map((p) => `ID ${p.id}`),
-          marker: { color: colors.orange, size: 8 },
+          marker: { color: colors.blue, size: 9, line: { color: ink.ink, width: 1.2 } },
           hovertemplate:
             "%{text}<br>θ %{x:.2f}<br>log residual %{y:.4f}<extra></extra>",
         },
@@ -254,82 +289,26 @@ export default function MrFitterApp() {
           title="Stress response"
           subtitle={
             fit
-              ? `${names[fit.model]} · curves hold confining stress constant; markers are included readings.`
+              ? `${names[fit.model]} · continuous power-law curves at constant confinement; solid within each tested range, dashed beyond it. Hover for confinement.`
               : "Raw HW2 readings. Choose a model and fit it to draw the response curves."
           }
           xTitle="Bulk stress θ (kPa)"
           yTitle="Resilient modulus Mr (MPa)"
           traces={traces}
           legend={[
-            { label: "Included readings", color: colors.orange },
+            ...(prediction ? prediction.values.map((p) => ({ label: `${names[p.model]} prediction / dashed path`, color: p.model === "generalized" ? colors.violet : colors.emerald, shape: "dash" as const })) : []),
+            { label: "Included readings", color: colors.blue },
             ...(fit
               ? [
                   {
-                    label: "Fitted response",
-                    color: colors.blue,
+                    label: "Power-law response",
+                    color: colors.violet,
                     shape: "line" as const,
                   },
                 ]
               : []),
           ]}
         />
-        {fit ? (
-          <>
-            <KpiStrip>
-              <Kpi
-                compact
-                label="k₁"
-                value={fmt(fit.k1, 6)}
-                tip={
-                  fit.model === "generalized"
-                    ? "Dimensionless scale in the normalized generalized model."
-                    : "Unit-dependent coefficient: this fit uses kPa for both modulus and bulk stress."
-                }
-              />
-              <Kpi
-                compact
-                label="k₂"
-                value={fmt(fit.k2, 6)}
-                tip="Exponent on bulk stress."
-              />
-              {fit.model === "generalized" && (
-                <Kpi
-                  compact
-                  label="k₃"
-                  value={fmt(fit.k3, 6)}
-                  tip="Exponent on normalized octahedral shear plus one."
-                />
-              )}
-              <Kpi
-                compact
-                label="R² · log response"
-                value={fmt(fit.r2log, 5)}
-                tip="Fit quality in the log space used by the regression."
-              />
-              <Kpi
-                compact
-                label="R² · modulus"
-                value={fmt(fit.r2, 5)}
-                tip="Fit quality after transforming predictions back to modulus. It may differ from log-space R squared."
-              />
-            </KpiStrip>
-            <FittingPlot
-              title="Inspect the residuals"
-              subtitle="Observed minus fitted log modulus. Hover for reading IDs; investigate patterns before changing the included data."
-              xTitle="Bulk stress θ (kPa)"
-              yTitle="ln(Mr) − ln(predicted Mr)"
-              traces={residualTraces}
-              legend={[
-                { label: "Log residual", color: colors.orange },
-                { label: "Zero residual", color: ink.secondary, shape: "dash" },
-              ]}
-            />
-          </>
-        ) : (
-          <p className="fit-status">
-            Coefficients and residuals appear after you fit the selected model.
-          </p>
-        )}
         <Card
           title="Predict at your stress state"
           subtitle="Enter bulk and deviator stress. Bulk stress alone does not define the generalized model’s shear term."
@@ -344,7 +323,7 @@ export default function MrFitterApp() {
                 value={theta}
                 onChange={(e) => {
                   setTheta(e.target.value);
-                  setPrediction(null);
+                  updatePrediction(e.target.value, sd);
                 }}
               />
             </label>
@@ -357,7 +336,7 @@ export default function MrFitterApp() {
                 value={sd}
                 onChange={(e) => {
                   setSd(e.target.value);
-                  setPrediction(null);
+                  updatePrediction(theta, e.target.value);
                 }}
               />
             </label>
@@ -440,6 +419,63 @@ export default function MrFitterApp() {
             </div>
           )}
         </Card>
+        {fit ? (
+          <>
+            <KpiStrip>
+              <Kpi
+                compact
+                label="k₁"
+                value={fmt(fit.k1, 6)}
+                tip={
+                  fit.model === "generalized"
+                    ? "Dimensionless scale in the normalized generalized model."
+                    : "Unit-dependent coefficient: this fit uses kPa for both modulus and bulk stress."
+                }
+              />
+              <Kpi
+                compact
+                label="k₂"
+                value={fmt(fit.k2, 6)}
+                tip="Exponent on bulk stress."
+              />
+              {fit.model === "generalized" && (
+                <Kpi
+                  compact
+                  label="k₃"
+                  value={fmt(fit.k3, 6)}
+                  tip="Exponent on normalized octahedral shear plus one."
+                />
+              )}
+              <Kpi
+                compact
+                label="R² · log response"
+                value={fmt(fit.r2log, 5)}
+                tip="Fit quality in the log space used by the regression."
+              />
+              <Kpi
+                compact
+                label="R² · modulus"
+                value={fmt(fit.r2, 5)}
+                tip="Fit quality after transforming predictions back to modulus. It may differ from log-space R squared."
+              />
+            </KpiStrip>
+            <FittingPlot
+              title="Inspect the residuals"
+              subtitle="Observed minus fitted log modulus. Hover for reading IDs; investigate patterns before changing the included data."
+              xTitle="Bulk stress θ (kPa)"
+              yTitle="ln(Mr) − ln(predicted Mr)"
+              traces={residualTraces}
+              legend={[
+                { label: "Log residual", color: colors.blue },
+                { label: "Zero residual", color: ink.secondary, shape: "dash" },
+              ]}
+            />
+          </>
+        ) : (
+          <p className="fit-status">
+            Coefficients and residuals appear after you fit the selected model.
+          </p>
+        )}
         <Card title="Equations and fitting method" className="fit-equations">
           <p>
             Conventional repeated-load triaxial test: σ₁ = σ₃ + σd and σ₂ = σ₃.
@@ -450,7 +486,11 @@ export default function MrFitterApp() {
             <Equation key={e.tex} {...e} display />
           ))}
           <p>
-            Ordinary least squares is applied to the natural-log response. R² is
+            Both models are nonlinear power laws in stress. Linear least squares
+            in log space estimates their exponents for that objective; the curves
+            evaluate those equations continuously. This emphasizes relative errors.
+            Fitting in modulus space would emphasize large absolute errors and is
+            not inherently better. R² is
             reported in both log and modulus space; state which you use. The
             generalized k₁ is dimensionless. In the bulk-stress model, k₁ has
             units kPa^(1 − k₂) and changes with the chosen stress unit. Neither

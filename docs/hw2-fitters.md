@@ -37,3 +37,9 @@ python scripts/check-hw2-fitters.py --base-url http://127.0.0.1:4324
 ```
 
 This checks initial unanswered states, fitting both models, prediction, exclusion/reset, pasted data, tangent choices, correction application, bracket validation, result invalidation, mobile resizing, dark mode, and browser errors.
+
+## Fitter chart refinements
+
+Both axes now use major and minor graph-paper grids, framed plots, and outlined markers. MR curves evaluate the fitted nonlinear power laws densely at constant confinement across the visible physical stress domain: solid within each confinement group's measured bulk-stress interval, dashed outside. Log-space QR regression remains the exact least-squares solution for the stated relative-error objective; a spline through observations would not represent either constitutive model.
+
+Prediction controls sit immediately below Stress response. Calculating a state adds both available models' markers, dashed constant-confinement paths, and horizontal/vertical reading guides. CBR uses blue measured and green corrected curves, and a violet dashed tangent clipped to the full plotting window. Origin correction precedes the penetration worksheet, followed by the CBR input/result tables; reading choices show both measured and corrected penetration. Changing the correction invalidates results so students can choose the new brackets and recompute.

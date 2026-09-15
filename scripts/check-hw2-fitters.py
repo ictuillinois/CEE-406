@@ -26,6 +26,12 @@ with sync_playwright() as p:
     page.get_by_label('Model to fit').select_option('generalized')
     page.get_by_role('button', name='Fit selected model').click()
     expect(page.locator('.cee-kpi')).to_have_count(5)
+    assert page.evaluate('''() => {
+        const p = document.querySelector('.js-plotly-plot');
+        return ['xaxis','yaxis'].every(a => p._fullLayout[a].showgrid && p._fullLayout[a].minor.showgrid)
+          && p.data.filter(t => t.mode === 'lines').every(t => t.x.length >= 241)
+          && p.data.some(t => t.line?.dash === 'dash');
+    }''')
     expect(page.locator('.katex-error')).to_have_count(0)
     page.get_by_label('Model to fit').select_option('bulk')
     page.get_by_role('button', name='Fit selected model').click()
@@ -35,6 +41,11 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Calculate prediction').click()
     table = page.get_by_role('table', name='Modulus predictions')
     expect(table.get_by_role('row')).to_have_count(3)
+    page.wait_for_function('''() => {
+        const traces = document.querySelector('.js-plotly-plot').data;
+        return traces.filter(t => t.name === 'Prediction guides').length === 2
+          && traces.filter(t => t.name?.endsWith(' prediction')).length === 2;
+    }''')
     expect(page.get_by_text('Extrapolation:', exact=False)).to_be_visible()
     page.get_by_label('Include point 8', exact=True).uncheck()
     expect(page.locator('.cee-kpi')).to_have_count(0)
@@ -69,6 +80,12 @@ with sync_playwright() as p:
     page.get_by_label('First reading').select_option('2')
     page.get_by_role('button', name='Use this origin correction').click()
     assert abs(float(page.get_by_role('spinbutton', name=re.compile('^Origin correction')).input_value()) - .04) < 1e-10
+    page.wait_for_function('''() => {
+        const p = document.querySelector('.js-plotly-plot');
+        const t = p.data.find(t => t.name === 'Selected tangent');
+        return t?.line.dash === 'dash' && t.x[0] === p.layout.xaxis.range[0]
+          && t.x[1] === p.layout.xaxis.range[1];
+    }''')
     for target, lo, hi in [('0.10','3','4'),('0.20','5','6')]:
         page.get_by_label('Lower reading for ' + target).select_option(lo)
         page.get_by_label('Upper reading for ' + target).select_option(hi)

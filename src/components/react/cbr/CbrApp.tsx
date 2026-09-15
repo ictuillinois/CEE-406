@@ -86,8 +86,8 @@ export default function CbrApp() {
           text: points.map((p) => `ID ${p.id}`),
           name: "Measured",
           mode: "lines+markers",
-          line: { color: colors.orange, width: 2.5 },
-          marker: { size: 7 },
+          line: { color: colors.blue, width: 2.5 },
+          marker: { color: colors.blue, size: 9, line: { color: ink.ink, width: 1.2 } },
           hovertemplate:
             "%{text}<br>Measured %{x:.4f} in<br>%{y:.2f} psi<extra></extra>",
         },
@@ -99,16 +99,22 @@ export default function CbrApp() {
       y: points.map((p) => p.load),
       name: "Corrected",
       mode: "lines+markers",
-      line: { color: colors.blue, width: 2, dash: "dash" },
+      line: { color: colors.emerald, width: 2.5 },
+      marker: { color: colors.emerald, size: 9, symbol: "square", line: { color: ink.ink, width: 1.2 } },
       hovertemplate: "Corrected %{x:.4f} in<br>%{y:.2f} psi<extra></extra>",
     });
+  const xMin = usable ? Math.min(0, points[0].pen - (validOrigin ? offset : 0), tangent?.origin ?? 0) : 0;
+  const xMax = usable ? Math.max(...points.map((p) => p.pen)) : 1;
+  const xPad = Math.max(xMax - xMin, 0.01) * 0.04;
+  const xRange: [number, number] = [xMin - xPad, xMax + xPad];
+  const yMax = usable ? Math.max(1, ...points.map((p) => p.load)) * 1.08 : 1;
   if (tangent) {
     traces.push({
-      x: [tangent.origin, points[ei].pen],
-      y: [0, tangent.slope * points[ei].pen + tangent.intercept],
+      x: xRange,
+      y: xRange.map((x) => tangent.slope * x + tangent.intercept),
       mode: "lines",
       name: "Selected tangent",
-      line: { color: ink.secondary, dash: "dot", width: 2 },
+      line: { color: colors.violet, dash: "dash", width: 2 },
       hovertemplate:
         "%{x:.4f} in<br>%{y:.2f} psi<extra>Selected-region line</extra>",
     });
@@ -117,7 +123,7 @@ export default function CbrApp() {
       y: [0],
       mode: "markers",
       name: "Tangent intercept",
-      marker: { color: ink.secondary, size: 11, symbol: "diamond" },
+      marker: { color: colors.violet, size: 11, symbol: "diamond", line: { color: ink.ink, width: 1.2 } },
       hovertemplate: "Intercept %{x:.5f} in<extra></extra>",
     });
   }
@@ -162,7 +168,7 @@ export default function CbrApp() {
       <option value="">Choose a reading…</option>
       {points.map((p) => (
         <option key={p.id} value={p.id}>
-          ID {p.id} · {fmt(p.pen)} in
+          ID {p.id} · {fmt(p.pen)} in measured{validOrigin ? ` · ${fmt(p.pen - offset)} in corrected` : ""}
         </option>
       ))}
     </>
@@ -191,23 +197,6 @@ export default function CbrApp() {
             Enter at least two complete, nonnegative readings with distinct
             penetrations. Duplicate penetrations cannot define an interpolation
             interval.
-          </p>
-        )}
-        <label className="fit-field">
-          Origin correction δ₀ (in)
-          <input
-            className="cee-input"
-            type="number"
-            step="any"
-            min="0"
-            value={origin}
-            onChange={(e) => changeOrigin(e.target.value)}
-          />
-        </label>
-        {!validOrigin && (
-          <p role="alert" className="fit-error">
-            Enter a finite, nonnegative correction. Use 0 for the measured
-            origin.
           </p>
         )}
         <h3 className="cee-panel__title">Explore a tangent</h3>
@@ -285,15 +274,17 @@ export default function CbrApp() {
           xTitle="Penetration (in)"
           yTitle="Piston pressure (psi)"
           traces={traces}
-          height={360}
+          height={400}
+          xRange={xRange}
+          yRange={[-0.04 * yMax, yMax]}
           legend={[
-            { label: "Measured", color: colors.orange },
+            { label: "Measured", color: colors.blue },
             ...(validOrigin && offset !== 0
               ? [
                   {
                     label: "Corrected",
-                    color: colors.blue,
-                    shape: "dash" as const,
+                    color: colors.emerald,
+                    shape: "line" as const,
                   },
                 ]
               : []),
@@ -301,13 +292,61 @@ export default function CbrApp() {
               ? [
                   {
                     label: "Selected tangent",
-                    color: ink.secondary,
+                    color: colors.violet,
                     shape: "dash" as const,
                   },
                 ]
               : []),
           ]}
         />
+        <Card title="Origin correction">
+        <label className="fit-field">
+          Origin correction δ₀ (in)
+          <input
+            className="cee-input"
+            type="number"
+            step="any"
+            min="0"
+            value={origin}
+            onChange={(e) => changeOrigin(e.target.value)}
+          />
+        </label>
+        {!validOrigin && (
+          <p role="alert" className="fit-error">
+            Enter a finite, nonnegative correction. Use 0 for the measured
+            origin.
+          </p>
+        )}
+        </Card>
+        <Card
+          title="Measured and corrected penetrations"
+          subtitle="Pressure is unchanged. Negative corrected penetrations are retained to show the part of the toe before the new origin."
+        >
+          <div className="cee-tablewrap">
+            <table className="cee-table" aria-label="Corrected penetration worksheet">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Measured (in)</th>
+                  <th>Correction (in)</th>
+                  <th>Corrected (in)</th>
+                  <th>Pressure (psi)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {points.map((p) => (
+                  <tr key={p.id}>
+                    <th scope="row">{p.id}</th>
+                    <td>{fmt(p.pen, 6)}</td>
+                    <td>{validOrigin ? fmt(offset, 6) : "—"}</td>
+                    <td>{validOrigin ? fmt(p.pen - offset, 6) : "—"}</td>
+                    <td>{fmt(p.load, 6)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
         <Card
           title="Calculate the two CBR values"
           subtitle="Choose the bracketing readings for each corrected penetration, then calculate. The reference pressures are provided in HW2."
@@ -428,35 +467,6 @@ export default function CbrApp() {
             affected result. Compare your uncorrected and corrected calculations
             and explain the difference in your own report.
           </p>
-        </Card>
-        <Card
-          title="Measured and corrected penetrations"
-          subtitle="Pressure is unchanged. Negative corrected penetrations are retained to show the part of the toe before the new origin."
-        >
-          <div className="cee-tablewrap">
-            <table className="cee-table" aria-label="Corrected penetration worksheet">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Measured (in)</th>
-                  <th>Correction (in)</th>
-                  <th>Corrected (in)</th>
-                  <th>Pressure (psi)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {points.map((p) => (
-                  <tr key={p.id}>
-                    <th scope="row">{p.id}</th>
-                    <td>{fmt(p.pen, 6)}</td>
-                    <td>{validOrigin ? fmt(offset, 6) : "—"}</td>
-                    <td>{validOrigin ? fmt(p.pen - offset, 6) : "—"}</td>
-                    <td>{fmt(p.load, 6)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </Card>
         <Card title="Equations and construction" className="fit-equations">
           {equations.map((e) => (

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   useTheme,
-  axis,
-  gridAxis,
+  paperAxis,
   baseLayout,
   plotConfig,
 } from "../chartTheme";
@@ -15,7 +14,9 @@ export default function FittingPlot({
   yTitle,
   traces,
   legend,
-  height = 340,
+  height = 400,
+  xRange,
+  yRange,
 }: {
   title: string;
   subtitle: string;
@@ -24,6 +25,8 @@ export default function FittingPlot({
   traces: any[];
   legend: LegendItem[];
   height?: number;
+  xRange?: [number, number];
+  yRange?: [number, number];
 }) {
   const ref = useRef<HTMLDivElement>(null),
     theme = useTheme();
@@ -39,8 +42,8 @@ export default function FittingPlot({
           traces,
           baseLayout(theme, {
             height,
-            xaxis: axis(theme, xTitle),
-            yaxis: gridAxis(theme, yTitle),
+            xaxis: { ...paperAxis(theme, { title: xTitle, range: xRange }), minor: { ...paperAxis(theme).minor as object, showgrid: true, nticks: 5 } },
+            yaxis: { ...paperAxis(theme, { title: yTitle, range: yRange }), minor: { ...paperAxis(theme).minor as object, showgrid: true, nticks: 5 } },
             showlegend: false,
             hovermode: "closest",
             margin: { l: 65, r: 20, t: 20, b: 55 },
@@ -55,7 +58,7 @@ export default function FittingPlot({
     return () => {
       cancelled = true;
     };
-  }, [traces, theme, height, xTitle, yTitle]);
+  }, [traces, theme, height, xTitle, yTitle, xRange, yRange]);
   useEffect(() => {
     const el = ref.current;
     return () => {
