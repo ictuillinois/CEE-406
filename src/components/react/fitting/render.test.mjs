@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { mkdirSync } from 'node:fs';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
+const cache = resolve(root, 'node_modules/.cache');
+mkdirSync(cache, { recursive: true });
+const out = resolve(cache, 'hw2-fitter-render.mjs');
+await build({ stdin: { contents: "export {default as Mr} from './src/components/react/mr/MrFitterApp'; export {default as Cbr} from './src/components/react/cbr/CbrApp';", resolveDir: root, loader: 'tsx' }, bundle: true, format: 'esm', platform: 'node', outfile: out, jsx: 'automatic', external: ['react', 'react-dom', 'react-dom/server', 'plotly.js-dist-min'], loader: { '.css': 'empty' }, logLevel: 'error' });
+globalThis.document ??= { documentElement: { getAttribute: () => 'light' } };
+globalThis.window ??= { matchMedia: () => ({ matches: false }) };
+const { Mr, Cbr } = await import(pathToFileURL(out));
+test('MR starts with all 30 raw readings, no fit or prediction, and accessible equations', () => {
+  const html = renderToString(React.createElement(Mr));
+  assert.equal((html.match(/aria-label="Include point /g) ?? []).length, 30);
+  assert.ok(html.includes('Choose a model'));
+  assert.ok(html.includes('Fit selected model'));
+  assert.ok(!html.includes('class="cee-kpi'));
+  assert.ok(!html.includes('aria-label="Modulus predictions"'));
+  assert.equal((html.match(/role="math"/g) ?? []).length, 7);
+});
+test('CBR starts at zero correction, with no selected tangent or calculated CBR', () => {
+  const html = renderToString(React.createElement(Cbr));
+  assert.equal((html.match(/aria-label="Remove point /g) ?? []).length, 8);
+  assert.ok(html.includes('Origin correction'));
+  assert.ok(!html.includes('Use this origin correction'));
+  assert.equal((html.match(/aria-label="CBR results"/g) ?? []).length, 1);
+  assert.equal((html.match(/role="math"/g) ?? []).length, 4);
+  assert.ok(!html.includes('CBR (governing)'));
+});

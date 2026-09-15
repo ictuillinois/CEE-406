@@ -65,6 +65,8 @@ export const RELEASED_TOOLS: Record<string, true> = {
   'contact-stress': true,
   lea: true,
   leaps: true,
+  'mr-fitter': true,
+  cbr: true,
 };
 
 /** Planned release week per tool, for the locked label. Optional. */

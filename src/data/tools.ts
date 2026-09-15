@@ -150,10 +150,12 @@ export const tools: Tool[] = [
   {
     name: 'Resilient Modulus Fitter',
     slug: 'mr-fitter',
+    image: 'mr-fitter.webp',
+    imageAlt: 'Resilient Modulus Fitter with editable triaxial readings, a bulk-stress versus modulus scatter plot, and model-selection controls.',
     color: '#E87722',
     hws: ['HW2'],
     ref: 'MEPDG k₁–k₂–k₃ · Huang Ch. 7',
-    desc: 'Fit k₁, k₂, k₃ of the generalized Mr model to triaxial data. Live LINEST-style regression with R², a parity plot, and paste-from-Excel input.',
+    desc: 'Fit two resilient modulus models to editable HW2 test data, inspect residuals, and compare predictions at a stress state you choose.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M16 33 Q52 24 108 9"/>
@@ -164,12 +166,14 @@ export const tools: Tool[] = [
     </svg>`,
   },
   {
-    name: 'CBR Reduction',
+    name: 'CBR Fitter',
     slug: 'cbr',
+    image: 'cbr.webp',
+    imageAlt: 'CBR Fitter showing an editable pressure–penetration dataset, tangent-region controls, and CBR calculations awaiting student input.',
     color: '#E87722',
     hws: ['HW2'],
     ref: 'AASHTO T 193 · ASTM D1883',
-    desc: 'Reduce a piston penetration test to a CBR, with the tangent construction that corrects a concave-up curve, and a toggle to see how much that correction is worth.',
+    desc: 'Explore the pressure–penetration curve, choose a tangent and origin correction, and calculate CBR from the readings you select.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M20 37 C34 36 44 26 60 18 C76 11 92 9 106 8"/>

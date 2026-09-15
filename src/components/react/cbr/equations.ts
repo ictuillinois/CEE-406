@@ -107,3 +107,29 @@ export function reduceCbr(points: Point[], correct = true): CbrResult | null {
     rerunAdvised: cbr02 > cbr01,
   };
 }
+
+/** User-selected linear region; this does not search for the steepest region. */
+export function fitTangent(points: Point[]): { slope: number; intercept: number; origin: number } | null {
+  if (points.length < 2 || points.some(p => !Number.isFinite(p.pen) || !Number.isFinite(p.load))) return null;
+  const x = points.reduce((s, p) => s + p.pen, 0) / points.length;
+  const y = points.reduce((s, p) => s + p.load, 0) / points.length;
+  const xx = points.reduce((s, p) => s + (p.pen - x) ** 2, 0);
+  if (xx <= 1e-20) return null;
+  const slope = points.reduce((s, p) => s + (p.pen - x) * (p.load - y), 0) / xx;
+  if (!Number.isFinite(slope) || slope <= 0) return null;
+  const intercept = y - slope * x;
+  return { slope, intercept, origin: -intercept / slope };
+}
+
+/** No clamping or extrapolation: the student must supply a valid bracket.
+ * When the target is exactly measured, a single reading may serve both ends.
+ */
+export function calculateCbrBracket(a: Point, b: Point, target: number, origin: number, standard: number) {
+  if (![a.pen, a.load, b.pen, b.load, target, origin, standard].every(Number.isFinite) || origin < 0 || target < 0 || standard <= 0 || a.load < 0 || b.load < 0 || b.pen < a.pen) return null;
+  const measuredTarget = target + origin;
+  if (measuredTarget < a.pen - 1e-10 || measuredTarget > b.pen + 1e-10) return null;
+  if (b.pen === a.pen && (Math.abs(measuredTarget - a.pen) > 1e-10 || a.load !== b.load)) return null;
+  const fraction = b.pen === a.pen ? 0 : Math.min(1, Math.max(0, (measuredTarget - a.pen) / (b.pen - a.pen)));
+  const pressure = a.load + fraction * (b.load - a.load);
+  return { measuredTarget, lowerCorrected: a.pen - origin, upperCorrected: b.pen - origin, fraction, pressure, standard, cbr: pressure / standard * 100 };
+}

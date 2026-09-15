@@ -1,255 +1,480 @@
-// CBR Reduction — reduce a piston penetration test to a California Bearing
-// Ratio, applying the origin correction for a concave-up curve.
-// AASHTO T 193 / ASTM D1883. Supports HW2 Problem 4.
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Tip from '../Tip';
-import {
-  useTheme, chartColors, baseLayout, plotConfig, num, fmt,
-  axis, gridAxis, hueFor,
-} from '../chartTheme';
-import ChartFigure from '../ui/ChartFigure';
-import KpiStrip, { Kpi } from '../ui/KpiStrip';
-import { reduceCbr, type Point } from './equations';
-import '../tools.css';
-
-interface Row { id: number; pen: string; load: string }
-let nextId = 100;
-
-/** A concave-up curve, the case the origin correction exists for. */
-const DEMO: [string, string][] = [
-  ['0', '0'], ['0.025', '35'], ['0.050', '95'], ['0.075', '185'],
-  ['0.100', '300'], ['0.150', '565'], ['0.200', '790'],
-  ['0.300', '1120'], ['0.400', '1350'], ['0.500', '1520'],
+import { useState } from "react";
+import { useTheme, HUES, chartColors } from "../chartTheme";
+import Card from "../ui/Card";
+import Equation from "../ui/Equation";
+import DataEditor from "../fitting/DataEditor";
+import FittingPlot from "../fitting/FittingPlot";
+import { makeRows, numberOrNaN, fmt, type EditRow } from "../fitting/shared.ts";
+import { HW2_CBR } from "./data.ts";
+import { fitTangent, calculateCbrBracket } from "./equations.ts";
+import "../tools.css";
+import "../fitting/fitting.css";
+type Calculation = NonNullable<ReturnType<typeof calculateCbrBracket>>;
+const equations = [
+  {
+    tex: "\\delta_c=\\delta_m-\\delta_0,\\qquad\\delta_m=\\delta_c+\\delta_0",
+    plain:
+      "Corrected penetration = measured penetration minus origin correction; measured target = corrected target plus origin correction",
+  },
+  {
+    tex: "p=m\\delta+b,\\quad m=\\frac{\\sum_i(\\delta_i-\\bar\\delta)(p_i-\\bar p)}{\\sum_i(\\delta_i-\\bar\\delta)^2},\\quad b=\\bar p-m\\bar\\delta,\\quad\\delta_0=-b/m",
+    plain:
+      "Selected-region line: pressure = slope times penetration + intercept; slope is covariance divided by penetration variance; origin intercept = minus intercept / slope",
+  },
+  {
+    tex: "t=\\frac{\\delta_c-\\delta_{c,L}}{\\delta_{c,U}-\\delta_{c,L}},\\qquad p(\\delta_c)=p_L+t(p_U-p_L)",
+    plain:
+      "Linear interpolation: fraction = (target minus lower corrected penetration) / (upper minus lower corrected penetration); pressure = lower pressure + fraction times pressure difference",
+  },
+  {
+    tex: "\\mathrm{CBR}_{0.10}=100\\frac{p(0.10)}{p_{s,0.10}},\\qquad\\mathrm{CBR}_{0.20}=100\\frac{p(0.20)}{p_{s,0.20}}",
+    plain:
+      "CBR at each standard penetration = 100 times interpolated specimen pressure / standard-stone pressure at the same penetration",
+  },
 ];
-
 export default function CbrApp() {
-  const [rows, setRows] = useState<Row[]>(
-    DEMO.map(([pen, load]) => ({ id: nextId++, pen, load }))
-  );
-  const [correct, setCorrect] = useState(true);
-  const [paste, setPaste] = useState('');
-
-  const points = useMemo<Point[]>(
-    () => rows
-      .map(r => ({ pen: num(r.pen, NaN), load: num(r.load, NaN) }))
-      .filter(p => Number.isFinite(p.pen) && Number.isFinite(p.load))
-      .sort((a, b) => a.pen - b.pen),
-    [rows]
-  );
-
-  const res = useMemo(() => reduceCbr(points, correct), [points, correct]);
-
-  const theme = useTheme();
-  const chartRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!res || !chartRef.current) return;
-    let canceled = false;
-    (async () => {
-      const Plotly = (await import('plotly.js-dist-min')).default;
-      if (canceled || !chartRef.current) return;
-      const c = chartColors(theme);
-      const measured = hueFor('stress', theme);
-      const shifted = hueFor('deflection', theme);
-
-      const traces: any[] = [
-        {
-          x: points.map(p => p.pen), y: points.map(p => p.load),
-          name: 'Measured', mode: 'lines+markers',
-          line: { color: measured, width: 2.5 },
-          marker: { color: measured, size: 7, line: { color: c.surface, width: 2 } },
-          hovertemplate: '%{x:.3f} in · %{y:,.0f} psi<extra></extra>',
-        },
-      ];
-
-      if (res.offset > 1e-9) {
-        traces.push({
-          x: res.corrected.map(p => p.pen), y: res.corrected.map(p => p.load),
-          name: 'Corrected', mode: 'lines',
-          line: { color: shifted, width: 2.5, dash: 'dot' },
-          hovertemplate: 'corrected %{x:.3f} in · %{y:,.0f} psi<extra></extra>',
-        });
-        // The tangent whose intercept defines the corrected origin.
-        const yTop = Math.max(...points.map(p => p.load));
-        traces.push({
-          x: [res.offset, res.offset + yTop / res.slope], y: [0, yTop],
-          name: 'Tangent', mode: 'lines',
-          line: { color: c.secondary, width: 1, dash: 'dash' },
-          hoverinfo: 'skip',
-        });
-      }
-
-      Plotly.react(chartRef.current, traces, baseLayout(theme, {
-        height: 340,
-        xaxis: axis(theme, 'Penetration (in)', { rangemode: 'tozero' as const }),
-        yaxis: gridAxis(theme, 'Piston pressure (psi)', { rangemode: 'tozero' as const }),
-        hovermode: 'closest',
-        shapes: [
-          { type: 'line', x0: 0.1, x1: 0.1, yref: 'paper', y0: 0, y1: 1, line: { color: c.secondary, width: 1, dash: 'dot' } },
-          { type: 'line', x0: 0.2, x1: 0.2, yref: 'paper', y0: 0, y1: 1, line: { color: c.secondary, width: 1, dash: 'dot' } },
-        ],
-        annotations: [
-          { x: 0.1, yref: 'paper', y: 1.03, text: '0.1 in', showarrow: false, font: { size: 10, color: c.fg } },
-          { x: 0.2, yref: 'paper', y: 1.03, text: '0.2 in', showarrow: false, font: { size: 10, color: c.fg } },
-        ],
-      }), plotConfig);
-    })();
-    return () => { canceled = true; };
-  }, [res, points, theme]);
-
-  const update = (id: number, patch: Partial<Row>) =>
-    setRows(rs => rs.map(r => (r.id === id ? { ...r, ...patch } : r)));
-
-  const applyPaste = () => {
-    const parsed: Row[] = [];
-    for (const line of paste.split(/\r?\n/)) {
-      const cells = line.trim().split(/[\t,;\s]+/).filter(Boolean);
-      if (cells.length < 2) continue;
-      const pen = parseFloat(cells[0]), load = parseFloat(cells[1]);
-      if (Number.isFinite(pen) && Number.isFinite(load)) {
-        parsed.push({ id: nextId++, pen: String(pen), load: String(load) });
-      }
-    }
-    if (parsed.length >= 2) { setRows(parsed); setPaste(''); }
+  const [rows, setRows] = useState(() => makeRows(HW2_CBR));
+  const [origin, setOrigin] = useState("0");
+  const [start, setStart] = useState(""),
+    [end, setEnd] = useState("");
+  const [choices, setChoices] = useState([
+    { lower: "", upper: "", standard: "1000" },
+    { lower: "", upper: "", standard: "1500" },
+  ]);
+  const [results, setResults] = useState<(Calculation | null)[]>([null, null]);
+  const [errors, setErrors] = useState(["", ""]);
+  const theme = useTheme(),
+    colors = HUES[theme],
+    ink = chartColors(theme);
+  const changeRows = (r: EditRow[]) => {
+    setRows(r);
+    setResults([null, null]);
+    setErrors(["", ""]);
   };
-
+  const changeOrigin = (v: string) => {
+    setOrigin(v);
+    setResults([null, null]);
+    setErrors(["", ""]);
+  };
+  const points = rows
+    .map((r) => ({
+      id: r.id,
+      pen: numberOrNaN(r.values[0]),
+      load: numberOrNaN(r.values[1]),
+    }))
+    .sort((a, b) => a.pen - b.pen);
+  const invalid = points.some(
+    (p) =>
+      !Number.isFinite(p.pen) ||
+      !Number.isFinite(p.load) ||
+      p.pen < 0 ||
+      p.load < 0,
+  );
+  const duplicate = points.some((p, i) => i > 0 && p.pen === points[i - 1].pen);
+  const usable = !invalid && !duplicate && points.length >= 2;
+  const offset = numberOrNaN(origin),
+    validOrigin = Number.isFinite(offset) && offset >= 0;
+  const si = points.findIndex((p) => String(p.id) === start),
+    ei = points.findIndex((p) => String(p.id) === end);
+  const tangent =
+    usable && si >= 0 && ei > si ? fitTangent(points.slice(si, ei + 1)) : null;
+  const traces: any[] = usable
+    ? [
+        {
+          x: points.map((p) => p.pen),
+          y: points.map((p) => p.load),
+          text: points.map((p) => `ID ${p.id}`),
+          name: "Measured",
+          mode: "lines+markers",
+          line: { color: colors.orange, width: 2.5 },
+          marker: { size: 7 },
+          hovertemplate:
+            "%{text}<br>Measured %{x:.4f} in<br>%{y:.2f} psi<extra></extra>",
+        },
+      ]
+    : [];
+  if (usable && validOrigin && offset !== 0)
+    traces.push({
+      x: points.map((p) => p.pen - offset),
+      y: points.map((p) => p.load),
+      name: "Corrected",
+      mode: "lines+markers",
+      line: { color: colors.blue, width: 2, dash: "dash" },
+      hovertemplate: "Corrected %{x:.4f} in<br>%{y:.2f} psi<extra></extra>",
+    });
+  if (tangent) {
+    traces.push({
+      x: [tangent.origin, points[ei].pen],
+      y: [0, tangent.slope * points[ei].pen + tangent.intercept],
+      mode: "lines",
+      name: "Selected tangent",
+      line: { color: ink.secondary, dash: "dot", width: 2 },
+      hovertemplate:
+        "%{x:.4f} in<br>%{y:.2f} psi<extra>Selected-region line</extra>",
+    });
+    traces.push({
+      x: [tangent.origin],
+      y: [0],
+      mode: "markers",
+      name: "Tangent intercept",
+      marker: { color: ink.secondary, size: 11, symbol: "diamond" },
+      hovertemplate: "Intercept %{x:.5f} in<extra></extra>",
+    });
+  }
+  const calculate = (i: number) => {
+    const c = choices[i],
+      a = points.findIndex((p) => String(p.id) === c.lower),
+      b = points.findIndex((p) => String(p.id) === c.upper);
+    let message = "";
+    if (!usable || !validOrigin)
+      message = "Correct the test data and origin first.";
+    else if (a < 0 || b < 0 || !(a === b || b === a + 1))
+      message =
+        "Choose adjacent readings in penetration order, or the same reading at an exact target.";
+    const value = !message
+      ? calculateCbrBracket(
+          points[a],
+          points[b],
+          i === 0 ? 0.1 : 0.2,
+          offset,
+          numberOrNaN(c.standard),
+        )
+      : null;
+    if (!message && !value)
+      message =
+        "The readings must bracket the corrected target. Standard pressure must be positive; values outside the measured range are not extrapolated.";
+    setErrors((e) => e.map((v, j) => (j === i ? message : v)));
+    setResults((r) => r.map((v, j) => (j === i ? value : v)));
+  };
+  const editChoice = (
+    i: number,
+    key: "lower" | "upper" | "standard",
+    value: string,
+  ) => {
+    setChoices((cs) =>
+      cs.map((c, j) => (j === i ? { ...c, [key]: value } : c)),
+    );
+    setResults((r) => r.map((v, j) => (j === i ? null : v)));
+    setErrors((es) => es.map((v, j) => (j === i ? "" : v)));
+  };
+  const options = (
+    <>
+      <option value="">Choose a reading…</option>
+      {points.map((p) => (
+        <option key={p.id} value={p.id}>
+          ID {p.id} · {fmt(p.pen)} in
+        </option>
+      ))}
+    </>
+  );
   return (
-    <div className="cee-tool">
+    <div className="cee-tool fit-tool">
       <aside className="cee-panel">
-        <h2 className="cee-panel__title">Penetration test</h2>
-
-        <div className="cee-field">
-          <span className="cee-field__label">
-            <span>Readings<Tip text="Piston penetration and the corresponding pressure. Include the zero reading, because the correction needs the toe of the curve." /></span>
-            <span className="cee-field__unit">in · psi</span>
-          </span>
-          {rows.map(r => (
-            <div className="cee-axle-row cee-axle-row--2" key={r.id}>
-              <input className="cee-input" type="number" step="0.005" value={r.pen}
-                aria-label="Penetration (in)" onChange={e => update(r.id, { pen: e.target.value })} />
-              <input className="cee-input" type="number" step="10" value={r.load}
-                aria-label="Piston pressure (psi)" onChange={e => update(r.id, { load: e.target.value })} />
-              <button className="cee-axle-remove" type="button" aria-label="Remove reading"
-                onClick={() => setRows(rs => rs.filter(x => x.id !== r.id))}>×</button>
-            </div>
-          ))}
-          <button className="cee-btn cee-btn--ghost cee-btn--sm" type="button"
-            onClick={() => setRows(rs => [...rs, { id: nextId++, pen: '', load: '' }])}>+ Add reading</button>
-        </div>
-
-        <div className="cee-field">
-          <label className="cee-field__label" htmlFor="cbr-paste">
-            <span>Paste from Excel<Tip text="Two columns: penetration then pressure. Tabs, commas, or spaces all work." /></span>
-          </label>
-          <textarea id="cbr-paste" className="cee-textarea" value={paste}
-            onChange={e => setPaste(e.target.value)} placeholder="0.000&#9;0&#10;0.025&#9;35" />
-          <button className="cee-btn cee-btn--primary cee-btn--sm" type="button"
-            style={{ marginTop: '0.5rem' }} onClick={applyPaste}>Load pasted data</button>
-        </div>
-
-        <label className="cee-field__label" style={{ marginTop: '0.5rem' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input type="checkbox" checked={correct} onChange={e => setCorrect(e.target.checked)} />
-            Apply origin correction
-          </span>
+        <h2 className="cee-panel__title">Penetration test data</h2>
+        <DataEditor
+          rows={rows}
+          columns={["Penetration (in)", "Pressure (psi)"]}
+          onChange={changeRows}
+          reset={() => {
+            changeRows(makeRows(HW2_CBR));
+            changeOrigin("0");
+            setStart("");
+            setEnd("");
+            setChoices([
+              { lower: "", upper: "", standard: "1000" },
+              { lower: "", upper: "", standard: "1500" },
+            ]);
+          }}
+        />
+        {!usable && rows.length > 0 && (
+          <p className="fit-error" role="alert">
+            Enter at least two complete, nonnegative readings with distinct
+            penetrations. Duplicate penetrations cannot define an interpolation
+            interval.
+          </p>
+        )}
+        <label className="fit-field">
+          Origin correction δ₀ (in)
+          <input
+            className="cee-input"
+            type="number"
+            step="any"
+            min="0"
+            value={origin}
+            onChange={(e) => changeOrigin(e.target.value)}
+          />
         </label>
-
+        {!validOrigin && (
+          <p role="alert" className="fit-error">
+            Enter a finite, nonnegative correction. Use 0 for the measured
+            origin.
+          </p>
+        )}
+        <h3 className="cee-panel__title">Explore a tangent</h3>
         <p className="cee-hint">
-          AASHTO T 193 / ASTM D1883. Standard crushed-stone pressures are
-          1000 psi at 0.1 in and 1500 psi at 0.2 in.
+          Choose the endpoints of a region you consider linear. Two readings
+          define a secant approximation to a tangent; more readings fit a
+          least-squares line through the selected region.
+        </p>
+        <div className="fit-fields">
+          <label className="fit-field">
+            First reading
+            <select
+              className="cee-input"
+              value={start}
+              onChange={(e) => {
+                setStart(e.target.value);
+                const i = points.findIndex(
+                  (p) => String(p.id) === e.target.value,
+                );
+                setEnd(
+                  i >= 0 && i < points.length - 1
+                    ? String(points[i + 1].id)
+                    : "",
+                );
+              }}
+            >
+              {options}
+            </select>
+          </label>
+          <label className="fit-field">
+            Last reading
+            <select
+              className="cee-input"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+            >
+              {options}
+            </select>
+          </label>
+        </div>
+        {start && !tangent && (
+          <p className="fit-error">
+            Select a later last reading and a region with a positive fitted
+            slope.
+          </p>
+        )}
+        {tangent && (
+          <div className="fit-status" aria-live="polite">
+            Slope: {fmt(tangent.slope, 6)} psi/in
+            <br />
+            Pressure intercept: {fmt(tangent.intercept, 6)} psi
+            <br />
+            Penetration intercept: <strong>{fmt(tangent.origin, 6)} in</strong>
+            <div className="fit-actions">
+              <button
+                type="button"
+                className="cee-chip"
+                disabled={tangent.origin < 0}
+                onClick={() => changeOrigin(String(tangent.origin))}
+              >
+                Use this origin correction
+              </button>
+            </div>
+          </div>
+        )}
+        <p className="cee-hint">
+          The tangent is exploratory. Moving it does not change the applied
+          correction until you choose to use its intercept.
         </p>
       </aside>
-
       <div className="cee-results">
-        <details className="cee-howto">
-          <summary>How to use this tool</summary>
-          <div className="cee-howto__body">
-            <ol>
-              <li><strong>Enter the readings</strong>, including the zero, because the origin correction is constructed from the toe of the curve.</li>
-              <li><strong>Look at the curve shape.</strong> If it starts concave upward, the test began against surface irregularities and the origin must move; the tool finds the tangent and shifts it.</li>
-              <li><strong>Read the CBR</strong> at 0.1 in. If the 0.2 in value is larger, the standard says rerun the test, and if it repeats, report the 0.2 in value.</li>
-              <li><strong>Toggle the correction off</strong> to see how much it matters: an uncorrected concave-up curve understates the CBR badly.</li>
-            </ol>
-            CBR is a ratio, not a stress: it is the piston pressure your soil needs expressed as a percentage of what a standard crushed stone needs at the same penetration.
-          </div>
-        </details>
-
-        {!res ? (
-          <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>Enter at least two valid readings.</span></p>
-        ) : (
-          <>
-            <KpiStrip>
-              <Kpi accent label="CBR (governing)" value={fmt(res.governing, 1)} unit="%"
-                tip="The reported CBR. Normally the 0.1 in value; the 0.2 in value governs only if it is larger and the test repeats." />
-              <Kpi label="CBR at 0.1 in" value={fmt(res.cbr01, 1)} unit="%"
-                tip="Piston pressure at 0.1 in penetration divided by 1000 psi." />
-              <Kpi label="CBR at 0.2 in" value={fmt(res.cbr02, 1)} unit="%"
-                tip="Piston pressure at 0.2 in penetration divided by 1500 psi." />
-              <Kpi label="Origin correction" value={fmt(res.offset, 4)} unit="in"
-                tip="How far the origin moved. Zero means the curve was already concave down and needed no correction." />
-            </KpiStrip>
-
-            {res.rerunAdvised && (
-              <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
-                The 0.2 in value ({fmt(res.cbr02, 1)}%) exceeds the 0.1 in value ({fmt(res.cbr01, 1)}%).
-                AASHTO T 193 says to <strong>rerun the test</strong>; if the result repeats, report the
-                0.2 in value as the CBR.
-              </span></p>
-            )}
-
-            <ChartFigure
-              title="Stress–penetration curve"
-              subtitle={res.offset > 1e-9
-                ? 'Measured curve, the tangent that locates the corrected origin, and the shifted curve'
-                : 'Measured curve, concave down from the start, so no correction is needed'}
-              plotRef={chartRef}
-              legend={[
-                { label: 'Measured', color: hueFor('stress', theme) },
-                ...(res.offset > 1e-9 ? [
-                  { label: 'Corrected', color: hueFor('deflection', theme), shape: 'dash' as const },
-                  { label: 'Tangent', color: chartColors(theme).secondary, shape: 'dash' as const },
-                ] : []),
-              ]}
-              takeaway={res.offset > 1e-9
-                ? `The curve is concave upward, so the origin shifts ${fmt(res.offset, 3)} in and the CBR rises to ${fmt(res.governing, 1)}%.`
-                : `The curve needs no origin correction; the CBR is ${fmt(res.governing, 1)}%.`}
-            >
-              The pressures at <strong>0.1 in and 0.2 in</strong> are the only two readings that matter,
-              but where you measure them from is the whole question. A curve that starts concave upward
-              means the piston was still seating; taking the tangent at the steepest point and extending
-              it to zero load finds where penetration <em>really</em> began.
-              {res.offset > 1e-9 && ' Everything is then re-read from that shifted origin.'}
-            </ChartFigure>
-
-            <div className="cee-tablewrap">
-              <table className="cee-table">
-                <thead>
-                  <tr>
-                    <th>Penetration (in)</th>
-                    <th>Corrected (in)</th>
-                    <th>Pressure (psi)</th>
+        <FittingPlot
+          title="Pressure–penetration curve"
+          subtitle="Inspect the initial toe and choose a linear region. Measured and corrected curves use their respective penetration origins."
+          xTitle="Penetration (in)"
+          yTitle="Piston pressure (psi)"
+          traces={traces}
+          height={360}
+          legend={[
+            { label: "Measured", color: colors.orange },
+            ...(validOrigin && offset !== 0
+              ? [
+                  {
+                    label: "Corrected",
+                    color: colors.blue,
+                    shape: "dash" as const,
+                  },
+                ]
+              : []),
+            ...(tangent
+              ? [
+                  {
+                    label: "Selected tangent",
+                    color: ink.secondary,
+                    shape: "dash" as const,
+                  },
+                ]
+              : []),
+          ]}
+        />
+        <Card
+          title="Calculate the two CBR values"
+          subtitle="Choose the bracketing readings for each corrected penetration, then calculate. The reference pressures are provided in HW2."
+        >
+          <p className="cee-hint">
+            A target at corrected penetration δc is read at measured penetration
+            δc + δ₀. Select adjacent IDs in penetration order. If the target is
+            an exact reading, select it in both fields.
+          </p>
+          <div
+            className="cee-tablewrap"
+            tabIndex={0}
+            role="region"
+            aria-label="CBR calculation inputs"
+          >
+            <table className="cee-table">
+              <thead>
+                <tr>
+                  <th>Target (in)</th>
+                  <th>Lower reading</th>
+                  <th>Upper reading</th>
+                  <th>Standard (psi)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {choices.map((c, i) => (
+                  <tr key={i}>
+                    <th scope="row">{i === 0 ? "0.10" : "0.20"}</th>
+                    <td>
+                      <select
+                        className="cee-input fit-table-input"
+                        aria-label={`Lower reading for ${i === 0 ? "0.10" : "0.20"}`}
+                        value={c.lower}
+                        onChange={(e) => editChoice(i, "lower", e.target.value)}
+                      >
+                        {options}
+                      </select>
+                    </td>
+                    <td>
+                      <select
+                        className="cee-input fit-table-input"
+                        aria-label={`Upper reading for ${i === 0 ? "0.10" : "0.20"}`}
+                        value={c.upper}
+                        onChange={(e) => editChoice(i, "upper", e.target.value)}
+                      >
+                        {options}
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        className="cee-input fit-table-input"
+                        aria-label={`Standard pressure for ${i === 0 ? "0.10" : "0.20"}`}
+                        type="number"
+                        step="any"
+                        min="0"
+                        value={c.standard}
+                        onChange={(e) =>
+                          editChoice(i, "standard", e.target.value)
+                        }
+                      />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="cee-btn cee-btn--sm"
+                        disabled={
+                          !usable || !validOrigin || !c.lower || !c.upper
+                        }
+                        onClick={() => calculate(i)}
+                      >
+                        Calculate CBR {i === 0 ? "0.10" : "0.20"}
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {points.map((p, i) => (
-                    <tr key={i}>
-                      <td>{p.pen.toFixed(3)}</td>
-                      <td>{(p.pen - res.offset).toFixed(3)}</td>
-                      <td>{fmt(p.load, 0)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <p className="cee-note">
-              CBR = piston pressure ÷ standard pressure × 100, with standard pressures of 1000 psi at
-              0.1 in and 1500 psi at 0.2 in (AASHTO T 193). The origin correction is the standard
-              construction: the tangent at the steepest point of the curve, extended to zero load.
-              A soaked CBR is the usual design value, so state which one you are reporting.
-            </p>
-          </>
-        )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {errors.map(
+            (e, i) =>
+              e && (
+                <p key={i} role="alert" className="fit-error">
+                  CBR {i === 0 ? "0.10" : "0.20"}: {e}
+                </p>
+              ),
+          )}
+          <div className="cee-tablewrap" aria-live="polite">
+            <table className="cee-table" aria-label="CBR results">
+              <thead>
+                <tr>
+                  <th>Corrected target (in)</th>
+                  <th>Measured target (in)</th>
+                  <th>Fraction t</th>
+                  <th>Pressure (psi)</th>
+                  <th>Standard (psi)</th>
+                  <th>CBR (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((r, i) => (
+                  <tr key={i}>
+                    <th scope="row">{i === 0 ? "0.10" : "0.20"}</th>
+                    <td>{fmt(r?.measuredTarget, 6)}</td>
+                    <td>{fmt(r?.fraction, 6)}</td>
+                    <td>{fmt(r?.pressure, 6)}</td>
+                    <td>{fmt(r?.standard, 6)}</td>
+                    <td>
+                      <strong>{fmt(r?.cbr, 6)}</strong>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="fit-status">
+            Changing a reading, correction, or calculation input clears the
+            affected result. Compare your uncorrected and corrected calculations
+            and explain the difference in your own report.
+          </p>
+        </Card>
+        <Card
+          title="Measured and corrected penetrations"
+          subtitle="Pressure is unchanged. Negative corrected penetrations are retained to show the part of the toe before the new origin."
+        >
+          <div className="cee-tablewrap">
+            <table className="cee-table" aria-label="Corrected penetration worksheet">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Measured (in)</th>
+                  <th>Correction (in)</th>
+                  <th>Corrected (in)</th>
+                  <th>Pressure (psi)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {points.map((p) => (
+                  <tr key={p.id}>
+                    <th scope="row">{p.id}</th>
+                    <td>{fmt(p.pen, 6)}</td>
+                    <td>{validOrigin ? fmt(offset, 6) : "—"}</td>
+                    <td>{validOrigin ? fmt(p.pen - offset, 6) : "—"}</td>
+                    <td>{fmt(p.load, 6)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+        <Card title="Equations and construction" className="fit-equations">
+          {equations.map((e) => (
+            <Equation key={e.tex} {...e} display />
+          ))}
+          <p>
+            Penetrations are in inches and pressures in psi. The reference
+            pressures are 1000 psi at 0.10 in and 1500 psi at 0.20 in. A reading
+            exactly at the target needs no interpolation. A piecewise-linear
+            dataset has no unique tangent at a corner; selecting a region makes
+            your approximation explicit.
+          </p>
+          <p>
+            Source: CEE 406 HW2, Fall 2026, Q5. Decide whether the initial curve
+            shape justifies your chosen correction. The tool does not choose a
+            tangent region or a governing CBR for you.
+          </p>
+        </Card>
       </div>
     </div>
   );

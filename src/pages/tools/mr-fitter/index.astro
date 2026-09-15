@@ -1,13 +1,13 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import CbrApp from '../../../components/react/cbr/CbrApp';
+import MrFitterApp from '../../../components/react/mr/MrFitterApp';
 
 const base = import.meta.env.BASE_URL;
 ---
 
 <BaseLayout
-  title="CBR Reduction · CEE 406 Tools"
-  description="Reduce a piston penetration test to a California Bearing Ratio, with the AASHTO T 193 origin correction for a concave-up stress-penetration curve."
+  title="Resilient Modulus Fitter · CEE 406 Tools"
+  description="Fit two resilient modulus models to editable HW2 triaxial data. Inspect residuals and predict at a stress state you choose."
 >
   <div class="container tool-page">
     <nav class="doc-breadcrumb" aria-label="Breadcrumb">
@@ -15,24 +15,24 @@ const base = import.meta.env.BASE_URL;
       <span class="doc-breadcrumb__sep">/</span>
       <a href={`${base}tools/`}>Tools</a>
       <span class="doc-breadcrumb__sep">/</span>
-      <span class="doc-breadcrumb__current">CBR Reduction</span>
+      <span class="doc-breadcrumb__current">Resilient Modulus Fitter</span>
     </nav>
 
     <header class="tool-head">
       <div>
-        <h1 class="tool-head__title">CBR Reduction</h1>
+        <h1 class="tool-head__title">Resilient Modulus Fitter</h1>
         <p class="tool-head__desc">
-          Reduce a piston penetration test to a CBR for
-          <a href={`${base}homeworks/hw2/`}>HW2</a>, including the origin correction
-          that a concave-up curve needs, which is the step the test most often turns on.
+          Fit two resilient modulus models to repeated-load triaxial data.
+          Inspect the residuals, choose the readings to retain, and compare predictions
+          at a stress state you define.
         </p>
       </div>
       <div class="tool-head__hws">
-        <a href={`${base}homeworks/hw2/`} class="tool-hw-chip">HW2</a>
+        <span class="tool-hw-chip">HW2 · Fall 2026</span>
       </div>
     </header>
 
-    <CbrApp client:only="react" />
+    <MrFitterApp client:only="react" />
   </div>
 </BaseLayout>
 
