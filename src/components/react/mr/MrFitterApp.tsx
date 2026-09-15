@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useTheme, HUES, chartColors } from "../chartTheme";
+import { useTheme, fitterColors, chartColors } from "../chartTheme";
 import Card from "../ui/Card";
 import Equation from "../ui/Equation";
 import KpiStrip, { Kpi } from "../ui/KpiStrip";
@@ -11,6 +11,7 @@ import {
   fitModulus,
   invariants,
   predict,
+  shearNormalizedModulus,
   KPA_PER_PSI,
   type Fit,
   type Model,
@@ -58,6 +59,7 @@ const equations = [
 export default function MrFitterApp() {
   const [rows, setRows] = useState(() => makeRows(HW2_MR));
   const [model, setModel] = useState<Model | "">("");
+  const [responseView, setResponseView] = useState<"normalized" | "raw">("normalized");
   const [pa, setPa] = useState("101.325");
   const [fits, setFits] = useState<Partial<Record<Model, Fit>>>({});
   const [error, setError] = useState("");
@@ -69,7 +71,7 @@ export default function MrFitterApp() {
     values: { model: Model; value: number }[];
   } | null>(null);
   const theme = useTheme(),
-    colors = HUES[theme],
+    colors = fitterColors(theme),
     ink = chartColors(theme);
   const invalidate = () => {
     setFits({});
@@ -122,40 +124,46 @@ export default function MrFitterApp() {
         : null,
     );
   };
+  const normalized = fit?.model === "generalized" && responseView === "normalized";
+  const displayModulus = (value: number, deviator: number) =>
+    (normalized ? shearNormalizedModulus(fit!, value, deviator) : value) / 1000;
+  const responseLegend: { label: string; color: string; shape?: "line" | "dash" }[] = [];
   const traces: any[] = [
     {
       x: points.map((p) => p.theta),
-      y: points.map((p) => p.mr / 1000),
+      y: points.map((p) => displayModulus(p.mr, p.sd)),
       mode: "markers",
-      name: "Included readings",
-      text: points.map((p) => `ID ${p.id} · σ₃ ${p.s3} kPa · σd ${p.sd} kPa`),
+      name: normalized ? "Shear-normalized readings" : "Included readings",
+      text: points.map((p) => `ID ${p.id} · σ₃ ${p.s3} kPa · σd ${p.sd} kPa<br>Measured Mr ${fmt(p.mr / 1000, 5)} MPa`),
       hovertemplate:
-        "%{text}<br>θ %{x:.2f} kPa<br>Mr %{y:.3f} MPa<extra></extra>",
+        `%{text}<br>θ %{x:.2f} kPa<br>${normalized ? "Normalized Mr" : "Mr"} %{y:.3f} MPa<extra></extra>`,
       marker: { color: colors.blue, size: 9, line: { color: ink.ink, width: 1.2 } },
     },
   ];
   if (fit) {
-    const groups = [...new Set(points.map((p) => p.s3))].sort((a, b) => a - b);
-    for (const s3 of fit.model === "bulk" ? [0] : groups) {
-      const subset =
-        fit.model === "bulk" ? points : points.filter((p) => p.s3 === s3);
-      const lo = Math.min(...subset.map((p) => p.theta)),
-        hi = Math.max(...subset.map((p) => p.theta));
-      const domainLo = Math.max(Math.min(...points.map((p) => p.theta)), 3 * s3);
-      const domainHi = Math.max(...points.map((p) => p.theta));
-      // Evaluate the power law itself, including its physical stress domain.
-      for (const [start, end, extension] of [[domainLo, lo, true], [lo, hi, false], [hi, domainHi, true]] as [number, number, boolean][]) {
-        if (end <= start) continue;
-        const x = Array.from({ length: 241 }, (_, i) => start + (end - start) * i / 240);
-        traces.unshift({
-          x,
-          y: x.map((t) => predict(fit, t, Math.max(0, t - 3 * s3)) / 1000),
-          mode: "lines",
-          name: (fit.model === "bulk" ? "Bulk-stress fit" : `Fit · σ₃ ${s3} kPa`) + (extension ? " · extended" : ""),
-          line: { color: colors.violet, width: extension ? 1.5 : 2.5, dash: extension ? "dash" : "solid" },
-          hovertemplate: "%{x:.2f} kPa<br>%{y:.3f} MPa<extra>%{fullData.name}</extra>",
-        });
-      }
+    const lo = Math.min(...points.map((p) => p.theta));
+    const hi = Math.max(...points.map((p) => p.theta));
+    // The normalized generalized model and the bulk model each have ONE
+    // continuous power curve. Raw generalized data require stress slices.
+    const confinements = [...new Set(points.map((p) => p.s3))].sort((a, b) => a - b);
+    const slices = normalized || fit.model === "bulk"
+      ? [0]
+      : [confinements[0], confinements[Math.floor((confinements.length - 1) / 2)], confinements[confinements.length - 1]];
+    for (const [index, s3] of [...new Set(slices)].entries()) {
+      const start = normalized || fit.model === "bulk" ? lo : Math.max(lo, 3 * s3);
+      if (start >= hi) continue;
+      const x = Array.from({ length: 401 }, (_, i) => start + (hi - start) * i / 400);
+      const color = normalized || fit.model === "bulk" ? colors.emerald : [colors.emerald, colors.violet, colors.orange][index];
+      const name = normalized ? "Generalized power curve · shear normalized"
+        : fit.model === "bulk" ? "Bulk-stress power curve" : `Model slice · σ₃ = ${fmt(s3)} kPa`;
+      traces.unshift({
+        x,
+        y: x.map((t) => predict(fit, t, normalized ? 0 : Math.max(0, t - 3 * s3)) / 1000),
+        mode: "lines", name,
+        line: { color, width: 3, simplify: false },
+        hovertemplate: "%{x:.2f} kPa<br>%{y:.3f} MPa<extra>%{fullData.name}</extra>",
+      });
+      responseLegend.push({ label: name, color, shape: "line" });
     }
   }
   if (prediction) {
@@ -166,17 +174,17 @@ export default function MrFitterApp() {
       const hi = Math.max(...points.map((p) => p.theta), prediction.theta);
       const x = Array.from({ length: 301 }, (_, i) => lo + (hi - lo) * i / 300);
       traces.push({
-        x, y: x.map((t) => predict(fits[p.model]!, t, Math.max(0, t - 3 * s3)) / 1000),
+        x, y: x.map((t) => displayModulus(predict(fits[p.model]!, t, Math.max(0, t - 3 * s3)), Math.max(0, t - 3 * s3))),
         mode: "lines", name: `${names[p.model]} · prediction path · σ₃ ${fmt(s3)} kPa`,
         line: { color, width: 2, dash: "dash" },
         hovertemplate: "%{x:.2f} kPa<br>%{y:.3f} MPa<extra>%{fullData.name}</extra>",
       }, {
-        x: [0, prediction.theta, prediction.theta], y: [p.value / 1000, p.value / 1000, 0],
+        x: [0, prediction.theta, prediction.theta], y: [displayModulus(p.value, prediction.sd), displayModulus(p.value, prediction.sd), 0],
         mode: "lines", name: "Prediction guides", line: { color, width: 1.5, dash: "dash" }, hoverinfo: "skip",
       }, {
-        x: [prediction.theta], y: [p.value / 1000], mode: "markers", name: `${names[p.model]} prediction`,
+        x: [prediction.theta], y: [displayModulus(p.value, prediction.sd)], mode: "markers", name: `${names[p.model]} prediction`,
         marker: { color, size: 13, symbol: p.model === "generalized" ? "diamond" : "square", line: { color: ink.ink, width: 1.5 } },
-        hovertemplate: "θ %{x:.2f} kPa<br>Predicted Mr %{y:.3f} MPa<extra>%{fullData.name}</extra>",
+        hovertemplate: `θ %{x:.2f} kPa<br>${normalized ? "Normalized prediction" : "Predicted Mr"} %{y:.3f} MPa<br>Actual prediction ${fmt(p.value / 1000, 5)} MPa<extra>%{fullData.name}</extra>`,
       });
     }
   }
@@ -289,24 +297,31 @@ export default function MrFitterApp() {
           title="Stress response"
           subtitle={
             fit
-              ? `${names[fit.model]} · continuous power-law curves at constant confinement; solid within each tested range, dashed beyond it. Hover for confinement.`
+              ? normalized
+                ? "One continuous power curve after removing the fitted shear effect from each reading."
+                : fit.model === "bulk" ? "One continuous power-law fit through the bulk-stress response."
+                : "Three continuous slices of the fitted response surface at low, middle, and high tested confinement."
               : "Raw HW2 readings. Choose a model and fit it to draw the response curves."
           }
           xTitle="Bulk stress θ (kPa)"
-          yTitle="Resilient modulus Mr (MPa)"
+          yTitle={normalized ? "Shear-normalized modulus (MPa)" : "Resilient modulus Mr (MPa)"}
+          controls={fit?.model === "generalized" ? (
+            <div className="fit-response-controls">
+              <div className="fit-view-toggle" role="group" aria-label="Stress response view">
+                <button type="button" aria-pressed={normalized} onClick={() => setResponseView("normalized")}>Single power curve</button>
+                <button type="button" aria-pressed={!normalized} onClick={() => setResponseView("raw")}>Raw stress response</button>
+              </div>
+              {normalized ? <>
+                <Equation {...{ tex: "M_r^*=\\frac{M_r}{(1+\\tau_{oct}/p_a)^{k_3}}=k_1p_a(\\theta/p_a)^{k_2}", plain: "Shear-normalized modulus equals measured modulus divided by the fitted shear factor; its fitted response is one bulk-stress power curve." }} display />
+                <p className="cee-hint">The vertical axis is adjusted using fitted k₃; original readings and predictions remain in the tables. All three coefficients are fitted together.</p>
+              </> : <p className="cee-hint">The generalized model depends on bulk AND shear stress. Each line holds confinement constant; portions outside that confinement’s measured range are model projections, not additional test data.</p>}
+            </div>
+          ) : undefined}
           traces={traces}
           legend={[
             ...(prediction ? prediction.values.map((p) => ({ label: `${names[p.model]} prediction / dashed path`, color: p.model === "generalized" ? colors.violet : colors.emerald, shape: "dash" as const })) : []),
-            { label: "Included readings", color: colors.blue },
-            ...(fit
-              ? [
-                  {
-                    label: "Power-law response",
-                    color: colors.violet,
-                    shape: "line" as const,
-                  },
-                ]
-              : []),
+            { label: normalized ? "Shear-normalized readings" : "Included readings", color: colors.blue },
+            ...responseLegend,
           ]}
         />
         <Card

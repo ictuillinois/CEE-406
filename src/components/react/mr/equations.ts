@@ -147,3 +147,14 @@ export function fitModulus(
     ),
   };
 }
+
+/** Remove the fitted shear factor to expose the generalized bulk power curve.
+ * This is a display transformation; regression always uses the original data.
+ */
+export function shearNormalizedModulus(
+  f: Pick<Fit, "pa" | "k3">,
+  modulus: number,
+  sd: number,
+): number {
+  return modulus / (1 + Math.SQRT2 * sd / (3 * f.pa)) ** f.k3;
+}

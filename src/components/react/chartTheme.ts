@@ -599,3 +599,25 @@ export const num = (v: string, fb = 0): number => {
 
 export const fmt = (x: number, d = 2) =>
   Math.abs(x) >= 1000 ? x.toLocaleString('en-US', { maximumFractionDigits: 0 }) : x.toFixed(d);
+
+/** Fitter plots need distinct, high-contrast observations and continuous fits. */
+export function fitterColors(theme: Mode) {
+  return {
+    ...HUES[theme],
+    blue: theme === 'light' ? RAMPS.blue[1] : HUES.dark.blue,
+    emerald: theme === 'light' ? RAMPS.emerald[0] : HUES.dark.emerald,
+    violet: theme === 'light' ? '#6D42C2' : HUES.dark.violet,
+  };
+}
+
+/** Readable engineering axes with a restrained major/minor hierarchy. */
+export function fitterAxis(theme: Mode, title: string, range?: [number, number]) {
+  const a = paperAxis(theme, { title, range });
+  return {
+    ...a,
+    nticks: 6,
+    tickfont: { ...TICK_FONT(theme), size: 12, color: TOKENS[theme].secondary },
+    title: { text: title, font: { ...AXIS_TITLE_FONT(theme), size: 13 }, standoff: 16 },
+    minor: { ...a.minor as object, showgrid: true, nticks: 4, ticks: '' },
+  };
+}

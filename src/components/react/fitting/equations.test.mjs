@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { fitModulus, predict, invariants, KPA_PER_PSI } from '../mr/equations.ts';
+import { fitModulus, predict, shearNormalizedModulus, invariants, KPA_PER_PSI } from '../mr/equations.ts';
 import { HW2_MR } from '../mr/data.ts';
 import { HW2_CBR } from '../cbr/data.ts';
 import { fitTangent, calculateCbrBracket } from '../cbr/equations.ts';
@@ -76,4 +76,22 @@ test('editor rejects malformed imports and never treats blanks as zero', () => {
   assert.deepEqual(parseRows('1,2,3\n4\t5\t6',3).map(r=>r.values),[['1','2','3'],['4','5','6']]);
   assert.throws(()=>parseRows('0,,10',2));
   for(const s of ['1,2','1,2,bad','1,2,Infinity',''])assert.throws(()=>parseRows(s,3));
+});
+
+test('normalizing the generalized shear term exposes one continuous power law without changing residuals', () => {
+  const fit = fitModulus(observations, 'generalized');
+  for (const p of fit.points) {
+    const adjustedObserved = shearNormalizedModulus(fit, p.mr, p.sd);
+    const adjustedFit = shearNormalizedModulus(fit, p.predicted, p.sd);
+    near(adjustedFit, fit.k1 * fit.pa * (p.theta / fit.pa) ** fit.k2);
+    near(Math.log(adjustedObserved / adjustedFit), p.logResidual);
+  }
+  for (const k2 of [0, .7, -0.3]) {
+    const f = { ...fit, k2 };
+    for (const theta of [100, 500, 1500]) {
+      for (const sd of [0, theta / 2, theta]) {
+        near(shearNormalizedModulus(f, predict(f, theta, sd), sd), f.k1 * f.pa * (theta / f.pa) ** k2);
+      }
+    }
+  }
 });

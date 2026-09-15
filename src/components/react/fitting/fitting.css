@@ -127,3 +127,38 @@
 }
 
 .fit-tool .cee-figure__plot { min-height: 340px; }
+
+.fit-response-controls {
+  padding: 14px 16px;
+  margin: 0 0 8px;
+  background: var(--cee-sunken);
+  border-radius: 10px;
+}
+.fit-view-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--cee-control);
+  border-radius: 9px;
+}
+.fit-view-toggle button {
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--cee-secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.fit-view-toggle button[aria-pressed="true"] {
+  background: var(--cee-surface);
+  color: var(--cee-ink);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+  font-weight: 600;
+}
+.fit-view-toggle button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.fit-response-controls .cee-hint { margin-bottom: 0; }
+.fit-tool .cee-legend { row-gap: 10px; padding-top: 12px; }
+.fit-tool .cee-legend__mark--line, .fit-tool .cee-legend__mark--dash { width: 24px; }

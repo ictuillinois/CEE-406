@@ -29,10 +29,15 @@ with sync_playwright() as p:
     assert page.evaluate('''() => {
         const p = document.querySelector('.js-plotly-plot');
         return ['xaxis','yaxis'].every(a => p._fullLayout[a].showgrid && p._fullLayout[a].minor.showgrid)
-          && p.data.filter(t => t.mode === 'lines').every(t => t.x.length >= 241)
-          && p.data.some(t => t.line?.dash === 'dash');
+          && p.data.filter(t => t.mode === 'lines').length === 1
+          && p.data.filter(t => t.mode === 'lines').every(t => t.x.length === 401)
+          && p.layout.yaxis.title.text.includes('Shear-normalized');
     }''')
     expect(page.locator('.katex-error')).to_have_count(0)
+    page.get_by_role('button', name='Raw stress response', exact=True).click()
+    page.wait_for_function("document.querySelector('.js-plotly-plot').data.filter(t => t.mode === 'lines').length === 3")
+    page.get_by_role('button', name='Single power curve', exact=True).click()
+    page.wait_for_function("document.querySelector('.js-plotly-plot').data.filter(t => t.mode === 'lines').length === 1")
     page.get_by_label('Model to fit').select_option('bulk')
     page.get_by_role('button', name='Fit selected model').click()
     expect(page.locator('.cee-kpi')).to_have_count(4)
@@ -47,6 +52,21 @@ with sync_playwright() as p:
           && traces.filter(t => t.name?.endsWith(' prediction')).length === 2;
     }''')
     expect(page.get_by_text('Extrapolation:', exact=False)).to_be_visible()
+    page.get_by_label('Model to fit').select_option('generalized')
+    page.wait_for_function("document.querySelector('.js-plotly-plot').layout.yaxis.title.text.includes('Shear-normalized')")
+    assert page.evaluate("""() => {
+        const p = document.querySelector('.js-plotly-plot').data.find(t => t.name === 'Generalized model prediction');
+        const expected = 1288.7674221845034 * 101.325 * (1500 / 101.325) ** .7133195435731182 / 1000;
+        return Math.abs(p.y[0] - expected) < 1e-6;
+    }""")
+    page.get_by_role('spinbutton', name=re.compile('^Bulk stress')).fill('1200')
+    page.wait_for_function("document.querySelector('.js-plotly-plot').data.find(t => t.name === 'Generalized model prediction')?.x[0] === 1200")
+    page.set_viewport_size({'width': 390, 'height': 844})
+    page.wait_for_timeout(300)
+    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1'), 'normalized view overflows on mobile'
+    page.set_viewport_size({'width': 1312, 'height': 788})
+    page.get_by_label('Model to fit').select_option('bulk')
+
     page.get_by_label('Include point 8', exact=True).uncheck()
     expect(page.locator('.cee-kpi')).to_have_count(0)
     expect(table).to_have_count(0)

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   useTheme,
-  paperAxis,
+  fitterAxis,
   baseLayout,
   plotConfig,
 } from "../chartTheme";
@@ -14,7 +14,8 @@ export default function FittingPlot({
   yTitle,
   traces,
   legend,
-  height = 400,
+  height = 440,
+  controls,
   xRange,
   yRange,
 }: {
@@ -25,6 +26,7 @@ export default function FittingPlot({
   traces: any[];
   legend: LegendItem[];
   height?: number;
+  controls?: ReactNode;
   xRange?: [number, number];
   yRange?: [number, number];
 }) {
@@ -42,11 +44,11 @@ export default function FittingPlot({
           traces,
           baseLayout(theme, {
             height,
-            xaxis: { ...paperAxis(theme, { title: xTitle, range: xRange }), minor: { ...paperAxis(theme).minor as object, showgrid: true, nticks: 5 } },
-            yaxis: { ...paperAxis(theme, { title: yTitle, range: yRange }), minor: { ...paperAxis(theme).minor as object, showgrid: true, nticks: 5 } },
+            xaxis: fitterAxis(theme, xTitle, xRange),
+            yaxis: fitterAxis(theme, yTitle, yRange),
             showlegend: false,
             hovermode: "closest",
-            margin: { l: 65, r: 20, t: 20, b: 55 },
+            margin: { l: 78, r: 28, t: 24, b: 66 },
           }),
           plotConfig,
         );
@@ -73,6 +75,7 @@ export default function FittingPlot({
       <ChartFigure
         title={title}
         subtitle={subtitle}
+        banner={controls}
         plotRef={ref}
         legend={legend}
         takeaway={subtitle}

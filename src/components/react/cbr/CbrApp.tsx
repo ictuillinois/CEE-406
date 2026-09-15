@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTheme, HUES, chartColors } from "../chartTheme";
+import { useTheme, fitterColors, chartColors } from "../chartTheme";
 import Card from "../ui/Card";
 import Equation from "../ui/Equation";
 import DataEditor from "../fitting/DataEditor";
@@ -44,7 +44,7 @@ export default function CbrApp() {
   const [results, setResults] = useState<(Calculation | null)[]>([null, null]);
   const [errors, setErrors] = useState(["", ""]);
   const theme = useTheme(),
-    colors = HUES[theme],
+    colors = fitterColors(theme),
     ink = chartColors(theme);
   const changeRows = (r: EditRow[]) => {
     setRows(r);
@@ -86,7 +86,7 @@ export default function CbrApp() {
           text: points.map((p) => `ID ${p.id}`),
           name: "Measured",
           mode: "lines+markers",
-          line: { color: colors.blue, width: 2.5 },
+          line: { color: colors.blue, width: 3 },
           marker: { color: colors.blue, size: 9, line: { color: ink.ink, width: 1.2 } },
           hovertemplate:
             "%{text}<br>Measured %{x:.4f} in<br>%{y:.2f} psi<extra></extra>",
@@ -99,7 +99,7 @@ export default function CbrApp() {
       y: points.map((p) => p.load),
       name: "Corrected",
       mode: "lines+markers",
-      line: { color: colors.emerald, width: 2.5 },
+      line: { color: colors.emerald, width: 3 },
       marker: { color: colors.emerald, size: 9, symbol: "square", line: { color: ink.ink, width: 1.2 } },
       hovertemplate: "Corrected %{x:.4f} in<br>%{y:.2f} psi<extra></extra>",
     });
@@ -274,7 +274,7 @@ export default function CbrApp() {
           xTitle="Penetration (in)"
           yTitle="Piston pressure (psi)"
           traces={traces}
-          height={400}
+          height={440}
           xRange={xRange}
           yRange={[-0.04 * yMax, yMax]}
           legend={[
