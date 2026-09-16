@@ -164,7 +164,7 @@ export default function Gear3DApp() {
               <Icon name="th" /> Gear catalog
             </button>
             <span className="g3-tool-sep" />
-            <button type="button" id="g3-annot" className="g3-btn is-on" title="Show or hide all dimensions, callouts and the scale bar (A)" aria-pressed="true">
+            <button type="button" id="g3-annot" className="g3-btn" title="Show or hide all dimensions, callouts and the scale bar (A)" aria-pressed="false">
               <Icon name="ruler-combined" /> Annotations
             </button>
             <button type="button" id="g3-grid" className="g3-btn" title="Ground reference grid (G)" aria-pressed="false">

@@ -165,7 +165,7 @@ function defaultView() {
         // set enabled puts around twenty dimension lines over the model and
         // the geometry stops being readable; the point of the app is the
         // gear, with the numbers available on demand.
-        annotations: true,
+        annotations: false,
         dimensionSets: ['longitudinal', 'custom'],
         showCallouts: false,
         showScaleBar: true,
@@ -639,6 +639,11 @@ function drawQuadOverlay(svg, info) {
         maxY: Math.max(...shown.wheels.map((w) => w.y + w.geometry.sectionWidth / 2))
     };
 
+    // The engineering dimensions are shared; only projection differs by pane.
+    const dims = v.annotations ? [
+        ...autoDimensions(shown, { sets: v.dimensionSets }),
+        ...(v.dimensionSets.includes('custom') ? (app.store.doc.customDimensions || []) : [])
+    ] : [];
     for (const pane of info.panes) {
         // Pane separators, drawn as the app's hairlines.
         const frame = document.createElementNS(SVG_NS, 'rect');
@@ -696,10 +701,6 @@ function drawQuadOverlay(svg, info) {
             container: g
         };
 
-        const dims = [
-            ...autoDimensions(shown, { sets: v.dimensionSets }),
-            ...(v.dimensionSets.includes('custom') ? (app.store.doc.customDimensions || []) : [])
-        ];
         renderDimensions(svg, dims, opts);
         if (v.showScaleBar) renderScaleBar(g, opts);
     }
@@ -1136,7 +1137,7 @@ function setupToolbar() {
     $('g3-annot').addEventListener('click', () => {
         app.store.view.annotations = !app.store.view.annotations;
         syncToggle($('g3-annot'), app.store.view.annotations);
-        app.viewport.invalidate();
+        app.viewport.renderOverlay();
     });
     $('g3-grid').addEventListener('click', () => {
         app.store.view.showGrid = !app.store.view.showGrid;
@@ -3058,7 +3059,7 @@ function applyProject(p) {
         dimensionSets: p.view?.dimensionSets || ['longitudinal', 'transverse'],
         showCallouts: !!p.view?.showCallouts,
         showScaleBar: p.view?.showScaleBar !== false,
-        annotations: p.view?.annotations !== false,
+        annotations: p.view?.annotations === true,
         showGrid: p.view?.showGrid === true,
         materials: p.view?.materials || {},
         quality: p.view?.quality || 'auto',
