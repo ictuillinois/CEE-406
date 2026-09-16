@@ -63,6 +63,7 @@
    ============================================================ */
 
 .g3-app {
+    box-sizing: border-box;
     --g3-datum: #e87722;
     --g3-datum-hover: #c2500f;
     --g3-datum-glow: rgba(232, 119, 34, 0.26);
@@ -1287,7 +1288,7 @@
    30px it gives back is 30px of viewport. */
 @media screen and (max-width: 1100px) {
     .g3-app .app-header { padding: .7rem 0 .55rem; }
-    .g3-app { padding-left: .75rem; padding-right: .75rem; }
+    .g3-app { padding-left: 0; padding-right: 0; }
 }
 
 /* ---------- Handheld viewport chrome ------------------------ */
@@ -1787,8 +1788,70 @@ body.g3-modal-open { overflow: hidden; }
     .g3-cat-card[data-unit] { min-height: 44px; }
 }
 
-.g3-figure-actions { position: absolute; top: 8px; right: 8px; z-index: 6; display: flex; gap: 5px; align-items: center; padding: 5px; border-radius: 6px; background: var(--g3-paper, white); box-shadow: 0 1px 5px #0002; }
-.g3-figure-actions .g3-select { width: auto; }
-@media (max-width: 700px) { .g3-figure-actions { top: 4px; right: 4px; gap: 3px; font-size: 11px; } }
-
-.g3-figure-actions ~ .g3-hud-right { top: 58px; }
+/* Keep all controls and help outside the canvas at every screen size. The
+   viewport itself has no padding, preserving picking and SVG coordinates. */
+.g3-figure {
+    grid-area: viewport;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    min-width: 0;
+    min-height: 0;
+    background: var(--g3-paper);
+    border: 1px solid var(--g3-rule);
+    border-radius: 5px;
+    overflow: hidden;
+}
+.g3-figure > .g3-viewport { grid-area: auto; border: 0; border-radius: 0; min-width: 0; }
+.g3-figure-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    border-bottom: 1px solid var(--g3-rule);
+}
+.g3-figure-actions .g3-select { width: auto; min-width: 0; }
+.g3-figure-footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 8px;
+    border-top: 1px solid var(--g3-rule);
+    font-size: .75rem;
+}
+.g3-figure-footer .g3-hud,
+.g3-figure-footer .g3-hud-right,
+.g3-figure-footer .g3-axisbadge {
+    position: static;
+    max-width: none;
+    border: 0;
+    background: none;
+    color: var(--g3-ink);
+    padding: 8px 0;
+    font-size: .75rem;
+    overflow-wrap: anywhere;
+}
+.g3-view-help { min-width: 0; max-width: 70%; }
+.g3-view-help summary { cursor: pointer; padding: 8px 0; color: var(--g3-ink); }
+.g3-view-help summary:focus-visible { outline: 2px solid var(--g3-datum); outline-offset: 2px; }
+.g3-view-help .g3-axisbadge { padding-top: 0; }
+@media (pointer: coarse) {
+    .g3-view-help summary { min-height: 44px; display: list-item; align-content: center; }
+    .g3-figure-actions .g3-select { min-height: 44px; }
+}
+@media (max-width: 1100px) {
+    .g3-figure-actions { justify-content: stretch; }
+    .g3-figure-actions .g3-select { flex: 1 1 0; }
+    .g3-app .g3-figure-actions .g3-btn { padding-left: 8px; padding-right: 8px; font-size: .75rem; }
+}
+@media (max-width: 719px) {
+    .g3-studio { grid-template-rows: auto minmax(400px, 62dvh) auto auto auto; }
+}
+@media (max-width: 380px) {
+    .g3-figure-actions { display: grid; grid-template-columns: 1fr 1fr; }
+    .g3-figure-actions .g3-select { grid-column: 1 / -1; width: 100%; }
+}
+@media (max-width: 1100px) and (max-height: 500px) and (orientation: landscape) {
+    .g3-studio { grid-template-rows: auto minmax(300px, 80dvh) auto auto auto; }
+}

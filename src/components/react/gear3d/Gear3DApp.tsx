@@ -606,25 +606,32 @@ export default function Gear3DApp() {
           </aside>
 
           {/* Viewport */}
-          <div className="g3-viewport" id="g3-viewport">
+          <section className="g3-figure" aria-label="Vehicle visualization">
             <div className="g3-figure-actions" aria-label="Save figure">
               <select id="g3-figure-background" className="g3-select" aria-label="Figure background">
-                <option value="png">With background</option>
+                <option value="png">Background</option>
                 <option value="png-alpha">Transparent</option>
               </select>
               <button type="button" className="g3-btn" id="g3-figure-copy">Copy PNG</button>
               <button type="button" className="g3-btn" id="g3-figure-download">Download PNG</button>
             </div>
+          <div className="g3-viewport" id="g3-viewport">
             <canvas id="g3-canvas" aria-label="3D gear viewport" />
             <svg id="g3-overlay" className="g3-overlay" aria-hidden="true" />
-            <div className="g3-axisbadge" id="g3-axisbadge" />
-            <div className="g3-hud" id="g3-hud">—</div>
-            <div className="g3-hud-right" id="g3-hud-right">orbit: drag · zoom: wheel · pan: right-drag · click an axle to isolate</div>
             <div className="g3-progress" id="g3-progress" hidden>
               <div className="g3-progress-bar"><span /></div>
               <span className="g3-progress-label" />
             </div>
           </div>
+            <div className="g3-figure-footer">
+              <div className="g3-hud" id="g3-hud">—</div>
+              <details className="g3-view-help">
+                <summary>View controls</summary>
+                <div className="g3-hud-right" id="g3-hud-right">Drag to orbit · scroll to zoom · right-drag to pan</div>
+                <div className="g3-axisbadge" id="g3-axisbadge" />
+              </details>
+            </div>
+          </section>
 
           {/* Right rail */}
           <aside className="g3-panel g3-right" aria-label="Structure and properties">
