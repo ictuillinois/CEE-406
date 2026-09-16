@@ -13,7 +13,7 @@ const specs=[
     {id:'B747',file:'B747.glb',rotation:-Math.PI/2},
     ...['sedan','truck','delivery','delivery-flat'].map(id=>({id,file:`kenney/Models/GLB format/${id}.glb`,rotation:Math.PI})),
     {id:'trailer',file:'kenney/Models/GLB format/delivery.glb',rotation:Math.PI},
-    {id:'bus',file:'Bus.obj',rotation:Math.PI/2},
+    {id:'bus',file:'Bus.obj',rotation:-Math.PI/2},
     {id:'motorcycle',file:'motorcycle.glb',rotation:0}
 ];
 for(const spec of specs) if(!fs.existsSync(path.join(sourceDir,spec.file))) throw Error(`Missing source: ${spec.file}`);

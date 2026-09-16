@@ -167,7 +167,7 @@ export default function Gear3DApp() {
             <button type="button" id="g3-annot" className="g3-btn is-on" title="Show or hide all dimensions, callouts and the scale bar (A)" aria-pressed="true">
               <Icon name="ruler-combined" /> Annotations
             </button>
-            <button type="button" id="g3-grid" className="g3-btn is-on" title="Ground reference grid (G)" aria-pressed="true">
+            <button type="button" id="g3-grid" className="g3-btn" title="Ground reference grid (G)" aria-pressed="false">
               <Icon name="border-all" /> Grid
             </button>
             <span className="g3-tool-sep" />
@@ -275,7 +275,7 @@ export default function Gear3DApp() {
                 </div>
                 <div className="g3-field">
                   <label className="g3-check" htmlFor="g3-vehicle-body">
-                    <input type="checkbox" id="g3-vehicle-body" /> Show vehicle body
+                    <input type="checkbox" id="g3-vehicle-body" defaultChecked /> Show vehicle body
                   </label>
                 </div>
                 <p className="g3-note">A dimmed, illustrative body puts the axles in context. Body proportions are approximate; bare gear configurations have no body. <a href={`${base}gear3d/bodies/CREDITS.md`} target="_blank" rel="noreferrer">Model sources and licenses</a>.</p>
@@ -607,6 +607,14 @@ export default function Gear3DApp() {
 
           {/* Viewport */}
           <div className="g3-viewport" id="g3-viewport">
+            <div className="g3-figure-actions" aria-label="Save figure">
+              <select id="g3-figure-background" className="g3-select" aria-label="Figure background">
+                <option value="png">With background</option>
+                <option value="png-alpha">Transparent</option>
+              </select>
+              <button type="button" className="g3-btn" id="g3-figure-copy">Copy PNG</button>
+              <button type="button" className="g3-btn" id="g3-figure-download">Download PNG</button>
+            </div>
             <canvas id="g3-canvas" aria-label="3D gear viewport" />
             <svg id="g3-overlay" className="g3-overlay" aria-hidden="true" />
             <div className="g3-axisbadge" id="g3-axisbadge" />

@@ -8,6 +8,7 @@ window.prepareBody = async (spec) => {
  const group=new THREE.Group();
  const mat=new THREE.MeshStandardMaterial({color:0x889bad,roughness:.8,side:THREE.FrontSide});
  const wheels=[];
+ const namedWheels={};
  source.traverse(o=>{
   if(!o.isMesh)return;
   let geo=o.geometry.clone().applyMatrix4(o.matrixWorld).applyMatrix4(rotation);
@@ -60,9 +61,34 @@ window.prepareBody = async (spec) => {
     geo=geo.toNonIndexed();
   }
   geo.computeBoundingBox();
-  if(/wheel/i.test(o.name)) {wheels.push(geo.boundingBox.getCenter(new THREE.Vector3()));return;}
+  if(/wheel/i.test(o.name)) {
+    const center=geo.boundingBox.getCenter(new THREE.Vector3());wheels.push(center);
+    if(/FrontWheels/i.test(o.name))namedWheels.front=center;
+    if(/BackWheels/i.test(o.name))namedWheels.rear=center;
+    return;
+  }
   // Retain position + normals only. UVs/textures and source wheels are irrelevant to an x-ray body.
   for(const key of Object.keys(geo.attributes))if(!['position','normal'].includes(key))geo.deleteAttribute(key);
+  if (spec.id === 'bus') {
+    // Keep authored glazing, lamps and trim as independent surfaces. Their
+    // source polygons were previously invisible inside a uniform material.
+    const attributes=geo.attributes, sourceMaterials=Array.isArray(o.material)?o.material:[o.material];
+    for(const part of geo.groups) {
+      const surface=sourceMaterials[part.materialIndex]?.name?.toLowerCase() || 'body';
+      const partGeo=new THREE.BufferGeometry();
+      for(const name of ['position','normal']) {
+        const a=attributes[name], values=[];
+        for(let i=part.start;i<part.start+part.count;i++) {
+          const j=geo.index?geo.index.getX(i):i;
+          values.push(a.getX(j),a.getY(j),a.getZ(j));
+        }
+        partGeo.setAttribute(name,new THREE.Float32BufferAttribute(values,3));
+      }
+      const mesh=new THREE.Mesh(partGeo,mat);mesh.name=`bus-${surface}`;
+      mesh.userData.surface=surface;group.add(mesh);
+    }
+    geo.dispose();return;
+  }
   geo.clearGroups();
   const mesh=new THREE.Mesh(geo,mat);mesh.name='body';group.add(mesh);
  });
@@ -73,6 +99,12 @@ window.prepareBody = async (spec) => {
  const meta={length:size.z,width:size.x,minY:box.min.y,maxY:box.max.y,
    frontAxle:stations[0]??size.z*.13,rearAxle:stations.at(-1)??size.z*.54,
    axleY:wheels.length?wheels.reduce((s,w)=>s+w.y,0)/wheels.length:0};
+ if(spec.id==='bus') {
+    meta.frontAxle=namedWheels.front.z+offset.z;
+    meta.rearAxle=namedWheels.rear.z+offset.z;
+    meta.forwardAxis='-Z';
+    if(meta.frontAxle>=meta.rearAxle)throw Error('Bus faces away from its steering axle');
+ }
  if(spec.id==='motorcycle') {
     meta.frontAxle=-.29474+offset.z; meta.rearAxle=.40574+offset.z; meta.axleY=.142;
  }

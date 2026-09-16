@@ -28,7 +28,7 @@ they do not claim variant-specific wing, fuselage or engine dimensions.
 
 CEE-406 changes: separate wheel meshes removed from Kenney and Quaternius models;
 wheel-region triangles removed from the motorcycle's combined meshes; textures
-and materials removed; transforms and orientation baked; GLB re-exported. Road
+and materials replaced (bus surface names retained); transforms and orientation baked; GLB re-exported. Road
 body wheel stations come from source wheel centers (motorcycle centers were
 identified from the mesh). Runtime stretches the wheelbase to the selected axles,
 preserves overhang proportions relative to width, and adapts height and width.
@@ -44,3 +44,5 @@ redistributing these models or figures made with them. The credits do not imply
 endorsement by any original creator.
 
 See `docs/gear3d-body-review/README.md` for the render comparisons and limitations.
+
+Runtime refinements include bus glazing/trim, doors, mirrors, lamps, roof equipment, enlarged tractor cabs, chassis details, open dump beds and subtle aircraft intake shading. These additions are illustrative and do not alter engineering exports.

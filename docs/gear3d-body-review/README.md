@@ -3,7 +3,7 @@
 ## Result
 
 The overlay is feasible and implemented as **Show vehicle body** under Isolation.
-It starts unchecked, works with the existing view and isolation controls, follows
+It starts enabled in Quad view with the grid off, works with the existing view and isolation controls, follows
 geometry edits, and is saved in project files. Bare FAA schematic configurations
 have no invented airframe. Engineering geometry and footprint exports exclude the
 body; rendered figures include it when enabled.
@@ -87,12 +87,12 @@ comparison from implying an accuracy the data does not support.
 
 ## Cost and behavior
 
-The eleven GLBs total approximately **646 KB**. Individual assets are 17–97 KB,
+The eleven GLBs total approximately **649 KB**. Individual assets are 17–97 KB,
 with 212–3,378 triangles. Only the selected asset downloads after opt-in; shared
 requests and a cache avoid repeated downloads. There are no texture requests or
 external-host dependencies at runtime. Body geometry and owned materials are
 disposed with the assembly; cached templates are disposed when the tool unmounts.
-The surface has 25% opacity, does not cast shadows, and is excluded from picking,
+The base surface has 28% opacity, with stronger bus glazing and trim, does not cast shadows, and is excluded from picking,
 measurement snaps and engineering exports. Camera fitting includes visible body
 vertices so wings and tails remain in frame.
 
@@ -112,7 +112,7 @@ vertices so wings and tails remain in frame.
    every library layout, finite coordinates, ground clearance, actual vertex
    containment in camera bounds, lazy body creation and export exclusion.
 
-Browser smoke checks additionally exercise default-off behavior, enabling,
+Browser smoke checks additionally exercise Quad/body-on/grid-off defaults, enabling,
 changing between truck and aircraft models, full-aircraft framing and disabling.
 The save/reopen round trip and disabled-by-default network behavior are also
 checked by `node scripts/check-gear3d-bodies.mjs <running-tool-URL>`.
@@ -125,7 +125,15 @@ bundled in a local browser harness.
 * 36 Gear3D geometry, unit and token checks passed.
 * 33 matched-camera source-body comparisons: zero changed pixels.
 * Browser checks passed for saved and legacy projects, failed body requests,
-  default-off loading, isolation, model changes, quad view and disabling.
+  default body loading, isolation, model changes, quad view and disabling.
 * The production Astro build and Pagefind indexing passed in a clean temporary
   copy with the same lockfile. The Box workspace intermittently locked native
   esbuild/Rollup dependencies; no application dependency changes were needed.
+
+## Refinement iteration
+
+The viewport offers Copy PNG and Download PNG, with solid-background and transparent options. Both capture the current view and dimension overlay. Bus orientation follows named source front/rear wheels; authored glazing and trim are retained separately, with added doors, mirrors, lights and roof ventilation. Tractor cab fitting spans the steering and first drive group independently of trailer axles. Road bodies gain bumper, lamp and mirror details; dump trucks gain open beds and reinforcing ribs. Aircraft retain their shape with subtle intake shading. These runtime additions and fitting changes are illustrative; source pixel comparisons validate the prepared source surfaces, not these additions or calibrated vehicle dimensions.
+
+[Refined bus](app-bus-refined.png) · [Open dump bed](app-dump-refined.png) · [Enlarged tractor](app-tractor-refined.png)
+
+Validation: 37 geometry/unit/style checks pass, Chrome smoke checks pass, opaque and transparent PNG downloads and clipboard copies pass, and the production build generates all 33 pages. Transparent pixels were verified from decoded PNG data; the figure annotations and Quad pane borders remain visible.

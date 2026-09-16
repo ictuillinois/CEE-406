@@ -21,7 +21,7 @@ export function vehicleBodySpec(unit) {
     const profile = profileFor(unit.bodyType).key;
     const articulated = /tractor|trailer/.test(unit.bodyType || '');
     const id = { car: 'sedan', pickup: 'truck', bus: 'bus', motorcycle: 'motorcycle' }[profile]
-        || (articulated ? 'delivery-flat' : 'delivery');
+        || (articulated || /dump/.test(unit.bodyType || '') ? 'delivery-flat' : 'delivery');
     return { id, label: articulated ? 'Cab and articulated trailer bodies' : `${profile} reference body`, articulated, secondary: articulated ? 'trailer' : null };
 }
 
@@ -32,7 +32,7 @@ export function vehicleBodyStatus(unit) {
     return ids.every(id=>templates.has(id)) ? 'ready' : ids.some(id=>failures.has(id)) ? 'failed' : 'loading';
 }
 
-/** Load only selected bodies after opt-in; repeated requests share promises. */
+/** Load only selected visible bodies; repeated requests share promises. */
 export function ensureVehicleBody(unit, base) {
     const spec = vehicleBodySpec(unit);
     if (!spec) return Promise.resolve();
@@ -40,7 +40,7 @@ export function ensureVehicleBody(unit, base) {
         if(templates.has(id)||failures.has(id))return Promise.resolve();
         if(requests.has(id))return requests.get(id);
         const epoch=generation;
-        const request=new GLTFLoader().loadAsync(`${base}bodies/${id}.glb`).then(gltf=>{
+        const request=new GLTFLoader().loadAsync(`${base}bodies/${id}.glb${id === 'bus' ? '?v=2' : ''}`).then(gltf=>{
             if(epoch!==generation){disposeTemplate(gltf.scene);return;}
             templates.set(id,gltf.scene.children[0]);
         }).catch(()=>{if(epoch===generation)failures.add(id);});
@@ -72,11 +72,27 @@ export function buildVehicleBody(layout) {
     const meta = template.userData;
     const group = new THREE.Group(); group.name = 'vehicle-body';
     group.userData = { illustrative: true, label: spec.label };
-    const material = new THREE.MeshStandardMaterial({color:0x71899b,roughness:.85,
-        transparent:true,opacity:.25,depthWrite:false,side:THREE.FrontSide});
+    const palette = new Map();
+    function surfaceMaterial(surface = 'body') {
+        const key = spec.id === 'bus' ? surface : 'body';
+        if (!palette.has(key)) {
+            const style = {
+                windows: {color:0x294859,opacity:.43,roughness:.3},
+                details: {color:0x536a78,opacity:.36},
+                bumper: {color:0x435765,opacity:.38},
+                lights: {color:0xc7dce6,opacity:.52},
+                top: {color:0x92a5af,opacity:.32}
+            }[key] || {color:0x71899b,opacity:.28};
+            palette.set(key,new THREE.MeshStandardMaterial({roughness:.85,
+                transparent:true,depthWrite:false,side:THREE.FrontSide,...style,
+                vertexColors:!!spec.aircraft}));
+        }
+        return palette.get(key);
+    }
+    const material = surfaceMaterial(spec.id === 'bus' ? 'bottom' : 'body');
     const xs = layout.axles.map(a=>a.x);
     let front = Math.min(...xs), rear = Math.max(...xs);
-    let sx, sy, sz, lift;
+    let sx, sy, sz, lift, tractor, busFit, fuselageBelly;
     if (spec.aircraft) {
         const nose=layout.axles.find(a=>a.role==='nose');
         const mains=layout.axles.filter(a=>a.role==='main');
@@ -94,6 +110,7 @@ export function buildVehicleBody(layout) {
             }
         });
         if (!Number.isFinite(belly)) belly=meta.minY;
+        fuselageBelly=belly;
         const gearTop=Math.max(...mains.map(a=>a.axleHeight+a.geometry.overallDiameter*1.35));
         lift=Math.max(gearTop-belly*sy, -meta.minY*sy + 150);
     } else {
@@ -103,6 +120,32 @@ export function buildVehicleBody(layout) {
         sx=width/meta.width; sy=sx * (spec.id.startsWith('delivery') ? 1.35 : 1);
         sz=(rear-front)/(meta.rearAxle-meta.frontAxle);
         if(spec.id==='motorcycle') sx=sy=sz;
+        if (spec.articulated && drive.length) {
+            const radius=Math.max(...drive.map(a=>a.geometry.freeRadius));
+            let cabSourceEnd=meta.frontAxle;
+            template.traverse(o=>{
+                const p=o.geometry?.attributes.position;
+                if(p)for(let i=0;i<p.count;i++)
+                    if(p.getY(i)>meta.axleY+(meta.maxY-meta.axleY)*.4)
+                        cabSourceEnd=Math.max(cabSourceEnd,p.getZ(i));
+            });
+            tractor={front, firstDrive:Math.min(...drive.map(a=>a.x)), rear,
+                cabSourceEnd, rearEnd:rear+radius+180};
+            tractor.cabEnd=Math.min(tractor.firstDrive+radius*.6,rear-radius*.45);
+            sy=(3500-layout.axles[0].axleHeight)/(meta.maxY-meta.axleY);
+            group.userData.tractor=tractor;
+        }
+        if(spec.id==='bus') {
+            sy=(3200-layout.axles[0].axleHeight)/(meta.maxY-meta.axleY);
+            const total=Math.max(layout.unit.overallLength || 0,rear-front+2000);
+            const spare=total-(rear-front), sourceSpare=meta.frontAxle+meta.length-meta.rearAxle;
+            const frontOverhang=spare*meta.frontAxle/sourceSpare;
+            busFit={front:front-frontOverhang,rear:rear+spare-frontOverhang,
+                frontScale:frontOverhang/meta.frontAxle,
+                rearScale:(spare-frontOverhang)/(meta.length-meta.rearAxle),width,roof:3200};
+            group.userData.bus=busFit;
+            group.userData.forwardAxis=meta.forwardAxis;
+        }
         lift=layout.axles[0].axleHeight-meta.axleY*sy;
     }
     if (![sx,sy,sz,lift].every(Number.isFinite) || sz<=0) {material.dispose();return null;}
@@ -112,20 +155,59 @@ export function buildVehicleBody(layout) {
         if(!o.isMesh)return;
         const geo=o.geometry.clone();
         const p=geo.attributes.position;
+        if(spec.aircraft) {
+            // Emphasize existing forward-facing intake surfaces without adding
+            // shapes or changing the airframe geometry students already know.
+            const colors=new Float32Array(p.count*3).fill(1), n=geo.attributes.normal;
+            for(let i=0;i<p.count;i++) {
+                if(Math.abs(p.getX(i))>meta.width*.09 && p.getY(i)<fuselageBelly+meta.length*.015 &&
+                    p.getZ(i)>meta.length*.2 && p.getZ(i)<meta.length*.65 && n.getZ(i)<-.4)
+                    colors.set([.62,.69,.76],i*3);
+            }
+            geo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+        }
         for(let i=0;i<p.count;i++) {
             const z=p.getZ(i);
-            const longitudinal = spec.aircraft ? z*sz+offset
-                : z<meta.frontAxle ? front+(z-meta.frontAxle)*sx
-                : z>meta.rearAxle ? rear+(z-meta.rearAxle)*sx
+            const longitudinal = tractor ? tractorLongitudinal(z,meta,tractor,sx)
+                : spec.aircraft ? z*sz+offset
+                : z<meta.frontAxle ? front+(z-meta.frontAxle)*(busFit?.frontScale ?? sx)
+                : z>meta.rearAxle ? rear+(z-meta.rearAxle)*(busFit?.rearScale ?? sx)
                 : front+(z-meta.frontAxle)*sz;
             p.setXYZ(i,p.getX(i)*sx,p.getY(i)*sy+lift,longitudinal);
         }
         if (!spec.aircraft) geo.computeVertexNormals();
+        if (spec.id === 'bus' && o.userData.surface === 'windows') {
+            const n=geo.attributes.normal;
+            for(let i=0;i<p.count;i++) p.setXYZ(i,p.getX(i)+n.getX(i)*18,p.getY(i)+n.getY(i)*18,p.getZ(i)+n.getZ(i)*18);
+        }
         geo.computeBoundingBox(); geo.computeBoundingSphere();
-        const mesh=new THREE.Mesh(geo,material);mesh.name='vehicle-body:surface';
+        const mesh=new THREE.Mesh(geo,surfaceMaterial(o.userData.surface));
+        mesh.name=tractor?'vehicle-body:tractor':`vehicle-body:${o.userData.surface || 'surface'}`;
         mesh.userData.pickable=false;mesh.raycast=()=>{};
         group.add(mesh);
     });
+    if(busFit) addBusDetails(group,busFit,surfaceMaterial);
+    if(tractor) addTractorDetails(group,layout,tractor,material);
+    if(!spec.aircraft && spec.id !== 'bus' && spec.id !== 'motorcycle') {
+        const bounds=new THREE.Box3().setFromObject(group);
+        const half=(layout.extents.maxY-layout.extents.minY)/2;
+        // Fine bumper and lamp details remain subdued with the source body.
+        detailBox(group,'front-bumper',material,0,layout.axles[0].axleHeight*.65,bounds.min.z-15,half*1.8,110,90);
+        for(const side of [-1,1]) {
+            detailBox(group,'headlamp',material,side*half*.72,layout.axles[0].axleHeight+150,bounds.min.z-65,half*.25,110,35);
+            detailBox(group,'mirror',material,side*(half+70),Math.min(bounds.max.y*.72,2300),front+300,110,190,130);
+        }
+        if(/dump/.test(layout.unit.bodyType || '')) {
+            const start=front+(rear-front)*.36,end=rear+900;
+            const floor=1450,top=2900;
+            detailBox(group,'dump-floor',material,0,floor,(start+end)/2,half*1.9,120,end-start);
+            for(const side of [-1,1]) {
+                detailBox(group,'dump-side',material,side*half*.94,(floor+top)/2,(start+end)/2,90,top-floor,end-start);
+                for(let i=0;i<5;i++)detailBox(group,'dump-rib',material,side*(half*.94+60),(floor+top)/2,start+(end-start)*(i+.5)/5,70,top-floor,85);
+            }
+            for(const z of [start,end])detailBox(group,'dump-end',material,0,(floor+top)/2,z,half*1.9,top-floor,90);
+        }
+    }
     if(spec.articulated) {
         // Each separated trailer axle cluster carries its own cargo body.
         const trailer=layout.axles.filter(a=>a.role==='trailer').sort((a,b)=>a.x-b.x);
@@ -136,7 +218,7 @@ export function buildVehicleBody(layout) {
         }
         if (clusters.length > 2 && /full trailer|double/.test(layout.unit.bodyType || ''))
             clusters = [clusters[0], clusters.slice(1).flat()];
-        let start=rear+700;
+        let start=Math.max(rear+700,(tractor?.rearEnd || rear)+250);
         const width=layout.extents.maxY-layout.extents.minY;
         for(const [i,cluster] of clusters.entries()) {
             const end=Math.max(...cluster.map(a=>a.x))+1200;
@@ -155,4 +237,63 @@ export function buildVehicleBody(layout) {
         }
     }
     return group;
+}
+
+
+/** Preserve the nose, enlarge the cab up to the drive group, then fit the rear
+ * deck to the actual last tractor axle. Trailer axles never set tractor size. */
+function tractorLongitudinal(z,meta,fit,widthScale) {
+    if(z<meta.frontAxle)return fit.front+(z-meta.frontAxle)*widthScale;
+    if(z<fit.cabSourceEnd)return THREE.MathUtils.mapLinear(z,meta.frontAxle,fit.cabSourceEnd,fit.front,fit.cabEnd);
+    if(z<meta.rearAxle)return THREE.MathUtils.mapLinear(z,fit.cabSourceEnd,meta.rearAxle,fit.cabEnd,fit.rear);
+    return THREE.MathUtils.mapLinear(z,meta.rearAxle,meta.length,fit.rear,fit.rearEnd);
+}
+
+function detailBox(group,name,material,x,y,z,width,height,length) {
+    const geometry=new THREE.BoxGeometry(width,height,length);
+    geometry.translate(x,y,z);
+    const mesh=new THREE.Mesh(geometry,material);mesh.name=`vehicle-body:${name}`;
+    mesh.userData.pickable=false;mesh.raycast=()=>{};group.add(mesh);
+    return mesh;
+}
+
+function addTractorDetails(group,layout,fit,material) {
+    const drive=layout.axles.filter(a=>a.role==='drive');
+    const radius=Math.max(...drive.map(a=>a.geometry.freeRadius));
+    const axleHeight=Math.max(...drive.map(a=>a.axleHeight));
+    const length=fit.rearEnd-fit.front+350;
+    for(const side of [-1,1]) {
+        detailBox(group,'tractor-frame',material,side*430,axleHeight+240,
+            (fit.front-350+fit.rearEnd)/2,100,190,length);
+        const fenderLength=fit.rear-fit.firstDrive+radius*2;
+        detailBox(group,'drive-fender',material,side*(layout.derived.overallWidth/2-270),
+            axleHeight+radius+90,(fit.firstDrive+fit.rear)/2,520,110,fenderLength);
+    }
+}
+
+/** Transit-bus detail follows the calibrated body envelope, in millimeters.
+ * These visual additions are illustrative and never create engineering snaps. */
+function addBusDetails(group,fit,material) {
+    const half=fit.width/2, length=fit.rear-fit.front;
+    // Passenger entry doors, with two glazing panes and a central frame.
+    for(const z of [fit.front+1050,fit.front+length*.58]) {
+        for(const offset of [-190,190])detailBox(group,'entry-door',material('windows'),
+            half+10,1370,z+offset,16,1880,350);
+        detailBox(group,'door-divider',material('details'),half+24,1370,z,28,1940,30);
+    }
+    // Front destination panel and exterior mirror assemblies identify travel.
+    detailBox(group,'destination-panel',material('windows'),0,fit.roof-240,fit.front-12,fit.width*.64,230,22);
+    for(const side of [-1,1]) {
+        detailBox(group,'mirror-arm',material('details'),side*(half+90),2300,fit.front+420,210,35,45);
+        detailBox(group,'mirror',material('windows'),side*(half+190),2240,fit.front+380,65,300,145);
+        detailBox(group,'front-headlamp',material('lights'),side*half*.76,850,fit.front-18,300,140,28);
+    }
+    // Low rooftop HVAC housing and visible ventilation ribs.
+    const hvacZ=fit.front+length*.57;
+    detailBox(group,'roof-hvac',material('top'),0,fit.roof+100,hvacZ,1450,200,2600);
+    for(let i=0;i<8;i++)detailBox(group,'roof-vent',material('details'),0,
+        fit.roof+205,hvacZ-850+i*240,1120,16,42);
+    // Rear engine grille reads differently from the windshield at the front.
+    for(let i=0;i<9;i++)detailBox(group,'rear-grille',material('details'),0,
+        1050+i*65,fit.rear+12,fit.width*.62,20,22);
 }

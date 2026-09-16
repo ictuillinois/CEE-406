@@ -290,7 +290,12 @@ export function buildAssembly(layout, materials, opts = {}) {
             vehicleBody = buildVehicleBody(layout);
             if (vehicleBody) {
                 root.add(vehicleBody);
-                ownedMaterials.push(vehicleBody.children[0].material);
+                const bodyMaterials = new Set();
+                vehicleBody.traverse(o => {
+                    if (Array.isArray(o.material)) o.material.forEach(m => bodyMaterials.add(m));
+                    else if (o.material) bodyMaterials.add(o.material);
+                });
+                ownedMaterials.push(...bodyMaterials);
             }
         }
         if (vehicleBody) vehicleBody.visible = !!opts.vehicleBody;

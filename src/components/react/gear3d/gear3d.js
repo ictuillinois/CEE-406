@@ -155,16 +155,9 @@ const app = {
 /** Everything that is not the document: view flags, not undoable. */
 function defaultView() {
     return {
-        // Quad, not 3D. A gear configuration is a PLAN first — the thing an
-        // engineer needs from it is where the wheels are, and a single
-        // pictorial 3D view is the one arrangement that answers that worst:
-        // it foreshortens both axes at once, so no spacing can be read off it.
-        // Opening on plan / 3D / side / front shows the layout, the elevation,
-        // the track and the pictorial together, which is what a gear drawing
-        // has looked like for as long as there have been gear drawings.
-        // Clicking any pane still opens it full size.
+        // Open with vehicle context in all four views and a clear background.
         mode: 'quad',
-        showVehicleBody: false,
+        showVehicleBody: true,
         unitSystem: 'SI',
         precision: 0,
         dualUnits: false,
@@ -176,7 +169,7 @@ function defaultView() {
         dimensionSets: ['longitudinal', 'custom'],
         showCallouts: false,
         showScaleBar: true,
-        showGrid: true,
+        showGrid: false,
         showPatches: false,
         patchModel: 'rectangular',
         inflationKpa: DEFAULT_INFLATION_KPA,
@@ -337,6 +330,7 @@ function setupViewport() {
     // The viewport owns the environment map; the library owns the materials
     // it has to be pushed onto.
     app.viewport.setMaterialLibrary(app.materials);
+    app.viewport.setGrid(app.store.view.showGrid);
 
     app.viewport.onFrame = (info) => drawOverlay(info);
     // The buffer size changes on resize, on a tier change and when an orbit
@@ -2402,6 +2396,43 @@ function setupBackgroundPanel() {
 }
 
 function setupExportPanel() {
+    let figureBusy = false;
+    for (const action of ['copy', 'download']) {
+        $('g3-figure-' + action).addEventListener('click', async () => {
+            if (figureBusy) return;
+            figureBusy = true;
+            const buttons = ['copy', 'download'].map(id => $('g3-figure-' + id));
+            buttons.forEach(button => button.disabled = true);
+            const format = $('g3-figure-background').value;
+            const makeFigure = async () => {
+                const source = { ...app.viewport.size };
+                const scale = Math.min(2, 2000 / Math.max(source.width, source.height));
+                const width = Math.round(source.width * scale), height = Math.round(source.height * scale);
+                const canvas = await renderSupersampled(app.viewport, { width, height, supersample: 1, format });
+                await compositeOverlay(canvas, $('g3-overlay'), {
+                    width, height, sourceWidth: source.width, sourceHeight: source.height
+                });
+                return canvasToBlob(canvas, format);
+            };
+            try {
+                if (action === 'copy') {
+                    if (!navigator.clipboard?.write || !window.ClipboardItem)
+                        throw new Error('Image copying is unavailable in this browser. Use Download PNG.');
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': makeFigure() })]);
+                    toast('Figure copied.');
+                } else {
+                    const blob = await makeFigure();
+                    download(blob, `${filenameFor(app.store.doc.unit, app.store.view.mode)}${format === 'png-alpha' ? '-transparent' : ''}.png`);
+                    toast('Figure downloaded.');
+                }
+            } catch (error) {
+                toast(action === 'copy' ? `${error.message} Use Download PNG if clipboard access is blocked.` : error.message, 'error');
+            } finally {
+                figureBusy = false;
+                buttons.forEach(button => button.disabled = false);
+            }
+        });
+    }
     const sel = $('g3-exp-size');
     for (const p of RESOLUTION_PRESETS) {
         const o = document.createElement('option');
@@ -3017,7 +3048,7 @@ function applyProject(p) {
         // A project records the view it was saved with, so that wins; the
         // fallback follows whatever the app's current default is.
         mode: p.view?.mode || defaultView().mode,
-        showVehicleBody: p.view?.showVehicleBody === true,
+        showVehicleBody: p.view?.showVehicleBody !== false,
         lighting: p.view?.lighting || { ...LIGHTING_PRESETS.studio },
         background: p.view?.background || 'white',
         backgroundColor: p.view?.backgroundColor || '#eef1f4',
@@ -3028,7 +3059,7 @@ function applyProject(p) {
         showCallouts: !!p.view?.showCallouts,
         showScaleBar: p.view?.showScaleBar !== false,
         annotations: p.view?.annotations !== false,
-        showGrid: p.view?.showGrid !== false,
+        showGrid: p.view?.showGrid === true,
         materials: p.view?.materials || {},
         quality: p.view?.quality || 'auto',
         renderTier: p.view?.renderTier || defaultView().renderTier,

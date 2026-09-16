@@ -1786,3 +1786,9 @@ body.g3-modal-open { overflow: hidden; }
     .g3-modal-tools .g3-text { min-height: 44px; }
     .g3-cat-card[data-unit] { min-height: 44px; }
 }
+
+.g3-figure-actions { position: absolute; top: 8px; right: 8px; z-index: 6; display: flex; gap: 5px; align-items: center; padding: 5px; border-radius: 6px; background: var(--g3-paper, white); box-shadow: 0 1px 5px #0002; }
+.g3-figure-actions .g3-select { width: auto; }
+@media (max-width: 700px) { .g3-figure-actions { top: 4px; right: 4px; gap: 3px; font-size: 11px; } }
+
+.g3-figure-actions ~ .g3-hud-right { top: 58px; }
