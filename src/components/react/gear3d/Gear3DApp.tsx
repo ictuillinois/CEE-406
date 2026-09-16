@@ -97,11 +97,17 @@ export default function Gear3DApp() {
             {/* Originator block: mark, name, and the way back. */}
             <div className="g3-tb-mark">
               <span className="g3-tb-icon" aria-hidden="true">
-                {/* A wheel seen face on: tire ring and hub, drawn for this app
-                    rather than borrowed from an icon font. */}
-                <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="3">
-                  <circle cx="12" cy="12" r="9.4" />
-                  <circle cx="12" cy="12" r="3.1" strokeWidth="2.4" />
+                <svg viewBox="0 0 48 48" width="38" height="38" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M8 32 29 43 42 35" stroke="#E87722" opacity=".7" />
+                  <path d="M17 19 32 11 39 15 24 23Z" fill="#E87722" stroke="#E87722" />
+                  <ellipse cx="35" cy="18" rx="7" ry="11" transform="rotate(-18 35 18)" fill="#243c55" />
+                  <ellipse cx="31" cy="19" rx="7" ry="11" transform="rotate(-18 31 19)" fill="#0f1a2e" />
+                  <path d="M16 27 31 19" stroke="#E87722" strokeWidth="4" />
+                  <path d="M13 12 19 10C29 8 34 31 24 35L18 38" fill="#354e66" />
+                  <ellipse cx="15" cy="25" rx="9" ry="13" transform="rotate(-18 15 25)" fill="#0f1a2e" />
+                  <ellipse cx="15" cy="25" rx="4.5" ry="7" transform="rotate(-18 15 25)" fill="#dce8ef" stroke="#dce8ef" />
+                  <ellipse cx="15" cy="25" rx="1.5" ry="2.4" fill="#E87722" stroke="#E87722" />
+                  <path d="m11 15 4-2m4 3 4-2m0 6 4-2m-1 7 4-2m-3 7 4-2" opacity=".6" />
                 </svg>
               </span>
               <span className="g3-tb-id">
@@ -278,6 +284,23 @@ export default function Gear3DApp() {
                     <input type="checkbox" id="g3-vehicle-body" defaultChecked /> Show vehicle body
                   </label>
                 </div>
+                <div className="g3-body-style">
+                  <div className="g3-field">
+                    <label htmlFor="g3-body-opacity">Body opacity</label>
+                    <input type="range" id="g3-body-opacity" className="g3-range" min="10" max="80" step="1" defaultValue="28" />
+                    <output id="g3-body-opacity-value" htmlFor="g3-body-opacity">28%</output>
+                  </div>
+                  <div className="g3-field">
+                    <label htmlFor="g3-body-color">Body color</label>
+                    <input type="color" id="g3-body-color" className="g3-color" defaultValue="#71899b" />
+                  </div>
+                  <div className="g3-body-presets" aria-label="Body appearance presets">
+                    <button type="button" className="g3-btn" data-body-opacity="16">Faint</button>
+                    <button type="button" className="g3-btn" data-body-opacity="28">Balanced</button>
+                    <button type="button" className="g3-btn" data-body-opacity="60">Detailed</button>
+                  </div>
+                  <button type="button" id="g3-body-reset" className="g3-btn g3-body-reset">Reset body appearance</button>
+                </div>
                 <p className="g3-note">A dimmed, illustrative body puts the axles in context. Body proportions are approximate; bare gear configurations have no body. <a href={`${base}gear3d/bodies/CREDITS.md`} target="_blank" rel="noreferrer">Model sources and licenses</a>.</p>
                 <div id="g3-chassis-notice" className="g3-badge-assumed" hidden />
                 <p className="g3-note">Click an axle in the viewport to isolate it. <kbd>Esc</kbd> steps back one level.</p>
@@ -288,16 +311,24 @@ export default function Gear3DApp() {
               <summary><Icon name="sliders-h" /> Configuration</summary>
               <div className="g3-group" id="g3-config-group">
                 <div className="g3-field">
-                  <label htmlFor="g3-wbt">Wide-base</label>
-                  <select id="g3-wbt" className="g3-select" defaultValue="">
-                    <option value="">Swap selected axle to…</option>
+                  <label htmlFor="g3-wbt-axle">Axle</label>
+                  <select id="g3-wbt-axle" className="g3-select" />
+                </div>
+                <p id="g3-wbt-status" className="g3-note" aria-live="polite" />
+                <div className="g3-field">
+                  <label htmlFor="g3-wbt">WBT size</label>
+                  <select id="g3-wbt" className="g3-select" defaultValue="445/50R22.5">
                     <option value="445/50R22.5">445/50R22.5</option>
                     <option value="455/55R22.5">455/55R22.5</option>
                     <option value="425/65R22.5">425/65R22.5</option>
                   </select>
                 </div>
+                <div className="g3-tire-actions">
+                  <button type="button" id="g3-wbt-apply" className="g3-btn">Use WBT</button>
+                  <button type="button" id="g3-wbt-restore" className="g3-btn">Restore DTA</button>
+                </div>
                 <div id="g3-wbt-report" className="g3-report" hidden />
-                <p className="g3-note">Select a dual-tire axle in the tree, then swap it. The outer tire edge is held so the vehicle's overall width does not change.</p>
+                <p className="g3-note">DTA: dual tire assembly. WBT: wide-base tire. Swapping holds the outer tire edge. Restore DTA returns the original tire, track and spacing without resetting the vehicle.</p>
               </div>
             </details>
 

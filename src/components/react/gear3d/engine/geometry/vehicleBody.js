@@ -231,3 +231,16 @@ function addBusDetails(group,fit,material) {
     for(let i=0;i<9;i++)detailBox(group,'rear-grille',material('details'),0,
         1050+i*65,fit.rear+12,fit.width*.62,20,22);
 }
+
+
+/** Adjust the overlay in place; preserve authored glazing/trim contrast. */
+export function styleVehicleBody(root,{opacity=.28,color='#71899b'}={}) {
+    const materials=new Set();
+    root.traverse(o=>{if(o.material)materials.add(o.material);});
+    for(const material of materials) {
+        material.userData.bodyBaseOpacity ??= material.opacity;
+        material.userData.bodyBaseColor ??= material.color.getHex();
+        material.opacity=Math.min(.92,material.userData.bodyBaseOpacity*opacity/.28);
+        if(material.userData.bodyBaseColor===0x71899b)material.color.set(color);
+    }
+}

@@ -48,7 +48,7 @@
 import * as THREE from 'three';
 
 import { setNominalTable } from './engine/core/tires.js';
-import { resolveLayout, swapToWideBase } from './engine/core/layout.js';
+import { resolveLayout, swapToWideBase, restoreDualTires } from './engine/core/layout.js';
 import { validateUnit, tireCount } from './engine/core/schema.js';
 import { Store } from './engine/core/store.js';
 import { checkBridgeFormula } from './engine/core/bridge.js';
@@ -71,7 +71,7 @@ import { MaterialLibrary, MATERIAL_SPECS } from './engine/scene/materials.js';
 import { LIGHTING_PRESETS } from './engine/scene/lighting.js';
 import { Viewport, RENDER_TIERS } from './engine/scene/renderer.js';
 import { VIEW_META } from './engine/scene/cameras.js';
-import { ensureVehicleBody, vehicleBodyStatus, vehicleBodySpec, disposeVehicleBodies } from './engine/geometry/vehicleBody.js';
+import { styleVehicleBody, ensureVehicleBody, vehicleBodyStatus, vehicleBodySpec, disposeVehicleBodies } from './engine/geometry/vehicleBody.js';
 import { buildAssembly } from './engine/geometry/assembly.js';
 
 import {
@@ -158,6 +158,8 @@ function defaultView() {
         // Open with vehicle context in all four views and a clear background.
         mode: 'quad',
         showVehicleBody: true,
+        bodyOpacity: 28,
+        bodyColor: '#71899b',
         unitSystem: 'SI',
         precision: 0,
         dualUnits: false,
@@ -392,6 +394,8 @@ function setupViewport() {
 
 /** @param {string} id */
 function loadUnitById(id) {
+    app.lastWideBase = null;
+    $('g3-wbt-report').hidden = true;
     const unit = [...app.library.trucks, ...app.library.aircraft].find((u) => u.id === id);
     if (!unit) { toast(`Unit "${id}" is not in the library.`, 'error'); return; }
     app.store.replaceDoc({
@@ -465,6 +469,7 @@ function applyIsolation(opts = {}) {
         vehicleBody: app.store.view.showVehicleBody,
         chassis: showChassis(iso)
     });
+    applyBodyStyle();
     // Snap targets follow visibility — see rebuildSnapPoints. The chassis is
     // deliberately NOT snappable: it is a schematic envelope, so measuring to
     // it would produce a number with no sourced meaning.
@@ -1334,12 +1339,22 @@ function setupUnitPanel() {
     syncCategories();
     syncUnits();
 
-    $('g3-wbt').addEventListener('change', (e) => {
-        const designation = /** @type {HTMLSelectElement} */(e.target).value;
-        if (!designation) return;
-        applyWideBaseSwap(designation);
-        /** @type {HTMLSelectElement} */(e.target).value = '';
+    $('g3-wbt-axle').addEventListener('change', () => {
+        app.selection.axleId = $('g3-wbt-axle').value || null;
+        renderProperties(); renderTree(); app.viewport.renderOverlay();
     });
+    $('g3-wbt-apply').addEventListener('click', () => applyWideBaseSwap($('g3-wbt').value));
+    $('g3-wbt-restore').addEventListener('click', () => {
+        const id=$('g3-wbt-axle').value;
+        try {
+            const axle=app.store.doc.unit.axles.find(a=>a.id===id);
+            const restored=restoreDualTires(axle);
+            app.store.update(d=>{d.unit.axles[d.unit.axles.findIndex(a=>a.id===id)]=restored;}, `restore DTA on ${id}`);
+            app.lastWideBase=null; $('g3-wbt-report').hidden=true;
+            rebuild(); toast(`${id}: original dual tires restored.`);
+        } catch(error) { toast(error.message,'error'); }
+    });
+
 }
 
 /**
@@ -2019,6 +2034,19 @@ function setupIsolationPanel() {
         app.store.view.isolation = { ...app.store.view.isolation, level: sel.value, targetId: null };
         applyIsolation({ frame: true });
     });
+    $('g3-body-opacity').addEventListener('input', e => {
+        app.store.view.bodyOpacity=Number(e.target.value);applyBodyStyle();scheduleAutosave();
+    });
+    $('g3-body-reset').addEventListener('click', () => {
+        app.store.view.bodyOpacity=28;app.store.view.bodyColor='#71899b';
+        applyBodyStyle();scheduleAutosave();
+    });
+    $('g3-body-color').addEventListener('input', e => {
+        app.store.view.bodyColor=e.target.value;applyBodyStyle();scheduleAutosave();
+    });
+    for(const button of root.querySelectorAll('[data-body-opacity]')) button.addEventListener('click',()=>{
+        app.store.view.bodyOpacity=Number(button.dataset.bodyOpacity);applyBodyStyle();scheduleAutosave();
+    });
     $('g3-vehicle-body').addEventListener('change', (e) => {
         app.store.view.showVehicleBody = e.target.checked;
         applyIsolation({ frame: true });
@@ -2028,6 +2056,20 @@ function setupIsolationPanel() {
         app.store.view.isolation.ghost = /** @type {HTMLInputElement} */(e.target).checked;
         applyIsolation();
     });
+}
+
+function applyBodyStyle() {
+    const v=app.store.view;
+    $('g3-body-opacity').value=String(v.bodyOpacity);
+    $('g3-body-opacity-value').textContent=`${v.bodyOpacity}%`;
+    $('g3-body-color').value=v.bodyColor;
+    for(const button of root.querySelectorAll('[data-body-opacity]')) {
+        const active=Number(button.dataset.bodyOpacity)===v.bodyOpacity;
+        button.classList.toggle('is-on',active);button.setAttribute('aria-pressed',String(active));
+    }
+    const body=app.assembly?.root.getObjectByName('vehicle-body');
+    if(body)styleVehicleBody(body,{opacity:v.bodyOpacity/100,color:v.bodyColor});
+    app.viewport?.invalidate();
 }
 
 function setupDimensionPanel() {
@@ -2621,6 +2663,7 @@ function setupTreeKeys() {
 }
 
 function renderProperties() {
+    renderTireControls();
     const box = $('g3-props');
     const a = app.layout?.axles.find((x) => x.id === app.selection.axleId);
     if (!a) {
@@ -2692,9 +2735,28 @@ function revertToReference() {
     toast('Reverted to the cited reference configuration.');
 }
 
+function renderTireControls() {
+    const select=$('g3-wbt-axle');
+    const axles=(app.store.doc.unit?.axles || []).filter(a=>['DTA','WBT'].includes(a.tireConfig));
+    const previous=select.value;
+    select.replaceChildren(...axles.map(a=>new Option(`${a.id} · ${a.role} · ${a.tireConfig}`,a.id)));
+    const id=axles.some(a=>a.id===app.selection.axleId)?app.selection.axleId
+        :axles.some(a=>a.id===previous)?previous:axles[0]?.id;
+    if(id)select.value=id;
+    const axle=axles.find(a=>a.id===id);
+    select.disabled=!axle;
+    $('g3-wbt-apply').disabled=axle?.tireConfig!=='DTA';
+    $('g3-wbt').disabled=axle?.tireConfig!=='DTA';
+    $('g3-wbt-restore').disabled=!(axle?.tireConfig==='WBT'&&axle.originalDTA);
+    $('g3-wbt-status').textContent=!axle?'This vehicle has no dual-tire axles to convert.'
+        :`${axle.id}: ${axle.tire} · ${axle.tireConfig==='DTA'?'4 tires per axle':'2 tires per axle'}${axle.tireConfig==='WBT'&&!axle.originalDTA?' · No original DTA stored in this project.':''}`;
+    $('g3-wbt-report').hidden=!app.lastWideBase || app.lastWideBase.axleId!==id || axle?.tireConfig!=='WBT';
+}
+
 /** @param {string} designation */
 function applyWideBaseSwap(designation) {
-    const axleId = app.selection.axleId;
+    const axleId = $('g3-wbt-axle').value;
+    app.selection.axleId = axleId;
     if (!axleId) { toast('Select a dual-tire axle in the structure tree first.', 'warn'); return; }
     const unit = app.store.doc.unit;
     const src = unit.axles?.find((x) => x.id === axleId);
@@ -3022,6 +3084,8 @@ function currentState() {
             annotations: v.annotations,
             showGrid: v.showGrid,
             showVehicleBody: v.showVehicleBody,
+            bodyOpacity: v.bodyOpacity,
+            bodyColor: v.bodyColor,
             materials: v.materials,
             isolation: v.isolation
         }
@@ -3036,6 +3100,8 @@ function saveProject() {
 
 /** @param {any} p */
 function applyProject(p) {
+    app.lastWideBase = null;
+    $('g3-wbt-report').hidden = true;
     app.store.replaceDoc({
         unit: p.unit,
         seed: p.seed || DEFAULT_SEED,
@@ -3050,6 +3116,8 @@ function applyProject(p) {
         // fallback follows whatever the app's current default is.
         mode: p.view?.mode || defaultView().mode,
         showVehicleBody: p.view?.showVehicleBody !== false,
+        bodyOpacity: Number.isFinite(p.view?.bodyOpacity) ? Math.max(10,Math.min(80,p.view.bodyOpacity)) : 28,
+        bodyColor: /^#[0-9a-f]{6}$/i.test(p.view?.bodyColor) ? p.view.bodyColor : '#71899b',
         lighting: p.view?.lighting || { ...LIGHTING_PRESETS.studio },
         background: p.view?.background || 'white',
         backgroundColor: p.view?.backgroundColor || '#eef1f4',
