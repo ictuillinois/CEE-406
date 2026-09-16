@@ -148,3 +148,8 @@ Coverage: all eight articulated library entries in Classes 8–13. There is no C
 [Conventional tractor close-up](tractor-conventional-closeup.png) · [Side profile](tractor-conventional-side.png)
 
 Revision validation: 38 tests, Chrome body/default/project checks, and all articulated entries rendered in 3D. Trailer axle edits leave hood, cab, glazing, frame and fifth-wheel geometry unchanged.
+
+## Aircraft library expansion
+
+See [the Aircrafter review](aircraft-iteration.md) for six new aircraft,
+A320/A350 assets, source corrections, and reproducible validation.

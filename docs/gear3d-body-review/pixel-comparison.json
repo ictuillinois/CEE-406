@@ -81,6 +81,60 @@
     "maxChannelDifference": 0
   },
   {
+    "id": "A320",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A320",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A320",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A350",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A350",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A350",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
     "id": "B747",
     "view": "iso",
     "mae": 0,

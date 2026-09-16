@@ -34,5 +34,15 @@
     "file": "motorcycle.glb",
     "url": "https://static.poly.pizza/3ff04d85-dfe6-487c-b01d-5ce92103cf30.glb",
     "sha256": "86219f3bd3c14d50f822def3ce080db11b3d0f45123db5f3b9ace4d7b44a8124"
+  },
+  {
+    "file": "A320.glb",
+    "url": "https://raw.githubusercontent.com/amvlab/aircraft-models/main/models/A320_nologo.glb",
+    "sha256": "08cc60caafe3d0937f3e12e72c28bcb96dfdb39763ac124bcd4da8adaea11ab9"
+  },
+  {
+    "file": "A350.glb",
+    "url": "https://raw.githubusercontent.com/amvlab/aircraft-models/main/models/A350_nologo.glb",
+    "sha256": "d91061ecff300c4e8951b571a476d6fcacd4d50dceb8e1d9a80cde7fa86b19f5"
   }
 ]

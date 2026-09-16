@@ -9,7 +9,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || 'playwright')
 const sourceDir=path.resolve(process.argv[2] || '.tmp/vehicle-reference');
 const root=process.cwd();
 const specs=[
-    ...['B737','A380','B787'].map(id=>({id,file:`${id}.glb`,rotation:Math.PI/2})),
+    ...['B737','A380','B787','A320','A350'].map(id=>({id,file:`${id}.glb`,rotation:Math.PI/2})),
     {id:'B747',file:'B747.glb',rotation:-Math.PI/2},
     ...['sedan','truck','delivery','delivery-flat'].map(id=>({id,file:`kenney/Models/GLB format/${id}.glb`,rotation:Math.PI})),
     {id:'trailer',file:'kenney/Models/GLB format/delivery.glb',rotation:Math.PI},

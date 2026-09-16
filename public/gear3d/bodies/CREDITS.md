@@ -6,7 +6,7 @@ when Show vehicle body is enabled. No original textures or liveries are shipped.
 
 ## Aircraft
 
-* **B737.glb, A380.glb, B787.glb**: AMV Lab, [aircraft-models](https://github.com/amvlab/aircraft-models), plain/logo-free variants. [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/).
+* **B737.glb, A380.glb, B787.glb, A320.glb, A350.glb**: AMV Lab, [aircraft-models](https://github.com/amvlab/aircraft-models), plain/logo-free variants. [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/).
 * **B747.glb**: [“boeing 747” by zairiq-123](https://sketchfab.com/3d-models/boeing-747-9b16672038ba48f98e6d80a159044ed9), [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/). Downloaded from [God's Eye View's prepared asset](https://github.com/bilawalsidhu/gods-eye-view/blob/main/public/models/README.md), which already simplified geometry/materials and baked orientation and scale.
 
 CEE-406 changes: textures/materials removed; node transforms baked; nose oriented
@@ -51,3 +51,9 @@ Runtime refinements include bus glazing/trim, doors, mirrors, lamps, roof equipm
 ## Authored conventional tractor and trailers
 
 Classes 8–13 now use local procedural meshes rather than the stretched delivery-flat cab and cropped trailer GLB. Proportions reference the [Cascadia 126 specification sheet (June 2024), page 2](https://www.freightliner.com.au/siteassets/documents/cascadia-spec-sheet-126-2024.pdf): 3,220 mm day-cab BBC, 4,520 mm 60-inch XT sleeper BBC, 3,455 mm XT cab height and 1,315 mm front overhang. The hood, cab, glazing, fenders and trailer details are original simplified interpretations. No Freightliner mesh, logo or texture is distributed. These are illustrative conventional trucks, not exact Freightliner replicas. Existing GLB credits and comparisons remain applicable to the retained assets only.
+
+The reviewed A320, A350 and 787 entries use their matching AMV family mesh.
+Their runtime uniform scale uses manufacturer length and nose-to-nose-gear
+distance; source proportions and triangles are retained. A family mesh is not
+variant-specific CAD, so wingspan and wing/engine stations remain illustrative.
+Unknown aircraft families receive no substitute body.

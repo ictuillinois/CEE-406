@@ -13,8 +13,10 @@ export function vehicleBodySpec(unit) {
     if (!unit || unit.kind === 'schematic') return null;
     if (unit.domain === 'aircraft') {
         if (!unit.gears?.some(g => g.role === 'nose')) return null;
-        const id = /747/.test(unit.id) ? 'B747' : /380/.test(unit.id) ? 'A380'
-            : /737|757/.test(unit.id) ? 'B737' : 'B787';
+        const family = String(unit.id).toLowerCase().match(/^(a320|a350|a380|b737|b747|b757|b767|b777|b787)(?:-|$)/)?.[1];
+        const id = {a320:'A320',a350:'A350',a380:'A380',b737:'B737',b747:'B747',
+            b757:'B737',b767:'B787',b777:'B787',b787:'B787'}[family];
+        if (!id) return null;
         return { id, label: `Representative ${id} airframe`, aircraft: true,
             representative: !unit.id.toLowerCase().includes(id.toLowerCase()) };
     }
@@ -96,13 +98,22 @@ export function buildVehicleBody(layout) {
     const material = surfaceMaterial(spec.id === 'bus' ? 'bottom' : 'body');
     const xs = layout.axles.map(a=>a.x);
     let front = Math.min(...xs), rear = Math.max(...xs);
-    let sx, sy, sz, lift, busFit, fuselageBelly;
+    let sx, sy, sz, lift, busFit, fuselageBelly, aircraftNoseOffset;
     if (spec.aircraft) {
         const nose=layout.axles.find(a=>a.role==='nose');
         const mains=layout.axles.filter(a=>a.role==='main');
         if (!nose || !mains.length) {material.dispose();return null;}
         front=nose.x; rear=mains.reduce((sum,a)=>sum+a.x,0)/mains.length;
         sx=sy=sz=(rear-front)/(meta.rearAxle-meta.frontAxle);
+        // Reviewed aircraft retain source mesh proportions and use published
+        // body length / nose station, rather than generic 13% / 54% stations.
+        const fit=layout.unit.bodyFit;
+        if (Number.isFinite(fit?.length) && fit.length>0 &&
+            Number.isFinite(fit.noseOffset) && fit.noseOffset>=0 && fit.noseOffset<fit.length) {
+            sx=sy=sz=fit.length/meta.length;
+            aircraftNoseOffset=fit.noseOffset;
+            group.userData.aircraftFit={length:fit.length,noseOffset:fit.noseOffset};
+        }
         // Align the fuselage belly over the existing gear tops; engines may hang lower.
         let belly=Infinity;
         template.traverse(o=>{
@@ -136,7 +147,7 @@ export function buildVehicleBody(layout) {
         lift=layout.axles[0].axleHeight-meta.axleY*sy;
     }
     if (![sx,sy,sz,lift].every(Number.isFinite) || sz<=0) {material.dispose();return null;}
-    const offset=front-meta.frontAxle*sz;
+    const offset=front-(aircraftNoseOffset ?? meta.frontAxle*sz);
     template.updateWorldMatrix(true,true);
     template.traverse(o=>{
         if(!o.isMesh)return;

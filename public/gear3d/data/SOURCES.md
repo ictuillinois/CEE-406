@@ -462,3 +462,16 @@ The test suite (`npm test`, 175 checks as of v1.9) fails the build if any axle, 
 GVW, MTOW, tire pressure or multi-axle group spacing lacks provenance, and
 includes a negative control that confirms the validator actually rejects a
 missing source rather than passing vacuously.
+
+## Reviewed Aircrafter expansion
+
+`aircraft/aircrafter-reviewed.json` adds the 787-8/-9/-10, A320-200, and
+A350-900/-1000. Main-wheel coordinates originate in ICT Mechanics Aircrafter
+and were checked against manufacturer footprints. Nose gear, wheelbase and
+MTOW come from manufacturer manuals; taxi weight remains a separate field.
+The 95% main-gear allocation is an explicit design assumption.
+
+See [the review and primary references](../../../docs/gear3d-body-review/aircraft-iteration.md)
+and [the coordinate audit](../../../docs/gear3d-body-review/aircrafter-audit.json)
+for row numbers, workbook hash, variant choices, and A350-1000 corrections.
+These entries use mainGearTrack directly, rather than deriving it from outer width.

@@ -1704,11 +1704,10 @@ function renderAssumptionNotice(u) {
             + `${list}Its wheel geometry — track, dual and tandem spacings — is real where a source `
             + 'carries it, and the panel below says which. Its tire size and wheelbase are nominal '
             + 'in every case, so do not read a wheel diameter or a nose gear position off this figure.</span>'
-        : lead + `<span>${list}Everything else on this aircraft — gear code, `
-            + 'wheelbase, main gear outer width, MTOW, tire size and pressure — is taken from the '
-            + 'FAA Aircraft Characteristics Database and the manufacturer ACAP. Set the assumed '
-            + 'spacings from FAARFIELD before using this figure for pavement work; the track '
-            + 're-derives so the published outer width is preserved.</span>';
+        : lead + `<span>${list}The source panel documents this aircraft’s dimensions, tires and loads, `
+            + 'including manufacturer drawings and any FAARFIELD-derived coordinates. '
+            + 'Review the listed assumptions and weight variant before using the geometry for pavement work. '
+            + 'The translucent body is an illustrative family mesh; its surface is not an engineering dimension.</span>';
 }
 
 /* ============================================================
