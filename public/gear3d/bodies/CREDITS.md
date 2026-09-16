@@ -46,3 +46,8 @@ endorsement by any original creator.
 See `docs/gear3d-body-review/README.md` for the render comparisons and limitations.
 
 Runtime refinements include bus glazing/trim, doors, mirrors, lamps, roof equipment, enlarged tractor cabs, chassis details, open dump beds and subtle aircraft intake shading. These additions are illustrative and do not alter engineering exports.
+
+
+## Authored conventional tractor and trailers
+
+Classes 8–13 now use local procedural meshes rather than the stretched delivery-flat cab and cropped trailer GLB. Proportions reference the [Cascadia 126 specification sheet (June 2024), page 2](https://www.freightliner.com.au/siteassets/documents/cascadia-spec-sheet-126-2024.pdf): 3,220 mm day-cab BBC, 4,520 mm 60-inch XT sleeper BBC, 3,455 mm XT cab height and 1,315 mm front overhang. The hood, cab, glazing, fenders and trailer details are original simplified interpretations. No Freightliner mesh, logo or texture is distributed. These are illustrative conventional trucks, not exact Freightliner replicas. Existing GLB credits and comparisons remain applicable to the retained assets only.

@@ -9,7 +9,7 @@ have no invented airframe. Engineering geometry and footprint exports exclude th
 body; rendered figures include it when enabled.
 
 The first procedural prototype was replaced after the request for stronger
-fidelity. The shipped bodies use the actual licensed source mesh triangles,
+fidelity. Aircraft and smaller road bodies use the actual licensed source mesh triangles,
 prepared locally into small GLB assets. This preserves recognizable fuselages,
 wings, engines, tails, cabs, pickup beds and motorcycle bodywork.
 
@@ -33,9 +33,7 @@ The asset source URLs and SHA-256 hashes are recorded in
 
 ### Coverage and accuracy
 
-* All shipped road classes receive a body. Heavy combinations use cargo shells
-  cropped from the source delivery truck; doubles receive two bodies, with the
-  dolly in the second trailer group. Cargo proportions remain illustrative.
+* All shipped road classes receive a body. Articulated Classes 8–13 now use an authored conventional tractor and clean van trailers; doubles receive two bodies, with the dolly in the second trailer group. These replace the stretched delivery cab and cropped cargo shell. Cargo proportions remain illustrative.
 * The 737, 747 and A380 use their corresponding airframe families. The 757 uses
   the 737 reference shape; the 767 and 777 use the 787 reference shape. The
   interface names the actual reference airframe. These are representative
@@ -137,3 +135,16 @@ The viewport offers Copy PNG and Download PNG, with solid-background and transpa
 [Refined bus](app-bus-refined.png) · [Open dump bed](app-dump-refined.png) · [Enlarged tractor](app-tractor-refined.png)
 
 Validation: 37 geometry/unit/style checks pass, Chrome smoke checks pass, opaque and transparent PNG downloads and clipboard copies pass, and the production build generates all 33 pages. Transparent pixels were verified from decoded PNG data; the figure annotations and Quad pane borders remain visible.
+
+
+## Conventional tractor revision
+
+The articulated bodies were rebuilt after the elongated cab and cropped trailer looked distorted. The new tractor has independent hood, cab and sleeper sections, a sloping windshield, curved steer fenders, grille slats, lamps, mirrors, steps, cylindrical tanks and a fifth wheel. The cab stops ahead of the drive group; chassis rails continue over it. A longer wheelbase no longer stretches the windshield. Trailer noses overlap the fifth wheel with sleeper clearance. Trailer shells have straight, uninterrupted walls, chamfered roof edges, rails, markers, landing legs, rear doors, locks, hinges and underride guards.
+
+Reference: [Freightliner Cascadia 126 specification sheet, June 2024, page 2](https://www.freightliner.com.au/siteassets/documents/cascadia-spec-sheet-126-2024.pdf). Published day-cab BBC is 3,220 mm; the 60-inch XT sleeper BBC is 4,520 mm and cab height 3,455 mm. The drawing labels a 1,315 mm front overhang. These anchor the proportions; hood contours, glazing and accessories are interpreted locally. Shorter library wheelbases compress the longitudinal profile modestly, independently of the trailer. This is a representative conventional truck, not licensed manufacturer CAD or a pixel-identical copy. The earlier pixel comparisons apply only to the retained prepared GLB assets, not this authored replacement.
+
+Coverage: all eight articulated library entries in Classes 8–13. There is no Class 14 entry in this library. The geometry tests check hood length, cab position, frame coverage, trailer overlap, finite geometry and triangle budget for every entry.
+
+[Conventional tractor close-up](tractor-conventional-closeup.png) · [Side profile](tractor-conventional-side.png)
+
+Revision validation: 38 tests, Chrome body/default/project checks, and all articulated entries rendered in 3D. Trailer axle edits leave hood, cab, glazing, frame and fifth-wheel geometry unchanged.

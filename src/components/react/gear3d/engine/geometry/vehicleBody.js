@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { profileFor } from './chassis.js';
+import { buildConventionalTruck } from './conventionalTruck.js';
 
 const templates = new Map();
 const requests = new Map();
@@ -20,14 +21,16 @@ export function vehicleBodySpec(unit) {
     if (unit.domain !== 'truck') return null;
     const profile = profileFor(unit.bodyType).key;
     const articulated = /tractor|trailer/.test(unit.bodyType || '');
+    if(articulated) return {id:'conventional',label:'Conventional long-hood tractor and van trailers',articulated:true};
     const id = { car: 'sedan', pickup: 'truck', bus: 'bus', motorcycle: 'motorcycle' }[profile]
-        || (articulated || /dump/.test(unit.bodyType || '') ? 'delivery-flat' : 'delivery');
-    return { id, label: articulated ? 'Cab and articulated trailer bodies' : `${profile} reference body`, articulated, secondary: articulated ? 'trailer' : null };
+        || (/dump/.test(unit.bodyType || '') ? 'delivery-flat' : 'delivery');
+    return { id, label: `${profile} reference body` };
 }
 
 export function vehicleBodyStatus(unit) {
     const spec = vehicleBodySpec(unit);
     if (!spec) return 'unavailable';
+    if (spec.articulated) return 'ready';
     const ids=[spec.id,spec.secondary].filter(Boolean);
     return ids.every(id=>templates.has(id)) ? 'ready' : ids.some(id=>failures.has(id)) ? 'failed' : 'loading';
 }
@@ -35,7 +38,7 @@ export function vehicleBodyStatus(unit) {
 /** Load only selected visible bodies; repeated requests share promises. */
 export function ensureVehicleBody(unit, base) {
     const spec = vehicleBodySpec(unit);
-    if (!spec) return Promise.resolve();
+    if (!spec || spec.articulated) return Promise.resolve();
     return Promise.all([spec.id,spec.secondary].filter(Boolean).map(id=>{
         if(templates.has(id)||failures.has(id))return Promise.resolve();
         if(requests.has(id))return requests.get(id);
@@ -68,13 +71,13 @@ export function disposeVehicleBodies() {
 export function buildVehicleBody(layout) {
     const spec = vehicleBodySpec(layout.unit);
     const template = spec && templates.get(spec.id);
-    if (!template || vehicleBodyStatus(layout.unit) !== 'ready' || !layout.wheels.length) return null;
-    const meta = template.userData;
+    if (!spec || (!template && !spec.articulated) || vehicleBodyStatus(layout.unit) !== 'ready' || !layout.wheels.length) return null;
+    const meta = template?.userData;
     const group = new THREE.Group(); group.name = 'vehicle-body';
     group.userData = { illustrative: true, label: spec.label };
     const palette = new Map();
     function surfaceMaterial(surface = 'body') {
-        const key = spec.id === 'bus' ? surface : 'body';
+        const key = spec.id === 'bus' || spec.articulated ? surface : 'body';
         if (!palette.has(key)) {
             const style = {
                 windows: {color:0x294859,opacity:.43,roughness:.3},
@@ -89,10 +92,11 @@ export function buildVehicleBody(layout) {
         }
         return palette.get(key);
     }
+    if(spec.articulated) return buildConventionalTruck(layout,surfaceMaterial);
     const material = surfaceMaterial(spec.id === 'bus' ? 'bottom' : 'body');
     const xs = layout.axles.map(a=>a.x);
     let front = Math.min(...xs), rear = Math.max(...xs);
-    let sx, sy, sz, lift, tractor, busFit, fuselageBelly;
+    let sx, sy, sz, lift, busFit, fuselageBelly;
     if (spec.aircraft) {
         const nose=layout.axles.find(a=>a.role==='nose');
         const mains=layout.axles.filter(a=>a.role==='main');
@@ -114,27 +118,10 @@ export function buildVehicleBody(layout) {
         const gearTop=Math.max(...mains.map(a=>a.axleHeight+a.geometry.overallDiameter*1.35));
         lift=Math.max(gearTop-belly*sy, -meta.minY*sy + 150);
     } else {
-        const drive=layout.axles.filter(a=>a.role==='drive');
-        if(spec.articulated && drive.length) rear=Math.max(...drive.map(a=>a.x));
         const width=layout.extents.maxY-layout.extents.minY;
         sx=width/meta.width; sy=sx * (spec.id.startsWith('delivery') ? 1.35 : 1);
         sz=(rear-front)/(meta.rearAxle-meta.frontAxle);
         if(spec.id==='motorcycle') sx=sy=sz;
-        if (spec.articulated && drive.length) {
-            const radius=Math.max(...drive.map(a=>a.geometry.freeRadius));
-            let cabSourceEnd=meta.frontAxle;
-            template.traverse(o=>{
-                const p=o.geometry?.attributes.position;
-                if(p)for(let i=0;i<p.count;i++)
-                    if(p.getY(i)>meta.axleY+(meta.maxY-meta.axleY)*.4)
-                        cabSourceEnd=Math.max(cabSourceEnd,p.getZ(i));
-            });
-            tractor={front, firstDrive:Math.min(...drive.map(a=>a.x)), rear,
-                cabSourceEnd, rearEnd:rear+radius+180};
-            tractor.cabEnd=Math.min(tractor.firstDrive+radius*.6,rear-radius*.45);
-            sy=(3500-layout.axles[0].axleHeight)/(meta.maxY-meta.axleY);
-            group.userData.tractor=tractor;
-        }
         if(spec.id==='bus') {
             sy=(3200-layout.axles[0].axleHeight)/(meta.maxY-meta.axleY);
             const total=Math.max(layout.unit.overallLength || 0,rear-front+2000);
@@ -168,8 +155,7 @@ export function buildVehicleBody(layout) {
         }
         for(let i=0;i<p.count;i++) {
             const z=p.getZ(i);
-            const longitudinal = tractor ? tractorLongitudinal(z,meta,tractor,sx)
-                : spec.aircraft ? z*sz+offset
+            const longitudinal = spec.aircraft ? z*sz+offset
                 : z<meta.frontAxle ? front+(z-meta.frontAxle)*(busFit?.frontScale ?? sx)
                 : z>meta.rearAxle ? rear+(z-meta.rearAxle)*(busFit?.rearScale ?? sx)
                 : front+(z-meta.frontAxle)*sz;
@@ -182,12 +168,11 @@ export function buildVehicleBody(layout) {
         }
         geo.computeBoundingBox(); geo.computeBoundingSphere();
         const mesh=new THREE.Mesh(geo,surfaceMaterial(o.userData.surface));
-        mesh.name=tractor?'vehicle-body:tractor':`vehicle-body:${o.userData.surface || 'surface'}`;
+        mesh.name=`vehicle-body:${o.userData.surface || 'surface'}`;
         mesh.userData.pickable=false;mesh.raycast=()=>{};
         group.add(mesh);
     });
     if(busFit) addBusDetails(group,busFit,surfaceMaterial);
-    if(tractor) addTractorDetails(group,layout,tractor,material);
     if(!spec.aircraft && spec.id !== 'bus' && spec.id !== 'motorcycle') {
         const bounds=new THREE.Box3().setFromObject(group);
         const half=(layout.extents.maxY-layout.extents.minY)/2;
@@ -208,46 +193,9 @@ export function buildVehicleBody(layout) {
             for(const z of [start,end])detailBox(group,'dump-end',material,0,(floor+top)/2,z,half*1.9,top-floor,90);
         }
     }
-    if(spec.articulated) {
-        // Each separated trailer axle cluster carries its own cargo body.
-        const trailer=layout.axles.filter(a=>a.role==='trailer').sort((a,b)=>a.x-b.x);
-        let clusters=[];
-        for(const a of trailer) {
-            if(!clusters.length || a.x-clusters.at(-1).at(-1).x>3000) clusters.push([]);
-            clusters.at(-1).push(a);
-        }
-        if (clusters.length > 2 && /full trailer|double/.test(layout.unit.bodyType || ''))
-            clusters = [clusters[0], clusters.slice(1).flat()];
-        let start=Math.max(rear+700,(tractor?.rearEnd || rear)+250);
-        const width=layout.extents.maxY-layout.extents.minY;
-        for(const [i,cluster] of clusters.entries()) {
-            const end=Math.max(...cluster.map(a=>a.x))+1200;
-            if(end<=start)continue;
-            const cargo=templates.get('trailer'), cm=cargo.userData;
-            cargo.traverse(o=>{
-                if(!o.isMesh)return;
-                const geo=o.geometry.clone();
-                geo.translate(0,-cm.minY,0);
-                geo.scale(width/cm.width,2600/(cm.maxY-cm.minY),(end-start)/cm.length);
-                geo.translate(0,1250,start);
-                const mesh=new THREE.Mesh(geo,material);mesh.name=`vehicle-body:trailer-${i+1}`;
-                mesh.userData.pickable=false;mesh.raycast=()=>{};group.add(mesh);
-            });
-            start=end+700;
-        }
-    }
     return group;
 }
 
-
-/** Preserve the nose, enlarge the cab up to the drive group, then fit the rear
- * deck to the actual last tractor axle. Trailer axles never set tractor size. */
-function tractorLongitudinal(z,meta,fit,widthScale) {
-    if(z<meta.frontAxle)return fit.front+(z-meta.frontAxle)*widthScale;
-    if(z<fit.cabSourceEnd)return THREE.MathUtils.mapLinear(z,meta.frontAxle,fit.cabSourceEnd,fit.front,fit.cabEnd);
-    if(z<meta.rearAxle)return THREE.MathUtils.mapLinear(z,fit.cabSourceEnd,meta.rearAxle,fit.cabEnd,fit.rear);
-    return THREE.MathUtils.mapLinear(z,meta.rearAxle,meta.length,fit.rear,fit.rearEnd);
-}
 
 function detailBox(group,name,material,x,y,z,width,height,length) {
     const geometry=new THREE.BoxGeometry(width,height,length);
@@ -255,20 +203,6 @@ function detailBox(group,name,material,x,y,z,width,height,length) {
     const mesh=new THREE.Mesh(geometry,material);mesh.name=`vehicle-body:${name}`;
     mesh.userData.pickable=false;mesh.raycast=()=>{};group.add(mesh);
     return mesh;
-}
-
-function addTractorDetails(group,layout,fit,material) {
-    const drive=layout.axles.filter(a=>a.role==='drive');
-    const radius=Math.max(...drive.map(a=>a.geometry.freeRadius));
-    const axleHeight=Math.max(...drive.map(a=>a.axleHeight));
-    const length=fit.rearEnd-fit.front+350;
-    for(const side of [-1,1]) {
-        detailBox(group,'tractor-frame',material,side*430,axleHeight+240,
-            (fit.front-350+fit.rearEnd)/2,100,190,length);
-        const fenderLength=fit.rear-fit.firstDrive+radius*2;
-        detailBox(group,'drive-fender',material,side*(layout.derived.overallWidth/2-270),
-            axleHeight+radius+90,(fit.firstDrive+fit.rear)/2,520,110,fenderLength);
-    }
 }
 
 /** Transit-bus detail follows the calibrated body envelope, in millimeters.

@@ -28,6 +28,7 @@ const failed=await browser.newPage();
 await failed.route('**/bodies/*.glb*',route=>route.abort());
 await failed.goto(process.argv[2] || 'http://localhost:4321/tools/gear3d/');
 await failed.waitForFunction(()=>window.gear3d?.assembly);
+await failed.locator('#g3-unit').selectOption('fhwa-c04-transit-bus');
 await failed.locator('#g3-vehicle-body').check();
 await failed.waitForFunction(()=>document.getElementById('g3-chassis-notice').textContent.includes('could not load'));
 assert.equal(await failed.evaluate(()=>gear3d.assembly.hasVehicleBody()),false);

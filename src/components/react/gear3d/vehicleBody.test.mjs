@@ -88,10 +88,35 @@ test('bus faces the steering axle and tractors span only their drive group', () 
             assert.ok(fit.rearEnd>fit.rear);
             const cab=body.getObjectByName('vehicle-body:tractor');
             cab.geometry.computeBoundingBox();
-            assert.ok(cab.geometry.boundingBox.min.z<fit.front);
-            assert.ok(cab.geometry.boundingBox.max.z>=fit.rear-1);
+            assert.ok(cab.geometry.boundingBox.min.z>fit.front, 'cab follows the hood');
+            assert.ok(cab.geometry.boundingBox.max.z<fit.firstDrive, 'sleeper stops ahead of drive tires');
+            const hood=body.getObjectByName('vehicle-body:hood');
+            assert.ok(hood.geometry.boundingBox.min.z<fit.front-800);
+            assert.ok(hood.geometry.boundingBox.max.z-hood.geometry.boundingBox.min.z>1300);
+            const frame=body.getObjectByName('vehicle-body:frame-rail');
+            assert.ok(frame.geometry.boundingBox.max.z>fit.rear);
+            assert.ok(body.userData.trailers[0].start>fit.cabEnd);
+            assert.ok(body.userData.trailers[0].start<fit.rear, 'trailer overlaps fifth wheel');
+            for(const trailer of body.userData.trailers) {
+                assert.ok(trailer.end>trailer.start);
+                assert.ok(trailer.roof-trailer.floor>2500);
+            }
         }
         body.children.forEach(m=>m.geometry.dispose());
         new Set(body.children.map(m=>m.material)).forEach(m=>m.dispose());
     }
+});
+
+
+test('trailer axle edits do not distort the conventional hood or cab', () => {
+    const unit=units.find(u=>u.id==='fhwa-c09-3S2');
+    const original=resolveLayout(unit),edited=resolveLayout(unit);
+    edited.axles.filter(a=>a.role==='trailer').forEach(a=>a.x+=3000);
+    const bodies=[buildVehicleBody(original),buildVehicleBody(edited)];
+    for(const name of ['hood','tractor','windshield','frame-rail','fifth-wheel']) {
+        assert.deepEqual(bodies[0].getObjectByName('vehicle-body:'+name).geometry.attributes.position.array,
+            bodies[1].getObjectByName('vehicle-body:'+name).geometry.attributes.position.array);
+    }
+    assert.equal(bodies[1].userData.trailers[0].end-bodies[0].userData.trailers[0].end,3000);
+    for(const body of bodies){body.children.forEach(m=>m.geometry.dispose());new Set(body.children.map(m=>m.material)).forEach(m=>m.dispose());}
 });
