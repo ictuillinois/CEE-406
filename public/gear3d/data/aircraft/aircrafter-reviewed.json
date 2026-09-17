@@ -80,7 +80,7 @@
           "id": "manufacturer-acap",
           "title": "Manufacturer airport planning manual",
           "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
-          "note": "General characteristics and dimensions; landing gear footprint. Boeing Rev Q October 2025; Airbus A350 December 2024 / A320 December 2023."
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
         },
         {
           "id": "aircrafter",
@@ -169,7 +169,7 @@
           "id": "manufacturer-acap",
           "title": "Manufacturer airport planning manual",
           "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
-          "note": "General characteristics and dimensions; landing gear footprint. Boeing Rev Q October 2025; Airbus A350 December 2024 / A320 December 2023."
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
         },
         {
           "id": "aircrafter",
@@ -258,7 +258,7 @@
           "id": "manufacturer-acap",
           "title": "Manufacturer airport planning manual",
           "url": "https://www.boeing.com/content/dam/boeing/v2/airports/acaps/787_ACAP_Rev_Q.pdf",
-          "note": "General characteristics and dimensions; landing gear footprint. Boeing Rev Q October 2025; Airbus A350 December 2024 / A320 December 2023."
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
         },
         {
           "id": "aircrafter",
@@ -347,7 +347,7 @@
           "id": "manufacturer-acap",
           "title": "Manufacturer airport planning manual",
           "url": "https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2023-12/ac_a320_1223.pdf",
-          "note": "General characteristics and dimensions; landing gear footprint. Boeing Rev Q October 2025; Airbus A350 December 2024 / A320 December 2023."
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
         },
         {
           "id": "aircrafter",
@@ -436,7 +436,7 @@
           "id": "manufacturer-acap",
           "title": "Manufacturer airport planning manual",
           "url": "https://aircraft.airbus.com/sites/g/files/jlcbta126/files/2024-12/AC_A350_1224.pdf",
-          "note": "General characteristics and dimensions; landing gear footprint. Boeing Rev Q October 2025; Airbus A350 December 2024 / A320 December 2023."
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
         },
         {
           "id": "aircrafter",
@@ -535,13 +535,549 @@
           "id": "manufacturer-acap",
           "title": "Manufacturer airport planning manual",
           "url": "https://aircraft.airbus.com/sites/g/files/jlcbta126/files/2024-12/AC_A350_1224.pdf",
-          "note": "General characteristics and dimensions; landing gear footprint. Boeing Rev Q October 2025; Airbus A350 December 2024 / A320 December 2023."
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
         },
         {
           "id": "aircrafter",
           "title": "Aircrafter FAARFIELD-derived workbook",
           "publisher": "ICT Mechanics",
           "note": "public/data/aircraft.xlsx; SHA256 d12a4bbc1aa20a86e8b2ab1daee04662c35fa3bc88e79c7d059c0e24d6b66419; row 132. Main footprint only; representative tire fields independently reviewed."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "a319-100",
+      "domain": "aircraft",
+      "manufacturer": "Airbus",
+      "model": "A319-100",
+      "gearDesignation": "D",
+      "mtow": {
+        "value": 64000,
+        "unit": "kg",
+        "basis": "Manufacturer ACAP general characteristics, selected weight variant. https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf"
+      },
+      "maxTaxiWeight": {
+        "value": 141977.7,
+        "unit": "lb",
+        "basis": "Aircrafter aircraft.xlsx row 61 (A319-100 std), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf."
+      },
+      "percentOnMainGear": 95,
+      "wheelbase": 11039,
+      "mainGearTrack": 7590.002606201171,
+      "tirePressure": {
+        "value": 173,
+        "unit": "psi",
+        "basis": "Manufacturer landing gear footprint, selected weight variant. https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf"
+      },
+      "assumedFields": [
+        "percentOnMainGear"
+      ],
+      "gears": [
+        {
+          "id": "NLG",
+          "role": "nose",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 0,
+          "y": 0,
+          "dualSpacing": 500,
+          "tandemSpacing": null,
+          "tire": "30x8.8R15",
+          "source": "Manufacturer landing gear footprint: nose tire, pitch and wheelbase. https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf"
+        },
+        {
+          "id": "MLG-L",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 11039,
+          "y": -3795.0013031005856,
+          "dualSpacing": 927.0999999999999,
+          "tandemSpacing": null,
+          "tire": "46x17R20",
+          "source": "Aircrafter aircraft.xlsx row 61 (A319-100 std), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf."
+        },
+        {
+          "id": "MLG-R",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 11039,
+          "y": 3795.0013031005856,
+          "dualSpacing": 927.0999999999999,
+          "tandemSpacing": null,
+          "tire": "46x17R20",
+          "source": "Aircrafter aircraft.xlsx row 61 (A319-100 std), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf."
+        }
+      ],
+      "bodyFit": {
+        "length": 33840,
+        "noseOffset": 5070
+      },
+      "notes": "Complete nose and main gear. Loads use MTOW with the FAA 95% main-gear design assumption; taxi weight is separate. Body is a representative family mesh, with manufacturer length and nose station. ",
+      "sources": [
+        {
+          "id": "manufacturer-acap",
+          "title": "Manufacturer airport planning manual",
+          "url": "https://mediaassets.airbus.com/pm_38_916_916263-0hxcf0237y.pdf?fileName=aca31901-jul-2026-2.pdf",
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
+        },
+        {
+          "id": "aircrafter",
+          "title": "Aircrafter FAARFIELD-derived workbook",
+          "publisher": "ICT Mechanics",
+          "note": "public/data/aircraft.xlsx; SHA256 d12a4bbc1aa20a86e8b2ab1daee04662c35fa3bc88e79c7d059c0e24d6b66419; row 61. Main footprint only; representative tire fields independently reviewed."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "a321-200",
+      "domain": "aircraft",
+      "manufacturer": "Airbus",
+      "model": "A321-200",
+      "gearDesignation": "D",
+      "mtow": {
+        "value": 89000,
+        "unit": "kg",
+        "basis": "Manufacturer ACAP general characteristics, selected weight variant. https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf"
+      },
+      "maxTaxiWeight": {
+        "value": 197100,
+        "unit": "lb",
+        "basis": "Aircrafter aircraft.xlsx row 74 (A321-200 std), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf."
+      },
+      "percentOnMainGear": 95,
+      "wheelbase": 16906,
+      "mainGearTrack": 7590.028186035155,
+      "tirePressure": {
+        "value": 212,
+        "unit": "psi",
+        "basis": "Manufacturer landing gear footprint, selected weight variant. https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf"
+      },
+      "assumedFields": [
+        "percentOnMainGear"
+      ],
+      "gears": [
+        {
+          "id": "NLG",
+          "role": "nose",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 0,
+          "y": 0,
+          "dualSpacing": 500,
+          "tandemSpacing": null,
+          "tire": "30x8.8R15",
+          "source": "Manufacturer landing gear footprint: nose tire, pitch and wheelbase. https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf"
+        },
+        {
+          "id": "MLG-L",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 16906,
+          "y": -3795.0140930175776,
+          "dualSpacing": 927.0999999999999,
+          "tandemSpacing": null,
+          "tire": "1270x455R22",
+          "source": "Aircrafter aircraft.xlsx row 74 (A321-200 std), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf."
+        },
+        {
+          "id": "MLG-R",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 16906,
+          "y": 3795.0140930175776,
+          "dualSpacing": 927.0999999999999,
+          "tandemSpacing": null,
+          "tire": "1270x455R22",
+          "source": "Aircrafter aircraft.xlsx row 74 (A321-200 std), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf."
+        }
+      ],
+      "bodyFit": {
+        "length": 44510,
+        "noseOffset": 5070
+      },
+      "notes": "Complete nose and main gear. Loads use MTOW with the FAA 95% main-gear design assumption; taxi weight is separate. Body is a representative family mesh, with manufacturer length and nose station. Main tire corrected from inherited 46x17R20 to manufacturer 1270x455R22 (A321 AC 7-2-0 page 3, WV000).",
+      "sources": [
+        {
+          "id": "manufacturer-acap",
+          "title": "Manufacturer airport planning manual",
+          "url": "https://mediaassets.airbus.com/pm_38_916_916230-7u6neg4lfg.pdf?fileName=aca32101-jul-2026.pdf",
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
+        },
+        {
+          "id": "aircrafter",
+          "title": "Aircrafter FAARFIELD-derived workbook",
+          "publisher": "ICT Mechanics",
+          "note": "public/data/aircraft.xlsx; SHA256 d12a4bbc1aa20a86e8b2ab1daee04662c35fa3bc88e79c7d059c0e24d6b66419; row 74. Main footprint only; representative tire fields independently reviewed."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "a330-200",
+      "domain": "aircraft",
+      "manufacturer": "Airbus",
+      "model": "A330-200",
+      "gearDesignation": "2D",
+      "mtow": {
+        "value": 230000,
+        "unit": "kg",
+        "basis": "Manufacturer ACAP general characteristics, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf"
+      },
+      "maxTaxiWeight": {
+        "value": 509050,
+        "unit": "lb",
+        "basis": "Aircrafter aircraft.xlsx row 78 (A330-200 WV020), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf."
+      },
+      "percentOnMainGear": 95,
+      "wheelbase": 22180,
+      "mainGearTrack": 10680.699999999999,
+      "tirePressure": {
+        "value": 206,
+        "unit": "psi",
+        "basis": "Manufacturer landing gear footprint, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf"
+      },
+      "assumedFields": [
+        "percentOnMainGear"
+      ],
+      "gears": [
+        {
+          "id": "NLG",
+          "role": "nose",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 0,
+          "y": 0,
+          "dualSpacing": 710,
+          "tandemSpacing": null,
+          "tire": "1050x395R16",
+          "source": "Manufacturer landing gear footprint: nose tire, pitch and wheelbase. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf"
+        },
+        {
+          "id": "MLG-L",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 2,
+          "x": 22180,
+          "y": -5340.349999999999,
+          "dualSpacing": 1397.0,
+          "tandemSpacing": 1981.1999999999998,
+          "tire": "1400x530R23",
+          "source": "Aircrafter aircraft.xlsx row 78 (A330-200 WV020), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf."
+        },
+        {
+          "id": "MLG-R",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 2,
+          "x": 22180,
+          "y": 5340.349999999999,
+          "dualSpacing": 1397.0,
+          "tandemSpacing": 1981.1999999999998,
+          "tire": "1400x530R23",
+          "source": "Aircrafter aircraft.xlsx row 78 (A330-200 WV020), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf."
+        }
+      ],
+      "bodyFit": {
+        "length": 58820,
+        "noseOffset": 6670
+      },
+      "notes": "Complete nose and main gear. Loads use MTOW with the FAA 95% main-gear design assumption; taxi weight is separate. Body is a representative family mesh, with manufacturer length and nose station. ",
+      "sources": [
+        {
+          "id": "manufacturer-acap",
+          "title": "Manufacturer airport planning manual",
+          "url": "https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf",
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
+        },
+        {
+          "id": "aircrafter",
+          "title": "Aircrafter FAARFIELD-derived workbook",
+          "publisher": "ICT Mechanics",
+          "note": "public/data/aircraft.xlsx; SHA256 d12a4bbc1aa20a86e8b2ab1daee04662c35fa3bc88e79c7d059c0e24d6b66419; row 78. Main footprint only; representative tire fields independently reviewed."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "a330-300",
+      "domain": "aircraft",
+      "manufacturer": "Airbus",
+      "model": "A330-300",
+      "gearDesignation": "2D",
+      "mtow": {
+        "value": 230000,
+        "unit": "kg",
+        "basis": "Manufacturer ACAP general characteristics, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf"
+      },
+      "maxTaxiWeight": {
+        "value": 509050,
+        "unit": "lb",
+        "basis": "Aircrafter aircraft.xlsx row 89 (A330-300 WV020), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf."
+      },
+      "percentOnMainGear": 95,
+      "wheelbase": 25375,
+      "mainGearTrack": 10680.699999999999,
+      "tirePressure": {
+        "value": 206,
+        "unit": "psi",
+        "basis": "Manufacturer landing gear footprint, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf"
+      },
+      "assumedFields": [
+        "percentOnMainGear"
+      ],
+      "gears": [
+        {
+          "id": "NLG",
+          "role": "nose",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 0,
+          "y": 0,
+          "dualSpacing": 710,
+          "tandemSpacing": null,
+          "tire": "1050x395R16",
+          "source": "Manufacturer landing gear footprint: nose tire, pitch and wheelbase. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf"
+        },
+        {
+          "id": "MLG-L",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 2,
+          "x": 25375,
+          "y": -5340.349999999999,
+          "dualSpacing": 1397.0,
+          "tandemSpacing": 1981.1999999999998,
+          "tire": "1400x530R23",
+          "source": "Aircrafter aircraft.xlsx row 89 (A330-300 WV020), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf."
+        },
+        {
+          "id": "MLG-R",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 2,
+          "x": 25375,
+          "y": 5340.349999999999,
+          "dualSpacing": 1397.0,
+          "tandemSpacing": 1981.1999999999998,
+          "tire": "1400x530R23",
+          "source": "Aircrafter aircraft.xlsx row 89 (A330-300 WV020), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf."
+        }
+      ],
+      "bodyFit": {
+        "length": 63670,
+        "noseOffset": 6670
+      },
+      "notes": "Complete nose and main gear. Loads use MTOW with the FAA 95% main-gear design assumption; taxi weight is separate. Body is a representative family mesh, with manufacturer length and nose station. ",
+      "sources": [
+        {
+          "id": "manufacturer-acap",
+          "title": "Manufacturer airport planning manual",
+          "url": "https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/AC_A330_20251201.pdf",
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
+        },
+        {
+          "id": "aircrafter",
+          "title": "Aircrafter FAARFIELD-derived workbook",
+          "publisher": "ICT Mechanics",
+          "note": "public/data/aircraft.xlsx; SHA256 d12a4bbc1aa20a86e8b2ab1daee04662c35fa3bc88e79c7d059c0e24d6b66419; row 89. Main footprint only; representative tire fields independently reviewed."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "a220-100",
+      "domain": "aircraft",
+      "manufacturer": "Airbus",
+      "model": "A220-100",
+      "gearDesignation": "D",
+      "mtow": {
+        "value": 140500,
+        "unit": "lb",
+        "basis": "Manufacturer ACAP general characteristics, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+      },
+      "maxTaxiWeight": {
+        "value": 141500,
+        "unit": "lb",
+        "basis": "Airbus ACP aircraft description weight table. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+      },
+      "percentOnMainGear": 95,
+      "wheelbase": 13106.4,
+      "mainGearTrack": 6731.0,
+      "tirePressure": {
+        "value": 200,
+        "unit": "psi",
+        "basis": "Manufacturer landing gear footprint, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+      },
+      "assumedFields": [
+        "percentOnMainGear",
+        "wheelbase (conflicting manufacturer diagrams; general geometry selected)"
+      ],
+      "gears": [
+        {
+          "id": "NLG",
+          "role": "nose",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 0,
+          "y": 0,
+          "dualSpacing": 471.678,
+          "tandemSpacing": null,
+          "tire": "27x8.5R12",
+          "source": "Manufacturer landing gear footprint: nose tire, pitch and wheelbase. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+        },
+        {
+          "id": "MLG-L",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 13106.4,
+          "y": -3365.5,
+          "dualSpacing": 889.0,
+          "tandemSpacing": null,
+          "tire": "H42x15.0R21",
+          "source": "Aircrafter aircraft.xlsx row 43 (A220-100), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf."
+        },
+        {
+          "id": "MLG-R",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 13106.4,
+          "y": 3365.5,
+          "dualSpacing": 889.0,
+          "tandemSpacing": null,
+          "tire": "H42x15.0R21",
+          "source": "Aircrafter aircraft.xlsx row 43 (A220-100), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf."
+        }
+      ],
+      "bodyFit": {
+        "length": 34975.799999999996,
+        "noseOffset": 3530.6
+      },
+      "notes": "Complete nose and main gear. Loads use MTOW with the FAA 95% main-gear design assumption; taxi weight is separate. Body is a representative family mesh, with manufacturer length and nose station. Missing main tire supplied from Airbus ACP pavement footprint tables: H42x15.0R21. Wheelbase uses aircraft general-dimension drawing: 43 ft (-100) / 602.6 in (-300). Pavement-module figures instead state 513.10 / 576.10 in. These conflicting manufacturer dimensions are unresolved; this entry uses the general geometry for visualization. Loading variant and pressure updated to the cited ACP, rather than mixing current tire data with older workbook weights.",
+      "sources": [
+        {
+          "id": "manufacturer-acap",
+          "title": "Manufacturer airport planning manual",
+          "url": "https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf",
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
+        },
+        {
+          "id": "aircrafter",
+          "title": "Aircrafter FAARFIELD-derived workbook",
+          "publisher": "ICT Mechanics",
+          "note": "public/data/aircraft.xlsx; SHA256 d12a4bbc1aa20a86e8b2ab1daee04662c35fa3bc88e79c7d059c0e24d6b66419; row 43. Main footprint only; representative tire fields independently reviewed."
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1.0",
+      "id": "a220-300",
+      "domain": "aircraft",
+      "manufacturer": "Airbus",
+      "model": "A220-300",
+      "gearDesignation": "D",
+      "mtow": {
+        "value": 156300,
+        "unit": "lb",
+        "basis": "Manufacturer ACAP general characteristics, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+      },
+      "maxTaxiWeight": {
+        "value": 157000,
+        "unit": "lb",
+        "basis": "Airbus ACP aircraft description weight table. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+      },
+      "percentOnMainGear": 95,
+      "wheelbase": 15306.039999999999,
+      "mainGearTrack": 6731.0,
+      "tirePressure": {
+        "value": 223,
+        "unit": "psi",
+        "basis": "Manufacturer landing gear footprint, selected weight variant. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+      },
+      "assumedFields": [
+        "percentOnMainGear",
+        "wheelbase (conflicting manufacturer diagrams; general geometry selected)"
+      ],
+      "gears": [
+        {
+          "id": "NLG",
+          "role": "nose",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 0,
+          "y": 0,
+          "dualSpacing": 471.678,
+          "tandemSpacing": null,
+          "tire": "27x8.5R12",
+          "source": "Manufacturer landing gear footprint: nose tire, pitch and wheelbase. https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf"
+        },
+        {
+          "id": "MLG-L",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 15306.039999999999,
+          "y": -3365.5,
+          "dualSpacing": 889.0,
+          "tandemSpacing": null,
+          "tire": "H42x15.0R21",
+          "source": "Aircrafter aircraft.xlsx row 44 (A220-300), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf."
+        },
+        {
+          "id": "MLG-R",
+          "role": "main",
+          "type": "dual",
+          "wheelsAcross": 2,
+          "tandemRows": 1,
+          "x": 15306.039999999999,
+          "y": 3365.5,
+          "dualSpacing": 889.0,
+          "tandemSpacing": null,
+          "tire": "H42x15.0R21",
+          "source": "Aircrafter aircraft.xlsx row 44 (A220-300), FAARFIELD-derived main-wheel coordinates; inches converted to mm. Manufacturer footprint cross-check: https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf."
+        }
+      ],
+      "bodyFit": {
+        "length": 38689.28,
+        "noseOffset": 3388.36
+      },
+      "notes": "Complete nose and main gear. Loads use MTOW with the FAA 95% main-gear design assumption; taxi weight is separate. Body is a representative family mesh, with manufacturer length and nose station. Missing main tire supplied from Airbus ACP pavement footprint tables: H42x15.0R21. Wheelbase uses aircraft general-dimension drawing: 43 ft (-100) / 602.6 in (-300). Pavement-module figures instead state 513.10 / 576.10 in. These conflicting manufacturer dimensions are unresolved; this entry uses the general geometry for visualization. Loading variant and pressure updated to the cited ACP, rather than mixing current tire data with older workbook weights.",
+      "sources": [
+        {
+          "id": "manufacturer-acap",
+          "title": "Manufacturer airport planning manual",
+          "url": "https://www.aircraft.airbus.com/sites/g/files/jlcbta126/files/2025-12/A220-ACP-Issue013-00-27Nov2025.pdf",
+          "note": "General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review."
+        },
+        {
+          "id": "aircrafter",
+          "title": "Aircrafter FAARFIELD-derived workbook",
+          "publisher": "ICT Mechanics",
+          "note": "public/data/aircraft.xlsx; SHA256 d12a4bbc1aa20a86e8b2ab1daee04662c35fa3bc88e79c7d059c0e24d6b66419; row 44. Main footprint only; representative tire fields independently reviewed."
         }
       ]
     }

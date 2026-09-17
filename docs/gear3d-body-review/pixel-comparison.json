@@ -135,6 +135,195 @@
     "maxChannelDifference": 0
   },
   {
+    "id": "A319",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A319",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A319",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A321",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A321",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A321",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A330-200",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A330-200",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A330-200",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A330-300",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A330-300",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A330-300",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A220-100",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A220-100",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A220-100",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A220-300",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A220-300",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "A220-300",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B777",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B777",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B777",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
     "id": "B747",
     "view": "iso",
     "mae": 0,

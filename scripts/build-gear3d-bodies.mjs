@@ -10,6 +10,9 @@ const sourceDir=path.resolve(process.argv[2] || '.tmp/vehicle-reference');
 const root=process.cwd();
 const specs=[
     ...['B737','A380','B787','A320','A350'].map(id=>({id,file:`${id}.glb`,rotation:Math.PI/2})),
+    ...Object.entries({'A319':'a319','A321':'a321','A330-200':'a332','A330-300':'a333',
+        'A220-100':'cs100','A220-300':'cs300','B777':'b773'})
+        .map(([id,file])=>({id,file:`${file}.glb`,rotation:0,removeGear:true,merge:true})),
     {id:'B747',file:'B747.glb',rotation:-Math.PI/2},
     ...['sedan','truck','delivery','delivery-flat'].map(id=>({id,file:`kenney/Models/GLB format/${id}.glb`,rotation:Math.PI})),
     {id:'trailer',file:'kenney/Models/GLB format/delivery.glb',rotation:Math.PI},

@@ -1,0 +1,51 @@
+[
+  {
+    "model": "a319",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/master/models/a319.glb",
+    "sha256": "25de212876725c6e26e0970ddcf5650b8c803ed3912550f596a57acccffbc9ae",
+    "sourceArchive": "a319-source.zip",
+    "archiveSha256": "b5160a5a76d7f30f846c3716795816fa708e36e69ef2c922146096289642b56e"
+  },
+  {
+    "model": "a321",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/master/models/a321.glb",
+    "sha256": "32cf293b8a9a621127df956c719a1e001af034cc7ca3d3a23290dd6886db11eb",
+    "sourceArchive": "a321-source.zip",
+    "archiveSha256": "9d60778fe9d6faf7b903ca879bab69cdd75cc970951445aaa4bf582c3148d836"
+  },
+  {
+    "model": "a332",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/master/models/a332.glb",
+    "sha256": "e223d8e315b59ace952df1f0d8437091eaac0051b4a418a0829d06af6d042c77",
+    "sourceArchive": "a332-source.zip",
+    "archiveSha256": "48d7f92f3748fd631dbc958a71e3960dfd8525d46bc2646da6369e2e69a10ebd"
+  },
+  {
+    "model": "a333",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/master/models/a333.glb",
+    "sha256": "2c4556a82cb6158152d38cf06c95ec9ffb0edbc8815c64030fe021e6f5121af1",
+    "sourceArchive": "a333-source.zip",
+    "archiveSha256": "3c6bb649eda7eedf4c12e9090b858c11ceb43c2210de2dcde23641ed9fa619a1"
+  },
+  {
+    "model": "cs100",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/master/models/cs100.glb",
+    "sha256": "bdef3caf2ca59900c1406f2e836f67e1ba8a70372bb134cd0dc8f41586e7b78a",
+    "sourceArchive": "cs100-source.zip",
+    "archiveSha256": "546ecac2103ed196b57d6991631f0d1cd64d905def499103ff9a56c31be028d1"
+  },
+  {
+    "model": "cs300",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/master/models/cs300.glb",
+    "sha256": "1017903296b3b3bf22cee1b760718a59757c339116ac6514e2dd959728d4b903",
+    "sourceArchive": "cs300-source.zip",
+    "archiveSha256": "fef3c002ed52bcc8c78cb9f06db5cf05fc75c46e6a6c6cc92138da45c2eac92c"
+  },
+  {
+    "model": "b773",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/master/models/b773.glb",
+    "sha256": "df0663ff62b50cd8308c847337eb7ba90dc2c0a5b6803f2cd0ae29deebd6915d",
+    "sourceArchive": "b773-source.zip",
+    "archiveSha256": "04814af12b9cd8b723d9e1ae1f19e66e0bf84f87ab6cc7af47c190da496bace8"
+  }
+]

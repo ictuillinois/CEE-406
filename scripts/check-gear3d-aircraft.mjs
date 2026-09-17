@@ -17,6 +17,10 @@ try {
         assert.equal(await page.evaluate(()=>gear3d.layout.wheels.length),unit.gears.reduce((s,g)=>s+g.wheelsAcross*g.tandemRows,0));
         await page.locator('.g3-figure').screenshot({path:`.tmp/vehicle-reference/review-${unit.id}.png`});
     }
+    await page.locator('#g3-unit').selectOption('b777-300er');
+    await page.waitForFunction(()=>gear3d.store.doc.unit.id==='b777-300er' && gear3d.assembly.hasVehicleBody());
+    assert.match(await page.evaluate(()=>gear3d.assembly.root.getObjectByName('vehicle-body').userData.label),/B777/);
+    await page.locator('.g3-figure').screenshot({path:'.tmp/vehicle-reference/review-b777-300er.png'});
     await page.setViewportSize({width:390,height:844});
     await page.waitForFunction(()=>{
         const rig=gear3d.viewport.cameras;
@@ -34,5 +38,5 @@ try {
     await page.locator('.g3-figure').screenshot({path:'.tmp/vehicle-reference/review-aircraft-mobile.png'});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     assert.deepEqual(errors,[]);
-    console.log('PASS: six aircraft select and render with expected wheels and body fit; mobile has no horizontal overflow; zero page errors.');
+    console.log(`PASS: ${units.length} aircraft select and render with expected wheels and body fit; mobile has no horizontal overflow; zero page errors.`);
 } finally {await browser.close();}

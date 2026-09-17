@@ -1,5 +1,6 @@
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import * as THREE from 'three';
+import {mergeGeometries, mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js';
 // Source models are transformed rigidly into Y-up, nose -Z. No simplification.
 window.prepareBody = async (spec) => {
  const source=await window.loadModel(spec.url);
@@ -11,6 +12,9 @@ window.prepareBody = async (spec) => {
  const namedWheels={};
  source.traverse(o=>{
   if(!o.isMesh)return;
+  if(spec.removeGear) {
+    for(let node=o;node;node=node.parent) if(/gear|wheel|tyre|tire/i.test(node.name))return;
+  }
   let geo=o.geometry.clone().applyMatrix4(o.matrixWorld).applyMatrix4(rotation);
   // Baking a reflected node removes Three's automatic front-face reversal.
   // Reverse triangle winding to keep the source's exterior faces outward.
@@ -92,6 +96,16 @@ window.prepareBody = async (spec) => {
   geo.clearGroups();
   const mesh=new THREE.Mesh(geo,mat);mesh.name='body';group.add(mesh);
  });
+ // The detailed aircraft contain many material primitives. Consolidate their
+ // identical x-ray surfaces into one draw call without simplifying triangles.
+ if(spec.merge) {
+   const geometries=group.children.map(m=>m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone());
+   const joined=mergeGeometries(geometries);
+   const compact=mergeVertices(joined,1e-6);
+   group.children.forEach(m=>m.geometry.dispose());
+   geometries.forEach(g=>g.dispose());joined.dispose();group.clear();
+   group.add(new THREE.Mesh(compact,mat));
+ }
  const box=new THREE.Box3().setFromObject(group), size=box.getSize(new THREE.Vector3());
  const offset=new THREE.Vector3(-(box.min.x+box.max.x)/2,0,-box.min.z);
  group.children.forEach(m=>m.geometry.translate(...offset.toArray()));

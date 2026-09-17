@@ -43,7 +43,9 @@ test('every library body has finite, lightweight geometry above pavement; schema
             assert.equal(mesh.userData.pickable, false);
             mesh.geometry.dispose();
         }
-        assert.ok(triangles < 6000, `${unit.id}: ${triangles}`);
+        const detailed=['A319','A321','A330-200','A330-300','A220-100','A220-300','B777'].includes(vehicleBodySpec(unit).id);
+        assert.ok(triangles < (detailed?30000:6000), `${unit.id}: ${triangles}`);
+        if(detailed) assert.equal(body.children.length,1,'detailed aircraft use one body draw call');
         new Set(body.children.map(mesh=>mesh.material)).forEach(material=>material.dispose());
         assert.equal(JSON.stringify(unit), before);
     }

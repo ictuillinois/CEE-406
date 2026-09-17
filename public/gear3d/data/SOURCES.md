@@ -475,3 +475,8 @@ See [the review and primary references](../../../docs/gear3d-body-review/aircraf
 and [the coordinate audit](../../../docs/gear3d-body-review/aircrafter-audit.json)
 for row numbers, workbook hash, variant choices, and A350-1000 corrections.
 These entries use mainGearTrack directly, rather than deriving it from outer width.
+
+The [second expansion review](../../../docs/gear3d-body-review/aircraft-expansion-2.md)
+adds A319-100, A321-200, A330-200/-300 and A220-100/-300. It documents
+manufacturer weight variants, the corrected A321 tire, and conflicting A220
+wheelbase diagrams. The A220 conflict is exposed in assumedFields and unit notes.

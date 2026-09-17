@@ -260,6 +260,192 @@
       "corrections": [
         "Airbus overrides workbook: track 10374.093 -> 10734 mm; middle axle pitch 1396.898 -> 1474 mm; tire 1400x530R23 -> 50x20R22."
       ]
+    },
+    {
+      "id": "a319-100",
+      "row": 61,
+      "name": "A319-100 std",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -3331.451303100586
+        },
+        {
+          "x": 0.0,
+          "y": -4258.551303100586
+        },
+        {
+          "x": 0.0,
+          "y": 4258.551303100586
+        },
+        {
+          "x": 0.0,
+          "y": 3331.451303100586
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "id": "a321-200",
+      "row": 74,
+      "name": "A321-200 std",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -3331.464093017578
+        },
+        {
+          "x": 0.0,
+          "y": -4258.564093017578
+        },
+        {
+          "x": 0.0,
+          "y": 4258.564093017578
+        },
+        {
+          "x": 0.0,
+          "y": 3331.464093017578
+        }
+      ],
+      "corrections": [
+        "Main tire corrected from inherited 46x17R20 to manufacturer 1270x455R22 (A321 AC 7-2-0 page 3, WV000)."
+      ]
+    },
+    {
+      "id": "a330-200",
+      "row": 78,
+      "name": "A330-200 WV020",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": -990.5999999999999,
+          "y": -4641.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": -6038.849999999999
+        },
+        {
+          "x": -990.5999999999999,
+          "y": -6038.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": -4641.849999999999
+        },
+        {
+          "x": -990.5999999999999,
+          "y": 4641.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": 6038.849999999999
+        },
+        {
+          "x": -990.5999999999999,
+          "y": 6038.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": 4641.849999999999
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "id": "a330-300",
+      "row": 89,
+      "name": "A330-300 WV020",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": -990.5999999999999,
+          "y": -4641.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": -6038.849999999999
+        },
+        {
+          "x": -990.5999999999999,
+          "y": -6038.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": -4641.849999999999
+        },
+        {
+          "x": -990.5999999999999,
+          "y": 4641.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": 6038.849999999999
+        },
+        {
+          "x": -990.5999999999999,
+          "y": 6038.849999999999
+        },
+        {
+          "x": 990.5999999999999,
+          "y": 4641.849999999999
+        }
+      ],
+      "corrections": []
+    },
+    {
+      "id": "a220-100",
+      "row": 43,
+      "name": "A220-100",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -2921.0
+        },
+        {
+          "x": 0.0,
+          "y": -3810.0
+        },
+        {
+          "x": 0.0,
+          "y": 3810.0
+        },
+        {
+          "x": 0.0,
+          "y": 2921.0
+        }
+      ],
+      "corrections": [
+        "Missing main tire supplied from Airbus ACP pavement footprint tables: H42x15.0R21.",
+        "Wheelbase uses aircraft general-dimension drawing: 43 ft (-100) / 602.6 in (-300). Pavement-module figures instead state 513.10 / 576.10 in. These conflicting manufacturer dimensions are unresolved; this entry uses the general geometry for visualization.",
+        "Loading variant and pressure updated to the cited ACP, rather than mixing current tire data with older workbook weights."
+      ]
+    },
+    {
+      "id": "a220-300",
+      "row": 44,
+      "name": "A220-300",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -2921.0
+        },
+        {
+          "x": 0.0,
+          "y": -3810.0
+        },
+        {
+          "x": 0.0,
+          "y": 3810.0
+        },
+        {
+          "x": 0.0,
+          "y": 2921.0
+        }
+      ],
+      "corrections": [
+        "Missing main tire supplied from Airbus ACP pavement footprint tables: H42x15.0R21.",
+        "Wheelbase uses aircraft general-dimension drawing: 43 ft (-100) / 602.6 in (-300). Pavement-module figures instead state 513.10 / 576.10 in. These conflicting manufacturer dimensions are unresolved; this entry uses the general geometry for visualization.",
+        "Loading variant and pressure updated to the cited ACP, rather than mixing current tire data with older workbook weights."
+      ]
     }
   ],
   "limitations": [

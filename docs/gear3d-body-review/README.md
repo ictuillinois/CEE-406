@@ -153,3 +153,6 @@ Revision validation: 38 tests, Chrome body/default/project checks, and all artic
 
 See [the Aircrafter review](aircraft-iteration.md) for six new aircraft,
 A320/A350 assets, source corrections, and reproducible validation.
+
+The [second aircraft expansion](aircraft-expansion-2.md) adds six more aircraft,
+seven matching meshes, and a detailed review of A220 source discrepancies.
