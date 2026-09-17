@@ -95,5 +95,45 @@
     "sourceArchive": "crj700-source.zip",
     "archiveSha256": "cb50c7f21002f34d463d5c613d72d6f09b5388b0298b2be8a5f1c9f68cd83126",
     "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "b752",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/b752.glb",
+    "sha256": "7697b4d7995916d92a2e650ea4546800710b39e29635553ce7fbdecd56d5de3d",
+    "sourceArchive": "b752-source.zip",
+    "archiveSha256": "2ca2deb51d3ba8d127d805629c240f24ba19d4c934028c0594709baa964ebdea",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "b753",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/b753.glb",
+    "sha256": "45014a61cf8880c0e396b4ecb76bfee23f67d00354de74c3bd38d07f1bac942b",
+    "sourceArchive": "b753-source.zip",
+    "archiveSha256": "4620d5f3421c568404f2073cd0fa5e52f8c16b122b837d7c6bcb5924dc5c0beb",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "b762",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/b762.glb",
+    "sha256": "eca66b1131a88dfee55256c0e57bdf594610139597ed66dec2a612ce1179c915",
+    "sourceArchive": "b762-source.zip",
+    "archiveSha256": "846cc120a4e06166a28ba1e6ecc766affb6a3f75caf93ed903e87be5840dd2fe",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "b763",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/b763.glb",
+    "sha256": "1b19acda8cc1af71b10ca5327bc0c22e262b7e66c6b05e2e29dadf0c86f34fb2",
+    "sourceArchive": "b763-source.zip",
+    "archiveSha256": "57bfa16a70485582815ea27df3f6b8ca9d4d08dc0124f0a3667bbac1a7dc9e5a",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "b764",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/b764.glb",
+    "sha256": "7e0e9f83e6dd67ed47cd44d4b47f1afd0782df150fca56a4c38e8cef1d655d07",
+    "sourceArchive": "b764-source.zip",
+    "archiveSha256": "0e783a89e1f3f252fd875f02624490858c66125cc4826031d3b4fe1609d0646a",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
   }
 ]

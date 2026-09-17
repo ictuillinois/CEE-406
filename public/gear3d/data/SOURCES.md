@@ -480,3 +480,16 @@ The [second expansion review](../../../docs/gear3d-body-review/aircraft-expansio
 adds A319-100, A321-200, A330-200/-300 and A220-100/-300. It documents
 manufacturer weight variants, the corrected A321 tire, and conflicting A220
 wheelbase diagrams. The A220 conflict is exposed in assumedFields and unit notes.
+
+## Boeing 757/767 expansion
+
+`aircraft/boeing-757-767.json` adds 757-300, 767-200 and 767-300ER and replaces
+the older 757-200 / 767-400ER entries from `boeing.json`. All five use dedicated
+variant meshes and directly dimensioned Boeing ACAP footprints. This supersedes
+the historical outer-width derivations and assumed nose spacing for these two
+families described above. The catalog retains the existing IDs for saved-project
+compatibility; saved projects retain their own stored dimensions.
+
+The [review](../../../docs/gear3d-body-review/boeing-757-767.md) records exact
+manual pages, weight variants, corrected geometry, model licensing, and known
+visual differences. Reproduce the catalog with `scripts/build-gear3d-boeing.mjs`.

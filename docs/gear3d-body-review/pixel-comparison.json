@@ -700,5 +700,140 @@
     "silhouetteIoU": 1,
     "changedPixels": 0,
     "maxChannelDifference": 0
+  },
+  {
+    "id": "B757-200",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B757-200",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B757-200",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B757-300",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B757-300",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B757-300",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-200",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-200",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-200",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-300",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-300",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-300",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-400",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-400",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "B767-400",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
   }
 ]

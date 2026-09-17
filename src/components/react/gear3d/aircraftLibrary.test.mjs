@@ -71,6 +71,40 @@ test('A350-1000 uses the manufacturer track, wider middle axle and smaller main 
 });
 test('unknown aircraft never silently acquire a 787 body',()=>{
     assert.equal(vehicleBodySpec({...units[0],id:'c17'}),null);
+    assert.equal(vehicleBodySpec({...units[0],id:'b767-999'}),null);
+});
+
+test('757 and 767 variants retain their published footprints and distinct bodies',()=>{
+    const additions=read('public/gear3d/data/aircraft/boeing-757-767.json').units;
+    const expected=[
+        ['b757-200','B757-200',720,288,24,34,45,255500,256000,183],
+        ['b757-300','B757-300',880,288,24,34,45,270000,271000,200],
+        ['b767-200','B767-200',775,366,25,45,56,315000,317000,165],
+        ['b767-300er','B767-300',896,366,25,45,56,412000,413000,200],
+        ['b767-400er','B767-400',1030,366,25,45.8,54,450000,451000,213]
+    ];
+    assert.equal(additions.length,expected.length);
+    const index=read('public/gear3d/data/aircraft/index.json');
+    const catalog=index.files.flatMap(f=>read(`public/gear3d/data/aircraft/${f}`).units);
+    assert.equal(new Set(catalog.map(u=>u.id)).size,catalog.length,'catalog IDs remain unique');
+    for(const [id,body,wb,track,nose,dual,tandem,mtow,taxi,psi] of expected) {
+        const u=additions.find(u=>u.id===id),layout=resolveLayout(u);
+        assert.deepEqual(validateUnit(u).errors,[],id);
+        assert.equal(vehicleBodySpec(u).id,body);
+        assert.equal(vehicleBodySpec(u).representative,false);
+        assert.equal(u.mtow.value,mtow);assert.equal(u.maxTaxiWeight.value,taxi);
+        assert.equal(u.tirePressure.value,psi);
+        assert.ok(Math.abs(u.wheelbase-wb*25.4)<1e-6);
+        assert.ok(Math.abs(u.mainGearTrack-track*25.4)<1e-6);
+        assert.ok(Math.abs(u.gears[0].dualSpacing-nose*25.4)<1e-6);
+        const mains=layout.wheels.filter(w=>w.axleId!=='NLG');
+        assert.equal(mains.length,8);
+        for(const side of [-1,1])for(const row of [-1,1])for(const across of [-1,1])
+            assert.ok(mains.some(w=>Math.abs(w.x-(wb+row*tandem/2)*25.4)<1e-6 &&
+                Math.abs(w.y-(side*track/2+across*dual/2)*25.4)<1e-6),id);
+        assert.ok(Math.abs(layout.wheels.reduce((s,w)=>s+w.loadKn,0)-mtow*.45359237*9.80665/1000)<1e-8);
+        assert.ok(u.sources[0].url.startsWith('https://www.boeing.com/'));
+    }
 });
 test('new families retain manufacturer tire corrections and disclose A220 source conflicts',()=>{
     const a321=units.find(u=>u.id==='a321-200');

@@ -62,10 +62,11 @@ Unknown aircraft families receive no substitute body.
 
 A319.glb, A321.glb, A330-200.glb, A330-300.glb, A220-100.glb,
 A220-300.glb, B777.glb, E170.glb, E190.glb, CRJ700.glb, CRJ900.glb,
-DHC8-400.glb and ATR42.glb are adapted from the FlightGear/FGMEMBERS
+DHC8-400.glb, ATR42.glb, B757-200.glb, B757-300.glb, B767-200.glb,
+B767-300.glb and B767-400.glb are adapted from the FlightGear/FGMEMBERS
 contributors' aircraft, distributed by
 [Flightradar24/fr24-3d-models](https://github.com/Flightradar24/fr24-3d-models).
-These thirteen derived assets are licensed under [GNU GPL v2](sources/GPL-2.0.txt).
+These eighteen derived assets are licensed under [GNU GPL v2](sources/GPL-2.0.txt).
 The other assets retain their separately stated licenses above.
 
 | Body | Upstream authors/project | Corresponding editable source and original GLB |
@@ -81,6 +82,9 @@ The other assets retain their separately stated licenses above.
 | CRJ700 / CRJ900 | [FGMEMBERS CRJ700-family](https://github.com/FGMEMBERS/CRJ700-family) | [crj700-source.zip](sources/crj700-source.zip), [crj900-source.zip](sources/crj900-source.zip) |
 | DHC8-400 | [FGMEMBERS Q400](https://github.com/FGMEMBERS/Q400) | [q400-source.zip](sources/q400-source.zip) |
 | ATR42 | [FGMEMBERS ATR-42-500](https://github.com/FGMEMBERS/ATR-42-500) | [atr42-source.zip](sources/atr42-source.zip) |
+| B757-200 / B757-300 | [FGMEMBERS 757-200](https://github.com/FGMEMBERS/757-200) | [b752-source.zip](sources/b752-source.zip), [b753-source.zip](sources/b753-source.zip) |
+| B767-200 / B767-400 | [FGMEMBERS 767](https://github.com/FGMEMBERS/767) | [b762-source.zip](sources/b762-source.zip), [b764-source.zip](sources/b764-source.zip) |
+| B767-300 | [FGMEMBERS 767-300](https://github.com/FGMEMBERS/767-300) | [b763-source.zip](sources/b763-source.zip) |
 
 Changes by CEE-406: glTF 1 converted to glTF 2 with gltf-pipeline 4.3.1;
 textures and materials removed; named gear nodes excluded; transforms baked;
@@ -104,3 +108,11 @@ no triangles are removed by this correction. The archived original is unchanged.
 Pixel comparisons use this explicitly corrected source as their reference.
 Runtime ground height is calibrated for turboprops and CRJs, with illustrative
 strut attachment heights for nacelle/sponson gears. These overlays are not CAD.
+
+The five 757/767 models are pinned to FR24 commit
+`dd53267690c6a4ecbb290a3acf0284333a5d68a9`. Each variant uses its own mesh.
+The 757-200 source winglets are retained; its span therefore differs from the
+non-winglet ACAP drawing. The 767-300 mesh represents the 300ER entry.
+Engine options and mesh details remain illustrative. Ground attitude uses
+the midpoint of each published tail-clearance range; attachment heights are
+visually calibrated. No source geometry is stretched to create another variant.

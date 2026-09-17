@@ -12,7 +12,8 @@ const specs=[
     ...['B737','A380','B787','A320','A350'].map(id=>({id,file:`${id}.glb`,rotation:Math.PI/2})),
     ...Object.entries({'A319':'a319','A321':'a321','A330-200':'a332','A330-300':'a333',
         'A220-100':'cs100','A220-300':'cs300','B777':'b773',
-        'E170':'e170','E190':'e190','CRJ700':'crj700','CRJ900':'crj900','DHC8-400':'q400'})
+        'E170':'e170','E190':'e190','CRJ700':'crj700','CRJ900':'crj900','DHC8-400':'q400',
+        'B757-200':'b752','B757-300':'b753','B767-200':'b762','B767-300':'b763','B767-400':'b764'})
         .map(([id,file])=>({id,file:`${file}.glb`,rotation:0,removeGear:true,merge:true})),
     {id:'ATR42',file:'atr42.glb',rotation:0,removeGear:true,merge:true,
         spanRatio:24.572/22.67,preserveHalfSpan:6},

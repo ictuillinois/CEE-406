@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const units=JSON.parse(fs.readFileSync('public/gear3d/data/aircraft/aircrafter-reviewed.json')).units;
+const units=['aircrafter-reviewed','boeing-757-767'].flatMap(name=>
+    JSON.parse(fs.readFileSync(`public/gear3d/data/aircraft/${name}.json`)).units);
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
     const page=await browser.newPage({viewport:{width:1600,height:1100}}),errors=[];
@@ -42,7 +43,7 @@ try {
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     for(const [width,height] of [[320,740],[768,1024],[1024,768]]) {
         await page.setViewportSize({width,height});
-        for(const id of ['e190-std','crj900','dhc8-400','atr42-500']) {
+        for(const id of ['e190-std','crj900','dhc8-400','atr42-500','b757-300','b767-400er']) {
             await page.locator('#g3-unit').selectOption(id);
             await page.waitForFunction(id=>gear3d.store.doc.unit.id===id && gear3d.assembly.hasVehicleBody(),id);
             await page.waitForFunction(()=>{

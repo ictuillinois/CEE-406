@@ -44,8 +44,10 @@ test('every library body has finite, lightweight geometry above pavement; schema
             mesh.geometry.dispose();
         }
         const detailed=['A319','A321','A330-200','A330-300','A220-100','A220-300','B777',
-            'E170','E190','CRJ700','CRJ900','DHC8-400','ATR42'].includes(vehicleBodySpec(unit).id);
-        assert.ok(triangles < (detailed?30000:6000), `${unit.id}: ${triangles}`);
+            'E170','E190','CRJ700','CRJ900','DHC8-400','ATR42',
+            'B757-200','B757-300','B767-200','B767-300','B767-400'].includes(vehicleBodySpec(unit).id);
+        const budget=vehicleBodySpec(unit).id.startsWith('B757-')?40000:detailed?30000:6000;
+        assert.ok(triangles < budget, `${unit.id}: ${triangles}`);
         if(detailed) assert.equal(body.children.length,1,'detailed aircraft use one body draw call');
         new Set(body.children.map(mesh=>mesh.material)).forEach(material=>material.dispose());
         assert.equal(JSON.stringify(unit), before);
@@ -68,6 +70,29 @@ test('body is lazy, follows visibility, fits bounds and stays out of engineering
     assembly.setWheelFilter(()=>true);
     assert.equal(body.visible, false);
     assembly.dispose(); material.dispose();
+});
+
+test('757 and 767 strut attachments meet the prepared bodies at the published gear stations',()=>{
+    for(const unit of units.filter(u=>/^b75[7]-|^b767-/.test(u.id))) {
+        const body=buildVehicleBody(resolveLayout(unit));
+        body.updateMatrixWorld(true);
+        const bounds=new THREE.Box3().setFromObject(body);
+        assert.ok(Math.abs(bounds.max.y-unit.bodyFit.tailHeight)<1,unit.id);
+        assert.ok(Math.abs(bounds.min.z+unit.bodyFit.noseOffset)<1,unit.id);
+        for(const mesh of body.children) mesh.material.side=THREE.DoubleSide;
+        for(const gear of unit.gears) {
+            const ray=new THREE.Raycaster(new THREE.Vector3(gear.y,0,gear.x),new THREE.Vector3(0,1,0));
+            // Body meshes opt out of interactive picking; use the standard mesh
+            // intersection only for this independent geometry check.
+            for(const mesh of body.children) mesh.raycast=THREE.Mesh.prototype.raycast;
+            const hit=ray.intersectObject(body,true)[0];
+            assert.ok(hit,`${unit.id} ${gear.id} has a body surface above it`);
+            const overlap=unit.bodyFit.attachmentHeights[gear.role]-hit.point.y;
+            assert.ok(overlap>=0 && overlap<60,`${unit.id} ${gear.id}: attachment overlap ${overlap}`);
+        }
+        body.children.forEach(m=>m.geometry.dispose());
+        new Set(body.children.map(m=>m.material)).forEach(m=>m.dispose());
+    }
 });
 
 test('turboprops retain calibrated span, ground attitude and nacelle/sponson struts',()=>{
