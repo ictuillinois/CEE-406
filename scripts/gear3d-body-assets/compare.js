@@ -20,7 +20,7 @@ window.compareBody=async(spec,view)=>{
  }
  const dc=document.createElement('canvas');dc.width=w;dc.height=h;dc.getContext('2d').putImageData(diff,0,0);
  const sheet=document.createElement('canvas');sheet.width=w*3;sheet.height=h+42;const ctx=sheet.getContext('2d');ctx.fillStyle='white';ctx.fillRect(0,0,sheet.width,sheet.height);ctx.fillStyle='#253346';ctx.font='16px sans-serif';
- ['Source body (wheels removed)','Local prepared body','Pixel difference (12x)'].forEach((t,i)=>ctx.fillText(`${spec.id} ${view}: ${t}`,i*w+12,27));
+ [spec.spanRatio?'Source body (corrected span)':'Source body (wheels removed)','Local prepared body','Pixel difference (12x)'].forEach((t,i)=>ctx.fillText(`${spec.id} ${view}: ${t}`,i*w+12,27));
  ctx.drawImage(a,0,42);ctx.drawImage(b,w,42);ctx.drawImage(dc,w*2,42);
  renderer.dispose();
  return {png:sheet.toDataURL().split(',')[1],metrics:{mae:sum/(w*h*3),foregroundMae:fgSum/(Math.max(union,1)*3),silhouetteIoU:intersection/Math.max(union,1),changedPixels:changed,maxChannelDifference:max}};

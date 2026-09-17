@@ -61,10 +61,11 @@ Unknown aircraft families receive no substitute body.
 ## Additional aircraft: FlightGear / Flightradar24 (GPL v2)
 
 A319.glb, A321.glb, A330-200.glb, A330-300.glb, A220-100.glb,
-A220-300.glb and B777.glb are adapted from the FlightGear/FGMEMBERS
+A220-300.glb, B777.glb, E170.glb, E190.glb, CRJ700.glb, CRJ900.glb,
+DHC8-400.glb and ATR42.glb are adapted from the FlightGear/FGMEMBERS
 contributors' aircraft, distributed by
 [Flightradar24/fr24-3d-models](https://github.com/Flightradar24/fr24-3d-models).
-These seven derived assets are licensed under [GNU GPL v2](sources/GPL-2.0.txt).
+These thirteen derived assets are licensed under [GNU GPL v2](sources/GPL-2.0.txt).
 The other assets retain their separately stated licenses above.
 
 | Body | Upstream authors/project | Corresponding editable source and original GLB |
@@ -76,6 +77,10 @@ The other assets retain their separately stated licenses above.
 | A220-100 | [FGMEMBERS CSeries](https://github.com/FGMEMBERS/CSeries), CS100 model | [cs100-source.zip](sources/cs100-source.zip) |
 | A220-300 | [FGMEMBERS CSeries](https://github.com/FGMEMBERS/CSeries), CS300 model | [cs300-source.zip](sources/cs300-source.zip) |
 | B777 | [FGMEMBERS 777](https://github.com/FGMEMBERS/777), 777-300 model | [b773-source.zip](sources/b773-source.zip) |
+| E170 / E190 | [FGMEMBERS E-jet-family](https://github.com/FGMEMBERS/E-jet-family) | [e170-source.zip](sources/e170-source.zip), [e190-source.zip](sources/e190-source.zip) |
+| CRJ700 / CRJ900 | [FGMEMBERS CRJ700-family](https://github.com/FGMEMBERS/CRJ700-family) | [crj700-source.zip](sources/crj700-source.zip), [crj900-source.zip](sources/crj900-source.zip) |
+| DHC8-400 | [FGMEMBERS Q400](https://github.com/FGMEMBERS/Q400) | [q400-source.zip](sources/q400-source.zip) |
+| ATR42 | [FGMEMBERS ATR-42-500](https://github.com/FGMEMBERS/ATR-42-500) | [atr42-source.zip](sources/atr42-source.zip) |
 
 Changes by CEE-406: glTF 1 converted to glTF 2 with gltf-pipeline 4.3.1;
 textures and materials removed; named gear nodes excluded; transforms baked;
@@ -90,3 +95,12 @@ sources, original glTF inputs, and GPL license. Reproduction scripts are in
 `convert-gear3d-fr24.mjs`, `build-gear3d-bodies.mjs`, and `gear3d-body-assets/`.
 Archive and input SHA-256 hashes are recorded in [sources/manifest.json](sources/manifest.json).
 Source archives are downloaded only when requested; they are never loaded by the viewer.
+
+Regional-aircraft additions retain static propellers and the source surface detail.
+The ATR42 source wing is over-wide: vertices beyond 6 source units from the
+centerline are compressed laterally to the manufacturer's 24.572 m span at
+22.67 m body length. Fuselage, nacelles, propellers and inner wing remain intact;
+no triangles are removed by this correction. The archived original is unchanged.
+Pixel comparisons use this explicitly corrected source as their reference.
+Runtime ground height is calibrated for turboprops and CRJs, with illustrative
+strut attachment heights for nacelle/sponson gears. These overlays are not CAD.

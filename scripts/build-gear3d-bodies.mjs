@@ -11,15 +11,22 @@ const root=process.cwd();
 const specs=[
     ...['B737','A380','B787','A320','A350'].map(id=>({id,file:`${id}.glb`,rotation:Math.PI/2})),
     ...Object.entries({'A319':'a319','A321':'a321','A330-200':'a332','A330-300':'a333',
-        'A220-100':'cs100','A220-300':'cs300','B777':'b773'})
+        'A220-100':'cs100','A220-300':'cs300','B777':'b773',
+        'E170':'e170','E190':'e190','CRJ700':'crj700','CRJ900':'crj900','DHC8-400':'q400'})
         .map(([id,file])=>({id,file:`${file}.glb`,rotation:0,removeGear:true,merge:true})),
+    {id:'ATR42',file:'atr42.glb',rotation:0,removeGear:true,merge:true,
+        spanRatio:24.572/22.67,preserveHalfSpan:6},
     {id:'B747',file:'B747.glb',rotation:-Math.PI/2},
     ...['sedan','truck','delivery','delivery-flat'].map(id=>({id,file:`kenney/Models/GLB format/${id}.glb`,rotation:Math.PI})),
     {id:'trailer',file:'kenney/Models/GLB format/delivery.glb',rotation:Math.PI},
     {id:'bus',file:'Bus.obj',rotation:-Math.PI/2},
     {id:'motorcycle',file:'motorcycle.glb',rotation:0}
 ];
-for(const spec of specs) if(!fs.existsSync(path.join(sourceDir,spec.file))) throw Error(`Missing source: ${spec.file}`);
+// Optional IDs permit an incremental, reproducible bake without touching old reviews.
+const selected = process.argv.slice(3);
+const jobs = selected.length ? specs.filter(s=>selected.includes(s.id)) : specs;
+if(selected.some(id=>!specs.some(s=>s.id===id))) throw Error('Unknown body ID');
+for(const spec of jobs) if(!fs.existsSync(path.join(sourceDir,spec.file))) throw Error(`Missing source: ${spec.file}`);
 const server=http.createServer((req,res)=>{
     const requestPath=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
     const source=requestPath.startsWith('/__source/');
@@ -40,8 +47,9 @@ try {
     await page.waitForFunction(()=>window.readyBake&&window.readyCompare);
     const assets='public/gear3d/bodies', review='docs/gear3d-body-review';
     fs.mkdirSync(assets,{recursive:true});fs.mkdirSync(review,{recursive:true});
-    const manifest={}, comparisons=[];
-    for(const spec of specs){
+    const manifest=selected.length?JSON.parse(fs.readFileSync(`${assets}/manifest.json`)):{};
+    const comparisons=selected.length?JSON.parse(fs.readFileSync(`${review}/pixel-comparison.json`)).filter(r=>!selected.includes(r.id)):[];
+    for(const spec of jobs){
         spec.url='/__source/'+spec.file;
         const result=await page.evaluate(s=>window.prepareBody(s),spec);
         fs.writeFileSync(`${assets}/${spec.id}.glb`,Buffer.from(result.bytes));

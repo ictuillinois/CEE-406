@@ -13,10 +13,11 @@ export function vehicleBodySpec(unit) {
     if (!unit || unit.kind === 'schematic') return null;
     if (unit.domain === 'aircraft') {
         if (!unit.gears?.some(g => g.role === 'nose')) return null;
-        const family = String(unit.id).toLowerCase().match(/^(a220-100|a220-300|a319|a320|a321|a330-200|a330-300|a350|a380|b737|b747|b757|b767|b777|b787)(?:-|$)/)?.[1];
+        const family = String(unit.id).toLowerCase().match(/^(e170|e190|crj700|crj900|dhc8-400|atr42|a220-100|a220-300|a319|a320|a321|a330-200|a330-300|a350|a380|b737|b747|b757|b767|b777|b787)(?:-|$)/)?.[1];
         const id = {'a220-100':'A220-100','a220-300':'A220-300',a319:'A319',a320:'A320',a321:'A321',
             'a330-200':'A330-200','a330-300':'A330-300',a350:'A350',a380:'A380',b737:'B737',b747:'B747',
-            b757:'B737',b767:'B787',b777:'B777',b787:'B787'}[family];
+            b757:'B737',b767:'B787',b777:'B777',b787:'B787',e170:'E170',e190:'E190',
+            crj700:'CRJ700',crj900:'CRJ900','dhc8-400':'DHC8-400',atr42:'ATR42'}[family];
         if (!id) return null;
         return { id, label: `Representative ${id} airframe`, aircraft: true,
             representative: !unit.id.toLowerCase().includes(id.toLowerCase()) };
@@ -129,6 +130,14 @@ export function buildVehicleBody(layout) {
         fuselageBelly=belly;
         const gearTop=Math.max(...mains.map(a=>a.axleHeight+a.geometry.overallDiameter*1.35));
         lift=Math.max(gearTop-belly*sy, -meta.minY*sy + 150);
+        // High-wing turboprops must sit at their documented ground attitude,
+        // with mains reaching the nacelles/sponsons, rather than floating at
+        // the generic jet belly height. Height is an illustrative rigid fit.
+        if(Number.isFinite(fit?.tailHeight) && fit.tailHeight>0) {
+            lift=Math.max(fit.tailHeight-meta.maxY*sy,-meta.minY*sy+150);
+            group.userData.aircraftFit ??= {};
+            group.userData.aircraftFit.tailHeight=meta.maxY*sy+lift;
+        }
     } else {
         const width=layout.extents.maxY-layout.extents.minY;
         sx=width/meta.width; sy=sx * (spec.id.startsWith('delivery') ? 1.35 : 1);

@@ -9,6 +9,9 @@ try {
     await page.goto(process.argv[2] || 'http://127.0.0.1:8770/tools/gear3d/');
     await page.waitForFunction(()=>window.gear3d?.assembly);
     await page.locator('#g3-domain').selectOption('aircraft');
+    const groups=await page.locator('#g3-unit optgroup').evaluateAll(gs=>gs.map(g=>g.label));
+    for(const name of ['Embraer','Bombardier / Canadair','De Havilland Canada','ATR'])
+        assert.ok(groups.includes(name),`${name} is discoverable in the model picker`);
     for(const unit of units) {
         await page.locator('#g3-unit').selectOption(unit.id);
         await page.waitForFunction(id=>gear3d.store.doc.unit.id===id && gear3d.assembly.hasVehicleBody(),unit.id);
@@ -37,6 +40,25 @@ try {
     }),true,'resized Quad fits aircraft bounds');
     await page.locator('.g3-figure').screenshot({path:'.tmp/vehicle-reference/review-aircraft-mobile.png'});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    for(const [width,height] of [[320,740],[768,1024],[1024,768]]) {
+        await page.setViewportSize({width,height});
+        for(const id of ['e190-std','crj900','dhc8-400','atr42-500']) {
+            await page.locator('#g3-unit').selectOption(id);
+            await page.waitForFunction(id=>gear3d.store.doc.unit.id===id && gear3d.assembly.hasVehicleBody(),id);
+            await page.waitForFunction(()=>{
+                const rig=gear3d.viewport.cameras,c=document.getElementById('g3-canvas').getBoundingClientRect();
+                return Math.abs(rig.aspect-c.width/c.height)<.01;
+            });
+            assert.equal(await page.evaluate(()=>{
+                const rig=gear3d.viewport.cameras,b=gear3d.assembly.visibleBounds(),size=b.getSize(b.min.clone());
+                return ['plan','side','front'].every(mode=>{
+                    const e=rig._extentsFor(mode,size),s=rig.states[mode];
+                    return e.horizontal<=2*s.halfHeight*rig.aspect && e.vertical<=2*s.halfHeight;
+                }) && document.documentElement.scrollWidth<=innerWidth;
+            }),true,`${id} fits at ${width}px`);
+        }
+        await page.locator('.g3-figure').screenshot({path:`.tmp/vehicle-reference/regional-${width}.png`});
+    }
     assert.deepEqual(errors,[]);
     console.log(`PASS: ${units.length} aircraft select and render with expected wheels and body fit; mobile has no horizontal overflow; zero page errors.`);
 } finally {await browser.close();}

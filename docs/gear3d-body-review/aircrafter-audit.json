@@ -446,6 +446,214 @@
         "Wheelbase uses aircraft general-dimension drawing: 43 ft (-100) / 602.6 in (-300). Pavement-module figures instead state 513.10 / 576.10 in. These conflicting manufacturer dimensions are unresolved; this entry uses the general geometry for visualization.",
         "Loading variant and pressure updated to the cited ACP, rather than mixing current tire data with older workbook weights."
       ]
+    },
+    {
+      "id": "e170-std",
+      "row": 276,
+      "name": "EMB-170 STD",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -2247.9
+        },
+        {
+          "x": 0.0,
+          "y": -2959.1
+        },
+        {
+          "x": 0.0,
+          "y": 2959.1
+        },
+        {
+          "x": 0.0,
+          "y": 2247.9
+        }
+      ],
+      "corrections": [
+        "Missing tires supplied from the APM. Nose 24x7.7 is normalized with its 10-inch rim from the Goodyear databook.",
+        "Manufacturer track/pitch 5200/710 mm supersede rounded workbook 5207/711.2 mm.",
+        "Wheelbase uses pavement footprint 10.62 m; general drawing instead gives 10.60 m."
+      ],
+      "workbookCategory": "Regional/Commuter",
+      "manufacturer": "Embraer",
+      "geometryOverride": {
+        "track": 5200,
+        "mainPitch": 710
+      },
+      "reference": "Embraer APM-1346 revision 17 (2015), manufacturer document mirrored by Manuals.plus: 2-2, 2-4 and 7-2 (PDF pages 28, 30, 98)"
+    },
+    {
+      "id": "e190-std",
+      "row": 278,
+      "name": "EMB-190 STD",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -2540.0
+        },
+        {
+          "x": 0.0,
+          "y": -3403.6
+        },
+        {
+          "x": 0.0,
+          "y": 3403.6
+        },
+        {
+          "x": 0.0,
+          "y": 2540.0
+        }
+      ],
+      "corrections": [
+        "Missing tires supplied from the APM. Nose 24x7.7 is normalized with its 10-inch rim from the Goodyear databook.",
+        "Manufacturer track/pitch 5940/870 mm supersede workbook 5943.6/863.6 mm.",
+        "Main pressure 147 -> 157 psi from the current footprint; older pavement charts have different pressures."
+      ],
+      "workbookCategory": "Regional/Commuter",
+      "manufacturer": "Embraer",
+      "geometryOverride": {
+        "track": 5940,
+        "mainPitch": 870
+      },
+      "reference": "Embraer APM-1901 revision 24 (2024), Section 02 pages 2 and 4; Section 07 page 2 (PDF pages 16, 18, 114)"
+    },
+    {
+      "id": "crj700",
+      "row": 254,
+      "name": "CRJ700",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -2345.6899999999996
+        },
+        {
+          "x": 0.0,
+          "y": -1722.8819999999998
+        },
+        {
+          "x": 0.0,
+          "y": 2345.6899999999996
+        },
+        {
+          "x": 0.0,
+          "y": 1722.8819999999998
+        }
+      ],
+      "corrections": [
+        "Missing tires supplied from the APM. Manufacturer 162-inch track supersedes the workbook 160.18-inch track.",
+        "Body length uses revised drawing 1278.8 inches, rather than older table 1273.2 inches. CRJ program originally Bombardier/Canadair; current support is MHIRJ."
+      ],
+      "workbookCategory": "Regional/Commuter",
+      "manufacturer": "Bombardier / Canadair",
+      "geometryOverride": {
+        "track": 4114.8,
+        "mainPitch": 622.808
+      },
+      "reference": "Bombardier CSP B-020 revision 15 (2015): 00-02-01 page 1, 00-02-02 page 3, 00-07-01 page 6 (PDF pages 25, 31, 136)"
+    },
+    {
+      "id": "crj900",
+      "row": 255,
+      "name": "CRJ900",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -2345.6899999999996
+        },
+        {
+          "x": 0.0,
+          "y": -1722.8819999999998
+        },
+        {
+          "x": 0.0,
+          "y": 2345.6899999999996
+        },
+        {
+          "x": 0.0,
+          "y": 1722.8819999999998
+        }
+      ],
+      "corrections": [
+        "Missing tires supplied from the APM. Manufacturer 160-inch track supersedes workbook 160.18 inches.",
+        "Wheelbase follows dimensioned footprint 681.07 inches; inherited FS228.40/FS819.38 labels on that figure do not reproduce it. CRJ program originally Bombardier/Canadair; current support is MHIRJ."
+      ],
+      "workbookCategory": "Regional/Commuter",
+      "manufacturer": "Bombardier / Canadair",
+      "geometryOverride": {
+        "track": 4064.0,
+        "mainPitch": 622.808
+      },
+      "reference": "Bombardier CSP C-020 revision 11 (2015): 00-02-01 page 2 (aircraft 15036-15990), 00-02-02 page 3, 00-07-01 page 6 (PDF pages 26, 31, 162)"
+    },
+    {
+      "id": "dhc8-400",
+      "row": 370,
+      "name": "Q400/Dash 8 Series 400",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -4642.358
+        },
+        {
+          "x": 0.0,
+          "y": -4146.0419999999995
+        },
+        {
+          "x": 0.0,
+          "y": 4642.358
+        },
+        {
+          "x": 0.0,
+          "y": 4146.0419999999995
+        }
+      ],
+      "corrections": [
+        "Workbook combines optional 19.54-inch spacing with standard 227 psi pressure. Standard 32x8.8-16 tires require 21-inch spacing; both main units corrected.",
+        "Track uses manufacturer 8.80 m rather than workbook 8.7884 m. Wheelbase uses 45 ft 9 in = 13.9446 m; general drawing incorrectly converts that to 13.99 m.",
+        "Six-blade propellers remain static."
+      ],
+      "workbookCategory": "Regional/Commuter",
+      "manufacturer": "De Havilland Canada",
+      "geometryOverride": {
+        "track": 8800,
+        "mainPitch": 533.4
+      },
+      "reference": "De Havilland PSM 1-84-13 (March 2022), Chapter 2 pages 3, 5, 8; Chapter 7 page 2 (PDF pages 29, 31, 34, 152). High gross weight, standard main tires; loaded pressure."
+    },
+    {
+      "id": "atr42-500",
+      "row": 239,
+      "name": "ATR 42-500",
+      "mainWheelCoordinatesMm": [
+        {
+          "x": 0.0,
+          "y": -2240.0
+        },
+        {
+          "x": 0.0,
+          "y": -1860.0
+        },
+        {
+          "x": 0.0,
+          "y": 1860.0
+        },
+        {
+          "x": 0.0,
+          "y": 2240.0
+        }
+      ],
+      "corrections": [
+        "Missing tires supplied from manufacturer footprint; standard main tire pressure is 8.6 bar, replacing workbook 0.83 MPa. Optional H34x10R16 tires are not mixed into this configuration.",
+        "Selected current structural taxi/takeoff weights 18770/18600 kg; older pavement curves label 18600 kg as ramp weight.",
+        "Source mesh has an over-wide outer wing. Only geometry outboard of the propellers is span-corrected; source fuselage, nacelles and propellers are retained."
+      ],
+      "workbookCategory": "Regional/Commuter",
+      "manufacturer": "ATR",
+      "geometryOverride": {
+        "track": 4100,
+        "mainPitch": 380
+      },
+      "reference": "ATR 42-400/500 Aircraft Characteristics, PIA fleet 45: 2.1 page 2 (2025); 2.3 pages 1-2; 7 page 6 (2020). PDF pages 54, 59-60, 204. Standard 32x8.8R16 tires."
     }
   ],
   "limitations": [

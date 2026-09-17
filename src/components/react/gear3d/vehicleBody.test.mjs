@@ -43,7 +43,8 @@ test('every library body has finite, lightweight geometry above pavement; schema
             assert.equal(mesh.userData.pickable, false);
             mesh.geometry.dispose();
         }
-        const detailed=['A319','A321','A330-200','A330-300','A220-100','A220-300','B777'].includes(vehicleBodySpec(unit).id);
+        const detailed=['A319','A321','A330-200','A330-300','A220-100','A220-300','B777',
+            'E170','E190','CRJ700','CRJ900','DHC8-400','ATR42'].includes(vehicleBodySpec(unit).id);
         assert.ok(triangles < (detailed?30000:6000), `${unit.id}: ${triangles}`);
         if(detailed) assert.equal(body.children.length,1,'detailed aircraft use one body draw call');
         new Set(body.children.map(mesh=>mesh.material)).forEach(material=>material.dispose());
@@ -67,6 +68,34 @@ test('body is lazy, follows visibility, fits bounds and stays out of engineering
     assembly.setWheelFilter(()=>true);
     assert.equal(body.visible, false);
     assembly.dispose(); material.dispose();
+});
+
+test('turboprops retain calibrated span, ground attitude and nacelle/sponson struts',()=>{
+    const material=new THREE.MeshBasicMaterial();
+    const materials={get:()=>material,tireMaterials:()=>[material,material],ghost:()=>material};
+    for(const id of ['dhc8-400','atr42-500']) {
+        const unit=units.find(u=>u.id===id),layout=resolveLayout(unit);
+        const assembly=buildAssembly(layout,materials);
+        const baseline=buildExportScene({assembly});
+        assembly.setWheelFilter(()=>true,{vehicleBody:true});
+        const body=assembly.root.getObjectByName('vehicle-body');
+        const bounds=new THREE.Box3().setFromObject(body);
+        assert.ok(Math.abs(bounds.max.y-unit.bodyFit.tailHeight)<1,id);
+        assert.ok(Math.abs(bounds.min.z+unit.bodyFit.noseOffset)<1,id);
+        if(id==='atr42-500')assert.ok(Math.abs(bounds.max.x-bounds.min.x-24572)<1,'ATR published span');
+        for(const a of layout.axles) {
+            const pin=assembly.root.getObjectByName(`axle:${a.id}`).getObjectByName('trunnion');
+            assert.equal(pin.position.y,unit.bodyFit.attachmentHeights[a.role]);
+            if(id==='atr42-500' && a.role==='main') {
+                const gear=unit.gears.find(g=>g.id===a.id);
+                assert.ok(Math.abs(pin.position.x+Math.sign(gear.y)*500)<1e-6,
+                    'sponson struts lean inward without moving the axle');
+            }
+        }
+        assert.equal(buildExportScene({assembly}).triangleCount,baseline.triangleCount,'body stays out of engineering export');
+        assembly.dispose();
+    }
+    material.dispose();
 });
 
 

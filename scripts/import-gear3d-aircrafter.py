@@ -42,17 +42,37 @@ reviewed = [
     ('A220-300', 602.6*25.4, 18.57*25.4, '27x8.5R12', 156300, 'lb', 1523.2*25.4, 133.4*25.4, a220),
 ]
 units = []
+
+# Explicit identities: workbook 'Manufacturer' often contains a category instead.
+identities = {
+    'B787-8': ('Boeing', '787-8'), 'B787-9': ('Boeing', '787-9'),
+    'B787-10': ('Boeing', '787-10'),
+    **{name: ('Airbus', name.replace(' std', '').replace(' WV020', ''))
+       for name in ['A320-200 std', 'A350-900', 'A350-1000', 'A319-100 std',
+                    'A321-200 std', 'A330-200 WV020', 'A330-300 WV020', 'A220-100', 'A220-300']}
+}
+regional = json.loads((ROOT/'scripts/gear3d-body-assets/regional-aircraft.json').read_text(encoding='utf-8'))
+extras = {item['name']: item for item in regional}
+for item in regional:
+    identities[item['name']] = (item['manufacturer'], item['model'])
+    reviewed.append(tuple(item[key] for key in ['name', 'wheelbase', 'nosePitch', 'noseTire',
+        'mtow', 'massUnit', 'length', 'noseOffset', 'url']))
 audit = []
 for name, wb, nose_pitch, nose_tire, mtow, mass_unit, length, nose_offset, url in reviewed:
     matches = [r for r in active if r['Airplane Name'] == name]
     assert len(matches) == 1, name
     r = matches[0]
+    extra = extras.get(name)
     transverse = [float(x)*25.4 for x in r['WheelCoord_X (in.)'].split(';')]
     longitudinal = [float(x)*25.4 for x in r['WheelCoord_Y (in.)'].split(';')]
     assert len(transverse) == len(longitudinal)
     tire = (r['Repr. Tire Size'] or '').replace('\u00d7', 'x')
     corrections = []
     assumptions = ['percentOnMainGear']
+    if extra:
+        tire = extra['mainTire']
+        corrections.extend(extra['corrections'])
+        assumptions.extend(extra.get('assumedFields', []))
     if name.startswith('A321'):
         tire='1270x455R22'
         corrections.append('Main tire corrected from inherited 46x17R20 to manufacturer 1270x455R22 (A321 AC 7-2-0 page 3, WV000).')
@@ -77,6 +97,9 @@ for name, wb, nose_pitch, nose_tire, mtow, mass_unit, length, nose_offset, url i
             gear.update(y=sign*5367, dualSpacing=1397, dualSpacingByRow=[1397,1474,1397],
                         tandemSpacing=1400, tire='50x20R22',
                         source='Airbus A350 AC Dec 2024, 7-2-0 page 6: 10.734 m track, 1.400 m tandem pitch, 1.397/1.474/1.397 m axle pitches, 50x20R22 main tire. Supersedes workbook geometry and inherited tire. '+url)
+        if extra:
+            gear.update(y=sign*extra['track']/2, dualSpacing=extra['mainPitch'],
+                        source=extra['reference']+'. '+url)
         gears.append(gear)
     if name == 'A350-1000':
         corrections.append('Airbus overrides workbook: track 10374.093 -> 10734 mm; middle axle pitch 1396.898 -> 1474 mm; tire 1400x530R23 -> 50x20R22.')
@@ -90,13 +113,17 @@ for name, wb, nose_pitch, nose_tire, mtow, mass_unit, length, nose_offset, url i
     if name.startswith('A220'):
         pressure = 200 if name.endswith('100') else 223
         corrections.append('Loading variant and pressure updated to the cited ACP, rather than mixing current tire data with older workbook weights.')
-    model = name.lstrip('B') if name.startswith('B') else name.replace(' std','').replace(' WV020','')
+    manufacturer, model = identities[name]
     identifier = name.lower().replace(' std','').replace(' wv020','')
     taxi = dict(value=r['Gross Taxi Weight (lbs)'], unit='lb', basis=source)
     if name.startswith('A220'):
         taxi=dict(value=141500 if name.endswith('100') else 157000, unit='lb', basis='Airbus ACP aircraft description weight table. '+url)
+    if extra:
+        identifier = extra['id']
+        pressure = extra['pressure']
+        taxi = dict(value=extra['taxi'], unit=mass_unit, basis=extra['reference']+'. '+url)
     unit = dict(schemaVersion='1.0', id=identifier, domain='aircraft',
-                manufacturer='Boeing' if name.startswith('B') else 'Airbus', model=model,
+                manufacturer=manufacturer, model=model,
                 gearDesignation={1:'D',2:'2D',3:'3D'}[gears[1]['tandemRows']],
                 mtow=dict(value=mtow, unit=mass_unit, basis='Manufacturer ACAP general characteristics, selected weight variant. '+url),
                 maxTaxiWeight=taxi,
@@ -110,9 +137,20 @@ for name, wb, nose_pitch, nose_tire, mtow, mass_unit, length, nose_offset, url i
                          dict(id='aircrafter',title='Aircrafter FAARFIELD-derived workbook',publisher='ICT Mechanics',
                               note=f"public/data/aircraft.xlsx; SHA256 {digest}; row {r['sourceRow']}. Main footprint only; representative tire fields independently reviewed.")])
     units.append(unit)
+    if extra:
+        unit['bodyFit'].update(extra.get('bodyFit', {}))
+        unit['bodyFit']['source'] = extra['bodyReference']
+        unit['notes'] = ('Complete nose and main gear; 95% main-gear loading is a design assumption. '
+                         'Representative airframe, not manufacturer CAD. '+' '.join(corrections))
+        unit['sources'][0]['note'] = extra['reference']
+        unit['sources'].extend(extra.get('sources', []))
     audit.append(dict(id=unit['id'], row=r['sourceRow'], name=name,
                       mainWheelCoordinatesMm=[dict(x=x,y=y) for x,y in zip(longitudinal,transverse)],
                       corrections=corrections))
+    if extra:
+        audit[-1].update(workbookCategory=r['Manufacturer'], manufacturer=manufacturer,
+                         geometryOverride=dict(track=extra['track'], mainPitch=extra['mainPitch']),
+                         reference=extra['reference'])
 
 def write(path, data):
     (ROOT/path).write_text(json.dumps(data, indent=2, ensure_ascii=False)+'\n', encoding='utf-8')

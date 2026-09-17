@@ -47,5 +47,53 @@
     "sha256": "df0663ff62b50cd8308c847337eb7ba90dc2c0a5b6803f2cd0ae29deebd6915d",
     "sourceArchive": "b773-source.zip",
     "archiveSha256": "04814af12b9cd8b723d9e1ae1f19e66e0bf84f87ab6cc7af47c190da496bace8"
+  },
+  {
+    "model": "e170",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/e170.glb",
+    "sha256": "8d2639a839ba8bcf113282af16aacbb519df848e4012a61c99a64b44df715fbd",
+    "sourceArchive": "e170-source.zip",
+    "archiveSha256": "d9f8135ae375e9881839abfaa4218d7f9d58016a5df28e08fe091afa869f5b8f",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "e190",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/e190.glb",
+    "sha256": "211fc8c15640defe73a6262e1ece58353151e504c854698986f769c86c9aa23a",
+    "sourceArchive": "e190-source.zip",
+    "archiveSha256": "82d8113a3d78acfc61bb69c4f6592baecfd2b75e156e57f0a84b07c0ae6bd5a4",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "crj900",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/crj900.glb",
+    "sha256": "9ccb1ecc1e95a277b941a6fa673a06fa8fe9dd31e3bd24d3c9459f464a9b7c96",
+    "sourceArchive": "crj900-source.zip",
+    "archiveSha256": "4c23b4a7b9ea2906636e899b3f1a17e2eb44bff543cc6d5b79a95c4c9c6e5fdf",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "q400",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/q400.glb",
+    "sha256": "bf9be0ce17922fe00a555c9bf443103375a135954deb0b59d60c8fb576f104f0",
+    "sourceArchive": "q400-source.zip",
+    "archiveSha256": "5c67c0d829e69b24e1ce7dd4192d9aa177271758230a65e23bb0b41ce580874e",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "atr42",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/atr42.glb",
+    "sha256": "8674f1a205ecb56c9b0605113afbe3cd90afcc9cc4381ea80f8e7bc7d131bad4",
+    "sourceArchive": "atr42-source.zip",
+    "archiveSha256": "c324b777e36cc956466ea23436a8be05bce287c33f95aa44839dbcc89ea58a5d",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
+  },
+  {
+    "model": "crj700",
+    "url": "https://raw.githubusercontent.com/Flightradar24/fr24-3d-models/dd53267690c6a4ecbb290a3acf0284333a5d68a9/models/crj700.glb",
+    "sha256": "2611518d9b6ec2e949704b7b5bcf81fa39858678d22753c76d20d89d7a4c6889",
+    "sourceArchive": "crj700-source.zip",
+    "archiveSha256": "cb50c7f21002f34d463d5c613d72d6f09b5388b0298b2be8a5f1c9f68cd83126",
+    "commit": "dd53267690c6a4ecbb290a3acf0284333a5d68a9"
   }
 ]

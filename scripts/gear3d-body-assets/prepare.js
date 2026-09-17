@@ -109,10 +109,31 @@ window.prepareBody = async (spec) => {
  const box=new THREE.Box3().setFromObject(group), size=box.getSize(new THREE.Vector3());
  const offset=new THREE.Vector3(-(box.min.x+box.max.x)/2,0,-box.min.z);
  group.children.forEach(m=>m.geometry.translate(...offset.toArray()));
+ // The ATR source has an over-wide outer wing. Correct only the outboard
+ // portion beyond both propellers; preserve fuselage, engines and wing roots.
+ // Manufacturer span/length is recorded in the build spec and review.
+ let spanCorrection;
+ if(spec.spanRatio) {
+   const half=spec.preserveHalfSpan, target=size.z*spec.spanRatio;
+   const scale=(target/2-half)/(size.x/2-half);
+   if(!(scale>0))throw Error('Invalid outboard span correction');
+   group.children.forEach(m=>{
+     const p=m.geometry.attributes.position,n=m.geometry.attributes.normal;
+     for(let i=0;i<p.count;i++)if(Math.abs(p.getX(i))>half) {
+       p.setX(i,Math.sign(p.getX(i))*(half+(Math.abs(p.getX(i))-half)*scale));
+       const normal=new THREE.Vector3(n.getX(i)/scale,n.getY(i),n.getZ(i)).normalize();
+       n.setXYZ(i,normal.x,normal.y,normal.z);
+     }
+     m.geometry.computeBoundingBox();m.geometry.computeBoundingSphere();
+   });
+   spanCorrection={originalWidth:size.x,width:target,preserveHalfSpan:half};
+   size.x=target;
+ }
  const stations=wheels.map(w=>w.z+offset.z).sort((a,b)=>a-b);
  const meta={length:size.z,width:size.x,minY:box.min.y,maxY:box.max.y,
    frontAxle:stations[0]??size.z*.13,rearAxle:stations.at(-1)??size.z*.54,
    axleY:wheels.length?wheels.reduce((s,w)=>s+w.y,0)/wheels.length:0};
+ if(spanCorrection)meta.spanCorrection=spanCorrection;
  if(spec.id==='bus') {
     meta.frontAxle=namedWheels.front.z+offset.z;
     meta.rearAxle=namedWheels.rear.z+offset.z;

@@ -1,0 +1,240 @@
+[
+  {
+    "name": "EMB-170 STD",
+    "id": "e170-std",
+    "manufacturer": "Embraer",
+    "model": "E170 STD",
+    "wheelbase": 10620,
+    "nosePitch": 400,
+    "noseTire": "24x7.7-10",
+    "mainTire": "H38x13-18",
+    "track": 5200,
+    "mainPitch": 710,
+    "mtow": 35990,
+    "taxi": 36150,
+    "massUnit": "kg",
+    "pressure": 126,
+    "length": 29900,
+    "noseOffset": 4130,
+    "url": "https://manuals.plus/m/73e2ca704565c0144f49d3e969038b577e658def993378e8434885c70ffdd746.pdf",
+    "reference": "Embraer APM-1346 revision 17 (2015), manufacturer document mirrored by Manuals.plus: 2-2, 2-4 and 7-2 (PDF pages 28, 30, 98)",
+    "bodyFit": {
+      "tailHeight": 9650,
+      "attachmentHeights": {
+        "nose": 1400,
+        "main": 1770
+      }
+    },
+    "bodyReference": "Length and nose overhang: APM Figure 2.1; tail height: Table 2.3, STD forward CG at ramp weight. Rigid visual placement; no CG-dependent pitch simulation. Strut tops visually calibrated to the prepared body; these are illustrative attachments, not manufacturer strut dimensions.",
+    "corrections": [
+      "Missing tires supplied from the APM. Nose 24x7.7 is normalized with its 10-inch rim from the Goodyear databook.",
+      "Manufacturer track/pitch 5200/710 mm supersede rounded workbook 5207/711.2 mm.",
+      "Wheelbase uses pavement footprint 10.62 m; general drawing instead gives 10.60 m."
+    ],
+    "assumedFields": [
+      "wheelbase (manufacturer footprint selected over 10.60 m general drawing)",
+      "bodyFit.attachmentHeights (illustrative strut attachment)"
+    ],
+    "sources": [
+      {
+        "id": "goodyear",
+        "title": "Goodyear Aviation Databook 2022",
+        "url": "https://www.goodyearaviation.com/resources/pdf/Aviation-Databook-2022.pdf",
+        "note": "Type VII 24x7.7 uses a 10-inch rim. The app normalizes it to 24x7.7-10; this is not a radial-tire substitution."
+      }
+    ]
+  },
+  {
+    "name": "EMB-190 STD",
+    "id": "e190-std",
+    "manufacturer": "Embraer",
+    "model": "E190 STD",
+    "wheelbase": 13830,
+    "nosePitch": 400,
+    "noseTire": "24x7.7-10",
+    "mainTire": "H41x16-20",
+    "track": 5940,
+    "mainPitch": 870,
+    "mtow": 47790,
+    "taxi": 47950,
+    "massUnit": "kg",
+    "pressure": 157,
+    "length": 36240,
+    "noseOffset": 4130,
+    "url": "https://www.embraer.com/media/jwsj1u1u/e190apm_apm_190-1.pdf",
+    "reference": "Embraer APM-1901 revision 24 (2024), Section 02 pages 2 and 4; Section 07 page 2 (PDF pages 16, 18, 114)",
+    "bodyFit": {
+      "attachmentHeights": {
+        "nose": 1500,
+        "main": 1930
+      },
+      "tailHeight": 10570
+    },
+    "bodyReference": "Length and nose overhang: Figure 2.1. Tail height 10.57 m from Figure 2.1; rigid visual placement. Strut tops visually calibrated to the prepared body; these are illustrative attachments, not manufacturer strut dimensions.",
+    "corrections": [
+      "Missing tires supplied from the APM. Nose 24x7.7 is normalized with its 10-inch rim from the Goodyear databook.",
+      "Manufacturer track/pitch 5940/870 mm supersede workbook 5943.6/863.6 mm.",
+      "Main pressure 147 -> 157 psi from the current footprint; older pavement charts have different pressures."
+    ],
+    "sources": [
+      {
+        "id": "goodyear",
+        "title": "Goodyear Aviation Databook 2022",
+        "url": "https://www.goodyearaviation.com/resources/pdf/Aviation-Databook-2022.pdf",
+        "note": "Type VII 24x7.7 uses a 10-inch rim. The app normalizes it to 24x7.7-10; this is not a radial-tire substitution."
+      }
+    ],
+    "assumedFields": [
+      "bodyFit.attachmentHeights (illustrative strut attachment)"
+    ]
+  },
+  {
+    "name": "CRJ700",
+    "id": "crj700",
+    "manufacturer": "Bombardier / Canadair",
+    "model": "CRJ700",
+    "wheelbase": 15010.892,
+    "nosePitch": 309.87999999999994,
+    "noseTire": "H20.5x6.75-10",
+    "mainTire": "H36x12-18",
+    "track": 4114.8,
+    "mainPitch": 622.808,
+    "mtow": 72750,
+    "taxi": 73000,
+    "massUnit": "lb",
+    "pressure": 142,
+    "length": 32481.519999999997,
+    "noseOffset": 1730,
+    "url": "https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTE8Q23.pdf/CRJ700APMR15.pdf",
+    "reference": "Bombardier CSP B-020 revision 15 (2015): 00-02-01 page 1, 00-02-02 page 3, 00-07-01 page 6 (PDF pages 25, 31, 136)",
+    "bodyFit": {
+      "tailHeight": 7460,
+      "attachmentHeights": {
+        "nose": 2040,
+        "main": 2040
+      }
+    },
+    "bodyReference": "Length/height: revised general drawing. Nose overhang is an illustrative 1.73 m mesh placement, not a verified nose station. Strut tops visually calibrated to the prepared body; these are illustrative attachments, not manufacturer strut dimensions.",
+    "corrections": [
+      "Missing tires supplied from the APM. Manufacturer 162-inch track supersedes the workbook 160.18-inch track.",
+      "Body length uses revised drawing 1278.8 inches, rather than older table 1273.2 inches. CRJ program originally Bombardier/Canadair; current support is MHIRJ."
+    ],
+    "assumedFields": [
+      "bodyFit.noseOffset (illustrative mesh alignment)",
+      "bodyFit.attachmentHeights (illustrative strut attachment)"
+    ]
+  },
+  {
+    "name": "CRJ900",
+    "id": "crj900",
+    "manufacturer": "Bombardier / Canadair",
+    "model": "CRJ900",
+    "wheelbase": 17299.178,
+    "nosePitch": 309.87999999999994,
+    "noseTire": "H20.5x6.75-10",
+    "mainTire": "H36x12-18",
+    "track": 4064.0,
+    "mainPitch": 622.808,
+    "mtow": 84500,
+    "taxi": 85000,
+    "massUnit": "lb",
+    "pressure": 162,
+    "length": 36342.32,
+    "noseOffset": 1730,
+    "url": "https://customer.aero.bombardier.com/webd/BAG/CustSite/BRAD/RACSDocument.nsf/51aae8b2b3bfdf6685256c300045ff31/ec63f8639ff3ab9d85257c1500635bd8/$FILE/ATTQF1EY.pdf/CRJ900APMR11.pdf",
+    "reference": "Bombardier CSP C-020 revision 11 (2015): 00-02-01 page 2 (aircraft 15036-15990), 00-02-02 page 3, 00-07-01 page 6 (PDF pages 26, 31, 162)",
+    "bodyFit": {
+      "tailHeight": 7350,
+      "attachmentHeights": {
+        "nose": 1940,
+        "main": 1940
+      }
+    },
+    "bodyReference": "Length/height: general drawing. Nose overhang is an illustrative 1.73 m mesh placement, not a verified nose station. Strut tops visually calibrated to the prepared body; these are illustrative attachments, not manufacturer strut dimensions.",
+    "corrections": [
+      "Missing tires supplied from the APM. Manufacturer 160-inch track supersedes workbook 160.18 inches.",
+      "Wheelbase follows dimensioned footprint 681.07 inches; inherited FS228.40/FS819.38 labels on that figure do not reproduce it. CRJ program originally Bombardier/Canadair; current support is MHIRJ."
+    ],
+    "assumedFields": [
+      "wheelbase (dimension line selected over inconsistent fuselage station labels)",
+      "bodyFit.noseOffset (illustrative mesh alignment)",
+      "bodyFit.attachmentHeights (illustrative strut attachment)"
+    ]
+  },
+  {
+    "name": "Q400/Dash 8 Series 400",
+    "id": "dhc8-400",
+    "manufacturer": "De Havilland Canada",
+    "model": "Dash 8-400 (Q400)",
+    "wheelbase": 13944.599999999999,
+    "nosePitch": 381,
+    "noseTire": "22x6.5-10",
+    "mainTire": "32x8.8-16",
+    "track": 8800,
+    "mainPitch": 533.4,
+    "mtow": 64500,
+    "taxi": 64700,
+    "massUnit": "lb",
+    "pressure": 227,
+    "length": 32830,
+    "noseOffset": 1800,
+    "url": "https://dehavillandportal.com/assets/public-documents/D8400-APM.pdf",
+    "reference": "De Havilland PSM 1-84-13 (March 2022), Chapter 2 pages 3, 5, 8; Chapter 7 page 2 (PDF pages 29, 31, 34, 152). High gross weight, standard main tires; loaded pressure.",
+    "bodyFit": {
+      "tailHeight": 8260,
+      "attachmentHeights": {
+        "nose": 760,
+        "main": 2070
+      }
+    },
+    "bodyReference": "Tail/nacelle/fuselage heights from Chapter 2 page 8, forward CG at ramp weight. Nose overhang is an illustrative 1.8 m mesh placement. Gear attachments approximate the documented lower surfaces.",
+    "corrections": [
+      "Workbook combines optional 19.54-inch spacing with standard 227 psi pressure. Standard 32x8.8-16 tires require 21-inch spacing; both main units corrected.",
+      "Track uses manufacturer 8.80 m rather than workbook 8.7884 m. Wheelbase uses 45 ft 9 in = 13.9446 m; general drawing incorrectly converts that to 13.99 m.",
+      "Six-blade propellers remain static."
+    ],
+    "assumedFields": [
+      "wheelbase (published imperial dimension selected over conflicting metric conversion)",
+      "bodyFit.noseOffset (illustrative mesh alignment)",
+      "bodyFit.attachmentHeights (illustrative strut attachment)"
+    ]
+  },
+  {
+    "name": "ATR 42-500",
+    "id": "atr42-500",
+    "manufacturer": "ATR",
+    "model": "42-500",
+    "wheelbase": 8781,
+    "nosePitch": 336,
+    "noseTire": "450x190-5",
+    "mainTire": "32x8.8R16",
+    "track": 4100,
+    "mainPitch": 380,
+    "mtow": 18600,
+    "taxi": 18770,
+    "massUnit": "kg",
+    "pressure": 124.7324544478,
+    "length": 22670,
+    "noseOffset": 1730,
+    "url": "https://crewserver1.piac.com.pk/Documents/Manual/ATR42/PK1.AC.45.L.SI.full.Rev2.0.pdf",
+    "reference": "ATR 42-400/500 Aircraft Characteristics, PIA fleet 45: 2.1 page 2 (2025); 2.3 pages 1-2; 7 page 6 (2020). PDF pages 54, 59-60, 204. Standard 32x8.8R16 tires.",
+    "bodyFit": {
+      "tailHeight": 7660,
+      "attachmentHeights": {
+        "nose": 1850,
+        "main": 1800
+      },
+      "mainAttachmentInset": 500
+    },
+    "bodyReference": "Length/nose overhang/tail height: 2.3 ground-clearance drawing and table, ramp weight forward CG. Strut attachments are illustrative. Outer wing span corrected to 24.572 m in preparation; central body and nacelles preserved. Strut tops visually calibrated to the prepared body; these are illustrative attachments, not manufacturer strut dimensions. Main strut tops lean 0.5 m inboard into the source sponsons; wheel centers are unchanged.",
+    "corrections": [
+      "Missing tires supplied from manufacturer footprint; standard main tire pressure is 8.6 bar, replacing workbook 0.83 MPa. Optional H34x10R16 tires are not mixed into this configuration.",
+      "Selected current structural taxi/takeoff weights 18770/18600 kg; older pavement curves label 18600 kg as ramp weight.",
+      "Source mesh has an over-wide outer wing. Only geometry outboard of the propellers is span-corrected; source fuselage, nacelles and propellers are retained."
+    ],
+    "assumedFields": [
+      "bodyFit.attachmentHeights (illustrative strut attachment)",
+      "bodyFit.mainAttachmentInset (illustrative inboard sponson attachment)"
+    ]
+  }
+]

@@ -167,6 +167,9 @@ export function buildAssembly(layout, materials, opts = {}) {
                 ? buildGearStrut(
                     {
                         axleHeight: a.axleHeight,
+                        attachmentHeight: layout.unit.bodyFit?.attachmentHeights?.[a.role],
+                        attachmentOffset: a.role==='main'
+                            ? -Math.sign(gearCenterY(layout,a.id))*(layout.unit.bodyFit?.mainAttachmentInset || 0) : 0,
                         tandemRows: rowsForGear(layout, a.id),
                         tandemSpacing: tandemSpacingForGear(layout, a.id),
                         trackSpan: Math.max(a.trackWidth, a.geometry.sectionWidth)

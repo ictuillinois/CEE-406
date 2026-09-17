@@ -1484,6 +1484,7 @@ function syncUnits(opts = {}) {
         sel.appendChild(o);
         return;
     }
+    const manufacturerGroups = new Map();
     for (const u of filtered) {
         const o = document.createElement('option');
         o.value = u.id;
@@ -1497,7 +1498,15 @@ function syncUnits(opts = {}) {
                 ? `${u.gearDesignation} — ${describeGearCode(u.gearDesignation).replace(/ main gear$/, '')}`
                     + (u.kind === 'schematic' ? '  · schematic' : `  · ${u.manufacturer} ${u.model}`)
                 : `${u.manufacturer} ${u.model} (${u.gearDesignation})`;
-        sel.appendChild(o);
+        if(domain==='aircraft') {
+            if(!manufacturerGroups.has(u.manufacturer)) {
+                const group=document.createElement('optgroup');
+                group.label=u.manufacturer;
+                manufacturerGroups.set(u.manufacturer,group);
+                sel.appendChild(group);
+            }
+            manufacturerGroups.get(u.manufacturer).appendChild(o);
+        } else sel.appendChild(o);
     }
     // Keep the loaded unit selected when it survives the new filter. When it
     // does not, the dropdown would otherwise fall to its first option while

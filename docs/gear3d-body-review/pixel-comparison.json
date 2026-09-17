@@ -538,5 +538,167 @@
     "silhouetteIoU": 1,
     "changedPixels": 0,
     "maxChannelDifference": 0
+  },
+  {
+    "id": "E170",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "E170",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "E170",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "E190",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "E190",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "E190",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "CRJ700",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "CRJ700",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "CRJ700",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "CRJ900",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "CRJ900",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "CRJ900",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "DHC8-400",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "DHC8-400",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "DHC8-400",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "ATR42",
+    "view": "iso",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "ATR42",
+    "view": "side",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
+  },
+  {
+    "id": "ATR42",
+    "view": "top",
+    "mae": 0,
+    "foregroundMae": 0,
+    "silhouetteIoU": 1,
+    "changedPixels": 0,
+    "maxChannelDifference": 0
   }
 ]
