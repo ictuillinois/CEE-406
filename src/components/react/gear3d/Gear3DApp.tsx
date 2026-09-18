@@ -66,21 +66,12 @@ export default function Gear3DApp() {
         <summary>How to use this tool</summary>
         <div className="cee-howto__body">
           <ol>
-            <li><strong>Pick a vehicle.</strong> Choose a domain (truck, aircraft, or a bare gear configuration), then a class and a model. Trucks are FHWA classes 1–13; aircraft come from FAA Order 5300.7 and the manufacturers' own airport planning documents. Every axle in the library carries a cited source, and every load carries the basis it was taken from.</li>
-            <li><strong>Work in SI or English.</strong> The switch at the right of the toolbar converts everything the interface shows: the figure and its dimension lines, the scale bar, the structure tree, the properties panel, the contact patches and the hover readout. The title block says which system is on. SI gives you the number the source cites. English is <em>rounded to three figures</em>, because a dimension recorded in millimeters has no exact inch and a track width printed as 72.99 in claims a precision it does not have. Three figures is also enough to bring back what the source itself printed, and most of this library was converted from English in the first place: 4572 mm reads 180 in, 1372 mm reads 54 in, 44.5 kN reads 10 kip, 13,608 kg reads 30,000 lb. Where the citation really is metric you get an honest reading rather than a tidy one, so a 300 mm tire section is 11.8 in. Data exports do not follow the switch at all. <code>footprint.csv</code>, the FEM deck and the geometry files are always written in millimeters, and each states so in its own header.</li>
-            <li><strong>Read the layout, not the picture.</strong> The tool opens in <strong>Quad</strong>, showing plan, 3D, side and front together, because a gear configuration is a plan first, and a single pictorial view is the one arrangement that hides the spacings you need. Click any pane to open it full size.</li>
-            <li><strong>Turn on the dimensions you need.</strong> Longitudinal spacings are on by default. Add transverse to get track widths and dual spacings. <strong>Measure</strong> (M) lets you take your own dimension between any two features. Endpoints snap to tire centers and edges, contact patches, and axle centerlines.</li>
-            <li><strong>Draw the footprints.</strong> Under Contact patches, tick <em>Draw footprints</em>. Three models are offered because the literature offers three: a rectangle, Huang's rectangle with semicircular ends (Ch. 2), and an ellipse. They give different contact areas for the same load, which is the point. Compare them before you trust one.</li>
-            <li><strong>Take the numbers out.</strong> <code>footprint.csv</code> gives you every patch corner in the engineering frame, in millimeters, ready for a finite-element pre-processor. <strong>FEM export</strong> writes the Abaqus form. The figure exports (PNG, SVG, PDF) keep the dimensions vector, so a figure stays sharp in a report at any size.</li>
+            <li><strong>Select:</strong> Choose a domain, class and model. Set SI or English units.</li>
+            <li><strong>View:</strong> Click a Quad pane to enlarge it. Toggle dimensions or press M to measure.</li>
+            <li><strong>Footprints:</strong> Enable Draw footprints and choose a shape. Use Override for measured dimensions.</li>
+            <li><strong>Export:</strong> Save a figure or export CSV/FEM data. Data exports always use millimeters.</li>
           </ol>
-          <p>
-            Contact pressure is taken equal to inflation pressure and uniform over the patch.
-            Both are idealizations, and both are stated in full in the header of every export.
-            If you have <em>measured</em> footprint dimensions, enter them under Override. It is an
-            overridden patch keeps its load and reports the contact pressure that implies, so it
-            no longer equals inflation pressure, and every export says which patches were
-            overridden.
-          </p>
+          <p>Patch pressure is uniform and equals inflation pressure unless dimensions are overridden.</p>
         </div>
       </details>
 
