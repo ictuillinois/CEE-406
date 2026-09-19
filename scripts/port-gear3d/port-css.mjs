@@ -72,7 +72,11 @@ sub('header',
    BaseLayout stamps the attribute from an inline script, but the island can
    render for a frame before that lands, and a theme-less host would leave
    every token undefined. */
-sub('tokens: :root -> .g3-app', '\n:root {\n', '\n.g3-app {\n');
+/* The first of these also carries the island's box model. The shell below
+   sizes itself to width: 100% of the Astro container, which only holds if its
+   padding counts inside that width; upstream centers a max-width box in the
+   window and never needed it. */
+sub('tokens: :root -> .g3-app', '\n:root {\n', '\n.g3-app {\n    box-sizing: border-box;\n');
 sub('tokens: light -> .g3-app base', '\n[data-theme="light"] {\n', '\n.g3-app {\n');
 sub('tokens: dark -> scoped', '\n[data-theme="dark"] {\n', '\n[data-theme="dark"] .g3-app {\n');
 
@@ -140,9 +144,11 @@ sub('rule-strong dark', '--g3-rule-strong: #3d4d5e;', '--g3-rule-strong: #3c5170
    a clear step below --g3-graphite (the second assertion in that file). */
 sub('muted dark (re-skin regression)', '--g3-muted: #7d8f9d;', '--g3-muted: #8293a1;');
 
-/* Ink laid ON the accent — the mark tile and the active tab in dark mode.
-   Upstream this was a deep teal-black; against orange it is the course navy. */
-subRe('ink-on-accent', /#06222a/g, '#0f1a2e', 4);
+/* Ink laid ON the accent — the active tab in dark mode — and the mark tile's
+   ground in both themes. Upstream this is a deep teal-black; against orange
+   it is the course navy. The tile's drop shadow is the same ink with an alpha
+   byte (#06222a18), which this rewrites along with the rest. */
+subRe('ink-on-accent', /#06222a/g, '#0f1a2e', 7);
 
 /* ---- 4. Site-button overrides rescope to the island -------------------- */
 subRe('body.Gear3D -> .g3-app', /body\.Gear3D\b/g, '.g3-app', 34);
@@ -151,6 +157,13 @@ subRe('body.Gear3D -> .g3-app', /body\.Gear3D\b/g, '.g3-app', 34);
 subRe('icon selectors', /^(\.g3-[a-z-]+(?: summary)?) i \{/gm, '$1 .g3-i {', 7);
 
 /* ---- 6. Shell: the page owns the measure, not the app ------------------ */
+/* Upstream narrows its own side gutter on a tablet, because in the standalone
+   page nothing else keeps a panel off the screen edge. Here the Astro
+   container already has a gutter, and the app's would double it. */
+sub('shell tablet gutter',
+`    .g3-app { padding-left: .75rem; padding-right: .75rem; }`,
+`    .g3-app { padding-left: 0; padding-right: 0; }`);
+
 sub('shell width',
 `.g3-app {
     max-width: 1620px;

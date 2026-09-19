@@ -5,7 +5,7 @@
     "757 and 767 entries are now in boeing-757-767.json, using direct Boeing ACAP footprint dimensions.",
     "737 and 777 derive main-gear track from FAA outer width, dual spacing and tire width.",
     "747 entries use the manufacturer footprint drawings directly.",
-    "See data/SOURCES.md and docs/gear3d-body-review/boeing-757-767.md for sourcing and limitations."
+    "See data/SOURCES.md, and docs/gear3d-body-review/boeing-757-767.md in the CEE-406 repository, for sourcing and limitations."
   ],
   "units": [
     {

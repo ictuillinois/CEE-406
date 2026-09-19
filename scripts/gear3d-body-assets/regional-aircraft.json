@@ -39,6 +39,7 @@
       {
         "id": "goodyear",
         "title": "Goodyear Aviation Databook 2022",
+        "publisher": "The Goodyear Tire & Rubber Company",
         "url": "https://www.goodyearaviation.com/resources/pdf/Aviation-Databook-2022.pdf",
         "note": "Type VII 24x7.7 uses a 10-inch rim. The app normalizes it to 24x7.7-10; this is not a radial-tire substitution."
       }
@@ -80,6 +81,7 @@
       {
         "id": "goodyear",
         "title": "Goodyear Aviation Databook 2022",
+        "publisher": "The Goodyear Tire & Rubber Company",
         "url": "https://www.goodyearaviation.com/resources/pdf/Aviation-Databook-2022.pdf",
         "note": "Type VII 24x7.7 uses a 10-inch rim. The app normalizes it to 24x7.7-10; this is not a radial-tire substitution."
       }

@@ -43,7 +43,8 @@ Retain the aircraft credits, license links, and modification statement when
 redistributing these models or figures made with them. The credits do not imply
 endorsement by any original creator.
 
-See `docs/gear3d-body-review/README.md` for the render comparisons and limitations.
+See [`docs/gear3d-body-review/README.md`](https://github.com/ictuillinois/CEE-406/blob/main/docs/gear3d-body-review/README.md)
+in the CEE-406 repository for the render comparisons and limitations.
 
 Runtime refinements include bus glazing/trim, doors, mirrors, lamps, roof equipment, enlarged tractor cabs, chassis details, open dump beds and subtle aircraft intake shading. These additions are illustrative and do not alter engineering exports.
 

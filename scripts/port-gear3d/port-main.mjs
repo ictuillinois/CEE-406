@@ -25,7 +25,7 @@ function subRe(label, re, replace, expect) {
 }
 
 /* ---- 1. Engine import paths ------------------------------------------ */
-subRe('import paths ./src/ -> ./engine/', /from '\.\/src\//g, "from './engine/", 27);
+subRe('import paths ./src/ -> ./engine/', /from '\.\/src\//g, "from './engine/", 28);
 
 /* ---- 2. Header -------------------------------------------------------- */
 sub('file header',
@@ -66,9 +66,16 @@ sub('file header',
    Gear3D — application entry point`);
 
 /* ---- 3. Open the closure; scope $ ------------------------------------- */
+/* Upstream declares its own ASSET_BASE beside $ (./assets/, where the vehicle
+   bodies live). It is consumed here and replaced by the port's, which points
+   at public/gear3d/ — the one base the data, textures and bodies share. */
 sub('open initGear3D + scoped $',
 `const SVG_NS = 'http://www.w3.org/2000/svg';
-const $ = (id) => document.getElementById(id);`,
+const $ = (id) => document.getElementById(id);
+
+/** Binary assets beside this file. Vehicle bodies load from assets/bodies/,
+ *  on demand, the first time a unit is shown with its body on. */
+const ASSET_BASE = new URL('./assets/', import.meta.url).href;`,
 `import { TextureLibrary } from './engine/scene/textures.js';
 import { iconHtml } from './icons';
 
@@ -100,8 +107,8 @@ const _docKeys = [];
 /** @type {Set<any>} */
 const _toastTimers = new Set();`);
 
-/* ---- 4. Scope the nine document-level collection queries --------------- */
-subRe('document.querySelectorAll -> root', /document\.querySelectorAll\(/g, 'root.querySelectorAll(', 9);
+/* ---- 4. Scope the eleven document-level collection queries ------------- */
+subRe('document.querySelectorAll -> root', /document\.querySelectorAll\(/g, 'root.querySelectorAll(', 11);
 
 /* ---- 5. cssVar reads the island's tokens, not :root -------------------- */
 sub('cssVar scope',
@@ -191,6 +198,19 @@ sub('boot dispose guard',
     if (_disposed) return;
 `);
 
+/* ---- 10b. Vehicle bodies are the other await, and they are shared ------ */
+/* A body GLB resolves whenever the network says, so its continuation can land
+   after an unmount exactly as boot() can. And the loaded templates live at
+   module scope in engine/geometry/vehicleBody.js, shared by every mount, so
+   the disposer has to release them — upstream never unloads, and has no use
+   for the import. */
+sub('vehicle body dispose import',
+`vehicleBodySpec } from './engine/geometry/vehicleBody.js';`,
+`vehicleBodySpec, disposeVehicleBodies } from './engine/geometry/vehicleBody.js';`);
+sub('vehicle body load dispose guard',
+`if (app.store.doc.unit === unit && app.store.view.showVehicleBody)`,
+`if (!_disposed && app?.store?.doc.unit === unit && app.store.view.showVehicleBody)`);
+
 /* ---- 11. Font Awesome -> the site's own strokes ------------------------ */
 /* Five sit at the head of a single-quoted string, five inside a template
    literal. The context decides the form, so each is named rather than swept
@@ -235,6 +255,7 @@ s += `
 return function dispose() {
     if (_disposed) return;
     _disposed = true;
+    disposeVehicleBodies();
 
     for (const [fn, capture] of _docKeys) document.removeEventListener('keydown', fn, capture);
     _docKeys.length = 0;

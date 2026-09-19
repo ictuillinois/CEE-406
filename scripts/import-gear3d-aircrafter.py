@@ -51,6 +51,14 @@ identities = {
        for name in ['A320-200 std', 'A350-900', 'A350-1000', 'A319-100 std',
                     'A321-200 std', 'A330-200 WV020', 'A330-300 WV020', 'A220-100', 'A220-300']}
 }
+# Who issues each manufacturer's airport planning document. The upstream E-Lab's
+# provenance gate requires a publisher on every source, and a URL cannot stand in
+# for one: two of the regional manuals are linked from third-party mirrors.
+publishers = {
+    'Boeing': 'Boeing Commercial Airplanes', 'Airbus': 'Airbus S.A.S.',
+    'Embraer': 'Embraer S.A.', 'Bombardier / Canadair': 'Bombardier Inc.',
+    'De Havilland Canada': 'De Havilland Aircraft of Canada Limited', 'ATR': 'ATR',
+}
 regional = json.loads((ROOT/'scripts/gear3d-body-assets/regional-aircraft.json').read_text(encoding='utf-8'))
 extras = {item['name']: item for item in regional}
 for item in regional:
@@ -132,7 +140,8 @@ for name, wb, nose_pitch, nose_tire, mtow, mass_unit, length, nose_offset, url i
                 assumedFields=assumptions, gears=gears,
                 bodyFit=dict(length=length, noseOffset=nose_offset),
                 notes='Complete nose and main gear. Loads use MTOW with the FAA 95% main-gear design assumption; taxi weight is separate. Body is a representative family mesh, with manufacturer length and nose station. '+ ' '.join(corrections),
-                sources=[dict(id='manufacturer-acap', title='Manufacturer airport planning manual', url=url,
+                sources=[dict(id='manufacturer-acap', title='Manufacturer airport planning manual',
+                              publisher=publishers[manufacturer], url=url,
                               note='General characteristics and dimensions; landing gear footprint. Revision is identified by the linked document; detailed section references and discrepancies are recorded in the review.'),
                          dict(id='aircrafter',title='Aircrafter FAARFIELD-derived workbook',publisher='ICT Mechanics',
                               note=f"public/data/aircraft.xlsx; SHA256 {digest}; row {r['sourceRow']}. Main footprint only; representative tire fields independently reviewed.")])

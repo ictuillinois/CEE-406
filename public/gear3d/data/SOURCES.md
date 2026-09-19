@@ -471,12 +471,12 @@ and were checked against manufacturer footprints. Nose gear, wheelbase and
 MTOW come from manufacturer manuals; taxi weight remains a separate field.
 The 95% main-gear allocation is an explicit design assumption.
 
-See [the review and primary references](../../../docs/gear3d-body-review/aircraft-iteration.md)
-and [the coordinate audit](../../../docs/gear3d-body-review/aircrafter-audit.json)
+See [the review and primary references](https://github.com/ictuillinois/CEE-406/blob/main/docs/gear3d-body-review/aircraft-iteration.md)
+and [the coordinate audit](https://github.com/ictuillinois/CEE-406/blob/main/docs/gear3d-body-review/aircrafter-audit.json)
 for row numbers, workbook hash, variant choices, and A350-1000 corrections.
 These entries use mainGearTrack directly, rather than deriving it from outer width.
 
-The [second expansion review](../../../docs/gear3d-body-review/aircraft-expansion-2.md)
+The [second expansion review](https://github.com/ictuillinois/CEE-406/blob/main/docs/gear3d-body-review/aircraft-expansion-2.md)
 adds A319-100, A321-200, A330-200/-300 and A220-100/-300. It documents
 manufacturer weight variants, the corrected A321 tire, and conflicting A220
 wheelbase diagrams. The A220 conflict is exposed in assumedFields and unit notes.
@@ -490,6 +490,8 @@ the historical outer-width derivations and assumed nose spacing for these two
 families described above. The catalog retains the existing IDs for saved-project
 compatibility; saved projects retain their own stored dimensions.
 
-The [review](../../../docs/gear3d-body-review/boeing-757-767.md) records exact
+The [review](https://github.com/ictuillinois/CEE-406/blob/main/docs/gear3d-body-review/boeing-757-767.md) records exact
 manual pages, weight variants, corrected geometry, model licensing, and known
-visual differences. Reproduce the catalog with `scripts/build-gear3d-boeing.mjs`.
+visual differences. Reproduce the catalog with `scripts/build-gear3d-boeing.mjs` in
+[the CEE-406 repository](https://github.com/ictuillinois/CEE-406/tree/main/scripts), where this expansion and its
+reviews were made.

@@ -8,11 +8,12 @@ transforms against a newer upstream**, not by hand-editing the ported files.
 
 | In this repo | Origin | How |
 |---|---|---|
-| `src/components/react/gear3d/engine/**` | upstream `src/**` (37 modules) | plain copy |
+| `src/components/react/gear3d/engine/**` | upstream `src/**` (39 modules) | plain copy |
 | `src/components/react/gear3d/gear3d.js` | upstream `main.js` | `port-main.mjs` |
 | `src/components/react/gear3d/gear3d.css` | upstream `styles.css` | `port-css.mjs` |
 | `public/gear3d/data/**` | upstream `src/data/**` | plain copy |
-| `public/gear3d/textures/**` | upstream `assets/textures/**` | plain copy |
+| `public/gear3d/textures/**` | upstream `assets/textures/**` | plain copy, then the spelling pass |
+| `public/gear3d/bodies/**` | upstream `assets/bodies/**` | plain copy |
 | `src/components/react/gear3d/Gear3DApp.tsx` | upstream `index.html` body | hand-converted to JSX |
 | `src/components/react/gear3d/icons.ts` | — | written here (upstream uses Font Awesome) |
 
@@ -32,14 +33,19 @@ cp -r "$UP/src"/{core,geometry,scene,annotate,contact,views,io} \
 cp "$UP/src/data/tires.json" "$UP/src/data/SOURCES.md" public/gear3d/data/
 cp -r "$UP/src/data"/{trucks,aircraft}                    public/gear3d/data/
 cp "$UP/assets/textures"/*                                public/gear3d/textures/
+cp -r "$UP/assets/bodies"                                 public/gear3d/
 
 # generated files
 node scripts/port-gear3d/port-main.mjs "$UP/main.js"    src/components/react/gear3d/gear3d.js
 node scripts/port-gear3d/port-css.mjs  "$UP/styles.css" src/components/react/gear3d/gear3d.css
 
 # American spelling, LAST, over the copied and the generated files alike
-node scripts/us-english.mjs src/components/react/gear3d
+node scripts/us-english.mjs src/components/react/gear3d public/gear3d/textures
 ```
+
+`public/gear3d/textures` is in that pass because its `CREDITS.md` is the one
+copied asset file the port respells (two words). The data and the bodies need
+nothing, and `node scripts/us-english.mjs --check public/gear3d` says so.
 
 Then re-apply the `PORT NOTE` in `engine/io/exportRaster.js`, and run
 `npm run build`.
@@ -112,13 +118,18 @@ where the unit-system work went in 2026-09, rather than into an eleventh
 section of this script. A transform that carries product changes stops being
 a transform and becomes a fork.
 
-`port-main.mjs` — 22 rewrites:
+`port-main.mjs` — 24 rewrites:
 
 - imports repointed to `./engine/`, and `icons` / `TextureLibrary` added;
 - the module body wrapped in one `initGear3D(root)` closure returning a disposer;
-- `$` and all nine `document.querySelectorAll` calls scoped to `root`, so two
+- `$` and all eleven `document.querySelectorAll` calls scoped to `root`, so two
   mounts cannot collide and nothing reaches outside the island;
-- the data library and textures addressed through `BASE_URL` (see CLAUDE.md);
+- the data library and textures addressed through `BASE_URL` (see CLAUDE.md),
+  and upstream's own `ASSET_BASE` (`./assets/`, where the vehicle bodies live)
+  consumed by the closure opener and replaced by the port's `public/gear3d/`;
+- the vehicle-body GLB continuation guarded against an unmount, like `boot()`,
+  and `disposeVehicleBodies()` imported and called by the disposer, because
+  the loaded templates are module-level and shared by every mount;
 - `cssVar()` reads tokens off `root`, not `documentElement`;
 - both `document` keydown maps named so the disposer can remove them;
 - toast timers tracked, and `boot()` guarded against an unmount that lands
@@ -127,9 +138,16 @@ a transform and becomes a fork.
   single-quoted strings, five inside template literals, which is why the table
   is keyed on the *site* rather than on the icon name.
 
-`port-css.mjs` — 34 rewrites:
+`port-css.mjs` — 36 rewrites:
 
-- tokens moved off `:root` onto `.g3-app` (integration contract, §0.1);
+- tokens moved off `:root` onto `.g3-app` (integration contract, §0.1), the
+  first block also carrying `box-sizing: border-box`, which the shell's
+  `width: 100%` needs and upstream's centered max-width box never did;
+- upstream's tablet side gutter zeroed, because the Astro container already
+  has one;
+- upstream's teal-black `#06222a` (ink on the accent, and the title-block
+  mark tile) mapped to the course navy, seven sites including the tile's
+  shadow;
 - the palette re-skinned from upstream teal-on-slate to the course
   orange-on-navy — but **not** `--g3-fig-*`, which are the exported figure's
   colors and must not follow the site;
@@ -139,6 +157,31 @@ a transform and becomes a fork.
   repainting every control);
 - the seven `… i {` icon rules retargeted at `.g3-i`;
 - the shell handed its width to the Astro page.
+
+## When a change was made here first
+
+It happened once, and this is how it was reconciled. The v1.13 work (vehicle
+bodies, the reversible wide-base swap, the figure bar, 21 new aircraft) was
+built in this repository, editing `engine/**`, `gear3d.js`, `gear3d.css`,
+`Gear3DApp.tsx` and `public/gear3d/` directly, and was then brought upstream
+(2026-09-18):
+
+1. `engine/**`, `public/gear3d/data/**` and `public/gear3d/bodies/**` went
+   up as plain copies (the `PORT NOTE` excepted);
+2. the `gear3d.js` / `gear3d.css` diffs since the last sync were applied to
+   upstream `main.js` / `styles.css` with the port-only lines taken out, and
+   each port-only line became a rewrite here instead — the four new ones
+   above;
+3. `Gear3DApp.tsx`'s markup changes were hand-written into upstream
+   `index.html` (upstream's own palette on the new mark);
+4. the full pipeline above was then run against the new upstream, and left
+   this tree byte-identical.
+
+Upstream's suite caught two data defects this repository's tests could not
+(DECISIONS D43 there): twenty source citations with no publisher, fixed in
+`scripts/import-gear3d-aircrafter.py` and regenerated from the same workbook,
+and a stale 767-400ER pin. Doing it this way round costs a reverse diff; the
+next change should go upstream first.
 
 ## After any re-sync, check
 
