@@ -72,40 +72,60 @@ export const shiftData = (points: TestPoint[], shifts: Shifts): ShiftedPoint[] =
 export interface SigmoidFit { delta: number; alpha: number; beta: number; gamma: number; rmse: number; r2: number; atBound: boolean }
 export const sigmoidLog = (fit: SigmoidFit, x: number) => fit.delta + fit.alpha / (1 + Math.exp(Math.max(-700, Math.min(700, fit.beta + fit.gamma * x))));
 
-export type ShiftLawKind = 'linear' | 'quadratic';
-export interface ShiftLaw { kind: ShiftLawKind; reference: number; c1: number; c2: number; r2: number | null }
-/** Least squares through the fixed reference; each temperature has equal weight.
- * Solve in scaled reference-centered coordinates, then express the quadratic about 20 °C.
+/** Williams–Landel–Ferry, anchored at the student's reference temperature:
+ *     log10 aT = −C1 (T − Tref) / (C2 + T − Tref)
+ * C1 enters LINEARLY once C2 is fixed, so this is a one-dimensional search over
+ * C2 with C1 projected out of it — no Jacobian, and no seed to get wrong. Each
+ * temperature carries equal weight, and the reference is satisfied exactly
+ * (T = Tref gives log10 aT = 0) rather than fitted.
+ *
+ * Two limits bound the search, and both are reported rather than hidden.
+ * The pole at T = Tref − C2 is held below the coldest test temperature, which
+ * is the branch WLF is written for; and C2 → ∞ at fixed C1/C2 IS a straight
+ * line, so shifts carrying no curvature drive C2 to the ceiling and identify
+ * only that ratio.
  */
-export function fitShiftLaw(ts: number[], shifts: Shifts, reference: number, kind: ShiftLawKind): ShiftLaw | null {
-  if (!ts.includes(reference) || ts.length < (kind === 'quadratic' ? 3 : 2) ||
+export const WLF_C2_MAX = 1e4;
+export interface ShiftLaw { reference: number; c1: number; c2: number; r2: number | null; atBound: boolean }
+export function fitShiftLaw(ts: number[], shifts: Shifts, reference: number): ShiftLaw | null {
+  if (!ts.includes(reference) || ts.length < 3 ||
       ts.some(t => !Number.isFinite(t) || !Number.isFinite(shifts[t]))) return null;
-  const scale = Math.max(...ts.map(t => Math.abs(t - reference)));
-  if (!(scale > 0)) return null;
-  const u = ts.map(t => (t - reference) / scale), y = ts.map(t => shifts[t]);
-  const dot = (a: number[], b: number[]) => a.reduce((sum, v, i) => sum + v * b[i], 0);
-  const uu = dot(u, u);
-  let slope = dot(u, y) / uu, curvature = 0;
-  if (kind === 'quadratic') {
-    const squared = u.map(v => v * v), projection = dot(squared, u) / uu;
-    const perpendicular = squared.map((v, i) => v - projection * u[i]);
-    const norm = dot(perpendicular, perpendicular);
-    if (norm < 1e-20) return null;
-    curvature = dot(perpendicular, y) / norm;
-    slope -= curvature * projection;
+  const dt = ts.map(t => t - reference), y = ts.map(t => shifts[t]);
+  const span = Math.max(...ts) - Math.min(...ts);
+  if (!(span > 0)) return null;
+  const floor = Math.max(0, -Math.min(...dt)) + Math.max(1, span / 50);
+  if (!(floor < WLF_C2_MAX)) return null;
+  /** Least-squares C1 at a fixed C2, and the residual the search minimizes. */
+  const project = (c2: number) => {
+    const u = dt.map(v => v / (c2 + v));
+    const uu = u.reduce((sum, v) => sum + v * v, 0);
+    if (!(uu > 1e-30)) return { c1: 0, error: Infinity };
+    const c1 = -u.reduce((sum, v, i) => sum + v * y[i], 0) / uu;
+    return { c1, error: u.reduce((sum, v, i) => sum + (y[i] + c1 * v) ** 2, 0) };
+  };
+  const steps = 400, ratio = Math.log(WLF_C2_MAX / floor) / steps;
+  const grid = Array.from({ length: steps + 1 }, (_, i) => floor * Math.exp(i * ratio));
+  let index = 0, least = Infinity;
+  grid.forEach((c2, i) => { const error = project(c2).error; if (error < least) { least = error; index = i; } });
+  // Golden section inside the bracket the 2%-resolution scan already located.
+  let lo = grid[Math.max(0, index - 1)], hi = grid[Math.min(steps, index + 1)];
+  const golden = (Math.sqrt(5) - 1) / 2;
+  let a = hi - golden * (hi - lo), b = lo + golden * (hi - lo);
+  let fa = project(a).error, fb = project(b).error;
+  for (let k = 0; k < 120 && hi - lo > 1e-10 * hi; k++) {
+    if (fa < fb) { hi = b; b = a; fb = fa; a = hi - golden * (hi - lo); fa = project(a).error; }
+    else { lo = a; a = b; fa = fb; b = lo + golden * (hi - lo); fb = project(b).error; }
   }
-  const c1 = kind === 'linear' ? slope / scale : curvature / scale ** 2;
-  const c2 = kind === 'linear' ? 0 : slope / scale - 2 * c1 * (reference - 20);
-  const law: ShiftLaw = { kind, reference, c1, c2, r2: null };
+  const c2 = (lo + hi) / 2, { c1, error } = project(c2);
   const mean = y.reduce((sum, v) => sum + v, 0) / y.length;
   const sst = y.reduce((sum, v) => sum + (v - mean) ** 2, 0);
-  const sse = ts.reduce((sum, t, i) => sum + (shiftLawAt(law, t) - y[i]) ** 2, 0);
-  law.r2 = sst > 1e-20 ? 1 - sse / sst : null;
-  return law;
+  return { reference, c1: Object.is(c1, -0) ? 0 : c1, c2, atBound: index === 0 || index === steps,
+    r2: sst > 1e-20 ? 1 - error / sst : null };
 }
+/** Undefined at or below the pole; the caller reports that, never a number. */
 export function shiftLawAt(law: ShiftLaw, temperature: number): number {
-  const dt = temperature - law.reference;
-  return law.kind === 'linear' ? law.c1 * dt : dt * (law.c1 * (temperature + law.reference - 40) + law.c2);
+  const dt = temperature - law.reference, denominator = law.c2 + dt;
+  return denominator > 0 ? -law.c1 * dt / denominator : NaN;
 }
 export function predictModulus(fit: SigmoidFit, law: ShiftLaw, temperature: number, frequency: number) {
   if (!Number.isFinite(temperature) || !Number.isFinite(frequency) || frequency <= 0) return null;

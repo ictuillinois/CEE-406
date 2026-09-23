@@ -49,25 +49,50 @@ The reference selector lists only temperatures in the active dataset, including 
 values. Changing reference subtracts its log shift from every shift, preserving
 pairwise spacing and fit error. The selected reference is fixed at zero.
 
-Final results offer two equal-weight least-squares temperature fits to the student's
-saved log shifts. Neither changes the manual shifts or refits the sigmoid:
+Final results fit the **Williams–Landel–Ferry** law to the student's saved log
+shifts by equal-weight least squares. It changes neither the manual shifts nor
+the sigmoid:
 
-- Linear: `log10(aT) = c1 (T − Tref)`.
-- Quadratic: `log10(aT) = c1 [(T − 20)² − (Tref − 20)²] + c2 (T − Tref)`.
-  This is exactly `c1(T − 20)² + c2(T − 20)` when Tref is 20 °C.
+    log10(aT) = −C1 (T − Tref) / [C2 + (T − Tref)]
 
-The quadratic requires three temperature groups; two groups use linear fitting.
-Scaled, reference-centered coordinates and orthogonalized columns stabilize the
-least-squares solve. Coefficients are then expressed about 20 °C. Their units and
-shift-fit R² appear beside the sigmoid parameters. Constant shifts have undefined
-shift-fit R². These polynomial coefficients are not WLF constants.
+C1 (dimensionless) and C2 (°C) are reported beside the sigmoid parameters with the
+shift-fit R². C1 enters linearly once C2 is fixed, so `fitShiftLaw` is a
+one-dimensional search over C2 — a 400-point logarithmic scan followed by golden
+section inside the bracket it finds — with C1 projected out in closed form at each
+trial. There is no Jacobian and no seed to get wrong. The reference is satisfied
+exactly (T = Tref gives log10 aT = 0) rather than fitted, so it contributes no
+residual; constant shifts still have undefined shift-fit R².
 
-The predictor below the five plots evaluates the selected shift law at the input
-temperature, computes `log10(fr) = log10(f) + log10(aT)`, then evaluates the saved
-sigmoid to return dynamic modulus magnitude in MPa. Frequency must be positive;
-both inputs must be finite. Predictions beyond measured temperatures or the
-shifted frequency range are labeled extrapolation. The exported JSON includes
-the selected law, coefficients and reference, allowing predictions to be reproduced.
+Two bounds are reported rather than hidden, both through `atBound`:
+
+- **The pole.** WLF is singular at `T = Tref − C2`. The search floor keeps that
+  temperature below the coldest test temperature, which is the branch WLF is
+  written for, and `shiftLawAt` returns NaN at or below it instead of a number —
+  the predictor says so in words. The singular temperature is printed in the C2
+  tooltip and carried in the export.
+- **The straight line.** A straight line is the `C2 → ∞` limit at fixed C1/C2, so
+  shifts with no curvature drive C2 to `WLF_C2_MAX` (10⁴ °C) and identify only the
+  ratio. The card then says that only C1/C2 is determined, and prints it.
+
+WLF needs three temperature groups; with two, C1 and C2 cannot be separated and
+the card says so rather than fitting something else. Both constants belong to the
+chosen reference. The WLF form converts exactly — moving the reference by ΔT gives
+C2′ = C2 + ΔT and C1′ = C1C2/C2′ — but refitting at another reference anchors the
+residuals elsewhere, so converting and refitting agree only as far as the fit is
+good; `equations.test.mjs` pins the conversion on noiseless WLF data, where they
+must agree exactly.
+
+The predictor below the five plots evaluates the WLF law at the input temperature,
+computes `log10(fr) = log10(f) + log10(aT)`, then evaluates the saved sigmoid to
+return dynamic modulus magnitude in MPa. Frequency must be positive; both inputs
+must be finite; temperatures at or below the pole report nothing. Predictions
+beyond measured temperatures or the shifted frequency range are labeled
+extrapolation. The exported JSON names the model and carries C1, C2, the
+reference, the singular temperature and the bound flag, so a prediction can be
+reproduced.
+
+On the default trial shifts at a 21 °C reference the fit gives C1 = 23.03,
+C2 = 197.6 °C (R² = 0.9996), which `equations.test.mjs` pins.
 
 The final supplemental model follows the Python workflow: storage and loss from
 measured magnitude/phase, fitted jointly with nonnegative relaxation strengths.
@@ -93,9 +118,10 @@ npm run build
 ```
 
 Tests cover source averages, import validation, shift/reference invariance,
-synthetic sigmoid recovery, pivoted linear solves and NNLS, reference-script trial
-shift improvement, missing overlap, and analytic standard-linear-solid relaxation
-and creep. Render tests exercise the manual entry state, full results and missing
+synthetic sigmoid recovery, exact WLF constant recovery at every reference and the
+textbook reference conversion, the C2 → ∞ straight-line bound, the pole guard,
+pivoted linear solves and NNLS, reference-script trial shift improvement, missing
+overlap, and analytic standard-linear-solid relaxation and creep. Render tests exercise the manual entry state, full results and missing
 phase data. Browser checks cover manual editing, dataset reference selection, invalid and
 modulus-only imports, result invalidation, JSON export, all five plots, and mobile
 layout. The catalog thumbnail is an actual browser capture at 1312 × 788.

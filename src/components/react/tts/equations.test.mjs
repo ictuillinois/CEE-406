@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { DEFAULT_DATA, REPLICATES } from './data.ts';
 import {
   parseData, validateData, dataCSV, zeroShifts, temperatures, shiftAt, shiftData, rebaseShifts,
-  fitShiftLaw, shiftLawAt, predictModulus, sigmoidLog, fitSigmoid, overlapError, solveLinear, nnls, spectrumAt, fitSpectrum, relaxationAt, creepModel, creepAt,
+  fitShiftLaw, shiftLawAt, predictModulus, sigmoidLog, fitSigmoid, overlapError, solveLinear, nnls, spectrumAt, fitSpectrum, relaxationAt, creepModel, creepAt, WLF_C2_MAX,
 } from './equations.ts';
 const near = (actual, expected, tolerance = 1e-8) => assert.ok(Math.abs(actual - expected) <= tolerance * Math.max(1, Math.abs(expected)), `${actual} != ${expected}`);
 const manual = { '-10': 4.25, 4: 2.25, 21: 0, 37: -1.8, 54: -3.25 };
@@ -154,32 +154,86 @@ test('log-space 1 − R² error matches normalized residuals and improves with a
 });
 
 
-test('temperature fits recover anchored linear and stated 20-degree quadratic laws', () => {
+const wlf = (c1, c2, reference) => t => -c1 * (t - reference) / (c2 + t - reference);
+
+test('the WLF fit recovers the constants that generated the shifts, at every reference', () => {
+  // The projection solves C1 exactly at the right C2, so a noiseless dataset
+  // has to come back at full precision -- not merely close.
   const ts = [-10, 4, 20, 37, 54];
-  const linearShifts = Object.fromEntries(ts.map(t => [t, -0.12 * (t - 20)]));
-  const linear = fitShiftLaw(ts, linearShifts, 20, 'linear');
-  near(linear.c1, -0.12); near(linear.r2, 1); near(shiftLawAt(linear, 20), 0);
-  const q = t => 0.001 * (t - 20) ** 2 - 0.12 * (t - 20);
   for (const reference of ts) {
-    const shifts = Object.fromEntries(ts.map(t => [t, q(t) - q(reference)]));
-    const law = fitShiftLaw(ts, shifts, reference, 'quadratic');
-    near(law.c1, 0.001); near(law.c2, -0.12); near(law.r2, 1);
-    near(shiftLawAt(law, reference), 0);
-    near(shiftLawAt(law, 30), q(30) - q(reference));
+    // every C2 here keeps the pole below -10 degrees at every reference, which
+    // is the branch the fit searches; a pole inside the data is not WLF data
+    for (const [c1, c2] of [[19, 92], [23.5, 197.6], [12, 70]]) {
+      const law = fitShiftLaw(ts, Object.fromEntries(ts.map(t => [t, wlf(c1, c2, reference)(t)])), reference);
+      near(law.c1, c1, 1e-6); near(law.c2, c2, 1e-6); near(law.r2, 1, 1e-12);
+      assert.equal(law.atBound, false);
+      near(shiftLawAt(law, reference), 0);
+      near(shiftLawAt(law, 30), wlf(c1, c2, reference)(30), 1e-6);
+    }
   }
 });
 
-test('shift fits handle two temperatures and zero shifts without misleading R squared', () => {
-  assert.equal(fitShiftLaw([0, 20], {0: 2, 20: 0}, 20, 'quadratic'), null);
-  near(fitShiftLaw([0, 20], {0: 2, 20: 0}, 20, 'linear').c1, -0.1);
-  const ts = [-10, 4, 21, 37, 54], shifts = Object.fromEntries(ts.map(t => [t, 0]));
-  const law = fitShiftLaw(ts, shifts, 21, 'quadratic');
-  assert.equal(law.r2, null); near(law.c1, 0); near(law.c2, 0);
+test('WLF constants convert between references exactly, when the data are exactly WLF', () => {
+  // C2' = C2 + dT and C1' = C1 C2 / C2' is the textbook conversion, and it is
+  // a property of the equation, not of the fit: refitting at another reference
+  // must land on the converted constants whenever the shifts have no scatter.
+  const ts = [-10, 4, 21, 37, 54], reference = 21, c1 = 23.5, c2 = 197.6;
+  const shifts = Object.fromEntries(ts.map(t => [t, wlf(c1, c2, reference)(t)]));
+  for (const moved of ts) {
+    const dt = moved - reference;
+    const rebased = rebaseShifts(ts, shifts, moved);
+    const law = fitShiftLaw(ts, rebased, moved);
+    near(law.c2, c2 + dt, 1e-6);
+    near(law.c1, c1 * c2 / (c2 + dt), 1e-6);
+  }
+});
+
+test('the default trial shifts give asphalt-scale WLF constants and a curve through them', () => {
+  const ts = temperatures(DEFAULT_DATA);
+  const law = fitShiftLaw(ts, manual, 21);
+  near(law.c1, 23.0276, 1e-3); near(law.c2, 197.553, 1e-3);
+  assert.ok(law.r2 > 0.999, `R2 ${law.r2}`);
+  assert.equal(law.atBound, false);
+  near(shiftLawAt(law, 21), 0);
+  // the pole stays below the coldest reading, so every drawn temperature is finite
+  assert.ok(21 - law.c2 < ts[0], `pole ${21 - law.c2}`);
+  ts.forEach(t => assert.ok(Math.abs(shiftLawAt(law, t) - manual[t]) < 0.12));
+});
+
+test('a straight line is the C2 to infinity limit, and is reported as a bound rather than a fit', () => {
+  const ts = [-10, 4, 21, 37, 54];
+  const law = fitShiftLaw(ts, Object.fromEntries(ts.map(t => [t, -0.12 * (t - 21)])), 21);
+  assert.equal(law.atBound, true);
+  near(law.c2, WLF_C2_MAX, 1e-9);
+  near(law.c1 / law.c2, 0.12, 2e-4);   // only the ratio is identified
+  assert.ok(law.r2 > 0.99999);
+});
+
+test('WLF is undefined below its pole, and the fit keeps that pole off the data', () => {
+  const ts = [-10, 4, 21, 37, 54];
+  const law = fitShiftLaw(ts, manual, 21);
+  const pole = 21 - law.c2;
+  assert.ok(Number.isNaN(shiftLawAt(law, pole)));
+  assert.ok(Number.isNaN(shiftLawAt(law, pole - 10)));
+  assert.ok(Number.isFinite(shiftLawAt(law, pole + 1e-6)));
+  // a reference at the coldest group still cannot put the pole inside the data
+  const cold = fitShiftLaw(ts, rebaseShifts(ts, manual, -10), -10);
+  assert.ok(-10 - cold.c2 < -10);
+  ts.forEach(t => assert.ok(Number.isFinite(shiftLawAt(cold, t))));
+});
+
+test('two temperatures and flat shifts are refused or flagged, never given false constants', () => {
+  assert.equal(fitShiftLaw([0, 20], { 0: 2, 20: 0 }, 20), null);
+  assert.equal(fitShiftLaw([-10, 4, 21], { '-10': 2, 4: 1, 21: 0 }, 37), null);
+  const ts = [-10, 4, 21, 37, 54];
+  const law = fitShiftLaw(ts, Object.fromEntries(ts.map(t => [t, 0])), 21);
+  assert.equal(law.r2, null); near(law.c1, 0); assert.equal(law.atBound, true);
+  assert.ok(Object.is(law.c1, 0), 'a zero C1 is never reported as -0');
 });
 
 test('modulus prediction composes fitted temperature shifts with the saved sigmoid', () => {
   const points = shiftData(DEFAULT_DATA, manual), fit = fitSigmoid(points);
-  const law = fitShiftLaw(temperatures(DEFAULT_DATA), manual, 21, 'quadratic');
+  const law = fitShiftLaw(temperatures(DEFAULT_DATA), manual, 21);
   const prediction = predictModulus(fit, law, 30, 10);
   near(prediction.logFrequency, 1 + shiftLawAt(law, 30));
   near(prediction.modulus, 10 ** sigmoidLog(fit, prediction.logFrequency));

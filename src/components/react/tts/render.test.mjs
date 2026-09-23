@@ -5,7 +5,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { DEFAULT_DATA } from './data.ts';
-import { shiftData, fitSigmoid, fitSpectrum } from './equations.ts';
+import { shiftData, fitSigmoid, fitSpectrum, fitShiftLaw, temperatures } from './equations.ts';
+import { fmt } from '../fitting/shared.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
 const require = createRequire(import.meta.url);
@@ -49,9 +50,13 @@ test('final fit retains frequency responses and removes time-domain plots', () =
     assert.ok(html.includes(title), title);
   assert.doesNotMatch(html, /Relaxation modulus E\(t\)|Creep compliance J\(t\)|Time-domain|decades/);
   assert.match(html, /Download fit \+ shifts/);
-  assert.match(html, /Temperature-shift fit/);
-  assert.match(html, /Shift c₁/);
-  assert.match(html, /Shift c₂/);
+  assert.match(html, /Temperature-shift fit · Williams–Landel–Ferry/);
+  assert.doesNotMatch(html, /[Qq]uadratic|polynomial/);
+  // the card must print the constants the engine actually fitted
+  const law = fitShiftLaw(temperatures(DEFAULT_DATA), shifts, 21);
+  assert.ok(html.includes(fmt(law.c1, 6)), `C₁ ${fmt(law.c1, 6)}`);
+  assert.ok(html.includes(fmt(law.c2, 6)), `C₂ ${fmt(law.c2, 6)}`);
+  assert.ok(html.includes(fmt(21 - law.c2, 4)), 'the singular temperature');
   assert.match(html, /Predict dynamic modulus/);
   assert.match(html, /Predicted \|E\*\|/);
   assert.ok(html.includes((1 - fitSigmoid(shiftData(DEFAULT_DATA, shifts)).r2).toFixed(6)));

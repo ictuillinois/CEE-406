@@ -130,7 +130,7 @@ export const tools: Tool[] = [
     slug: 'time-temperature-superposition',
     color: '#E87722',
     hws: ['Ch. 2', 'Ch. 7'],
-    ref: 'Manual shifting · Sigmoidal master curve',
+    ref: 'Manual shifting · Sigmoidal master curve · WLF',
     image: 'time-temperature-superposition.webp',
     imageAlt: 'Temperature-grouped modulus measurements with manual shift controls and live master-curve error feedback.',
     desc: 'Shift temperature curves by hand, minimize live fit error, and explore modulus and phase at a reference temperature from your dataset.',
