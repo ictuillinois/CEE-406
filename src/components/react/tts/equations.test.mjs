@@ -138,3 +138,17 @@ test('spectrum fits the default data and yields bounded monotone time responses'
   assert.equal(fitSpectrum(shiftData(DEFAULT_DATA.map(p => ({ ...p, phase: null })), manual)), null);
   assert.equal(fitSpectrum(shiftData(DEFAULT_DATA, manual), 1e9), null);
 });
+
+
+test('log-space 1 − R² error matches normalized residuals and improves with alignment', () => {
+  const points = shiftData(DEFAULT_DATA, manual), fit = fitSigmoid(points);
+  const mean = points.reduce((sum, p) => sum + Math.log10(p.modulus), 0) / points.length;
+  const sse = points.reduce((sum, p) => sum + (Math.log10(p.modulus) - sigmoidLog(fit, p.logFrequency)) ** 2, 0);
+  const sst = points.reduce((sum, p) => sum + (Math.log10(p.modulus) - mean) ** 2, 0);
+  near(1 - fit.r2, sse / sst, 1e-12);
+  assert.ok(1 - fit.r2 < (1 - fitSigmoid(shiftData(DEFAULT_DATA, zeroShifts(DEFAULT_DATA))).r2) / 100);
+  for (const ref of temperatures(DEFAULT_DATA)) {
+    const rebased = shiftData(DEFAULT_DATA, rebaseShifts(temperatures(DEFAULT_DATA), manual, ref));
+    near(1 - fitSigmoid(rebased).r2, 1 - fit.r2, 1e-7);
+  }
+});

@@ -133,7 +133,7 @@ export const tools: Tool[] = [
     ref: 'Manual shifting · Sigmoidal master curve',
     image: 'time-temperature-superposition.webp',
     imageAlt: 'Temperature-grouped modulus measurements with manual shift controls and live master-curve error feedback.',
-    desc: 'Build a master curve by hand: shift each temperature group, compare error and overlap live, then explore the sigmoid, storage and loss moduli, phase angle, relaxation and creep at your chosen reference temperature.',
+    desc: 'Shift temperature curves by hand, minimize live fit error, and explore modulus and phase at a reference temperature from your dataset.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M10 36 Q25 34 35 23 T60 9" opacity="0.35"/>
       <path d="M38 36 Q53 34 63 23 T88 9" opacity="0.6"/>

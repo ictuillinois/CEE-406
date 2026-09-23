@@ -4,7 +4,7 @@
 .tts-stages { display: flex; flex-wrap: wrap; width: fit-content; }
 .tts-stages button { padding: .65rem 1rem; }
 .tts-tool button:disabled { opacity: .45; cursor: not-allowed; }
-.tts-tool input:focus-visible, .tts-tool button:focus-visible, .tts-tool textarea:focus-visible,
+.tts-tool select:focus-visible, .tts-tool input:focus-visible, .tts-tool button:focus-visible, .tts-tool textarea:focus-visible,
 .tts-tool a:focus-visible { outline: 2px solid var(--cee-brand); outline-offset: 3px; }
 .tts-controls { position: static; }
 .tts-reference { display: flex; gap: .5rem; margin-top: .4rem; }

@@ -25,7 +25,11 @@ test('manual workspace starts unshifted, reference fixed, final results unavaila
   const html = renderToString(React.createElement(components.default)).replaceAll('<!-- -->', '');
   assert.match(html, /shifts start at zero/);
   assert.match(html, /Shift factors must be unique/);
-  assert.match(html, /0\.5855/);
+  assert.ok(html.includes((1 - fitSigmoid(shiftData(DEFAULT_DATA, { '-10': 0, 4: 0, 21: 0, 37: 0, 54: 0 })).r2).toFixed(6)));
+  assert.match(html, /Fit error · 1 − R²/);
+  assert.doesNotMatch(html, /decades|RMS factor/);
+  assert.equal([...html.matchAll(/<option /g)].length, 5);
+  assert.match(html, /<option value="21" selected="">21 °C/);
   assert.match(html, /disabled=""[^>]*>3\. Final fit/);
   assert.match(html, /disabled=""[^>]*aria-label="Log shift at 21 °C"/);
   assert.equal([...html.matchAll(/type="range"/g)].length, 5);
@@ -39,19 +43,19 @@ function renderFinal(data) {
     legend: [], groupTraces: () => [], domain: () => [0.001, 1, 1000], color: '#0F1A2E',
   }));
 }
-test('final fit renders all requested responses with separate relaxation and creep units', () => {
+test('final fit retains frequency responses and removes time-domain plots', () => {
   const html = renderFinal(DEFAULT_DATA);
-  for (const title of ['Storage modulus', 'Loss modulus', 'Phase angle', 'Shift factors', 'Dynamic modulus · reduced frequency', 'Relaxation modulus E(t)', 'Creep compliance J(t)'])
+  for (const title of ['Storage modulus', 'Loss modulus', 'Phase angle', 'Shift factors', 'Dynamic modulus · reduced frequency'])
     assert.ok(html.includes(title), title);
-  assert.match(html, /J\(t\) is not 1\/E\(t\)/);
+  assert.doesNotMatch(html, /Relaxation modulus E\(t\)|Creep compliance J\(t\)|Time-domain|decades/);
   assert.match(html, /Download fit \+ shifts/);
-  assert.match(html, /0\.02047/);
+  assert.ok(html.includes((1 - fitSigmoid(shiftData(DEFAULT_DATA, shifts)).r2).toFixed(6)));
   assert.doesNotMatch(html, /NaN|Infinity/);
 });
 test('modulus-only data never fabricate a phase or time-domain model', () => {
   const html = renderFinal(DEFAULT_DATA.map(p => ({ ...p, phase: null })));
   assert.match(html, /Response curves are unavailable/);
-  assert.match(html, /Time-domain responses need phase data/);
+  assert.doesNotMatch(html, /Time-domain responses/);
   assert.doesNotMatch(html, /title="Creep compliance J\(t\)"/);
   assert.doesNotMatch(html, /NaN|Infinity/);
 });
