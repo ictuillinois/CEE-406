@@ -126,6 +126,22 @@ export const tools: Tool[] = [
     </svg>`,
   },
   {
+    name: 'Time-Temperature Superposition',
+    slug: 'time-temperature-superposition',
+    color: '#E87722',
+    hws: ['Ch. 2', 'Ch. 7'],
+    ref: 'Manual shifting · Sigmoidal master curve',
+    image: 'time-temperature-superposition.webp',
+    imageAlt: 'Temperature-grouped modulus measurements with manual shift controls and live master-curve error feedback.',
+    desc: 'Build a master curve by hand: shift each temperature group, compare error and overlap live, then explore the sigmoid, storage and loss moduli, phase angle, relaxation and creep at your chosen reference temperature.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M10 36 Q25 34 35 23 T60 9" opacity="0.35"/>
+      <path d="M38 36 Q53 34 63 23 T88 9" opacity="0.6"/>
+      <path class="anim" d="M66 36 Q81 34 91 23 T116 9"/>
+      <path d="M30 8 h22 m-5-4 5 4-5 4"/>
+    </svg>`,
+  },
+  {
     name: 'LEAPS',
     slug: 'leaps',
     color: '#8B5CF6',

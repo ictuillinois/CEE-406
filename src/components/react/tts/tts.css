@@ -1,0 +1,51 @@
+.tts-tool { grid-template-columns: minmax(0, 1fr); }
+.tts-top, .tts-wide { grid-column: 1 / -1; min-width: 0; }
+.tts-top > p { margin: .75rem 0 0; }
+.tts-stages { display: flex; flex-wrap: wrap; width: fit-content; }
+.tts-stages button { padding: .65rem 1rem; }
+.tts-tool button:disabled { opacity: .45; cursor: not-allowed; }
+.tts-tool input:focus-visible, .tts-tool button:focus-visible, .tts-tool textarea:focus-visible,
+.tts-tool a:focus-visible { outline: 2px solid var(--cee-brand); outline-offset: 3px; }
+.tts-controls { position: static; }
+.tts-reference { display: flex; gap: .5rem; margin-top: .4rem; }
+.tts-reference input { min-width: 0; }
+.tts-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .9rem 0; }
+.tts-shift { margin-top: 1rem; padding-left: .8rem; border-left: 3px solid; }
+.tts-shift label { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; gap: .5rem; }
+.tts-shift label span { color: var(--cee-secondary); font-size: .72rem; }
+.tts-shift-input { display: flex; gap: .4rem; margin: .5rem 0; }
+.tts-shift-input input { text-align: center; min-width: 0; }
+.tts-shift input[type=range] { width: 100%; accent-color: var(--cee-brand); }
+.tts-callouts { display: grid; gap: 1rem; }
+.tts-callout { background: var(--cee-surface); border: 1px solid var(--cee-hairline); border-top: 3px solid var(--cee-brand); border-radius: 12px; padding: 1rem 1.15rem; }
+.tts-callout h3 { font-size: .9rem; margin: 0 0 .55rem; }
+.tts-callout p { font-size: .82rem; color: var(--cee-secondary); line-height: 1.6; margin: 0; }
+.tts-plot { min-width: 0; }
+.tts-tool .cee-note p { margin: .35rem 0; }
+.tts-tool .cee-card__body > p { line-height: 1.65; }
+.tts-tool a { color: var(--cee-brand-deep); text-decoration: underline; text-underline-offset: 3px; }
+.tts-error { color: var(--cee-negative); font-size: .85rem; }
+.tts-editor { max-height: 450px; overflow: auto; margin: 1rem 0; }
+.tts-editor input { min-width: 115px; }
+.tts-upload { position: relative; cursor: pointer; }
+.tts-upload input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+.tts-upload:focus-within { outline: 2px solid var(--cee-brand); outline-offset: 3px; }
+.tts-tool .cee-textarea { width: 100%; font-family: var(--font-mono); margin: .75rem 0; }
+.tts-tool .cee-howto { margin: 1rem 0; overflow: visible; }
+.tts-tool .cee-card__affordance .cee-tip__pop { left: auto; right: 0; transform: translateY(4px); }
+.tts-tool .cee-card__affordance .cee-tip:hover .cee-tip__pop,
+.tts-tool .cee-card__affordance .cee-tip:focus-visible .cee-tip__pop { transform: translateY(0); }
+@media (min-width: 960px) {
+  .tts-tool { grid-template-columns: 290px minmax(0, 1fr); }
+  .tts-callouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .tts-tool .cee-tip .cee-tip__pop,
+  .tts-tool .cee-tip:hover .cee-tip__pop,
+  .tts-tool .cee-tip:focus-visible .cee-tip__pop {
+    position: fixed; top: auto; bottom: 24px; left: 50%; right: auto;
+    max-width: calc(100vw - 48px); transform: translateX(-50%);
+  }
+  .tts-stages button { padding: .6rem .65rem; font-size: .78rem; }
+  .tts-tool .cee-card__body { padding-left: .8rem; padding-right: .8rem; }
+}

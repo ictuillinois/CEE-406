@@ -66,6 +66,7 @@ export const RELEASED_TOOLS: Record<string, true> = {
   lea: true,
   leaps: true,
   'mr-fitter': true,
+  'time-temperature-superposition': true,
   cbr: true,
 };
 

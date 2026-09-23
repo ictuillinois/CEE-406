@@ -1,0 +1,371 @@
+import { useEffect, useMemo, useState } from 'react';
+import Card from '../ui/Card';
+import Tip from '../Tip';
+import Equation from '../ui/Equation';
+import KpiStrip, { Kpi } from '../ui/KpiStrip';
+import { useTheme, HUES, HUE_ORDER, chartColors, withAlpha, mixHex } from '../chartTheme';
+import { fmt } from '../fitting/shared';
+import { DEFAULT_DATA } from './data.ts';
+import {
+  temperatures, zeroShifts, shiftData, rebaseShifts, validateData, parseData, dataCSV,
+  fitSigmoid, sigmoidLog, overlapError, fitSpectrum, spectrumAt, relaxationAt, creepModel, creepAt,
+  type TestPoint, type Shifts, type ShiftedPoint, type SigmoidFit, type Spectrum,
+} from './equations.ts';
+import TtsPlot from './TtsPlot';
+import '../tools.css';
+import './tts.css';
+
+type Stage = 'data' | 'shift' | 'results';
+interface Snapshot { points: ShiftedPoint[]; shifts: Shifts; reference: number; fit: SigmoidFit; spectrum: Spectrum | null; equilibrium: number }
+const columns = ['Temperature (°C)', 'Frequency (Hz)', '|E*| (MPa)', 'Phase (°)'];
+const toRows = (data: TestPoint[]) => data.map(p => [String(p.temperature), String(p.frequency), String(p.modulus), p.phase === null ? '' : String(p.phase)]);
+const symbols = ['circle', 'square', 'diamond', 'triangle-up', 'triangle-down', 'cross', 'x', 'star', 'hexagon', 'pentagon', 'hourglass', 'bowtie'];
+function download(name: string, content: string, type = 'text/csv') {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = document.createElement('a'); a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Keep incomplete keyboard input (blank, minus, decimal) while editing. */
+function ShiftValue({ value, temperature, index, disabled, onChange }: {
+  value: number; temperature: number; index: number; disabled: boolean; onChange: (v: number) => void;
+}) {
+  const [text, setText] = useState(String(Number(value.toFixed(5))));
+  useEffect(() => setText(String(Number(value.toFixed(5)))), [value]);
+  return <input id={`tts-shift-${index}`} className="cee-input" type="number" step="0.05" min="-24" max="24"
+    disabled={disabled} aria-label={`Log shift at ${temperature} °C`} value={text}
+    onChange={e => {
+      setText(e.target.value);
+      if (e.target.value.trim() !== '' && Number.isFinite(Number(e.target.value))) onChange(Number(e.target.value));
+    }} onBlur={() => setText(String(Number(value.toFixed(5))))} />;
+}
+
+export default function TtsApp() {
+  const [data, setData] = useState<TestPoint[]>(DEFAULT_DATA);
+  const [draft, setDraft] = useState(() => toRows(DEFAULT_DATA));
+  const [paste, setPaste] = useState('');
+  const [dataError, setDataError] = useState('');
+  const [stage, setStage] = useState<Stage>('shift');
+  const [shifts, setShifts] = useState<Shifts>(() => zeroShifts(DEFAULT_DATA));
+  const [reference, setReference] = useState(21);
+  const [refDraft, setRefDraft] = useState('21');
+  const [shiftError, setShiftError] = useState('');
+  const [history, setHistory] = useState<Shifts[]>([]);
+  const [best, setBest] = useState<{ shifts: Shifts; rmse: number } | null>(null);
+  const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
+  const [equilibrium, setEquilibrium] = useState('1');
+  const [message, setMessage] = useState('PG 64-22 · 30 points · 5 temperatures · shifts start at zero.');
+  const [rawView, setRawView] = useState(false);
+  const theme = useTheme(), colors = chartColors(theme);
+  const ts = useMemo(() => temperatures(data), [data]);
+  const shifted = useMemo(() => shiftData(data, shifts), [data, shifts]);
+  const fit = useMemo(() => fitSigmoid(shifted), [shifted]);
+  const overlap = useMemo(() => overlapError(shifted), [shifted]);
+  const legend = ts.map((t, i) => ({ label: `${t} °C`, color: HUES[theme][HUE_ORDER[i % HUE_ORDER.length]] }));
+  const fitLegend = [...legend, { label: 'Sigmoid fit', color: colors.ink, shape: 'line' as const }];
+  const nonmonotone = ts.some((t, i) => i > 0 && shifts[t] > shifts[ts[i - 1]] + 1e-8);
+  const untested = !ts.includes(reference);
+  const outside = reference < ts[0] || reference > ts.at(-1)!;
+  const phaseCount = data.filter(p => p.phase !== null).length;
+  const unapplied = JSON.stringify(draft) !== JSON.stringify(toRows(data));
+
+  function replaceData(points: TestPoint[], label: string) {
+    validateData(points);
+    const temps = temperatures(points);
+    const ref = temps.includes(21) ? 21 : temps[Math.floor(temps.length / 2)];
+    setData(points); setDraft(toRows(points)); setShifts(zeroShifts(points));
+    setReference(ref); setRefDraft(String(ref)); setHistory([]); setBest(null); setSnapshot(null);
+    setDataError(''); setShiftError(''); setMessage(`${label} · ${points.length} readings. Shifts reset to zero.`);
+    // Keep the script's 1 MPa floor where appropriate; support softer custom materials.
+    setEquilibrium(String(Math.min(1, Math.min(...points.map(p => p.modulus)) * 0.01)));
+  }
+  function changeShift(t: number, value: number) {
+    if (!Number.isFinite(value)) return;
+    try {
+      const next = rebaseShifts(ts, { ...shifts, [t]: value }, reference);
+      setHistory(h => [...h.slice(-49), shifts]); setShifts(next); setSnapshot(null); setShiftError('');
+    } catch (e) { setShiftError((e as Error).message); }
+  }
+  function changeReference(value: string) {
+    const ref = value.trim() === '' ? NaN : Number(value);
+    if (!Number.isFinite(ref) || ref < -200 || ref > 300) { setShiftError('Enter a reference between −200 and 300 °C.'); return; }
+    try {
+      const next = rebaseShifts(ts, shifts, ref);
+      const nextBest = best ? { ...best, shifts: rebaseShifts(ts, best.shifts, ref) } : null;
+      setShifts(next);
+      setBest(nextBest);
+      setReference(ref); setRefDraft(String(ref)); setHistory([]); setSnapshot(null); setShiftError('');
+      setMessage(`Reference: ${ref} °C · relative shifts preserved.`);
+    } catch (e) { setShiftError((e as Error).message); }
+  }
+  function finalize() {
+    if (!fit) return;
+    const floor = Number(equilibrium);
+    if (!(floor > 0) || !Number.isFinite(floor)) { setShiftError('Enter a positive, finite long-term modulus.'); return; }
+    const spectrum = fitSpectrum(shifted, floor);
+    setSnapshot({ points: shifted.map(p => ({ ...p })), shifts: { ...shifts }, reference, fit, spectrum, equilibrium: floor });
+    setStage('results'); setShiftError('');
+    setMessage('Final fit saved. Editing inputs clears these results.');
+  }
+  function groupTraces(points: ShiftedPoint[], property: 'modulus' | 'storage' | 'loss' | 'phase', raw = false) {
+    return ts.map((t, i) => {
+      const rows = points.filter(p => p.temperature === t && (property === 'modulus' || p.phase !== null)).sort((a, b) => a.frequency - b.frequency);
+      return { x: rows.map(p => raw ? p.frequency : p.reducedFrequency),
+        y: rows.map(p => property === 'modulus' ? p.modulus : property === 'phase' ? p.phase
+          : property === 'storage' ? p.modulus * Math.cos(p.phase! * Math.PI / 180) : p.modulus * Math.sin(p.phase! * Math.PI / 180)),
+        type: 'scatter', mode: 'lines+markers', name: `${t} °C`,
+        line: { color: withAlpha(legend[i].color, 0.55), width: 1.3, dash: 'dot' },
+        marker: { color: withAlpha(legend[i].color, 0.85), size: 9, symbol: symbols[i],
+          line: { color: mixHex(legend[i].color, colors.ink, 0.35), width: 1.4 } },
+        hovertemplate: `${t} °C<br>%{x:.4g} Hz<br>%{y:.4g}<extra></extra>` };
+    });
+  }
+  const domain = (points: ShiftedPoint[]) => {
+    const low = Math.min(...points.map(p => p.logFrequency)), high = Math.max(...points.map(p => p.logFrequency));
+    return Array.from({ length: 160 }, (_, i) => 10 ** (low + (high - low) * i / 159));
+  };
+  const masterTraces: Record<string, unknown>[] = groupTraces(shifted, 'modulus', rawView || stage === 'data');
+  if (fit && !rawView && stage !== 'data') {
+    const f = domain(shifted);
+    masterTraces.unshift({ x: f, y: f.map(fr => 10 ** sigmoidLog(fit, Math.log10(fr))), type: 'scatter', mode: 'lines', name: 'Sigmoid fit', line: { color: colors.ink, width: 3 } });
+  }
+
+  return <div className="cee-tool tts-tool">
+    <div className="tts-top">
+      <nav className="cee-seg tts-stages" aria-label="Superposition workflow">
+        {(['data', 'shift', 'results'] as Stage[]).map((s, i) => <button key={s} type="button"
+          aria-current={stage === s ? 'step' : undefined} className={stage === s ? 'is-active' : ''}
+          disabled={s === 'results' && !snapshot} onClick={() => setStage(s)}>
+          {i + 1}. {s === 'data' ? 'Test data' : s === 'shift' ? 'Shift & compare' : 'Final fit'}</button>)}
+      </nav>
+      <p role="status" className="cee-hint">{message}</p>
+      {unapplied && <p className="cee-note" role="status">Unapplied edits — select Apply table to update the calculations.</p>}
+    </div>
+
+    {stage === 'data' ? <div className="tts-wide cee-results">
+      <Card title="Test data" subtitle="One dataset · °C · Hz · MPa · degrees"
+        affordance={<Tip text="Default: PG 64-22 (M1 R27-233), Johann J. Cardenas, 2023. One modulus and one phase angle per temperature/frequency pair. Data stay in your browser." />}>
+        <div className="tts-actions">
+          <button type="button" className="cee-chip" onClick={() => replaceData(DEFAULT_DATA, 'Default data restored')}>Restore default data</button>
+          <button type="button" className="cee-chip" onClick={() => download('tts-test-data.csv', dataCSV(data))}>Download data / template</button>
+          <label className="cee-chip tts-upload">Import CSV
+            <input type="file" accept=".csv,.txt,.tsv" aria-label="Import test data CSV" onChange={async e => {
+              const file = e.target.files?.[0]; if (!file) return;
+              try { if (file.size > 250000) throw Error('Keep the file under 250 kB (maximum 500 readings).');
+                replaceData(parseData(await file.text()), 'Imported data');
+              } catch (err) { setDataError((err as Error).message); }
+              e.target.value = '';
+            }} />
+          </label>
+        </div>
+        <details className="cee-howto">
+          <summary>Paste CSV or spreadsheet columns</summary>
+          <div className="cee-howto__body">
+            <p>Header: <code>temperature_C,frequency_Hz,modulus_MPa,phase_deg</code>. Tabs and semicolons also work.
+              The phase column may be omitted or left blank; measured phase is needed for storage, loss and time-domain fitting.</p>
+            <textarea className="cee-textarea" rows={7} aria-label="Pasted test data" value={paste} onChange={e => setPaste(e.target.value)} />
+            <button type="button" className="cee-btn cee-btn--primary" onClick={() => {
+              try { replaceData(parseData(paste), 'Pasted data'); setPaste(''); } catch (err) { setDataError((err as Error).message); }
+            }}>Load pasted data</button>
+          </div>
+        </details>
+        <p className="cee-hint">Edit → Apply table. New data reset the shifts.
+          <Tip text="Use 2–12 temperature groups with at least three distinct frequencies each. Phase is optional for shifting but required for supplemental response fitting." /></p>
+        <div className="cee-tablewrap tts-editor" tabIndex={0} role="region" aria-label="Editable test readings">
+          <table className="cee-table"><thead><tr><th>Row</th>{columns.map(c => <th key={c}>{c}</th>)}<th>Remove</th></tr></thead>
+            <tbody>{draft.map((row, i) => <tr key={i}><th scope="row">{i + 1}</th>{row.map((v, j) => <td key={j}>
+              <input className="cee-input" type="number" step="any" value={v} aria-label={`${columns[j]}, row ${i + 1}`}
+                onChange={e => setDraft(rows => rows.map((r, k) => k === i ? r.map((cell, n) => n === j ? e.target.value : cell) : r))} />
+            </td>)}<td><button type="button" className="cee-chip" aria-label={`Remove row ${i + 1}`} onClick={() => setDraft(rows => rows.filter((_, k) => k !== i))}>×</button></td></tr>)}</tbody>
+          </table>
+        </div>
+        <div className="tts-actions">
+          <button type="button" className="cee-chip" disabled={draft.length >= 500} onClick={() => setDraft(rows => [...rows, ['', '', '', '']])}>Add reading</button>
+          <button type="button" className="cee-btn cee-btn--primary" onClick={() => {
+            try { replaceData(parseData('temperature_C,frequency_Hz,modulus_MPa,phase_deg\n' + draft.map(r => r.join(',')).join('\n')), 'Edited data applied'); }
+            catch (err) { setDataError((err as Error).message); }
+          }}>Apply table</button>
+          <button type="button" className="cee-chip" disabled={unapplied} onClick={() => setStage('shift')}>Continue to shifting →</button>
+        </div>
+        {dataError && <p role="alert" className="tts-error">{dataError} The active dataset has not changed.</p>}
+      </Card>
+      <TtsPlot title="Unshifted test results" subtitle="Measured values, grouped by temperature."
+        xTitle="Measured frequency f (Hz)" yTitle="Dynamic modulus |E*| (MPa)" traces={groupTraces(shifted, 'modulus', true)} legend={legend} />
+    </div> : stage === 'shift' ? <>
+      <aside className="cee-panel tts-controls">
+        <h2 className="cee-panel__title">Your shift factors</h2>
+        <label className="cee-field__label" htmlFor="tts-ref">Reference temperature (°C)</label>
+        <div className="tts-reference">
+          <input id="tts-ref" className="cee-input" type="number" value={refDraft} onChange={e => setRefDraft(e.target.value)} />
+          <button type="button" className="cee-chip" onClick={() => changeReference(refDraft)}>Apply</button>
+        </div>
+        <div className="tts-actions">{ts.map(t => <button key={t} type="button" className={`cee-chip${reference === t ? ' is-active' : ''}`} onClick={() => changeReference(String(t))}>{t}°</button>)}</div>
+        <p className="cee-hint">log₁₀(aT): +1 → ×10 frequency.
+          <Tip text="Positive shifts move right; negative shifts move left. Enter a value, use the ± buttons, or drag the slider. Every point at that temperature moves together." /></p>
+        {ts.map((t, i) => <div className="tts-shift" key={t} style={{ borderLeftColor: legend[i].color }}>
+          <label htmlFor={`tts-shift-${i}`}><strong>{t} °C</strong><span>{t === reference ? 'Reference · fixed' : `aT = ${fmt(10 ** shifts[t], 3)}`}</span></label>
+          <div className="tts-shift-input">
+            <button className="cee-chip" type="button" disabled={t === reference} aria-label={`Shift ${t} °C left 0.1 decade`} onClick={() => changeShift(t, shifts[t] - 0.1)}>−</button>
+            <ShiftValue value={shifts[t]} temperature={t} index={i} disabled={t === reference} onChange={value => changeShift(t, value)} />
+            <button className="cee-chip" type="button" disabled={t === reference} aria-label={`Shift ${t} °C right 0.1 decade`} onClick={() => changeShift(t, shifts[t] + 0.1)}>+</button>
+          </div>
+          <input type="range" min={Math.min(-8, shifts[t])} max={Math.max(8, shifts[t])} step="0.05" value={shifts[t]} disabled={t === reference}
+            aria-label={`Slide log shift at ${t} °C`} onChange={e => changeShift(t, Number(e.target.value))} />
+        </div>)}
+        <div className="tts-actions">
+          <button type="button" className="cee-chip" disabled={!history.length} onClick={() => {
+            setShifts(history.at(-1)!); setHistory(h => h.slice(0, -1)); setSnapshot(null);
+          }}>Undo</button>
+          <button type="button" className="cee-chip" onClick={() => {
+            setHistory(h => [...h.slice(-49), shifts]); setShifts(zeroShifts(data)); setSnapshot(null); setShiftError('');
+          }}>Reset shifts</button>
+        </div>
+        {shiftError && <p className="tts-error" role="alert">{shiftError}</p>}
+      </aside>
+      <div className="cee-results">
+        <KpiStrip>
+          <Kpi accent label="Live curve error" value={fit ? fit.rmse.toFixed(4) : '—'} unit="decades" tip="RMSE of log10 measured modulus minus log10 sigmoid prediction; smaller is better. Only curve parameters are fitted automatically." />
+          <Kpi label="Overlap mismatch" value={overlap.rmse === null ? 'No overlap' : overlap.rmse.toFixed(4)} unit={overlap.rmse === null ? '' : 'decades'} tip="RMS log-modulus difference between adjacent-temperature curves where their measured ranges overlap. No extrapolation." />
+          <Kpi label="Connected neighbors" value={`${overlap.pairs} / ${overlap.totalPairs}`} tip="Neighboring temperature pairs with at least 0.05 decade of shared reduced-frequency coverage. A low error with disconnected curves does not establish a master curve." />
+        </KpiStrip>
+        <div className="tts-actions">
+          <div className="cee-seg" aria-label="Frequency view">
+            <button type="button" className={!rawView ? 'is-active' : ''} aria-pressed={!rawView} onClick={() => setRawView(false)}>Shifted curves</button>
+            <button type="button" className={rawView ? 'is-active' : ''} aria-pressed={rawView} onClick={() => setRawView(true)}>Original measurements</button>
+          </div>
+          <button type="button" className="cee-chip" onClick={() => setStage('data')}>Edit test data</button>
+        </div>
+        <TtsPlot title={rawView ? 'Before shifting · measured isotherms' : `Build one curve at ${reference} °C`}
+          subtitle={rawView ? 'Original frequency · no shifts applied.' : 'Colored markers: test data · solid line: sigmoid.'}
+          help="Each temperature keeps its color and symbol. Dotted lines connect its readings. The solid curve is refitted after each edit, without changing your shifts."
+          xTitle={rawView ? 'Measured frequency f (Hz)' : 'Reduced frequency fr = f × aT (Hz)'} yTitle="Dynamic modulus |E*| (MPa)"
+          traces={masterTraces} legend={rawView ? legend : fitLegend} height={370} />
+        <div className="tts-callouts">
+          <div className="tts-callout"><h3>Shift factors must be unique <Tip text="One consistent factor per temperature applies to all frequencies, moduli and phase readings. Different temperatures can share a numeric factor; sparse data may not identify a unique best fit." /></h3><p>One temperature, one shift, for every response.</p></div>
+          <div className="tts-callout"><h3>Anchor the reference <Tip text="Colder curves usually move right and warmer curves left. Changing reference translates all curves together, preserving their relative spacing and fit error." /></h3><p>At Tref: aT = 1; log₁₀(aT) = 0.</p></div>
+          <div className="tts-callout"><h3>Check the overlap <Tip text="A small sigmoid error can hide disconnected curves. Check neighboring overlap and phase: horizontal shifts cannot repair incompatible curve shapes." /></h3><p>Low error alone does not establish superposition.</p></div>
+        </div>
+        {(outside || untested || nonmonotone || overlap.pairs < overlap.totalPairs) && <div className="cee-note" role="status">
+          {untested && <p>{outside ? 'Extrapolated' : 'Interpolated'} reference: {reference} °C.
+            <Tip text="Log(aT) at an untested reference is estimated linearly from neighboring temperatures. All shifts are re-anchored after each edit. Extrapolation outside the measured range is not validated." /></p>}
+          {nonmonotone && <p>Shifts increase with temperature in one or more intervals. Check their direction.</p>}
+          {overlap.pairs < overlap.totalPairs && <p>Some neighboring curves do not overlap. Check their alignment.</p>}
+        </div>}
+        <Card title="Keep your fit" affordance={<Tip text="The sigmoid adjusts its shape to your shifted data. Only you change the shift factors. Compare errors with experimental scatter; there is no universal passing threshold." />}>
+          <Equation tex={'f_r=f\\,a_T,\\qquad x=\\log_{10} f_r=\\log_{10} f+\\log_{10}a_T'} plain="fr = f × aT; log10 fr = log10 f + log10 aT" display />
+          <p>RMS factor: <strong>{fit ? fmt(10 ** fit.rmse, 4) : '—'}×</strong>
+            <Tip text="10 raised to the log-modulus RMSE. For example, 0.02 decades is a multiplicative factor of 1.047. RMSE is the square root of the mean squared log10 residual, not an absolute MPa error." /></p>
+          <div className="tts-actions">
+            <button type="button" className="cee-chip" disabled={!fit} onClick={() => {
+              if (fit) { setBest({ shifts: { ...shifts }, rmse: fit.rmse }); setMessage('Attempt saved.'); }
+            }}>Save this attempt</button>
+            <button type="button" className="cee-chip" disabled={!best} onClick={() => { if (best) {
+              setHistory(h => [...h.slice(-49), shifts]); setShifts(best.shifts); setSnapshot(null);
+            } }}>Restore saved{best ? ` (${best.rmse.toFixed(4)})` : ''}</button>
+          </div>
+          <details className="cee-howto"><summary>Time-domain assumption</summary><div className="cee-howto__body">
+            <label htmlFor="tts-equilibrium">Long-term modulus E∞ (MPa)
+              <Tip text="Default 1 MPa. Use a positive value below the smallest storage modulus. This controls long-time limits, not your shifts or sigmoid error." /></label>
+            <input id="tts-equilibrium" className="cee-input" type="number" min="0" step="0.1" value={equilibrium} onChange={e => { setEquilibrium(e.target.value); setSnapshot(null); }} />
+          </div></details>
+          {phaseCount < data.length && <p className="cee-note">Phase: {phaseCount}/{data.length} readings.
+            <Tip text="Shifting uses all modulus values. Supplemental response fitting uses only rows with measured phase; at least six are required." /></p>}
+          <button type="button" className="cee-btn cee-btn--primary" disabled={!fit} onClick={finalize}>Use these shifts → final fit</button>
+        </Card>
+      </div>
+    </> : snapshot && <div className="tts-wide cee-results">
+      <FinalResults snapshot={snapshot} legend={legend} groupTraces={groupTraces} domain={domain} color={colors.ink} />
+      <button type="button" className="cee-chip" onClick={() => setStage('shift')}>← Return to manual shifting</button>
+    </div>}
+  </div>;
+}
+
+export function FinalResults({ snapshot: s, legend, groupTraces, domain, color }: {
+  snapshot: Snapshot;
+  legend: { label: string; color: string }[];
+  groupTraces: (p: ShiftedPoint[], property: 'modulus' | 'storage' | 'loss' | 'phase') => Record<string, unknown>[];
+  domain: (p: ShiftedPoint[]) => number[]; color: string;
+}) {
+  const f = domain(s.points), ts = temperatures(s.points), spectrum = s.spectrum;
+  const predictions = spectrum ? f.map(fr => spectrumAt(spectrum, fr)) : [];
+  const times = f.map(fr => 1 / (2 * Math.PI * fr)).reverse();
+  const creep = spectrum ? creepModel(spectrum) : null;
+  const line = (x: number[], y: number[], name: string) => ({ x, y, name, type: 'scatter', mode: 'lines', line: { color, width: 3 } });
+  const responseLegend = [...legend, { label: 'Response model', color, shape: 'line' as const }];
+  const overlap = overlapError(s.points);
+  const poor = s.fit.rmse > 0.05 || overlap.pairs < overlap.totalPairs;
+  return <>
+    <Card title={`Your final fit · reference ${s.reference} °C`} subtitle="Your shifts · fixed across every response">
+      <Equation tex={'\\log_{10}|E^*|=\\delta+\\frac{\\alpha}{1+\\exp(\\beta+\\gamma\\log_{10}f_r)}'} plain="log10 |E*| = δ + α / [1 + exp(β + γ log10 fr)]" display />
+      <KpiStrip>
+        <Kpi label="δ" value={fmt(s.fit.delta, 6)} tip="Lower log10 modulus asymptote, with modulus in MPa." />
+        <Kpi label="α" value={fmt(s.fit.alpha, 6)} tip="Difference between upper and lower log10 modulus asymptotes." />
+        <Kpi label="β" value={fmt(s.fit.beta, 6)} tip="Horizontal position parameter; it changes when you change the reference temperature." />
+        <Kpi label="γ" value={fmt(s.fit.gamma, 6)} tip="Negative for a modulus that increases with reduced frequency." />
+      </KpiStrip>
+      <p>RMSE = <strong>{s.fit.rmse.toFixed(5)} decades</strong> · R² = {s.fit.r2.toFixed(5)}
+        <Tip text="RMSE and R² are evaluated in log10 modulus. In the sigmoid, exp uses base e; modulus is in MPa and reduced frequency in Hz." /></p>
+      {poor && <p className="cee-note">{s.fit.rmse > 0.05 ? 'RMSE exceeds 0.05 decades. ' : ''}{overlap.pairs < overlap.totalPairs ? 'Some curves do not overlap. ' : ''}Review the alignment.
+        <Tip text="This is your chosen fit, not an automatic approval. Compare residuals with experimental scatter and inspect overlap before interpreting predictions." /></p>}
+      {s.fit.atBound && <p className="cee-note">A sigmoid plateau reached its fitting limit; extrapolated values are uncertain.</p>}
+      <div className="tts-actions">
+        <button type="button" className="cee-chip" onClick={() => download('tts-final-fit.json', JSON.stringify({
+          reference_C: s.reference, units: { modulus: 'MPa', frequency: 'Hz', time: 's', compliance: '1/MPa' },
+          log10ShiftFactors: s.shifts, sigmoid: s.fit, equilibrium_MPa: s.equilibrium,
+          responseModel: s.spectrum, readings: s.points,
+        }, null, 2), 'application/json')}>Download fit + shifts</button>
+        <button type="button" className="cee-chip" onClick={() => download('tts-shifted-data.csv',
+          'temperature_C,frequency_Hz,modulus_MPa,phase_deg,log10_aT,reduced_frequency_Hz\n' +
+          s.points.map(p => [p.temperature, p.frequency, p.modulus, p.phase ?? '', s.shifts[p.temperature], p.reducedFrequency].join(',')).join('\n'))}>Download shifted data</button>
+      </div>
+    </Card>
+    <div className="cee-chart-grid cee-chart-grid--2">
+      <TtsPlot title="Dynamic modulus · reduced frequency" subtitle={`Sigmoid · ${s.reference} °C`}
+        help="The fitted line is drawn only across the shifted measurement range. It does not establish behavior outside that range."
+        xTitle="Reduced frequency fr (Hz)" yTitle="|E*| (MPa)" legend={[...legend, { label: 'Sigmoid fit', color, shape: 'line' }]}
+        traces={[line(f, f.map(fr => 10 ** sigmoidLog(s.fit, Math.log10(fr))), 'Sigmoid fit'), ...groupTraces(s.points, 'modulus')]} />
+      <TtsPlot title="Shift factors" subtitle="Your temperature shifts"
+        help="Segments interpolate log(aT) between measured temperatures. They are not a fitted WLF law. The star marks the reference."
+        xTitle="Temperature (°C)" yTitle="log₁₀(aT)" logX={false} logY={false} legend={[{ label: 'Your shifts', color }, { label: 'Reference', color, shape: 'line' }]}
+        traces={[{ ...line(ts, ts.map(t => s.shifts[t]), 'Your shifts'), mode: 'lines+markers', marker: { size: 9, color, line: { color: 'white', width: 1.2 } } },
+          { x: [s.reference], y: [0], type: 'scatter', mode: 'markers', marker: { symbol: 'star', size: 14, color, line: { color: 'white', width: 1.2 } }, name: 'Reference' }]} />
+    </div>
+    <Card title="Response fit" affordance={<Tip text="Measured modulus and phase give storage and loss. A nonnegative relaxation spectrum fits those responses using your fixed shifts, supplying the following curves. This supplemental model is separate from the sigmoid." />}>
+      <Equation tex={'E^{\\prime}=|E^*|\\cos\\phi,\\qquad E^{\\prime\\prime}=|E^*|\\sin\\phi'} plain="Storage E′ = |E*| cos φ; loss E″ = |E*| sin φ" display />
+      {spectrum ? <p>Storage RMSE: {spectrum.rmseStorage.toFixed(4)} decades · loss RMSE (positive readings): {spectrum.rmseLoss === null ? 'unavailable' : `${spectrum.rmseLoss.toFixed(4)} decades`}.
+        Assumed E∞ = {fmt(s.equilibrium)} MPa. {spectrum.converged ? '' : 'The response fit did not converge; its curves are provisional.'}</p>
+        : <p role="status">Response curves are unavailable. Supply at least six phase readings and E∞ below the smallest storage modulus.</p>}
+    </Card>
+    <div className="cee-chart-grid cee-chart-grid--2">
+      {(['storage', 'loss', 'phase'] as const).map(property => <TtsPlot key={property}
+        title={property === 'storage' ? 'Storage modulus' : property === 'loss' ? 'Loss modulus' : 'Phase angle'}
+        subtitle="Your shifts · measured points and response model"
+        help={property === 'phase' ? 'Phase must use the same shift factors as modulus; it cannot be shifted separately.' : property === 'loss' ? 'Loss is calculated from measured modulus and phase. Zero loss values are omitted on a logarithmic axis.' : 'Storage is calculated from measured modulus and phase. Only frequency is shifted.'}
+        xTitle="Reduced frequency fr (Hz)" yTitle={property === 'storage' ? 'E′ (MPa)' : property === 'loss' ? 'E″ (MPa)' : 'φ (degrees)'}
+        logY={property !== 'phase'} legend={spectrum ? responseLegend : legend}
+        traces={[...(spectrum ? [line(f, predictions.map(p => p[property]), 'Response model')] : []), ...groupTraces(s.points, property)]} />)}
+      {spectrum && creep ? <>
+        <TtsPlot title="Relaxation modulus E(t)" subtitle={`Unit step strain · ${s.reference} °C`}
+          help="Stress response to a unit step strain, calculated from the relaxation spectrum. E(t) is a modulus in MPa, not a compliance."
+          xTitle="Time t (s)" yTitle="E(t) (MPa)" traces={[line(times, times.map(t => relaxationAt(spectrum, t)), 'Relaxation modulus')]}
+          legend={[{ label: 'Relaxation model', color, shape: 'line' }]} />
+        <TtsPlot title="Creep compliance J(t)" subtitle={`Unit step stress · ${s.reference} °C`}
+          help="Strain response to a unit step stress. Derived by interconverting the relaxation model; J(t) is not 1/E(t). Units: 1/MPa."
+          xTitle="Time t (s)" yTitle="J(t) (1/MPa)" traces={[line(times, times.map(t => creepAt(creep, t)), 'Creep compliance')]}
+          legend={[{ label: 'Creep model', color, shape: 'line' }]} />
+      </> : <Card title="Time-domain responses need phase data"><p>Add at least six phase readings to calculate E(t) and J(t).</p></Card>}
+    </div>
+    <Card title="Shift factors and residuals" subtitle="Error by temperature">
+      <div className="cee-tablewrap" tabIndex={0} role="region" aria-label="Final shift factors"><table className="cee-table">
+        <thead><tr><th>Temperature (°C)</th><th>log₁₀(aT)</th><th>aT</th><th>Readings</th><th>RMSE (decades)</th></tr></thead>
+        <tbody>{ts.map(t => { const points = s.points.filter(p => p.temperature === t);
+          const error = Math.sqrt(points.reduce((sum, p) => sum + (Math.log10(p.modulus) - sigmoidLog(s.fit, p.logFrequency)) ** 2, 0) / points.length);
+          return <tr key={t}><th scope="row">{t}</th><td>{fmt(s.shifts[t], 6)}</td><td>{fmt(10 ** s.shifts[t], 6)}</td><td>{points.length}</td><td>{error.toFixed(5)}</td></tr>;
+        })}</tbody>
+      </table></div>
+      <p className="cee-hint">Model-derived time responses
+        <Tip text="These are predictions, not additional test measurements. Long-time limits depend on E∞. The plotted time window is the reciprocal angular-frequency window, not a point-by-point conversion of measured modulus." />
+        · <a href="https://doc.comsol.com/6.4/doc/com.comsol.help.sme/sme_ug_theory.06.029.html" target="_blank" rel="noopener noreferrer">Reference ↗</a></p>
+    </Card>
+  </>;
+}
