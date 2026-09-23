@@ -13,8 +13,8 @@
 // setup: a figure is already on screen, where every other module wants a
 // section typed in before it shows anything.
 //
-// The four solver modules are LOCKED for now — dimmed in the strip, inert,
-// and still built. Which ones are open is `release.ts`'s decision, not this
+// Module availability is controlled by the course release gate.
+// Which ones are open is `release.ts`'s decision, not this
 // file's, so unlocking one is the same one-line edit as unlocking a tool.
 // The tabs stay in the strip rather than disappearing because the ladder is
 // the teaching content: a student should see that Boussinesq, Burmister and
@@ -31,6 +31,7 @@ import TwoLayerModule from './modules/TwoLayerModule';
 import ThreeLayerModule from './modules/ThreeLayerModule';
 import MultiLayerModule from './modules/MultiLayerModule';
 import ChartsModule from './modules/ChartsModule';
+import { requestedModule } from './navigation';
 import '../tools.css';
 
 interface ModuleDef {
@@ -122,6 +123,11 @@ export default function LeaApp() {
   // unless that rung has since been locked, which is why the saved id is
   // re-checked against the gate rather than only against the module list.
   useEffect(() => {
+    const requested = requestedModule(window.location.search);
+    if (requested && MODULES.some(m => m.id === requested) && lockOf(requested).released) {
+      setActive(requested);
+      return;
+    }
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved && MODULES.some(m => m.id === saved) && lockOf(saved).released) {

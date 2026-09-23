@@ -13,7 +13,11 @@ import ChartReader from './ChartReader';
 import Equation from '../../ui/Equation';
 
 export default function ChartsModule() {
-  const [id, setId] = useState(CHARTS[0].id);
+  const [id, setId] = useState(() => {
+    const requested = typeof window === 'undefined' ? null
+      : new URLSearchParams(window.location?.search ?? '').get('figure');
+    return CHARTS.find(c => c.id === requested)?.id ?? CHARTS[0].id;
+  });
   const spec = useMemo(() => CHARTS.find(c => c.id === id) ?? CHARTS[0], [id]);
 
   const bySection = useMemo(() => {

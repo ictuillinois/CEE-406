@@ -14,7 +14,12 @@
 // rather than a data source.
 import { useMemo, useState } from 'react';
 import Tip from '../../Tip';
-import { num, fmt } from '../../chartTheme';
+import Equation from '../../ui/Equation';
+import ChartLink from './ChartLink';
+import LayerLessons from './LayerLessons';
+import LayerSection from './LayerSection';
+import ThreeLayerGraph from './ThreeLayerGraph';
+import { fmt } from '../../chartTheme';
 import KpiStrip, { Kpi } from '../../ui/KpiStrip';
 import { groupsFor, threeLayerState, HUANG_K1, HUANG_K2 } from '../threeLayer.ts';
 
@@ -51,9 +56,9 @@ export default function ThreeLayerModule() {
   const [qs, setQ] = useState(PRESETS[0].q);
   const [as_, setA] = useState(PRESETS[0].a);
 
-  const E1 = num(E1s, 1), E2 = num(E2s, 1), E3 = num(E3s, 1);
-  const h1 = num(h1s, 1), h2 = num(h2s, 1), q = num(qs, 1), a = num(as_, 1);
-  const valid = [E1, E2, E3, h1, h2, q, a].every(v => v > 0);
+  const E1 = Number(E1s), E2 = Number(E2s), E3 = Number(E3s);
+  const h1 = Number(h1s), h2 = Number(h2s), q = Number(qs), a = Number(as_);
+  const valid = [E1, E2, E3, h1, h2, q, a].every(v => Number.isFinite(v) && v > 0);
 
   const apply = (x: Preset) => {
     setP(x); setE1(x.E1); setE2(x.E2); setE3(x.E3);
@@ -118,14 +123,14 @@ export default function ThreeLayerModule() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tr-h1">
-              <span>h₁</span><span className="cee-field__unit">in / mm</span>
+              <span>h₁</span><span className="cee-field__unit">in</span>
             </label>
             <input id="tr-h1" className="cee-input" type="number" step="0.25" min="0.1" value={h1s}
               onChange={e => setH1(e.target.value)} />
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tr-h2">
-              <span>h₂</span><span className="cee-field__unit">in / mm</span>
+              <span>h₂</span><span className="cee-field__unit">in</span>
             </label>
             <input id="tr-h2" className="cee-input" type="number" step="0.25" min="0.1" value={h2s}
               onChange={e => setH2(e.target.value)} />
@@ -135,14 +140,14 @@ export default function ThreeLayerModule() {
         <div className="cee-row">
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tr-q">
-              <span>Pressure q</span><span className="cee-field__unit">psi / kPa</span>
+              <span>Pressure q</span><span className="cee-field__unit">psi</span>
             </label>
             <input id="tr-q" className="cee-input" type="number" step="5" min="0.1" value={qs}
               onChange={e => setQ(e.target.value)} />
           </div>
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tr-a">
-              <span>Radius a</span><span className="cee-field__unit">in / mm</span>
+              <span>Radius a</span><span className="cee-field__unit">in</span>
             </label>
             <input id="tr-a" className="cee-input" type="number" step="0.1" min="0.01" value={as_}
               onChange={e => setA(e.target.value)} />
@@ -196,6 +201,7 @@ export default function ThreeLayerModule() {
           </span></p>
         ) : (
           <>
+            <LayerSection moduli={[E1, E2, E3]} thicknesses={[h1, h2]} q={q} a={a} />
             <KpiStrip>
               <Kpi accent label="εr at bottom of layer 1"
                 value={fmt(state.bot1.epsR * 1e6, 0)} unit="µε"
@@ -205,11 +211,22 @@ export default function ThreeLayerModule() {
                 tip="Vertical compressive strain on the subgrade: the strain that drives rutting." />
               <Kpi label="σz on top of layer 3" value={fmt(state.top3.sigZ, 3)}
                 tip="Vertical stress reaching the subgrade. Continuous across the interface, so it is the same on both sides." />
-              <Kpi label="(RR1 − ZZ1)/2" value={fmt(state.factors.peattie, 4)}
-                tip="The quantity Figure 2.31 plots. Multiply by q/E1 for the radial strain at the bottom of layer 1." />
+              <Kpi label="Tensile factor (ZZ1 − RR1)/2" value={fmt(state.factors.peattie, 4)}
+                tip="The quantity Figure 2.31 plots. Multiply by −q/E1 for the signed radial strain at the bottom of layer 1." />
             </KpiStrip>
 
-            <div className="cee-card">
+            <div className="cee-card cee-card__body">
+              <h3 className="cee-card__title">From stresses to strains · current section</h3>
+              <Equation tex={'\\varepsilon_z = \\frac{\\sigma_z-\\sigma_r}{E},\\qquad \\varepsilon_r=-\\frac{\\sigma_z-\\sigma_r}{2E}'} plain="εz = (σz − σr)/E; εr = −(σz − σr)/(2E)" display />
+              <p>At the bottom of layer 1, D = σz − σr = {fmt(state.bot1.sigZ - state.bot1.sigR, 3)} psi.
+                Dividing by E₁ = {fmt(E1, 0)} psi gives εz = {state.bot1.epsZ.toExponential(3)} and
+                εr = {state.bot1.epsR.toExponential(3)}. Compression is positive; tension is negative.</p>
+              <Equation tex={'\\varepsilon_r=-\\frac{q}{E_1}\\frac{ZZ1-RR1}{2}'} plain="εr = −(q/E₁)(ZZ1 − RR1)/2" display />
+              <p>The positive tensile factor is {fmt(state.factors.peattie, 5)}.
+                Read its magnitude in <ChartLink figure="fig-2-31" /> and apply the tensile sign.</p>
+            </div>
+            <ThreeLayerGraph E1={E1} E2={E2} E3={E3} h1={h1} h2={h2} q={q} a={a} />
+            <div className="cee-card cee-card__body">
               <h3 className="cee-card__title">Stress factors: Jones' Table 2.3</h3>
               <div className="cee-tablewrap">
                 <table className="cee-table">
@@ -219,20 +236,20 @@ export default function ThreeLayerModule() {
                   <tbody>
                     <tr>
                       <td>ZZ1</td><td>{fmt(state.factors.ZZ1, 5)}</td>
-                      <td><code>σz1 = q·ZZ1</code></td><td>{fmt(state.bot1.sigZ, 3)}</td>
+                      <td><Equation tex={"\\sigma_{z1}=q\\,ZZ1"} plain="σz1 = q·ZZ1" /></td><td>{fmt(state.bot1.sigZ, 3)}</td>
                     </tr>
                     <tr>
                       <td>ZZ2</td><td>{fmt(state.factors.ZZ2, 5)}</td>
-                      <td><code>σz2 = q·ZZ2</code></td><td>{fmt(state.bot2.sigZ, 3)}</td>
+                      <td><Equation tex={"\\sigma_{z2}=q\\,ZZ2"} plain="σz2 = q·ZZ2" /></td><td>{fmt(state.bot2.sigZ, 3)}</td>
                     </tr>
                     <tr>
                       <td>ZZ1 − RR1</td><td>{fmt(state.factors.ZZ1_RR1, 5)}</td>
-                      <td><code>σz1 − σr1 = q·(ZZ1−RR1)</code></td>
+                      <td><Equation tex={"\\sigma_{z1}-\\sigma_{r1}=q(ZZ1-RR1)"} plain="σz1 − σr1 = q·(ZZ1−RR1)" /></td>
                       <td>{fmt(state.bot1.sigZ - state.bot1.sigR, 3)}</td>
                     </tr>
                     <tr>
                       <td>ZZ2 − RR2</td><td>{fmt(state.factors.ZZ2_RR2, 5)}</td>
-                      <td><code>σz2 − σr2 = q·(ZZ2−RR2)</code></td>
+                      <td><Equation tex={"\\sigma_{z2}-\\sigma_{r2}=q(ZZ2-RR2)"} plain="σz2 − σr2 = q·(ZZ2−RR2)" /></td>
                       <td>{fmt(state.bot2.sigZ - state.bot2.sigR, 3)}</td>
                     </tr>
                   </tbody>
@@ -250,15 +267,15 @@ export default function ThreeLayerModule() {
                   ) : (
                     <>
                       k₁ = {fmt(groups.k1, 2)} or k₂ = {fmt(groups.k2, 2)} lies{' '}
-                      <strong>outside the range Jones tabulated</strong> (0.2 to 200). The layered
-                      solution is still exact, but there is no printed value to check it against.
+                      <strong>outside the range Jones tabulated</strong> (0.2 to 200). The numerical layered
+                      solution still applies, but there is no printed value to check it against.
                     </>
                   )}
                 </p>
               )}
             </div>
 
-            <div className="cee-card">
+            <div className="cee-card cee-card__body">
               <h3 className="cee-card__title">Both sides of both interfaces</h3>
               <div className="cee-tablewrap">
                 <table className="cee-table">
@@ -291,10 +308,11 @@ export default function ThreeLayerModule() {
               </p>
             </div>
 
+            <LayerLessons layers={3} />
             <p className="cee-note">
               Huang (2004) §2.2.2, Eqs. 2.20–2.25, Table 2.3 and Figure 2.31. Where Jones'
               table has a row, these factors reproduce it to four decimals: Example 2.11's
-              ZZ1 = 0.12173 and ZZ1 − RR1 = 1.97428 come back as 0.12176 and 1.97406. All three
+              ZZ1 = 0.12173 and ZZ1 − RR1 = 1.97428 are numerical validation anchors. All three
               layers are incompressible with fully bonded interfaces, and the responses are on
               the axis of symmetry, where the tangential and radial stresses are equal and the
               shear is zero.

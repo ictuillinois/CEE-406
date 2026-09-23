@@ -249,3 +249,29 @@ test('no curve is labelled in exponent notation', () => {
   }
 });
 
+
+
+test('released layer lessons link to real charts in a separate tab', () => {
+  for (const [id, component] of [['two', 'TwoLayerModule'], ['three', 'ThreeLayerModule']]) {
+    assert.equal(mod.moduleLock('lea', id).released, true);
+    const html = renderToString(React.createElement(mod[component]));
+    assert.match(html, /Worked examples and problems/);
+    const links = [...html.matchAll(/<a[^>]+href="\?module=charts&amp;figure=([^"&]+)"[^>]*>/g)];
+    assert.ok(links.length >= 5);
+    for (const [anchor, figure] of links) {
+      assert.ok(mod.CHARTS.some(c => c.id === figure), figure);
+      assert.match(anchor, /target="_blank"/);
+      assert.match(anchor, /rel="noopener noreferrer"/);
+    }
+  }
+});
+
+test('chart deep links select their figure and unknown figures fall back', () => {
+  const previous = window.location;
+  try {
+    window.location = { search: '?module=charts&figure=fig-2-31' };
+    assert.match(renderToString(React.createElement(mod.ChartsModule)), /value="fig-2-31" selected=""/);
+    window.location = { search: '?module=charts&figure=missing' };
+    assert.match(renderToString(React.createElement(mod.ChartsModule)), /value="fig-2-2" selected=""/);
+  } finally { window.location = previous; }
+});

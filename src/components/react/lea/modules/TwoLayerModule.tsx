@@ -26,7 +26,11 @@ import {
   strainFactor, groupStrainFactor, allowableRepetitions, requiredAOverH1,
   CHART_NU,
 } from '../twoLayer.ts';
-import { leaResponse } from '../lea.ts';
+import Equation from '../../ui/Equation';
+import ChartLink from './ChartLink';
+import LayerLessons from './LayerLessons';
+import LayerSection from './LayerSection';
+import { leaResponse, leaSuperpose } from '../lea.ts';
 
 type Wheels = 'single' | 'dual' | 'tandem';
 
@@ -58,9 +62,19 @@ const PRESETS: Preset[] = [
     E1: '150000', E2: '15000', h1: '8', q: '67.7', a: '6.5', wheels: 'single', sd: '24', st: '48',
   },
   {
-    label: 'Examples 2.9 / 2.10',
+    label: 'Example 2.9 (dual)',
     tip: 'The same section under dual tires at 11.5-in spacing (Ex 2.9, C = 1.50) and then dual-tandem at 49 in (Ex 2.10, C = 1.43).',
     E1: '150000', E2: '15000', h1: '8', q: '67.7', a: '4.6', wheels: 'dual', sd: '11.5', st: '49',
+  },
+  {
+    label: 'Example 2.10 (tandem)',
+    tip: 'Dual-tandem wheels: C ≈ 1.43 and tensile strain ≈ 303 µε from the printed charts.',
+    E1: '150000', E2: '15000', h1: '8', q: '67.7', a: '4.6', wheels: 'tandem', sd: '11.5', st: '49',
+  },
+  {
+    label: 'Problem 2.5',
+    tip: 'Four 50,000-lb loads at 100 psi. Printed wheel-center answers: 205 µε and 0.057 in.',
+    E1: '1500000', E2: '30000', h1: '8', q: '100', a: String(Math.sqrt(50000 / (100 * Math.PI))), wheels: 'tandem', sd: '28', st: '60',
   },
   {
     label: 'Problem 2.4',
@@ -82,17 +96,22 @@ export default function TwoLayerModule() {
   const [rs, setR] = useState('0');
   const [target, setTarget] = useState('8');
 
-  const E1 = num(E1s, 1), E2 = num(E2s, 1), h1 = num(h1s, 1);
-  const q = num(qs, 1), a = num(as_, 1), sd = num(sds, 24), st = num(sts, 48);
+  const E1 = Number(E1s), E2 = Number(E2s), h1 = Number(h1s);
+  const q = Number(qs), a = Number(as_), sd = Number(sds), st = Number(sts);
   const rOff = Math.max(0, num(rs, 0));
-  const valid = E1 > 0 && E2 > 0 && h1 > 0 && q > 0 && a > 0;
+  const valid = [E1, E2, h1, q, a].every(v => Number.isFinite(v) && v > 0)
+    && (wheels === 'single' || (Number.isFinite(sd) && sd >= 2 * a))
+    && (wheels !== 'tandem' || (Number.isFinite(st) && st >= 2 * a));
+  const wheelCenters = useMemo(() => wheels === 'single' ? [{ x: 0, y: 0 }]
+    : wheels === 'dual' ? [{ x: 0, y: 0 }, { x: sd, y: 0 }]
+    : [{ x: 0, y: 0 }, { x: sd, y: 0 }, { x: 0, y: st }, { x: sd, y: st }], [wheels, sd, st]);
 
   const ER = E1 / E2;
   const hOverA = h1 / a;
 
   const apply = (x: Preset) => {
     setP(x); setE1(x.E1); setE2(x.E2); setH1(x.h1);
-    setQ(x.q); setA(x.a); setWheels(x.wheels); setSd(x.sd); setSt(x.st); setR('0');
+    setQ(x.q); setA(x.a); setWheels(x.wheels); setSd(x.sd); setSt(x.st); setR('0'); setTarget('8');
   };
 
   /** Every chart in §2.2.1, at this section. */
@@ -105,7 +124,12 @@ export default function TwoLayerModule() {
     const group = wheels === 'single'
       ? null
       : groupStrainFactor(ER, h1, a, sd, wheels === 'tandem' ? st : undefined);
+    const layers = [{ h: h1, E: E1, nu: CHART_NU }, { h: 0, E: E2, nu: CHART_NU }];
+    const atWheel = leaSuperpose(layers, q, a, wheelCenters, { x: 0, y: 0, z: h1 * (1 - 1e-9) });
+    const sumF = wheelCenters.reduce((sum, wheel) => sum + interfaceDeflectionFactor(
+      ER, hOverA, Math.hypot(rOff - wheel.x, wheel.y) / a), 0);
     return {
+      sumF, wGroup: q * a * sumF / E2, atWheel,
       sigmaC,
       Nd: allowableRepetitions(sigmaC, E2),
       F2, w0: (1.5 * q * a * F2) / E2,
@@ -115,7 +139,7 @@ export default function TwoLayerModule() {
       group,
       eGroup: group ? (q * group.groupFactor) / E1 : null,
     };
-  }, [valid, ER, hOverA, q, a, h1, E2, E1, rOff, wheels, sd, st]);
+  }, [valid, ER, hOverA, q, a, h1, E2, E1, rOff, wheels, sd, st, wheelCenters]);
 
   /** The thickness that would hold the interface stress to a target. */
   const design = useMemo(() => {
@@ -143,14 +167,15 @@ export default function TwoLayerModule() {
   const basin = useMemo(() => {
     if (!valid) return null;
     const rMax = Math.max(6 * a, wheels !== 'single' ? sd + 3 * a : 0);
-    const out: { r: number; F: number; w: number }[] = [];
+    const out: { r: number; F: number; w: number; groupW: number }[] = [];
     for (let i = 0; i <= 40; i++) {
       const r = (i / 40) * rMax;
       const F = interfaceDeflectionFactor(ER, hOverA, r / a);
-      out.push({ r, F, w: (q * a * F) / E2 });
+      const sum = wheelCenters.reduce((total, wheel) => total + interfaceDeflectionFactor(ER, hOverA, Math.hypot(r - wheel.x, wheel.y) / a), 0);
+      out.push({ r, F, w: (q * a * F) / E2, groupW: q * a * sum / E2 });
     }
     return out;
-  }, [valid, ER, hOverA, a, q, E2, wheels, sd]);
+  }, [valid, ER, hOverA, a, q, E2, wheels, sd, wheelCenters]);
 
   const theme = useTheme();
   const profRef = useRef<HTMLDivElement>(null);
@@ -173,8 +198,8 @@ export default function TwoLayerModule() {
           fill: 'tozerox', ...areaFill(hs),
         }], baseLayout(theme, {
           height: 360,
-          xaxis: axis(theme, 'Vertical stress σz'),
-          yaxis: gridAxis(theme, 'Depth z', { autorange: 'reversed' }),
+          xaxis: axis(theme, 'Single-wheel vertical stress σz (psi)'),
+          yaxis: gridAxis(theme, 'Depth z (in)', { autorange: 'reversed' }),
           hovermode: 'y unified', hoverlabel: hoverLabel(theme),
           shapes: [{
             type: 'line', xref: 'paper', x0: 0, x1: 1, y0: h1, y1: h1,
@@ -191,11 +216,15 @@ export default function TwoLayerModule() {
       if (basinRef.current) {
         await Plotly.react(basinRef.current, [{
           x: basin.map(d => d.r), y: basin.map(d => d.w),
-          name: 'w', mode: 'lines', line: { color: hw, width: 2.5 },
+          name: 'Single wheel', mode: 'lines', line: { color: hw, width: 2.5 },
+        }, {
+          x: basin.map(d => d.r), y: basin.map(d => d.groupW),
+          name: 'Selected wheel group', mode: 'lines', line: { color: hs, width: 2, dash: 'dot' },
         }], baseLayout(theme, {
           height: 360,
-          xaxis: axis(theme, 'Radial distance r'),
-          yaxis: gridAxis(theme, 'Interface deflection w', { autorange: 'reversed' }),
+          showlegend: true, legend: { orientation: 'h', y: 1.15, font: { size: 10 } },
+          xaxis: axis(theme, 'Offset x along axle (in)'),
+          yaxis: gridAxis(theme, 'Interface deflection w (in)', { autorange: 'reversed' }),
           hovermode: 'x unified', hoverlabel: hoverLabel(theme),
           shapes: [
             {
@@ -230,7 +259,7 @@ export default function TwoLayerModule() {
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tl-e1">
               <span>E₁<Tip text="Modulus of the upper layer. Only the ratio E1/E2 enters the charts." /></span>
-              <span className="cee-field__unit">psi / kPa</span>
+              <span className="cee-field__unit">psi</span>
             </label>
             <input id="tl-e1" className="cee-input" type="number" step="10000" min="1" value={E1s}
               onChange={e => setE1(e.target.value)} />
@@ -238,7 +267,7 @@ export default function TwoLayerModule() {
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tl-e2">
               <span>E₂<Tip text="Modulus of the subgrade half-space." /></span>
-              <span className="cee-field__unit">psi / kPa</span>
+              <span className="cee-field__unit">psi</span>
             </label>
             <input id="tl-e2" className="cee-input" type="number" step="1000" min="1" value={E2s}
               onChange={e => setE2(e.target.value)} />
@@ -249,7 +278,7 @@ export default function TwoLayerModule() {
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tl-h1">
               <span>h₁<Tip text="Thickness of the upper layer." /></span>
-              <span className="cee-field__unit">in / mm</span>
+              <span className="cee-field__unit">in</span>
             </label>
             <input id="tl-h1" className="cee-input" type="number" step="0.5" min="0.1" value={h1s}
               onChange={e => setH1(e.target.value)} />
@@ -257,7 +286,7 @@ export default function TwoLayerModule() {
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tl-a">
               <span>Radius a</span>
-              <span className="cee-field__unit">in / mm</span>
+              <span className="cee-field__unit">in</span>
             </label>
             <input id="tl-a" className="cee-input" type="number" step="0.5" min="0.1" value={as_}
               onChange={e => setA(e.target.value)} />
@@ -268,7 +297,7 @@ export default function TwoLayerModule() {
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tl-q">
               <span>Pressure q</span>
-              <span className="cee-field__unit">psi / kPa</span>
+              <span className="cee-field__unit">psi</span>
             </label>
             <input id="tl-q" className="cee-input" type="number" step="5" min="0.1" value={qs}
               onChange={e => setQ(e.target.value)} />
@@ -276,7 +305,7 @@ export default function TwoLayerModule() {
           <div className="cee-field">
             <label className="cee-field__label" htmlFor="tl-r">
               <span>Offset r<Tip text="Where on the interface to report the deflection factor F of Figure 2.19. Zero is under the load center." /></span>
-              <span className="cee-field__unit">in / mm</span>
+              <span className="cee-field__unit">in</span>
             </label>
             <input id="tl-r" className="cee-input" type="number" step="1" min="0" value={rs}
               onChange={e => setR(e.target.value)} />
@@ -319,7 +348,7 @@ export default function TwoLayerModule() {
         <div className="cee-field">
           <label className="cee-field__label" htmlFor="tl-target">
             <span>Allowable σc<Tip text="The interface stress the subgrade may carry. Example 2.5 uses 8 psi. The tool inverts Figure 2.15 for the thickness that delivers it." /></span>
-            <span className="cee-field__unit">psi / kPa</span>
+            <span className="cee-field__unit">psi</span>
           </label>
           <input id="tl-target" className="cee-input" type="number" step="1" min="0.1" value={target}
             onChange={e => setTarget(e.target.value)} />
@@ -357,24 +386,26 @@ export default function TwoLayerModule() {
 
         {!charts ? (
           <p className="cee-warn"><span className="cee-warn__icon">⚠️</span><span>
-            Enter positive moduli, a positive thickness and a positive load.
+            Enter positive, finite moduli, thickness, pressure and radius. Wheel spacings must be at least one tire diameter.
           </span></p>
         ) : (
           <>
+            <LayerSection moduli={[E1, E2]} thicknesses={[h1]} q={q} a={a} />
             <KpiStrip>
               <Kpi accent label="E₁/E₂" value={fmt(ER, ER > 100 ? 0 : 1)}
                 tip="The modulus ratio. With h₁/a, it is the only thing every chart in §2.2.1 depends on." />
               <Kpi label="h₁/a" value={fmt(hOverA, 3)}
                 tip="Thickness in contact radii. Figure 2.15 plots its reciprocal, a/h₁." />
-              <Kpi label="σc on subgrade" value={fmt(charts.sigmaC, 3)}
+              <Kpi label="σc · single wheel" value={fmt(charts.sigmaC, 3)}
                 tip="Vertical interface stress from Figure 2.15: what the subgrade actually carries." />
-              <Kpi label="Critical tensile strain"
+              <Kpi label="Chart tensile strain"
                 value={fmt((charts.eGroup ?? charts.e) * 1e6, 0)} unit="µε"
                 tip="At the bottom of layer 1, from Figure 2.21 (times the conversion factor for a wheel group). This is what drives bottom-up fatigue cracking." />
             </KpiStrip>
 
-            <div className="cee-card">
-              <h3 className="cee-card__title">Every chart in §2.2.1, at this section</h3>
+            <div className="cee-card cee-card__body">
+              <h3 className="cee-card__title">Chart factors and responses</h3>
+              <p className="cee-note">Stresses and moduli are in psi; lengths and deflections are in inches. Stress, surface deflection and F below refer to one wheel. Group responses are identified separately.</p>
               <div className="cee-tablewrap">
                 <table className="cee-table">
                   <thead>
@@ -382,39 +413,39 @@ export default function TwoLayerModule() {
                   </thead>
                   <tbody>
                     <tr>
-                      <td>2.15 · interface stress</td>
+                      <td><ChartLink figure="fig-2-15" /> · interface stress</td>
                       <td>σc/q = {fmt(charts.sigmaC / q, 4)}</td>
-                      <td><code>σc = q · (σc/q)</code></td>
+                      <td><Equation tex={"\\sigma_c = q(\\sigma_c/q)"} plain="σc = q · (σc/q)" /></td>
                       <td>{fmt(charts.sigmaC, 3)}</td>
                     </tr>
                     <tr>
-                      <td>2.13 · allowable repetitions</td>
+                      <td>Eq. 2.13 · allowable repetitions</td>
                       <td>—</td>
-                      <td><code>Nd = 4.873×10⁻⁵ σc⁻³·⁷³⁴ E₂³·⁵⁸³</code></td>
+                      <td><Equation tex={"N_d=4.873\\times10^{-5}\\sigma_c^{-3.734}E_2^{3.583}"} plain="Nd = 4.873×10⁻⁵ σc⁻³·⁷³⁴ E₂³·⁵⁸³" /></td>
                       <td>{charts.Nd > 0 && Number.isFinite(charts.Nd) ? charts.Nd.toExponential(2) : '—'}</td>
                     </tr>
                     <tr>
-                      <td>2.17 · surface deflection</td>
+                      <td><ChartLink figure="fig-2-17" /> · surface deflection</td>
                       <td>F₂ = {fmt(charts.F2, 4)}</td>
-                      <td><code>w₀ = 1.5·q·a·F₂/E₂</code></td>
+                      <td><Equation tex={"w_0=\\frac{1.5qaF_2}{E_2}"} plain="w₀ = 1.5·q·a·F₂/E₂" /></td>
                       <td>{fmt(charts.w0, 4)}</td>
                     </tr>
                     <tr>
-                      <td>2.17 · rigid plate</td>
+                      <td><ChartLink figure="fig-2-17" /> · rigid plate</td>
                       <td>F₂ = {fmt(charts.F2, 4)}</td>
-                      <td><code>w₀ = 1.18·q·a·F₂/E₂</code></td>
+                      <td><Equation tex={"w_0=\\frac{1.18qaF_2}{E_2}"} plain="w₀ = 1.18·q·a·F₂/E₂" /></td>
                       <td>{fmt(charts.w0rigid, 4)}</td>
                     </tr>
                     <tr>
-                      <td>2.19 · interface deflection at r = {fmt(rOff, 2)}</td>
+                      <td><ChartLink figure="fig-2-19" /> · single-wheel interface deflection at r = {fmt(rOff, 2)}</td>
                       <td>F = {fmt(charts.F, 4)}</td>
-                      <td><code>w = q·a·F/E₂</code></td>
+                      <td><Equation tex={"w=\\frac{qaF}{E_2}"} plain="w = q·a·F/E₂" /></td>
                       <td>{fmt(charts.wInterface, 4)}</td>
                     </tr>
                     <tr>
-                      <td>2.21 · strain factor, single wheel</td>
+                      <td><ChartLink figure="fig-2-21" /> · strain factor, single wheel</td>
                       <td>Fe = {fmt(charts.Fe, 4)}</td>
-                      <td><code>e = q·Fe/E₁</code></td>
+                      <td><Equation tex={"\\varepsilon_t=\\frac{qF_\\varepsilon}{E_1}"} plain="e = q·Fe/E₁" /></td>
                       <td>{charts.e.toExponential(3)}</td>
                     </tr>
                     {charts.group && (
@@ -423,19 +454,19 @@ export default function TwoLayerModule() {
                           <td>2.18 · rescaled to S_d = 24 in</td>
                           <td>a′ = {fmt(charts.group.modified.a, 3)}, h₁′ = {fmt(charts.group.modified.h1, 3)}
                             {charts.group.modified.st !== undefined && <>, S_t′ = {fmt(charts.group.modified.st, 1)}</>}</td>
-                          <td><code>a′ = 24a/S_d</code></td>
+                          <td><Equation tex={"a'=\\frac{24a}{S_d}"} plain="a′ = 24a/S_d" /></td>
                           <td>—</td>
                         </tr>
                         <tr>
-                          <td>{wheels === 'dual' ? '2.23' : '2.25–2.27'} · conversion factor</td>
+                          <td><ChartLink figure={wheels === 'dual' ? 'fig-2-23' : 'fig-2-27'}>Conversion factor</ChartLink></td>
                           <td>C₁ = {fmt(charts.group.c1, 3)}, C₂ = {fmt(charts.group.c2, 3)}</td>
-                          <td><code>C = C₁ + 0.2(a′ − 3)(C₂ − C₁)</code></td>
+                          <td><Equation tex={"C=C_1+0.2(a'-3)(C_2-C_1)"} plain="C = C₁ + 0.2(a′ − 3)(C₂ − C₁)" /></td>
                           <td>{fmt(charts.group.C, 3)}</td>
                         </tr>
                         <tr>
-                          <td>2.21 × C · strain, {wheels} wheels</td>
+                          <td><ChartLink figure="fig-2-21" /> × C · strain, {wheels} wheels</td>
                           <td>Fe = {fmt(charts.group.groupFactor, 4)}</td>
-                          <td><code>e = q·C·Fe/E₁</code></td>
+                          <td><Equation tex={"\\varepsilon_t=\\frac{qCF_\\varepsilon}{E_1}"} plain="e = q·C·Fe/E₁" /></td>
                           <td>{charts.eGroup!.toExponential(3)}</td>
                         </tr>
                       </>
@@ -451,18 +482,25 @@ export default function TwoLayerModule() {
                 </p>
               )}
               <p className="cee-note">
-                Every value here is computed from the two-layer solution, not read off the printed
-                curve, so it may differ from a hand chart read by a percent or two. Where Huang
-                quotes KENLAYER beside a chart answer, these numbers generally sit closer to
-                KENLAYER, because the chart is the lossy step, not the theory.
+                Factors are evaluated numerically; group conversion still uses the chart’s radius approximation. Differences from hand readings vary by case. Where Huang
+                quotes KENLAYER beside a chart answer, compare the two explicitly; rounded chart readings and the searched strain locations can produce different answers.
               </p>
             </div>
 
+            <div className="cee-card cee-card__body">
+              <h3 className="cee-card__title">Superposition · {wheels === 'single' ? 'one wheel' : wheels === 'dual' ? 'two wheels' : 'four wheels'}</h3>
+              <p>At x = {fmt(rOff, 2)} in, y = 0 on the interface, ΣF = {fmt(charts.sumF, 4)} and
+                w = qaΣF/E₂ = <strong>{fmt(charts.wGroup, 5)} in</strong>.</p>
+              <p>Direct tensor solution just above the interface under the first wheel:
+                tensile principal strain = <strong>{fmt((charts.atWheel?.tensile ?? 0) * 1e6, 1)} µε</strong>.
+                This is a fixed location; the conversion factor estimates a maximum over multiple locations.</p>
+              <ChartLink figure="fig-2-19">Read each wheel’s deflection factor</ChartLink>
+            </div>
             {design && (
-              <div className="cee-card cee-card--sunken">
+              <div className="cee-card cee-card--sunken cee-card__body">
                 <h3 className="cee-card__title">Thickness for σc = {fmt(design.target, 2)}</h3>
                 <p>
-                  Figure 2.15 inverted: <code>a/h₁ = {fmt(design.aOverH1, 3)}</code>, so
+                  <ChartLink figure="fig-2-15" /> inverted: <code>a/h₁ = {fmt(design.aOverH1, 3)}</code>, so
                   {' '}<strong>h₁ = {fmt(design.h1, 2)}</strong> at a = {fmt(a, 2)}.
                   {' '}That layer would carry {allowableRepetitions(design.target, E2).toExponential(2)} repetitions
                   by Eq. 2.13.
@@ -477,7 +515,7 @@ export default function TwoLayerModule() {
                 plotRef={profRef}
                 takeaway="The stiff upper layer sheds most of the applied pressure before it reaches the subgrade, and the interface is where the shedding shows."
               >
-                Figure 2.14 is drawn once, for h₁/a = 1. This is the same curve for the section you
+                <ChartLink figure="fig-2-14" /> is drawn once, for h₁/a = 1. This is the same curve for the section you
                 actually have. <strong>The kink is at the interface</strong>: above it the stiff
                 layer is spreading load sideways, below it the subgrade sees whatever is left,
                 here {fmt((100 * charts.sigmaC) / q, 1)}% of the contact pressure.
@@ -485,17 +523,18 @@ export default function TwoLayerModule() {
 
               <ChartFigure
                 title="Interface deflection basin"
-                subtitle="Figure 2.19 across the radius. Tinted bands are the loaded circles."
+                subtitle="Single wheel and selected group along y = 0. Tinted bands mark the near axle’s tires."
                 plotRef={basinRef}
                 takeaway="The basin is far wider than the load, which is why a second wheel adds to the deflection under the first."
               >
-                Example 2.7 reads this curve twice, once under the near wheel and once at the far
+                <ChartLink figure="fig-2-19" />: Example 2.7 reads this curve twice, once under the near wheel and once at the far
                 one, and adds. <strong>The basin has no edge</strong>, so at a dual spacing of a
                 few radii the second wheel is still contributing a third of the deflection under
                 the first.
               </ChartFigure>
             </div>
 
+            <LayerLessons layers={2} />
             <p className="cee-note">
               Huang (2004) §2.2.1, Figures 2.14, 2.15, 2.17, 2.19, 2.21, 2.23 and 2.25–2.27,
               with Eqs. 2.13 through 2.19. Both layers are incompressible (ν = 0.5) and the

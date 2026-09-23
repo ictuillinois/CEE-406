@@ -205,3 +205,16 @@ test('adding a tandem axle can reduce the conversion factor', () => {
       `C must be at least 1 at St = ${st}`);
   }
 });
+
+
+test('Problem 2.5: tensor superposition at the wheel center and interface deflection', async () => {
+  const { leaSuperpose } = await import('./lea.ts');
+  const a = Math.sqrt(50000 / (100 * Math.PI));
+  const layers = [{ h: 8, E: 1500000, nu: 0.5 }, { h: 0, E: 30000, nu: 0.5 }];
+  const wheels = [{ x: 0, y: 0 }, { x: 28, y: 0 }, { x: 0, y: 60 }, { x: 28, y: 60 }];
+  const result = leaSuperpose(layers, 100, a, wheels, { x: 0, y: 0, z: 8 * (1 - 1e-9) });
+  near(result.tensile, 2.05e-4, 0.03, 'wheel-center tensile strain');
+  near(result.w, 0.057, 0.01, 'four-wheel deflection');
+  const sumF = wheels.reduce((sum, wheel) => sum + interfaceDeflectionFactor(50, 8 / a, Math.hypot(wheel.x, wheel.y) / a), 0);
+  near(100 * a * sumF / 30000, result.w, 1e-6, 'chart-factor sum matches tensor deflection');
+});
