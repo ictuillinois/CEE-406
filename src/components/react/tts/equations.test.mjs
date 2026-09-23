@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { DEFAULT_DATA, REPLICATES } from './data.ts';
 import {
   parseData, validateData, dataCSV, zeroShifts, temperatures, shiftAt, shiftData, rebaseShifts,
-  sigmoidLog, fitSigmoid, overlapError, solveLinear, nnls, spectrumAt, fitSpectrum, relaxationAt, creepModel, creepAt,
+  fitShiftLaw, shiftLawAt, predictModulus, sigmoidLog, fitSigmoid, overlapError, solveLinear, nnls, spectrumAt, fitSpectrum, relaxationAt, creepModel, creepAt,
 } from './equations.ts';
 const near = (actual, expected, tolerance = 1e-8) => assert.ok(Math.abs(actual - expected) <= tolerance * Math.max(1, Math.abs(expected)), `${actual} != ${expected}`);
 const manual = { '-10': 4.25, 4: 2.25, 21: 0, 37: -1.8, 54: -3.25 };
@@ -151,4 +151,41 @@ test('log-space 1 − R² error matches normalized residuals and improves with a
     const rebased = shiftData(DEFAULT_DATA, rebaseShifts(temperatures(DEFAULT_DATA), manual, ref));
     near(1 - fitSigmoid(rebased).r2, 1 - fit.r2, 1e-7);
   }
+});
+
+
+test('temperature fits recover anchored linear and stated 20-degree quadratic laws', () => {
+  const ts = [-10, 4, 20, 37, 54];
+  const linearShifts = Object.fromEntries(ts.map(t => [t, -0.12 * (t - 20)]));
+  const linear = fitShiftLaw(ts, linearShifts, 20, 'linear');
+  near(linear.c1, -0.12); near(linear.r2, 1); near(shiftLawAt(linear, 20), 0);
+  const q = t => 0.001 * (t - 20) ** 2 - 0.12 * (t - 20);
+  for (const reference of ts) {
+    const shifts = Object.fromEntries(ts.map(t => [t, q(t) - q(reference)]));
+    const law = fitShiftLaw(ts, shifts, reference, 'quadratic');
+    near(law.c1, 0.001); near(law.c2, -0.12); near(law.r2, 1);
+    near(shiftLawAt(law, reference), 0);
+    near(shiftLawAt(law, 30), q(30) - q(reference));
+  }
+});
+
+test('shift fits handle two temperatures and zero shifts without misleading R squared', () => {
+  assert.equal(fitShiftLaw([0, 20], {0: 2, 20: 0}, 20, 'quadratic'), null);
+  near(fitShiftLaw([0, 20], {0: 2, 20: 0}, 20, 'linear').c1, -0.1);
+  const ts = [-10, 4, 21, 37, 54], shifts = Object.fromEntries(ts.map(t => [t, 0]));
+  const law = fitShiftLaw(ts, shifts, 21, 'quadratic');
+  assert.equal(law.r2, null); near(law.c1, 0); near(law.c2, 0);
+});
+
+test('modulus prediction composes fitted temperature shifts with the saved sigmoid', () => {
+  const points = shiftData(DEFAULT_DATA, manual), fit = fitSigmoid(points);
+  const law = fitShiftLaw(temperatures(DEFAULT_DATA), manual, 21, 'quadratic');
+  const prediction = predictModulus(fit, law, 30, 10);
+  near(prediction.logFrequency, 1 + shiftLawAt(law, 30));
+  near(prediction.modulus, 10 ** sigmoidLog(fit, prediction.logFrequency));
+  near(predictModulus(fit, law, 21, 10).modulus, 10 ** sigmoidLog(fit, 1));
+  assert.equal(predictModulus(fit, law, 30, 0), null);
+  assert.equal(predictModulus(fit, law, 30, -1), null);
+  assert.equal(predictModulus(fit, law, NaN, 10), null);
+  assert.equal(predictModulus(fit, law, 30, Infinity), null);
 });

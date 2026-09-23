@@ -72,6 +72,49 @@ export const shiftData = (points: TestPoint[], shifts: Shifts): ShiftedPoint[] =
 export interface SigmoidFit { delta: number; alpha: number; beta: number; gamma: number; rmse: number; r2: number; atBound: boolean }
 export const sigmoidLog = (fit: SigmoidFit, x: number) => fit.delta + fit.alpha / (1 + Math.exp(Math.max(-700, Math.min(700, fit.beta + fit.gamma * x))));
 
+export type ShiftLawKind = 'linear' | 'quadratic';
+export interface ShiftLaw { kind: ShiftLawKind; reference: number; c1: number; c2: number; r2: number | null }
+/** Least squares through the fixed reference; each temperature has equal weight.
+ * Solve in scaled reference-centered coordinates, then express the quadratic about 20 °C.
+ */
+export function fitShiftLaw(ts: number[], shifts: Shifts, reference: number, kind: ShiftLawKind): ShiftLaw | null {
+  if (!ts.includes(reference) || ts.length < (kind === 'quadratic' ? 3 : 2) ||
+      ts.some(t => !Number.isFinite(t) || !Number.isFinite(shifts[t]))) return null;
+  const scale = Math.max(...ts.map(t => Math.abs(t - reference)));
+  if (!(scale > 0)) return null;
+  const u = ts.map(t => (t - reference) / scale), y = ts.map(t => shifts[t]);
+  const dot = (a: number[], b: number[]) => a.reduce((sum, v, i) => sum + v * b[i], 0);
+  const uu = dot(u, u);
+  let slope = dot(u, y) / uu, curvature = 0;
+  if (kind === 'quadratic') {
+    const squared = u.map(v => v * v), projection = dot(squared, u) / uu;
+    const perpendicular = squared.map((v, i) => v - projection * u[i]);
+    const norm = dot(perpendicular, perpendicular);
+    if (norm < 1e-20) return null;
+    curvature = dot(perpendicular, y) / norm;
+    slope -= curvature * projection;
+  }
+  const c1 = kind === 'linear' ? slope / scale : curvature / scale ** 2;
+  const c2 = kind === 'linear' ? 0 : slope / scale - 2 * c1 * (reference - 20);
+  const law: ShiftLaw = { kind, reference, c1, c2, r2: null };
+  const mean = y.reduce((sum, v) => sum + v, 0) / y.length;
+  const sst = y.reduce((sum, v) => sum + (v - mean) ** 2, 0);
+  const sse = ts.reduce((sum, t, i) => sum + (shiftLawAt(law, t) - y[i]) ** 2, 0);
+  law.r2 = sst > 1e-20 ? 1 - sse / sst : null;
+  return law;
+}
+export function shiftLawAt(law: ShiftLaw, temperature: number): number {
+  const dt = temperature - law.reference;
+  return law.kind === 'linear' ? law.c1 * dt : dt * (law.c1 * (temperature + law.reference - 40) + law.c2);
+}
+export function predictModulus(fit: SigmoidFit, law: ShiftLaw, temperature: number, frequency: number) {
+  if (!Number.isFinite(temperature) || !Number.isFinite(frequency) || frequency <= 0) return null;
+  const logShift = shiftLawAt(law, temperature), logFrequency = Math.log10(frequency) + logShift;
+  if (!Number.isFinite(logFrequency)) return null;
+  const modulus = 10 ** sigmoidLog(fit, logFrequency);
+  return Number.isFinite(modulus) && modulus > 0 ? { modulus, logShift, logFrequency } : null;
+}
+
 /** Variable projection: solve the two plateaus at each center/slope candidate.
  * Log-frequency is centered for invariance under reference-temperature changes.
  * Two decades of extrapolation beyond the observed moduli bounds each plateau.

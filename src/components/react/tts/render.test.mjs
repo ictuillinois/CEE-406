@@ -49,6 +49,11 @@ test('final fit retains frequency responses and removes time-domain plots', () =
     assert.ok(html.includes(title), title);
   assert.doesNotMatch(html, /Relaxation modulus E\(t\)|Creep compliance J\(t\)|Time-domain|decades/);
   assert.match(html, /Download fit \+ shifts/);
+  assert.match(html, /Temperature-shift fit/);
+  assert.match(html, /Shift c₁/);
+  assert.match(html, /Shift c₂/);
+  assert.match(html, /Predict dynamic modulus/);
+  assert.match(html, /Predicted \|E\*\|/);
   assert.ok(html.includes((1 - fitSigmoid(shiftData(DEFAULT_DATA, shifts)).r2).toFixed(6)));
   assert.doesNotMatch(html, /NaN|Infinity/);
 });

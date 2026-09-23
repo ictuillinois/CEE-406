@@ -14,6 +14,9 @@ catalog and release gate. React island: `src/components/react/tts/TtsApp.tsx`.
   Saved attempts use this same error; residual tables report mean absolute percentage error.
 - Students explicitly capture a final fit. Editing data, shifts, reference or the
   equilibrium modulus invalidates that capture. Export includes inputs and shifts.
+- On desktop the shift-factor panel is sticky and scrolls independently, with
+  scroll chaining disabled so adjusting lower controls leaves the plot visible.
+  Mobile retains normal page scrolling.
 
 ## Source and units
 
@@ -45,6 +48,26 @@ optimized, never student shifts.
 The reference selector lists only temperatures in the active dataset, including imported
 values. Changing reference subtracts its log shift from every shift, preserving
 pairwise spacing and fit error. The selected reference is fixed at zero.
+
+Final results offer two equal-weight least-squares temperature fits to the student's
+saved log shifts. Neither changes the manual shifts or refits the sigmoid:
+
+- Linear: `log10(aT) = c1 (T − Tref)`.
+- Quadratic: `log10(aT) = c1 [(T − 20)² − (Tref − 20)²] + c2 (T − Tref)`.
+  This is exactly `c1(T − 20)² + c2(T − 20)` when Tref is 20 °C.
+
+The quadratic requires three temperature groups; two groups use linear fitting.
+Scaled, reference-centered coordinates and orthogonalized columns stabilize the
+least-squares solve. Coefficients are then expressed about 20 °C. Their units and
+shift-fit R² appear beside the sigmoid parameters. Constant shifts have undefined
+shift-fit R². These polynomial coefficients are not WLF constants.
+
+The predictor below the five plots evaluates the selected shift law at the input
+temperature, computes `log10(fr) = log10(f) + log10(aT)`, then evaluates the saved
+sigmoid to return dynamic modulus magnitude in MPa. Frequency must be positive;
+both inputs must be finite. Predictions beyond measured temperatures or the
+shifted frequency range are labeled extrapolation. The exported JSON includes
+the selected law, coefficients and reference, allowing predictions to be reproduced.
 
 The final supplemental model follows the Python workflow: storage and loss from
 measured magnitude/phase, fitted jointly with nonnegative relaxation strengths.

@@ -5,10 +5,12 @@
 .tts-stages button { padding: .65rem 1rem; }
 .tts-tool button:disabled { opacity: .45; cursor: not-allowed; }
 .tts-tool select:focus-visible, .tts-tool input:focus-visible, .tts-tool button:focus-visible, .tts-tool textarea:focus-visible,
-.tts-tool a:focus-visible { outline: 2px solid var(--cee-brand); outline-offset: 3px; }
+.tts-tool a:focus-visible, .tts-controls:focus-visible { outline: 2px solid var(--cee-brand); outline-offset: 3px; }
 .tts-controls { position: static; }
 .tts-reference { display: flex; gap: .5rem; margin-top: .4rem; }
 .tts-reference input { min-width: 0; }
+.tts-prediction-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.tts-prediction-inputs input { margin-top: .4rem; }
 .tts-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .9rem 0; }
 .tts-shift { margin-top: 1rem; padding-left: .8rem; border-left: 3px solid; }
 .tts-shift label { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; gap: .5rem; }
@@ -37,6 +39,16 @@
 .tts-tool .cee-card__affordance .cee-tip:focus-visible .cee-tip__pop { transform: translateY(0); }
 @media (min-width: 960px) {
   .tts-tool { grid-template-columns: 290px minmax(0, 1fr); }
+  .tts-controls {
+    position: sticky; top: 4.25rem; align-self: start;
+    max-height: calc(100dvh - 5.25rem); overflow-y: auto;
+    overscroll-behavior-y: contain; scrollbar-gutter: stable;
+  }
+  .tts-controls .cee-hint { position: relative; }
+  .tts-controls .cee-tip { position: static; }
+  .tts-controls .cee-tip .cee-tip__pop {
+    top: calc(100% + 8px); bottom: auto; left: 0; max-width: 100%; transform: none;
+  }
   .tts-callouts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {

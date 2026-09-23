@@ -8,7 +8,7 @@ import { fmt } from '../fitting/shared';
 import { DEFAULT_DATA } from './data.ts';
 import {
   temperatures, zeroShifts, shiftData, rebaseShifts, validateData, parseData, dataCSV,
-  fitSigmoid, sigmoidLog, overlapError, fitSpectrum, spectrumAt,
+  fitSigmoid, sigmoidLog, overlapError, fitSpectrum, spectrumAt, fitShiftLaw, shiftLawAt, predictModulus, type ShiftLawKind,
   type TestPoint, type Shifts, type ShiftedPoint, type SigmoidFit, type Spectrum,
 } from './equations.ts';
 import TtsPlot from './TtsPlot';
@@ -189,7 +189,7 @@ export default function TtsApp() {
       <TtsPlot title="Unshifted test results" subtitle="Measured values, grouped by temperature."
         xTitle="Measured frequency f (Hz)" yTitle="Dynamic modulus |E*| (MPa)" traces={groupTraces(shifted, 'modulus', true)} legend={legend} />
     </div> : stage === 'shift' ? <>
-      <aside className="cee-panel tts-controls">
+      <aside className="cee-panel tts-controls" aria-label="Your shift factors" tabIndex={0}>
         <h2 className="cee-panel__title">Your shift factors</h2>
         <label className="cee-field__label" htmlFor="tts-ref">Reference temperature (°C)</label>
         <div className="tts-reference">
@@ -280,7 +280,19 @@ export function FinalResults({ snapshot: s, legend, groupTraces, domain, color }
   groupTraces: (p: ShiftedPoint[], property: 'modulus' | 'storage' | 'loss' | 'phase') => Record<string, unknown>[];
   domain: (p: ShiftedPoint[]) => number[]; color: string;
 }) {
+  const shiftFitColor = HUES[useTheme()][HUE_ORDER[0]];
+  const [lawKind, setLawKind] = useState<ShiftLawKind>('quadratic');
+  const [predictionTemperature, setPredictionTemperature] = useState(String(s.reference));
+  const [predictionFrequency, setPredictionFrequency] = useState('10');
   const f = domain(s.points), ts = temperatures(s.points), spectrum = s.spectrum;
+  const effectiveKind = ts.length < 3 ? 'linear' : lawKind;
+  const law = fitShiftLaw(ts, s.shifts, s.reference, effectiveKind);
+  const temperature = predictionTemperature.trim() === '' ? NaN : Number(predictionTemperature);
+  const frequency = predictionFrequency.trim() === '' ? NaN : Number(predictionFrequency);
+  const prediction = law ? predictModulus(s.fit, law, temperature, frequency) : null;
+  const extrapolated = prediction && (temperature < ts[0] || temperature > ts.at(-1)! ||
+    prediction.logFrequency < Math.min(...s.points.map(p => p.logFrequency)) || prediction.logFrequency > Math.max(...s.points.map(p => p.logFrequency)));
+  const temperatureCurve = Array.from({ length: 120 }, (_, i) => ts[0] + (ts.at(-1)! - ts[0]) * i / 119);
   const predictions = spectrum ? f.map(fr => spectrumAt(spectrum, fr)) : [];
   const line = (x: number[], y: number[], name: string) => ({ x, y, name, type: 'scatter', mode: 'lines', line: { color, width: 3 } });
   const responseLegend = [...legend, { label: 'Response model', color, shape: 'line' as const }];
@@ -295,6 +307,22 @@ export function FinalResults({ snapshot: s, legend, groupTraces, domain, color }
         <Kpi label="β" value={fmt(s.fit.beta, 6)} tip="Horizontal position parameter; it changes when you change the reference temperature." />
         <Kpi label="γ" value={fmt(s.fit.gamma, 6)} tip="Negative for a modulus that increases with reduced frequency." />
       </KpiStrip>
+      <label className="cee-field__label" htmlFor="tts-law">Temperature-shift fit</label>
+      <select id="tts-law" className="cee-input" value={effectiveKind} onChange={e => setLawKind(e.target.value as ShiftLawKind)}>
+        <option value="linear">Linear</option>
+        <option value="quadratic" disabled={ts.length < 3}>Quadratic (power 2)</option>
+      </select>
+      {effectiveKind === 'linear'
+        ? <Equation tex={'\\log_{10}a_T=c_1(T-T_{ref})'} plain="log10 aT = c1(T − Tref)" display />
+        : <Equation tex={'\\log_{10}a_T=c_1[(T-20)^2-(T_{ref}-20)^2]+c_2(T-T_{ref})'} plain="log10 aT = c1[(T − 20)² − (Tref − 20)²] + c2(T − Tref)" display />}
+      <p className="cee-hint">Reference: {s.reference} °C · fitted to your shifts.
+        <Tip text="Equal-weight least squares fits your saved log10 shift factors without changing them or the sigmoid. The quadratic is q(T) − q(Tref), where q(T) = c1(T − 20)² + c2(T − 20); at a 20 °C reference it is exactly the stated quadratic. These are polynomial coefficients, not Williams–Landel–Ferry (WLF) constants." /></p>
+      {ts.length < 3 && <p className="cee-hint">Quadratic fitting needs three temperatures.</p>}
+      {law ? <KpiStrip>
+        <Kpi label="Shift c₁" value={fmt(law.c1, 6)} unit={effectiveKind === 'linear' ? '°C⁻¹' : '°C⁻²'} />
+        {effectiveKind === 'quadratic' && <Kpi label="Shift c₂" value={fmt(law.c2, 6)} unit="°C⁻¹" />}
+        <Kpi label="Shift-fit R²" value={law.r2 === null ? '—' : law.r2.toFixed(6)} tip="R² compares fitted and student log10 shift factors, with equal weight per temperature. Undefined if all shift factors are equal. This is separate from sigmoid fit quality." />
+      </KpiStrip> : <p role="status">The shift fit is unavailable for these temperatures.</p>}
       <p>Fit error (1 − R²): <strong>{(1 - s.fit.r2).toFixed(6)}</strong> · R²: {s.fit.r2.toFixed(6)}
         <Tip text="Both metrics use log10 modulus. Minimize fit error toward zero. In the sigmoid, exp uses base e; modulus is in MPa and reduced frequency in Hz." /></p>
       {poor && <p className="cee-note">Some curves do not overlap. Review the alignment.</p>}
@@ -303,6 +331,7 @@ export function FinalResults({ snapshot: s, legend, groupTraces, domain, color }
         <button type="button" className="cee-chip" onClick={() => download('tts-final-fit.json', JSON.stringify({
           reference_C: s.reference, units: { modulus: 'MPa', frequency: 'Hz', time: 's' },
           fitError: { metric: '1 - R2 in log10 modulus', value: 1 - s.fit.r2 },
+          temperatureShiftFit: law,
           log10ShiftFactors: s.shifts, sigmoid: s.fit, equilibrium_MPa: s.equilibrium,
           responseModel: s.spectrum, readings: s.points,
         }, null, 2), 'application/json')}>Download fit + shifts</button>
@@ -316,10 +345,10 @@ export function FinalResults({ snapshot: s, legend, groupTraces, domain, color }
         help="The fitted line is drawn only across the shifted measurement range. It does not establish behavior outside that range."
         xTitle="Reduced frequency fr (Hz)" yTitle="|E*| (MPa)" legend={[...legend, { label: 'Sigmoid fit', color, shape: 'line' }]}
         traces={[line(f, f.map(fr => 10 ** sigmoidLog(s.fit, Math.log10(fr))), 'Sigmoid fit'), ...groupTraces(s.points, 'modulus')]} />
-      <TtsPlot title="Shift factors" subtitle="Your temperature shifts"
-        help="Segments interpolate log(aT) between measured temperatures. They are not a fitted WLF law. The star marks the reference."
-        xTitle="Temperature (°C)" yTitle="log₁₀(aT)" logX={false} logY={false} legend={[{ label: 'Your shifts', color }, { label: 'Reference', color, shape: 'line' }]}
-        traces={[{ ...line(ts, ts.map(t => s.shifts[t]), 'Your shifts'), mode: 'lines+markers', marker: { size: 9, color, line: { color: 'white', width: 1.2 } } },
+      <TtsPlot title="Shift factors" subtitle={effectiveKind === 'linear' ? 'Linear fit to your shifts' : 'Quadratic fit to your shifts'}
+        help="Markers are your saved shifts; the dashed curve is the selected least-squares temperature fit. The star marks the fixed reference. This curve supplies shifts for the predictor below."
+        xTitle="Temperature (°C)" yTitle="log₁₀(aT)" logX={false} logY={false} legend={[{ label: 'Your shifts', color }, { label: 'Temperature fit', color: shiftFitColor, shape: 'line' }]}
+        traces={[...(law ? [{ ...line(temperatureCurve, temperatureCurve.map(t => shiftLawAt(law, t)), 'Temperature fit'), line: { color: shiftFitColor, width: 3, dash: 'dash' } }] : []), { ...line(ts, ts.map(t => s.shifts[t]), 'Your shifts'), mode: 'markers', marker: { size: 9, color, line: { color: 'white', width: 1.2 } } },
           { x: [s.reference], y: [0], type: 'scatter', mode: 'markers', marker: { symbol: 'star', size: 14, color, line: { color: 'white', width: 1.2 } }, name: 'Reference' }]} />
     </div>
     <Card title="Response fit" affordance={<Tip text="Measured modulus and phase give storage and loss. A nonnegative relaxation spectrum fits those responses using your fixed shifts, supplying the following curves. This supplemental model is separate from the sigmoid." />}>
@@ -336,6 +365,23 @@ export function FinalResults({ snapshot: s, legend, groupTraces, domain, color }
         logY={property !== 'phase'} legend={spectrum ? responseLegend : legend}
         traces={[...(spectrum ? [line(f, predictions.map(p => p[property]), 'Response model')] : []), ...groupTraces(s.points, property)]} />)}
     </div>
+    <Card title="Predict dynamic modulus" subtitle="Temperature + frequency → |E*|"
+      affordance={<Tip text="The selected temperature fit predicts log10(aT). Add log10(f) to obtain log10(fr), then evaluate the saved sigmoid. The output is the magnitude |E*| in MPa. Prediction uses the fitted shift curve, so it can differ from the manually shifted measurements." />}>
+      <div className="tts-prediction-inputs">
+        <label className="cee-field__label">Temperature (°C)
+          <input className="cee-input" type="number" step="any" value={predictionTemperature} onChange={e => setPredictionTemperature(e.target.value)} /></label>
+        <label className="cee-field__label">Frequency (Hz)
+          <input className="cee-input" type="number" step="any" min="0" value={predictionFrequency} onChange={e => setPredictionFrequency(e.target.value)} /></label>
+      </div>
+      <div aria-live="polite">
+        {prediction ? <KpiStrip>
+          <Kpi accent label="Predicted |E*|" value={fmt(prediction.modulus, 6)} unit="MPa" />
+          <Kpi label="log₁₀(aT)" value={fmt(prediction.logShift, 6)} />
+          <Kpi label="log₁₀(fr / Hz)" value={fmt(prediction.logFrequency, 6)} />
+        </KpiStrip> : <p role="status">Enter a finite temperature and a positive frequency with an available shift fit.</p>}
+        {extrapolated && <p className="cee-note">Extrapolation: outside the measured temperature or reduced-frequency range.</p>}
+      </div>
+    </Card>
     <Card title="Shift factors and residuals" subtitle="Error by temperature">
       <div className="cee-tablewrap" tabIndex={0} role="region" aria-label="Final shift factors"><table className="cee-table">
         <thead><tr><th>Temperature (°C)</th><th>log₁₀(aT)</th><th>aT</th><th>Readings</th><th>Mean absolute error (%)</th></tr></thead>
