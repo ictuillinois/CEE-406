@@ -291,13 +291,11 @@ export default function PsiApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Calibrate.</strong> Load Huang Problem 9.2 and confirm the fit gives 5.51, −1.70, −38.09 and −0.004.</li>
-              <li><strong>Compare your coefficients with AASHO's.</strong> They fitted 74 sections; you have five. Look at what happens to the rut term.</li>
-              <li><strong>Then look at R².</strong> It will be excellent. Sit with the fact that an excellent fit and a meaningless coefficient are entirely compatible.</li>
-              <li><strong>Read the skid curve as two separate properties.</strong> SN₀ is what the surface feels like at rest; PNG is how fast that falls away with speed. A road can be fine at 30 mph and dangerous at 60 with the same SN₀.</li>
+              <li><strong>Data:</strong> Enter section measurements and ratings, or load a preset.</li>
+              <li><strong>Fit:</strong> Compare the fitted coefficients with AASHO values and review R².</li>
+              <li><strong>Skid:</strong> Set SN₀ and PNG to see how skid resistance changes with speed.</li>
             </ol>
-            Every design equation in this course descends from a panel of people rating rides in
-            1958. This is where the numbers came from.
+            <p>A high R² alone does not establish reliable coefficients.</p>
           </div>
         </details>
 

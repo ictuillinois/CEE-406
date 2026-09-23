@@ -61,34 +61,14 @@ export default function CrossSectionApp() {
       <details className="cee-howto">
         <summary>How to use this tool</summary>
         <div className="cee-howto__body">
-          <ol>
-            <li><strong>Start from a template.</strong> Thirteen sections ship with the tool: FAA flexible and rigid, conventional and deep-strength highway, JPCP, CRCP, composite, permeable, FDR. Pick the nearest one and edit it rather than building from scratch.</li>
-            <li><strong>Pick your units first.</strong> SI (mm) and English (in) sit at the top of the toolbar, and the choice is remembered. Switching does not just relabel the numbers, it re-rounds them to the designation the other system uses: a 75 mm surface course becomes a 3 in surface course, 150 mm becomes 6 in. That is the soft conversion the specifications themselves print, so the section stays one somebody could build, and the figure is then drawn at exactly that size.</li>
-              <li><strong>Set the layer structure.</strong> Every thickness in the bottom strip is the real engineering thickness in the system you picked, drawn to scale. The subgrade is the exception: it is infinite in the analysis, so it carries a display thickness set under Section Geometry and is marked with an asterisk.</li>
-            <li><strong>Pick materials.</strong> Click a layer to select it, then a tile in the Material Library. The eighteen textures are procedural and seeded, so the same settings always produce the same figure, so a section rendered today matches the one in a report from last term.</li>
-            <li><strong>Frame it.</strong> Drag to orbit, wheel to zoom, right-drag to pan, or use the Isometric / Front / Fit buttons. Orthographic projection is the honest one for a dimensioned figure; perspective reads better in a presentation.</li>
-            <li><strong>Take the image.</strong> <strong>Copy</strong> puts the PNG straight on your clipboard. Paste it into Word, PowerPoint, LaTeX-adjacent editors, or a lab notebook without ever touching a file. <strong>Copy transparent</strong> does the same with no background, so the section sits on whatever the slide is already using. <strong>Export</strong> downloads the file instead.</li>
-          </ol>
-          <p>
-            Copy and Export both render at the resolution chosen under Export, not at the size of the
-            viewport on screen. 2400&nbsp;×&nbsp;1800 is 300&nbsp;dpi at 8&nbsp;×&nbsp;6&nbsp;in and is
-            the right default for a report figure. The selection outline never appears in the output.
-            <strong> Ctrl</strong>+<strong>Alt</strong>+<strong>C</strong> copies without leaving the
-            keyboard.
-          </p>
-          <p>
-            A transparent PNG keeps its alpha channel through the clipboard on Windows and macOS.
-            A few consumers flatten it (some chat clients, and older builds of Office), and there
-            the section will land on a white or black card instead. If that happens, use
-            <strong> Copy</strong> with <em>Publication white</em> selected under Background and you
-            get the same figure on a known ground.
-          </p>
-          <p>
-            Save and Open store the whole section: geometry, layers, materials, camera, lighting,
-            as a <code>.pavement.json</code> file, so a figure can be reopened and re-rendered at a
-            different size or angle later instead of being redrawn.
-          </p>
-        </div>
+            <ol>
+              <li><strong>Start:</strong> Choose SI or English units and a template.</li>
+              <li><strong>Edit:</strong> Set layer thicknesses. Select a layer to change its material.</li>
+              <li><strong>View:</strong> Drag to orbit, scroll to zoom or right-drag to pan.</li>
+              <li><strong>Export:</strong> Set the image resolution, then Copy or Export. Save the project to edit it later.</li>
+            </ol>
+            <p>Subgrade thickness is for display only. Unit changes use rounded engineering dimensions.</p>
+          </div>
       </details>
 
       {failure && (
@@ -158,7 +138,7 @@ export default function CrossSectionApp() {
                   <input type="number" id="xs-sec-subgrade" className="xs-num" min="50" max="2000" step="25" />
                   <span className="xs-unit" data-xs-unit>mm</span>
                 </div>
-                <p className="xs-field-note">Layer heights are exact engineering thicknesses. The infinite subgrade uses a fixed visualization thickness only.</p>
+                <p className="xs-field-note">Layer heights are to scale. Subgrade thickness is for display only.</p>
               </div>
             </details>
 

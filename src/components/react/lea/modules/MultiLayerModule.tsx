@@ -348,20 +348,11 @@ export default function MultiLayerModule() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Build the structure</strong> top to bottom. The bottom layer is the
-                half-space; its thickness is ignored.</li>
-              <li><strong>Set the load</strong> and, for Problem 2.5, switch to dual or tandem.
-                The wheels are superposed, which is legitimate because the system is linear elastic, with
-                each load's stresses rotated into a common plan frame before they are added.</li>
-              <li><strong>Read the critical strains</strong>: horizontal tension at the bottom of
-                the top layer drives fatigue cracking, vertical compression on top of the subgrade
-                drives rutting. These are the two numbers the HW8 damage tool wants.</li>
-              <li><strong>Check against WinJULEA.</strong> This solves the same equations; if the
-                two disagree, one of the inputs differs.</li>
+              <li><strong>Structure:</strong> Enter layers from top to bottom. The bottom layer is a half-space.</li>
+              <li><strong>Loads:</strong> Set pressure, contact size and wheel arrangement.</li>
+              <li><strong>Results:</strong> Read tensile strain at the top-layer bottom and vertical strain at the subgrade.</li>
+              <li><strong>Compare:</strong> Match units, loads, interfaces and evaluation points when checking WinJULEA.</li>
             </ol>
-            Reproduces Problem 2-4 (w₀ = 0.025 in, interface stress 11 psi) and Problem 2-6
-            (εt = 7.25×10⁻⁴, εz = 1.06×10⁻³), collapses onto the Boussinesq half-space when every
-            layer has the same modulus, and matches Jones' three-layer table to four decimals.
           </div>
         </details>
 

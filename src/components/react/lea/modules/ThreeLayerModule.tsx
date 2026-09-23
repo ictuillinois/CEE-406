@@ -178,20 +178,11 @@ export default function ThreeLayerModule() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Read the four groups first.</strong> k₁, k₂, A and H are the whole
-                problem, and two sections with the same four numbers have the same stress factors,
-                whatever their absolute size.</li>
-              <li><strong>The factors are Jones' table.</strong> ZZ1, ZZ2, ZZ1−RR1 and ZZ2−RR2
-                are what Table 2.3 tabulates, and Eq. 2.24 turns them into stresses.</li>
-              <li><strong>Both sides of each interface.</strong> σz is continuous across an
-                interface and σr is not. The radial STRAIN is what carries over, which is what
-                Eq. 2.23 says when it divides the deviator by the modulus ratio.</li>
-              <li><strong>Interpolate nothing.</strong> Huang's table is on a coarse grid and he
-                counts the cost of interpolating it at eighty-one times the work of a single
-                lookup. Here any k₁ and k₂ are computed directly.</li>
+              <li><strong>Inputs:</strong> Set layer properties and load geometry, or load an example.</li>
+              <li><strong>Factors:</strong> Read k₁, k₂, A and H alongside the Jones stress factors.</li>
+              <li><strong>Results:</strong> Compare stresses and strains on both sides of each interface.</li>
             </ol>
-            Matches Jones' printed values for Example 2.11 to four decimals, and reproduces
-            Examples 2.11, 2.12 and Problem 2.6.
+            <p>Vertical stress is continuous across interfaces; radial stress can change.</p>
           </div>
         </details>
 

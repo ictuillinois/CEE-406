@@ -466,15 +466,12 @@ export default function BackcalcApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Enter the basin and the load.</strong> Offsets in inches from the plate center, deflections in mils. The plate pressure follows from load and radius.</li>
-              <li><strong>Enter the structure you believe is down there</strong>: thicknesses from cores, and a rough guess at each modulus. The guess only has to be within a factor of a few.</li>
-              <li><strong>Fit.</strong> The solver adjusts the moduli until the computed basin matches the measured one, then reports how well it matched.</li>
-              <li><strong>Read the sensitivity chart before you believe the moduli.</strong> A layer with low sensitivity is one the basin cannot see, so its backcalculated modulus is close to arbitrary, and a different seed will give a different answer that fits just as well.</li>
-              <li><strong>Compare against the AASHTO closed form.</strong> It uses one outer sensor for the subgrade and d₀ for everything above. When the two routes disagree, ask which assumption broke.</li>
+              <li><strong>Inputs:</strong> Enter load, sensor offsets in inches and deflections in mils.</li>
+              <li><strong>Structure:</strong> Set layer thicknesses and starting moduli.</li>
+              <li><strong>Fit:</strong> Compare the computed and measured basins.</li>
+              <li><strong>Review:</strong> Check layer sensitivity and compare with the AASHTO estimate.</li>
             </ol>
-            A basin match is necessary but not sufficient. Huang §9.4.3 records two agencies
-            running the same program on the same sections and deriving very different moduli.
-            Your job is to say how much of your answer is data and how much is your seed.
+            <p>Low sensitivity means a layer modulus is poorly constrained by the measurements.</p>
           </div>
         </details>
 

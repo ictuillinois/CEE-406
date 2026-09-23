@@ -1271,29 +1271,11 @@ export default function OneLayerModule() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Pick the case first.</strong> Point load, flexible circle, or rigid
-                plate. The equations beside each chart change with it, and they are the equations
-                the curves were computed from — not a general reference panel.</li>
-              <li><strong>Read the family as a parametric study.</strong> Each curve is one depth.
-                Change q, a, E or ν and watch the whole family move; the shape tells you which
-                inputs matter where. σz does not move at all when you change E, which is
-                Huang's remark under Eq. 2.3 made visible.</li>
-              <li><strong>Then answer the actual question.</strong> The parametric card at the
-                bottom sweeps one input over a list of values and reports one number for each —
-                for a circular load, on both plates at once, because that is how the question is
-                usually worded ("assuming both flexible and rigid plates").</li>
-              <li><strong>The probe point is the exact answer.</strong> r and z above give the
-                full tensor, its principal values and the strains, including off the axis where
-                τrz is non-zero and σz is not a principal stress. That is what Problem 2.1
-                asks for.</li>
-              <li><strong>Watch ν.</strong> σz is independent of it. σr is not: at ν = 0.5 the
-                radial stress under the center stays compressive at every depth, and at ν = 0.3
-                it turns tensile below about z/a = 1.5.</li>
+              <li><strong>Case:</strong> Choose a point load, flexible circle or rigid plate.</li>
+              <li><strong>Inputs:</strong> Set load, material properties and probe position.</li>
+              <li><strong>Results:</strong> Read stresses, strains and displacements at the probe.</li>
+              <li><strong>Sweep:</strong> Use the parametric card to compare one input across several values.</li>
             </ol>
-            Reproduces Examples 2.1, 2.2 and 2.3. For Problem 2.1 it reports 0.228q, 0.0108q and
-            0.0092q where the book prints 0.221, 0.011 and 0.004; both this module and the
-            independent n-layer solver agree on the computed values, so the difference is the
-            table read Huang worked from.
           </div>
         </details>
 

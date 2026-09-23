@@ -338,12 +338,11 @@ export default function WestergaardApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Describe slab and foundation</strong>: E, ν, h, and the subgrade reaction k. ℓ is computed first, every formula consumes it.</li>
-              <li><strong>Set the load</strong>: P and contact radius a. The tool evaluates all three Westergaard cases at once.</li>
-              <li><strong>Check the critical fiber</strong>: interior and edge stresses are bottom tension; the corner stress is <em>top</em> tension.</li>
-              <li><strong>Add curling</strong>: Δt &gt; 0 is daytime (bottom tension at interior, adding to load stress); night reverses the sign.</li>
+              <li><strong>Inputs:</strong> Set slab properties, subgrade reaction, load and contact radius.</li>
+              <li><strong>Compare:</strong> Read interior, edge and corner stresses against the modulus of rupture.</li>
+              <li><strong>Curling:</strong> Set the temperature difference and review combined stresses.</li>
             </ol>
-            The h-sensitivity chart shows why edge loading governs rigid design. Compare each curve against the modulus of rupture line.
+            <p>Interior and edge load stresses are bottom tension; corner stress is top tension.</p>
           </div>
         </details>
 

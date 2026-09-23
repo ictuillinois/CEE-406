@@ -427,13 +427,11 @@ export default function ReliabilityApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Traffic gives a distribution, not a number.</strong> Every factor in the ESAL product has a mean and a spread; they combine into a mean and variance of log W<sub>T</sub>.</li>
-              <li><strong>So does the pavement.</strong> Layer coefficients, thicknesses, drainage coefficients, p₀ and M<sub>R</sub> all vary, giving a mean and variance of log W<sub>t</sub>, the capacity.</li>
-              <li><strong>Reliability is the overlap.</strong> It is the probability that demand stays below capacity: P(log W<sub>T</sub> − log W<sub>t</sub> &lt; 0).</li>
-              <li><strong>Read the variance chart first.</strong> It ranks every input by how much of the total uncertainty it owns. That ranking, not the reliability number, is what tells you where to spend money: on better traffic counts, tighter construction, or more asphalt.</li>
-              <li><strong>Run Monte Carlo and compare.</strong> Taylor's expansion linearizes the design equation; sampling does not. When they disagree, the equation is curved over the range your inputs actually span.</li>
+              <li><strong>Inputs:</strong> Set means and variability for traffic and pavement properties.</li>
+              <li><strong>Results:</strong> Read reliability and the demand and capacity distributions.</li>
+              <li><strong>Sensitivity:</strong> Use the variance chart to identify the largest uncertainty sources.</li>
+              <li><strong>Compare:</strong> Run Monte Carlo and compare with the Taylor estimate.</li>
             </ol>
-            The design equation itself never changes here. What changes is your honesty about the inputs.
           </div>
         </details>
 

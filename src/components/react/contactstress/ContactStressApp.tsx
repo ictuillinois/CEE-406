@@ -1203,58 +1203,13 @@ export default function ContactStressApp() {
             <details className="cee-card cee-howto">
               <summary>How to use this</summary>
               <div className="cee-howto__body">
-                <ol>
-                  <li>
-                    The tool opens on the headline case of the source paper: a dual assembly at
-                    42 kN and 0.69 MPa, free rolling at 8 km/h. The surfaces here should look
-                    like the ones printed there.
-                  </li>
-                  <li>
-                    Read the first strip. <strong>Peak vertical stress</strong> against inflation
-                    pressure is the number that breaks the uniform-pressure assumption; on a heavily
-                    loaded tire it is two to three times the inflation pressure, concentrated on the
-                    shoulder ribs.
-                  </li>
-                  <li>
-                    Sweep the wheel load from one end of the slider to the other and watch{' '}
-                    <strong>contact area</strong> against <em>P/p</em>. The ratio falls the whole
-                    way, because the real patch grows more slowly than <em>P/p</em> does, and on a softly
-                    inflated tire it drops through 1.0 near 40 kN. Now raise the inflation pressure
-                    and sweep again: it never gets there. The real patch stays larger than the
-                    idealization everywhere else the slider reaches.
-                  </li>
-                  <li>
-                    Switch to braking, then acceleration, and watch the longitudinal window. Most of
-                    the change happens in the first 5–10% of slip; beyond ~25% the field barely moves.
-                    The slider still runs to 99% because the FE database contains a locked wheel,
-                    not because 99% is a case anyone designs for.
-                  </li>
-                  <li>
-                    The two shear windows rescale themselves to whatever case is loaded, and σz
-                    never does. So the numbers on their color bars are part of the reading: a
-                    free-rolling wheel and the same wheel braking hard can look alike and be an
-                    order of magnitude apart. Compare σz by eye, σx and σy by the bar.
-                  </li>
-                  <li>
-                    The load and pressure sliders stop short of what the manifest calls the
-                    training domain, for two separate reasons. They span only the part where the
-                    predicted field still sums back to the load you applied within ±15%; and only
-                    the part every rolling condition was actually simulated over. Above 0.9 MPa,
-                    and below 18 kN, the database has free-rolling cases and nothing else. It is a
-                    surrogate, so treat the third decimal place with care.
-                  </li>
-                </ol>
-                <p>
-                  <strong>What this is not.</strong> The stresses are computed on a rigid, flat,
-                  smooth surface. There is no pavement compliance, no surface texture, and no layered
-                  structure: this is the load a tire applies, not the response a pavement gives. Take
-                  the field from here into the{' '}
-                  <a href={`${BASE}tools/lea/`}>Layered Elastic Analysis</a> or{' '}
-                  <a href={`${BASE}tools/stress-explorer/`}>Stress Explorer</a> tool for the second
-                  half of that question, and to <a href={`${BASE}tools/gear3d/`}>Gear3D</a> for how
-                  these footprints sit under a real axle group.
-                </p>
-              </div>
+            <ol>
+              <li><strong>Inputs:</strong> Set wheel load, inflation pressure and rolling condition.</li>
+              <li><strong>Compare:</strong> Review peak vertical stress and contact area.</li>
+              <li><strong>Shear:</strong> Adjust slip for braking or acceleration. Read each color bar; shear plots rescale.</li>
+            </ol>
+            <p>The model predicts tire stresses on a rigid, smooth surface, not pavement response.</p>
+          </div>
             </details>
 
             <Card title="Where these numbers come from">

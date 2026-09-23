@@ -107,12 +107,11 @@ export default function AcrApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Read the runway code</strong>: PCR number, R or F for rigid or flexible, the subgrade category A–D, the tire pressure code W–Z, and how the rating was derived.</li>
-              <li><strong>Look up the aircraft's ACR</strong> for that same pavement type and subgrade category. The ACR is not a single number, it is a table.</li>
-              <li><strong>Compare.</strong> ACR ≤ PCR is unrestricted. Above that, up to about {(OVERLOAD_ALLOWANCE * 100).toFixed(0)}% is an occasional-overload movement, not a routine one.</li>
-              <li><strong>Check the tire pressure separately.</strong> It is an independent gate; passing on strength does not help if the tires are too hard for the surface.</li>
+              <li><strong>Inputs:</strong> Enter the runway PCR code and aircraft ACR for the same pavement and subgrade.</li>
+              <li><strong>Compare:</strong> Check ACR against PCR, then check tire pressure separately.</li>
+              <li><strong>Overload:</strong> Review the allowance and movement limits when ACR exceeds PCR.</li>
             </ol>
-            This tool does the comparison and the code parsing, the part students most often get wrong, but the ACR values are yours to look up, because they come from published aircraft tables that are not reproduced here.
+            <p>Look up ACR in the published aircraft tables.</p>
           </div>
         </details>
 

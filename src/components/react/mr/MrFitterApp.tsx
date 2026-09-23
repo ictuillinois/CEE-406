@@ -288,9 +288,7 @@ export default function MrFitterApp() {
           Fit selected model
         </button>
         <p className="cee-hint">
-          {parsed.length} included readings. Fit each model separately to
-          compare them. Editing data or pressure clears prior fits and
-          predictions.
+          {parsed.length} readings. Fit each model to compare. Editing data or pressure clears fits and predictions.
         </p>
         {error && (
           <p className="fit-error" role="alert">
@@ -298,8 +296,7 @@ export default function MrFitterApp() {
           </p>
         )}
         <p className="fit-status">
-          Choose exclusions from residual structure and test context. No
-          readings are removed automatically.
+          Review residuals before excluding readings. Exclusions are manual.
         </p>
       </aside>
       <div className="cee-results">

@@ -87,21 +87,10 @@ export default function ChartsModule() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Pick a figure.</strong> The list is grouped the way the chapter is: the
-                Foster–Ahlvin half-space charts, the Burmister two-layer design charts, and
-                Peattie's three-layer lattice.</li>
-              <li><strong>Read it forwards.</strong> Type the two parameters; the marker lands on
-                the chart and the readout applies the equation printed beside it. A curve the book
-                never drew is computed and drawn dashed between the ones it did.</li>
-              <li><strong>Read it backwards.</strong> Move the pointer anywhere in the frame. The
-                panel under the chart solves for the curve that passes through that point,
-                including when there are two such curves, and when there are none.</li>
-              <li><strong>Check it against the book.</strong> Every chart with a worked example
-                carries its checkpoints; load one and confirm the marker lands where Huang says.</li>
+              <li><strong>Select:</strong> Choose a figure or worked example.</li>
+              <li><strong>Forward:</strong> Enter parameters to place the marker and read the result.</li>
+              <li><strong>Inverse:</strong> Move the pointer over the chart to solve for the parameters at that point.</li>
             </ol>
-            These are not scans or traced curves. Each is computed from the same layered-elastic
-            solver the other modules use, so intermediate values are exact rather than
-            interpolated by eye, and a curve the book never drew is as available as one it did.
           </div>
         </details>
 

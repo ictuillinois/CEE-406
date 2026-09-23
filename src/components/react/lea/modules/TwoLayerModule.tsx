@@ -365,22 +365,11 @@ export default function TwoLayerModule() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Only two numbers matter to the charts:</strong> E₁/E₂ and h₁/a. Everything
-                in §2.2.1 is dimensionless in those, which is why one page of curves serves every
-                load and every section.</li>
-              <li><strong>Each card is one figure.</strong> The chart value, the equation Huang
-                applies to it, and the answer, so a hand solution can be checked line by line
-                rather than only at the end.</li>
-              <li><strong>Dual and tandem wheels go through the conversion factor</strong> of
-                Figures 2.23 and 2.25–2.27: rescale to Sd = 24 in by Eq. 2.18, read both contact
-                radii, interpolate with Eq. 2.19.</li>
-              <li><strong>Design backwards</strong> with the allowable σc: the tool inverts
-                Figure 2.15 for the thickness, the way Example 2.5 does.</li>
+              <li><strong>Inputs:</strong> Set layer properties, load and geometry, or load an example.</li>
+              <li><strong>Results:</strong> Read each chart factor and its calculated response.</li>
+              <li><strong>Wheels:</strong> Use the conversion-factor cards for dual and tandem loads.</li>
+              <li><strong>Design:</strong> Enter allowable subgrade stress to solve for thickness.</li>
             </ol>
-            Reproduces Examples 2.5 through 2.10 and Problem 2.4. Values are computed from the
-            two-layer solution rather than read off the printed curves, so they will differ from a
-            hand chart read by a percent or two, usually toward the KENLAYER answer Huang quotes
-            beside each example.
           </div>
         </details>
 

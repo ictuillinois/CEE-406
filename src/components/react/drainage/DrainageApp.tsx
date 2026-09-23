@@ -327,12 +327,11 @@ export default function DrainageApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Estimate the inflow</strong>: surface infiltration always, then groundwater or meltwater. Huang treats them as alternatives, not additives, because frozen fine-grained soil is nearly impermeable.</li>
-              <li><strong>Size the drainage layer</strong> so its steady-state capacity exceeds the design inflow over the flow length, and check the time to drain.</li>
-              <li><strong>Size the collector pipe</strong> and the outlet spacing so the pipe can carry what the layer delivers.</li>
-              <li><strong>Check the filter</strong> both ways: coarse enough to drain, fine enough not to pipe.</li>
+              <li><strong>Inflow:</strong> Set surface infiltration plus groundwater or meltwater.</li>
+              <li><strong>Layer:</strong> Set thickness and permeability; check capacity and drainage time.</li>
+              <li><strong>Pipe:</strong> Set collector diameter and outlet spacing.</li>
+              <li><strong>Filter:</strong> Check drainage and soil retention.</li>
             </ol>
-            FHWA's <strong>DRIP</strong> does the same calculations as a desktop program, and HW6 asks you to check Problems 8.6 and 8.8 against it.
           </div>
         </details>
 

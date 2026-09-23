@@ -259,12 +259,10 @@ export default function DamageApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Run WinJULEA first</strong> (HW8 P2a): 5 AC sublayers with moduli ordered by loading frequency, base, subgrade.</li>
-              <li><strong>Enter the strains</strong>: εv at each sublayer mid-depth (AC, base, subgrade) and εt at the AC bottom, as magnitudes in µε.</li>
-              <li><strong>Read the growth curves</strong>: rutting per layer and total, and bottom-up cracked area, from 0 to {Nmax.toLocaleString()} repetitions.</li>
-              <li><strong>Answer P2c from the table</strong>: total rutting and the governing layer.</li>
+              <li><strong>Inputs:</strong> Enter vertical strains at layer mid-depths and tensile strain at the AC bottom from WinJULEA, in µε.</li>
+              <li><strong>Results:</strong> Read the rutting and cracking curves over the selected repetitions.</li>
+              <li><strong>Compare:</strong> Use the table to identify total rutting and the governing layer.</li>
             </ol>
-            Because the same load repeats, DI = N/N_f, so the sum in Miner’s law collapses. Describe the <em>shapes</em>: rutting grows as a power law (fast early, then flattening), cracking follows a sigmoid (slow, then accelerating).
           </div>
         </details>
 

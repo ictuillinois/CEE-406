@@ -325,15 +325,11 @@ export default function MasterCurveApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Calibrate first.</strong> Load the Huang Ex. 7.10 preset and confirm |E*| = 5.07 × 10⁵ psi at 77°F and 8 Hz before trusting anything else.</li>
-              <li><strong>Look at the isotherms.</strong> Each curve is one temperature. Asphalt is stiffer when cold and stiffer under a faster load, the two axes of the same underlying behavior.</li>
-              <li><strong>Shift them.</strong> Time–temperature superposition says a hot slow test and a cold fast test are the same test. If that is true, every isotherm lands on one curve.</li>
-              <li><strong>Read the collapse, not just the curve.</strong> The R² tells you whether superposition actually held. A poor collapse means the model you shifted does not obey it, and no amount of curve-fitting fixes that.</li>
-              <li><strong>Compare the two methods.</strong> The Asphalt Institute and Shell routes answer the same question and disagree. Decide which you would hand a designer, and on what grounds.</li>
+              <li><strong>Inputs:</strong> Enter mix properties and test conditions, or load a preset.</li>
+              <li><strong>Shift:</strong> Review isotherms and the resulting master curve.</li>
+              <li><strong>Check:</strong> Read fit quality and compare Asphalt Institute and Shell predictions.</li>
+              <li><strong>Use:</strong> Read the modulus at your pavement temperature and loading frequency.</li>
             </ol>
-            One number from this tool feeds everything else: the AC modulus that goes into a
-            layered-elastic run is a point on this curve, chosen for a vehicle speed and a pavement
-            temperature. Choosing it badly is a bigger error than most of the analysis downstream.
           </div>
         </details>
 

@@ -403,12 +403,11 @@ export default function EsalCalculatorApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Describe the pavement</strong>: SN and pₜ pick the AASHTO equivalency table (SN = 5, pₜ = 2.5 reproduce Table D.4).</li>
-              <li><strong>Build the axle spectrum</strong>: one row per axle group. A tandem is one group with its own EALF, <em>not</em> two singles. The presets load typical streams.</li>
-              <li><strong>Project the traffic</strong>: D and L bring two-way counts down to the design lane; r and n set the growth factor G. Counts already design-lane? Set D = L = 1.</li>
-              <li><strong>Read the results</strong>: the flow strip shows each factor doing its work, the table gives exact EALFs to compare with your interpolated values, and the growth chart shows the traffic accumulating.</li>
+              <li><strong>Pavement:</strong> Set SN and terminal serviceability.</li>
+              <li><strong>Traffic:</strong> Enter one row per axle group or load a preset. A tandem is one group.</li>
+              <li><strong>Growth:</strong> Set direction, lane, growth rate and design period. Use D = L = 1 for design-lane counts.</li>
+              <li><strong>Results:</strong> Read EALFs and cumulative ESALs.</li>
             </ol>
-            EALFs come from the AASHTO design equation itself, so they match the printed tables to the fourth decimal, a stronger check than the (L/18)⁴ rule of thumb.
           </div>
         </details>
 

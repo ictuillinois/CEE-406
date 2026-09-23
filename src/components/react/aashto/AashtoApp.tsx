@@ -569,12 +569,10 @@ export default function AashtoApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Pick the method</strong>: flexible (Huang Ch. 11), rigid (Ch. 12), or the effective-k season average that feeds the rigid design.</li>
-              <li><strong>Pick what to solve for.</strong> The design equation is one relationship among W₁₈, thickness, reliability, and support; this inverts it in whichever direction the problem asks.</li>
-              <li><strong>Read the design chart</strong>: your point sits on the curve for your reliability. Moving up a reliability curve is what the R term costs you in thickness.</li>
-              <li><strong>Convert SN to layers</strong> (flexible): each layer is designed against the modulus of the material beneath it, and thicknesses are rounded up to constructible increments.</li>
+              <li><strong>Method:</strong> Choose flexible, rigid or effective-k analysis.</li>
+              <li><strong>Inputs:</strong> Select the unknown and enter the remaining design values.</li>
+              <li><strong>Results:</strong> Read the design chart. For flexible pavement, convert SN to layer thicknesses.</li>
             </ol>
-            The equations are transcendental in SN and D, so those directions are solved by bisection rather than a nomograph. It is the same answer the AASHTO design charts give, without chart-reading error.
           </div>
         </details>
 

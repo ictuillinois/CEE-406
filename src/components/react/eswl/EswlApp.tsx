@@ -263,13 +263,10 @@ export default function EswlApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Calibrate.</strong> Load the Huang preset and confirm 7410, 5630, 7340 and 6750 lb: four published answers to one question.</li>
-              <li><strong>Read the divergence chart, not the number.</strong> The criteria agree at the extremes and disagree in the middle, which is exactly where real pavements sit.</li>
-              <li><strong>Notice which response governs where.</strong> Stress peaks midway between the tires; deflection peaks at the center of the pair, because deflection spreads further than stress.</li>
-              <li><strong>Then choose</strong>, and know that the choice is not free. Each criterion was built to feed a particular set of design curves.</li>
+              <li><strong>Inputs:</strong> Set wheel loads, geometry and evaluation depth, or load a preset.</li>
+              <li><strong>Compare:</strong> Read the ESWL curves for each response criterion.</li>
+              <li><strong>Select:</strong> Use the criterion required by your design method.</li>
             </ol>
-            HW5 P3 asks which you would use for a thin pavement, a thick pavement, and an airfield.
-            The three answers are not the same, and the reasons are more interesting than the numbers.
           </div>
         </details>
 

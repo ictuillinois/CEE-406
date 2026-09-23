@@ -226,12 +226,11 @@ export default function PcaApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Assume a trial thickness</strong>, then read the four table values for that thickness and your k: equivalent stress and erosion factor, each for the standard single and tandem axle.</li>
-              <li><strong>Enter the axle load distribution</strong> as axles per 1000 trucks, and the total trucks over the design period.</li>
-              <li><strong>Check both totals.</strong> Fatigue and erosion are independent criteria and <em>both</em> must come out at or under 100%.</li>
-              <li><strong>Iterate the thickness</strong> in ½ in steps until both pass, then step back down to confirm you have the thinnest section that works.</li>
+              <li><strong>Slab:</strong> Set trial thickness, subgrade reaction and the matching stress and erosion factors.</li>
+              <li><strong>Traffic:</strong> Enter axle groups per 1,000 trucks and total design-period trucks.</li>
+              <li><strong>Check:</strong> Keep both fatigue and erosion totals at or below 100%.</li>
+              <li><strong>Adjust:</strong> Change thickness in ½ in steps and update the factors.</li>
             </ol>
-            Fatigue usually governs thin slabs under light traffic; erosion governs thick slabs under heavy traffic. Which one binds tells you what the design is actually limited by.
           </div>
         </details>
 

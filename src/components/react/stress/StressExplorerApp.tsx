@@ -303,12 +303,11 @@ export default function StressExplorerApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Set the load</strong>: pressure <code>p</code> and radius <code>a</code> (a = √(P/πp)), or pick a preset.</li>
-              <li><strong>Set the material</strong>: one modulus and Poisson ratio, for a homogeneous half-space.</li>
-              <li><strong>Drag the depth probe</strong> to read every response at one depth; hover any curve for exact values.</li>
-              <li><strong>Check hand solutions</strong>: the table gives the classic z/a ratios; σz/p = 0.646 at z = a and w₀ = 2(1−ν²)pa/E are the two results every solution should reproduce.</li>
+              <li><strong>Inputs:</strong> Set load pressure, contact radius, modulus and Poisson ratio, or load a preset.</li>
+              <li><strong>Probe:</strong> Drag the depth marker or hover a curve to read values.</li>
+              <li><strong>Results:</strong> Review the pressure bulb and stress, strain and displacement profiles.</li>
             </ol>
-            The pressure bulb shows σz/p over the whole r–z plane. Where two wheels sit close together, their bulbs overlap and stresses superpose (the HW1 axle question, visualized). A stiff top layer cuts the subgrade stress well below the one-layer curve; that reduction is what the HW3 charts and WinJULEA quantify.
+            <p>This model uses a homogeneous elastic half-space.</p>
           </div>
         </details>
 

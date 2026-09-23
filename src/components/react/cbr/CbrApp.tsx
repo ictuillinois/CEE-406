@@ -221,9 +221,7 @@ export default function CbrApp() {
         )}
         <h3 className="cee-panel__title">Explore a tangent</h3>
         <p className="cee-hint">
-          Choose the endpoints of a region you consider linear. Two readings
-          define a secant approximation to a tangent; more readings fit a
-          least-squares line through the selected region.
+          Select a linear region. Two readings define a secant; more readings fit a least-squares line.
         </p>
         <div className="fit-fields">
           <label className="fit-field">
@@ -283,8 +281,7 @@ export default function CbrApp() {
           </div>
         )}
         <p className="cee-hint">
-          The tangent is exploratory. Moving it does not change the applied
-          correction until you choose to use its intercept.
+          Choose to use the intercept to apply the correction. Moving the tangent alone does not apply it.
         </p>
       </aside>
       <div className="cee-results">
@@ -300,7 +297,7 @@ export default function CbrApp() {
           controls={showCorrection ? (
             <div className="fit-response-controls" aria-live="polite">
               <strong>What did the first {fmt(offset, 5)} in measure?</strong>
-              <p className="cee-hint">The shaded interval represents travel attributed to piston seating or a surface irregularity by your correction. It is excluded from the soil penetration used for CBR.</p>
+              <p className="cee-hint">The shaded seating allowance is excluded from corrected penetration.</p>
               <label className="fit-field">
                 Explore a standard penetration
                 <select className="cee-input" value={visualTarget} onChange={(e) => setVisualTarget(Number(e.target.value))}>
@@ -308,7 +305,7 @@ export default function CbrApp() {
                   <option value={0.2}>0.20 in</option>
                 </select>
               </label>
-              <p className="cee-hint"><strong>{visualTarget.toFixed(2)} in corrected = {fmt(measuredTarget, 6)} in measured.</strong> Follow the arrow on the blue measured curve. The dotted guide at {visualTarget.toFixed(2)} in reads it too early; the dashed guide includes the seating allowance. On the green corrected curve, read at {visualTarget.toFixed(2)} in directly.</p>
+              <p className="cee-hint"><strong>{visualTarget.toFixed(2)} in corrected = {fmt(measuredTarget, 6)} in measured.</strong> Read the blue curve at the dashed guide, or the green corrected curve at {visualTarget.toFixed(2)} in.</p>
               <p className="cee-hint">Where pressure rises over this interval, reading too early gives a lower pressure and underestimates CBR.</p>
               {measuredTarget > points[points.length - 1].pen && <p className="fit-status">The shifted target is beyond the measured data. The guide shows its location; pressure and CBR are not extrapolated.</p>}
             </div>

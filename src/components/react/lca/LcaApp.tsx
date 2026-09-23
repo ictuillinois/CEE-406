@@ -216,12 +216,11 @@ export default function LcaApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Check the section and factors</strong>. Every assignment value is preloaded; edit anything you assume differently and say so in your report.</li>
-              <li><strong>Read the rehab schedule</strong> off the IRI timeline: the sawtooth resets each time the trigger is reached.</li>
-              <li><strong>Walk the stage table</strong>: each row shows the quantity, the factor applied, and the resulting GHG. Reproduce them by hand.</li>
-              <li><strong>Answer the closing question</strong>: the governing stage and one mitigation for it.</li>
+              <li><strong>Inputs:</strong> Review the pavement section, emission factors and rehabilitation settings.</li>
+              <li><strong>Schedule:</strong> Check rehabilitation events on the IRI timeline.</li>
+              <li><strong>Results:</strong> Compare stage emissions and identify the largest contributor.</li>
             </ol>
-            Note the stage chart is on a <em>log scale</em>, because the use phase is orders of magnitude above everything else, which is exactly the point of the problem.
+            <p>The stage chart uses a logarithmic scale.</p>
           </div>
         </details>
 

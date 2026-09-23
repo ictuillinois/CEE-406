@@ -445,14 +445,11 @@ export default function JointsApp() {
           <summary>How to use this tool</summary>
           <div className="cee-howto__body">
             <ol>
-              <li><strong>Calibrate.</strong> Load Huang Ex. 4.12 and confirm 3.27 effective dowels, 1376 lb, 3556 psi against an allowable 3250, a design the book calls unsatisfactory.</li>
-              <li><strong>Find the critical dowel.</strong> It is normally the one nearest the pavement edge, and with two wheels on the slab it is not necessarily under either of them.</li>
-              <li><strong>Choose a reach convention.</strong> Friberg's 1.8ℓ is what Huang's examples use; Heinrichs' 1.0ℓ is what he says is correct. They give different answers, and one of them may fail your design.</li>
-              <li><strong>Then check faulting</strong>, which §12.1.4 computes on a third convention again: 1.0ℓ and 0.45W.</li>
-              <li><strong>Now argue about joint spacing.</strong> Three limits pull against each other: the opening the sealant and aggregate interlock can tolerate, the friction stress in the slab, and faulting. Say which you let govern.</li>
+              <li><strong>Inputs:</strong> Set slab, load, dowel and joint properties, or load a preset.</li>
+              <li><strong>Dowels:</strong> Choose the load-transfer reach and check critical dowel stress.</li>
+              <li><strong>Joints:</strong> Review faulting, joint opening and slab friction limits.</li>
             </ol>
-            Nothing here decides the design. It makes each constraint visible so the defense can be
-            about engineering rather than about arithmetic.
+            <p>Friberg (1.8ℓ) and Heinrichs (1.0ℓ) use different load-transfer reaches.</p>
           </div>
         </details>
 
