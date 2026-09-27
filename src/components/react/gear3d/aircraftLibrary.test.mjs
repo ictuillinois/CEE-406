@@ -8,6 +8,23 @@ import {vehicleBodySpec} from './engine/geometry/vehicleBody.js';
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const units=read('public/gear3d/data/aircraft/aircrafter-reviewed.json').units;
 const audit=read('docs/gear3d-body-review/aircrafter-audit.json');
+test('additional 767 variants use matching manufacturer weight and pressure columns',()=>{
+    const additions=read('public/gear3d/data/aircraft/boeing-variants.json').units;
+    assert.equal(additions.length,2);
+    for(const [id,mtow,taxi,main,nose,body] of [
+        ['b767-200er',395000,396000,190,185,'B767-200'],
+        ['b767-300f',412000,413000,200,172,'B767-300']
+    ]) {
+        const u=additions.find(u=>u.id===id);
+        assert.deepEqual(validateUnit(u).errors,[],id);
+        assert.equal(u.mtow.value,mtow);assert.equal(u.maxTaxiWeight.value,taxi);
+        assert.equal(u.tirePressure.value,main);assert.equal(u.gears[0].pressure.value,nose);
+        assert.equal(vehicleBodySpec(u).id,body);
+        assert.equal(resolveLayout(u).wheels.length,10);
+        assert.ok(u.assumedFields.some(s=>s.includes('same-length passenger')));
+    }
+    assert.equal(vehicleBodySpec(additions[1]).representative,true);
+});
 test('reviewed aircraft validate and preserve the workbook footprints unless explicitly corrected',()=>{
     assert.equal(units.length,18);
     for(const u of units) {

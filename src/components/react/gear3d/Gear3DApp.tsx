@@ -285,6 +285,23 @@ export default function Gear3DApp() {
                     <label htmlFor="g3-body-color">Body color</label>
                     <input type="color" id="g3-body-color" className="g3-color" defaultValue="#71899b" />
                   </div>
+                  <div className="g3-field">
+                    <label htmlFor="g3-body-surface">Surface</label>
+                    <select id="g3-body-surface" className="g3-select" title="Shaded surfaces or the airframe mesh; wheel geometry is unchanged">
+                      <option value="shaded">Shaded</option><option value="wireframe">Wireframe</option>
+                    </select>
+                  </div>
+                  <div className="g3-field">
+                    <label htmlFor="g3-body-finish">Finish</label>
+                    <select id="g3-body-finish" className="g3-select" title="Body surface finish; glazing retains its own appearance">
+                      <option value="matte">Matte</option><option value="satin">Satin</option><option value="metallic">Metallic</option>
+                    </select>
+                  </div>
+                  <div className="g3-field">
+                    <label htmlFor="g3-body-detail">Intake detail</label>
+                    <input type="range" id="g3-body-detail" className="g3-range" min="0" max="100" step="1" defaultValue="65" title="Aircraft engine intake contrast; illustrative shading only" />
+                    <output id="g3-body-detail-value" htmlFor="g3-body-detail">65%</output>
+                  </div>
                   <div className="g3-body-presets" aria-label="Body appearance presets">
                     <button type="button" className="g3-btn" data-body-opacity="16">Faint</button>
                     <button type="button" className="g3-btn" data-body-opacity="28">Balanced</button>

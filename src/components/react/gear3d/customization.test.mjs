@@ -42,3 +42,20 @@ test('body styling is reversible and preserves glazing contrast without replacin
     assert.equal(body.material.color.getHex(),0x71899b);assert.equal(glass.material.color.getHex(),0x294859);
     for(const mesh of root.children){mesh.geometry.dispose();mesh.material.dispose();}
 });
+
+test('surface, finish and intake contrast are reversible without moving a vertex',()=>{
+    const geometry=new THREE.BoxGeometry();
+    const count=geometry.attributes.position.count;
+    geometry.setAttribute('intakeDetail',new THREE.BufferAttribute(new Float32Array(count).fill(.5),1));
+    geometry.setAttribute('color',new THREE.BufferAttribute(new Float32Array(count*3).fill(1),3));
+    const material=new THREE.MeshStandardMaterial({color:0x71899b,opacity:.28,roughness:.85,vertexColors:true});
+    const body=new THREE.Mesh(geometry,material),positions=geometry.attributes.position.array.slice();
+    styleVehicleBody(body,{surface:'wireframe',finish:'metallic',detail:1});
+    assert.equal(material.wireframe,true);assert.equal(material.metalness,.65);
+    assert.ok(geometry.attributes.color.getX(0)<1);
+    styleVehicleBody(body,{surface:'shaded',finish:'matte',detail:0});
+    assert.equal(material.wireframe,false);assert.equal(material.roughness,.85);assert.equal(material.metalness,0);
+    assert.ok([...geometry.attributes.color.array].every(v=>v===1));
+    assert.deepEqual(geometry.attributes.position.array,positions);
+    geometry.dispose();material.dispose();
+});
