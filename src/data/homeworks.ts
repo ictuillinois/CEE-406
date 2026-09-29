@@ -1,4 +1,5 @@
-// Structured content for the 10 homeworks (Fall 2024 edition).
+// Released homeworks use the Fall 2026 sheets; unreleased entries retain the
+// Fall 2024 reference sequence until their current assignment is issued.
 // Each homework page, the homeworks index, and the homepage timeline
 // are all generated from this single source of truth.
 
@@ -79,69 +80,69 @@ export const homeworks: Homework[] = [
     title: 'Subgrade & Material Characterization',
     phase: 'Materials',
     due: 'Sep 24',
+    dueNote: 'Fall 2026',
     layerFocus: 3,
     overview:
-      'Fit the generalized resilient modulus model to triaxial data, evaluate subgrade strength with the CBR test, and review lime stabilization of weak soils.',
+      'Fit and compare resilient modulus models, investigate outliers, distinguish interpolation from extrapolation, and evaluate how the CBR origin correction changes subgrade characterization.',
     objectives: [
-      'Fit the k₁–k₂–k₃ resilient modulus model to repeated-load triaxial data and report R²',
-      'Reduce CBR test data, applying the standard correction for concave-up curves',
-      'Summarize when and how lime stabilization modifies subgrade soils',
+      'Compute resilient modulus and stress invariants from repeated-load triaxial data',
+      'Fit the generalized model, report R² in log space, and interpret the material parameters',
+      'Identify outliers and compare the generalized and two-parameter models on the same cleaned dataset',
+      'Evaluate model predictions within and beyond the tested stress range',
+      'Calculate CBR before and after correcting the origin of a pressure-penetration curve',
     ],
     problems: [
-      { label: 'P1', desc: 'Problem 7.2, Huang p. 331 (practice with Example 7.3, p. 288)' },
-      { label: 'P2', desc: 'Fit $M_r = k_1 p_a (\\theta/p_a)^{k_2}(\\tau_{oct}/p_a + 1)^{k_3}$ to 30 resilient modulus test points; report k₁, k₂, k₃, and R²' },
-      { label: 'P3', desc: 'One-page synthesis on subgrade stabilization using lime' },
-      { label: 'P4', desc: 'Determine the CBR from piston pressure–penetration data' },
+      { label: 'Q1', desc: 'Compute modulus and stress invariants for 30 triaxial readings; fit the generalized model and interpret k₁, k₂, k₃ and R² in log space' },
+      { label: 'Q2', desc: 'Identify two outliers by ID, compare them with similar stress states, and refit after removing them; discuss possible causes' },
+      { label: 'Q3', desc: 'Fit the two-parameter bulk-stress model to the cleaned data; compare fit quality, the largest prediction difference, and suitability for design' },
+      { label: 'Q4', desc: 'Compare both models at twice the largest tested bulk stress and at an untested stress state; distinguish interpolation from extrapolation' },
+      { label: 'Q5', desc: 'Calculate CBR at both standard penetrations before and after a tangent-based origin correction, and discuss the design implications' },
     ],
     chapters: [{ id: 'ch07', label: 'Ch. 7: Material Characterization' }],
     tools: [
-      { label: 'Resilient Modulus Fitter', href: 'tools/mr-fitter/', note: 'fit k₁, k₂, k₃ and R² online, live' },
-      { label: 'CBR Reduction', href: 'tools/cbr/', note: 'penetration curve → CBR with the origin correction, live' },
+      { label: 'Resilient Modulus Fitter', href: 'tools/mr-fitter/', note: 'fit, compare and predict modulus for Q1–Q4' },
+      { label: 'CBR Fitter', href: 'tools/cbr/', note: 'inspect the curve and origin correction for Q5' },
     ],
-    downloads: [
-      { label: 'HW2 assignment', file: 'hw2-assignment.pdf', kind: 'assignment' },
-      { label: 'Resilient modulus test data (Excel)', file: 'hw2-part1-data.xlsx', kind: 'data' },
-      { label: 'AASHTO T 193: CBR', file: 'aashto-t193-cbr.pdf', kind: 'reference' },
-      { label: 'Handout: Performance grading', file: 'handout-performance-grading.pdf', kind: 'handout' },
-      { label: 'Reading: Soil mechanics & US national defense', file: 'reading-soil-mechanics.pdf', kind: 'reference' },
-    ],
+    // Assignment and supporting files are provided on Canvas, as for HW1.
+    downloads: [],
   },
   {
     id: 'hw3',
     num: 3,
-    title: 'Stresses in Layered Systems',
+    title: 'Asphalt Materials & Layered Response',
     phase: 'Analysis',
-    due: 'Oct 1',
-    layerFocus: 1,
+    due: 'Oct 4',
+    dueNote: 'Fall 2026',
+    layerFocus: 0,
     overview:
-      'Stresses, strains, and deflections in one-, two-, and three-layer systems under a circular load, using the classic Boussinesq and Burmister charts and tables.',
+      'Evaluate binder performance grades and Superpave compaction, build modulus and phase-angle master curves, and compare chart-based pavement responses with layered-elastic analysis.',
     objectives: [
-      'Compute stresses and deflections in a homogeneous half-space (one-layer system)',
-      'Use two-layer deflection and stress charts to size layers',
-      'Interpolate three-layer stress factors from Jones’ tables and Peattie’s charts',
+      'Determine true and standard binder grades and assess climate and traffic requirements',
+      'Use gyratory specimen heights to evaluate Superpave compaction criteria',
+      'Build a master curve at 21°C, fit WLF shift factors, and assess predictions and phase-angle behavior',
+      'Superpose two circular loads and compare chart readings with LEAPS',
+      'Compare thickness and stiffness changes in a bonded two-layer pavement and interpret equal-deflection structures',
     ],
     problems: [
-      { label: 'P1', desc: 'Problem 2-1, Huang p. 90' },
-      { label: 'P2', desc: 'Problem 2-2, Huang p. 90' },
-      { label: 'P3', desc: 'Problem 2-3, Huang p. 91' },
-      { label: 'P4', desc: 'Problem 2-5, Huang p. 91' },
+      { label: 'Q1', desc: 'Evaluate binder test criteria, determine true and standard PG grades, and assess suitability for the project climate and slow-moving heavy traffic' },
+      { label: 'Q2', desc: 'Determine gyration counts and percent maximum theoretical specific gravity from specimen heights; interpret any failed Superpave criterion' },
+      { label: 'Q3', desc: 'Build the 21°C modulus master curve, fit WLF shift factors, evaluate predictions and phase-angle collapse, and test predictions with the 54°C data withheld' },
+      { label: 'Q4', desc: 'Superpose chart-based responses beneath two circular loads; compare stresses, vertical strain and deflection with LEAPS and explain differences' },
+      { label: 'Q5', desc: 'Analyze a bonded two-layer pavement, check the homogeneous limit and plate assumptions, and compare thickness, stiffness and equal-deflection alternatives' },
     ],
     chapters: [
+      { id: 'ch07', label: 'Ch. 7: Material Characterization' },
+      { id: 'appendix-d', label: 'App. D: An Introduction to Superpave' },
       { id: 'ch02', label: 'Ch. 2: Stresses and Strains in Flexible Pavements' },
       { id: 'appendix-b', label: 'App. B: Theory of Elastic Layer Systems' },
     ],
     tools: [
-      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'two- and three-layer systems solved exactly; covers Problems 2-3 and 2-5, live' },
-      { label: 'Stress Explorer', href: 'tools/stress-explorer/', note: 'one-layer Boussinesq response, live' },
+      { label: 'Time-Temperature Superposition', href: 'tools/time-temperature-superposition/', note: 'master curves, phase angles and WLF predictions for Q3' },
+      { label: 'Layered Elastic Analysis', href: 'tools/lea/', note: 'one- and two-layer design charts for Q4 and Q5' },
+      { label: 'LEAPS', href: 'tools/leaps/', note: 'dual-load responses and two-layer comparisons for Q4 and Q5' },
     ],
-    downloads: [
-      { label: 'HW3 assignment', file: 'hw3-assignment.pdf', kind: 'assignment' },
-      { label: 'Handout: One-layer system plots', file: 'handout-one-layer-plots.pdf', kind: 'handout' },
-      { label: 'Handout: One-layer system tables', file: 'handout-one-layer-tables.pdf', kind: 'handout' },
-      { label: 'Handout: Two-layer systems', file: 'handout-two-layer.pdf', kind: 'handout' },
-      { label: 'Handout: Three-layer system plots', file: 'handout-three-layer-plots.pdf', kind: 'handout' },
-      { label: 'Handout: Three-layer system tables', file: 'handout-three-layer-tables.pdf', kind: 'handout' },
-    ],
+    // Assignment and supporting files are provided on Canvas, as for HW1.
+    downloads: [],
   },
   {
     id: 'hw4',

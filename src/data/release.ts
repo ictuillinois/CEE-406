@@ -39,6 +39,8 @@ export const RELEASED_HOMEWORKS: Record<string, true> = {
                // Canvas, so public/homeworks/hw1/ is empty and hw1 carries no
                // downloads. Releasing a homework does not oblige us to publish
                // its files; it only opens the page.
+  hw2: true,   // Fall 2026, due 9/24; assignment and supporting files on Canvas.
+  hw3: true,   // Fall 2026, due 10/4; assignment and supporting files on Canvas.
 };
 
 /** Planned release week per homework, for the locked label. Optional. */

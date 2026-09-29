@@ -135,7 +135,9 @@ const kindLabel: Record<string, string> = {
   <section class="doc-section" id="problems" data-section data-katex>
     <h2>Problem set</h2>
     <p>
-      Download the assignment PDF below for the complete problem statements.
+      {hw.downloads.some(d => d.kind === 'assignment')
+        ? 'Download the assignment PDF below for the complete problem statements.'
+        : 'Find the complete assignment and supporting files on Canvas.'}
       Textbook problems refer to Huang, <em>Pavement Analysis and Design</em> (2nd ed.).
     </p>
     <div class="doc-table-wrap">
@@ -251,7 +253,7 @@ const kindLabel: Record<string, string> = {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z"/></svg>
             <div>
               <strong>{c.label}</strong>
-              <span>Read online or download the chapter PDF</span>
+              <span>Chapter overview and University Library access</span>
             </div>
             <svg class="doc-link-card__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </a>
