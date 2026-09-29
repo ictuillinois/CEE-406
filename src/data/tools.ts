@@ -61,7 +61,7 @@ export const tools: Tool[] = [
     ref: 'FAA P-401 · P-209 · P-154 · P-501',
     image: 'cross-section-studio.webp',
     imageAlt: 'A true-to-scale 3-D pavement cross section: asphalt surface over base, subbase and subgrade, each layer rendered with its own procedural material.',
-    desc: 'The figure every write-up needs and nobody wants to redraw: a true-to-scale 3-D pavement section, eighteen procedural materials, thirteen airfield and highway templates, and the PNG copied straight to your clipboard, with or without a background.',
+    desc: 'Draw a true-to-scale 3-D pavement section interactively. Choose from a library of materials and airfield and highway templates to visualze typical layouts.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path class="anim" d="M14 15h70l14-8H28z"/>
       <path d="M14 15v6h70v-6"/>
@@ -78,7 +78,7 @@ export const tools: Tool[] = [
     ref: 'FHWA classes 1–13 · FAA Order 5300.7',
     image: 'gear3d.webp',
     imageAlt: 'Gear3D in quad view: an FHWA class 9 tractor-semitrailer in plan, 3-D, side and front, its five axles drawn to scale inside a translucent tractor and van-trailer body, between the unit controls and the axle structure tree.',
-    desc: 'Truck axle configurations and aircraft landing gear drawn true to scale in 3-D, with spacings and track widths as measurable dimensions, and contact-patch corner coordinates exported in millimeters for a finite-element pre-processor.',
+    desc: 'Truck axles and aicraft landing gear in true-scale 3-D. Measure spacings and dimensions directly from the model. Choose from a library of vehicles to visualize complex loading configurations.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M18 12h74l10 9v8H18z" opacity="0.5"/>
       <circle class="anim" cx="34" cy="31" r="7"/>
@@ -97,7 +97,7 @@ export const tools: Tool[] = [
     ref: 'Lang et al. 2026 · phyContactGAN · Huang Eq. 1.1',
     image: 'contact-stress.webp',
     imageAlt: 'The predicted contact patch of a truck tire in plan view: five orange ribs of vertical stress, with the equal-area circle, Huang’s rectangle-plus-semicircles and the PCA rectangle drawn over it, beside a readout of peak vertical stress at 2.61 times the inflation pressure.',
-    desc: 'The 3-D contact stresses a truck tire really applies (vertical, longitudinal and transverse), from a physics-informed network trained on 1,852 FE simulations, next to the uniform circle every design method assumes instead.',
+    desc: 'Tire-pavement contact stresses are neither constant nor uniform. Compare the vertical, longitudinal, and transverse contact stresses predicted from FE simulations with the uniform circular load that design methods assume',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 34 H108" opacity="0.35" stroke-width="1.5"/>
       <path d="M26 34 V16 M38 34 V9 M50 34 V6 M62 34 V6 M74 34 V9 M86 34 V16" opacity="0.5"/>
@@ -115,7 +115,7 @@ export const tools: Tool[] = [
     imageAlt: 'Figure 2.2 redrawn as log paper: seventeen curves of vertical stress against depth ' +
       'in a boxed frame with tick values on all four sides, each curve numbered in a gap in its ' +
       'own ink, and a dashed curve for an r/a the book never printed.',
-    desc: "The whole of Chapter 2 in five modules: Boussinesq's half-space, Burmister's two layers, Jones' three, the general N-layer solve, and every design chart in the chapter redrawn from the equations behind it and readable backwards as well as forwards.",
+    desc: "Boussinesq, Burmister's two layers, Jone's three layers, and a general N-layer solver. Every empirical design charts rebuilt from its equations.",
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M10 10 H110" opacity="0.5" stroke-width="3"/>
       <path d="M10 20 H110" opacity="0.35"/>
@@ -133,7 +133,7 @@ export const tools: Tool[] = [
     ref: 'Manual shifting · Sigmoidal master curve · WLF',
     image: 'time-temperature-superposition.webp',
     imageAlt: 'Temperature-grouped modulus measurements with manual shift controls and live master-curve error feedback.',
-    desc: 'Shift temperature curves by hand, minimize live fit error, and explore modulus and phase at a reference temperature from your dataset.',
+    desc: 'Shift each temperature curve by hand and observe the fit error update as you iterate. Build master curves for modulus and phase angle at any reference temperature.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M10 36 Q25 34 35 23 T60 9" opacity="0.35"/>
       <path d="M38 36 Q53 34 63 23 T88 9" opacity="0.6"/>
@@ -151,7 +151,7 @@ export const tools: Tool[] = [
     imageAlt: 'A pavement section in the LEAPS workspace: four layers under a dual wheel, ' +
       'the vertical-stress bulb contoured through them, the deflected surface drawn above, ' +
       'and a results table below with one column per evaluation point.',
-    desc: 'A full layered-elastic analysis program in the browser: any number of layers, interfaces from bonded to frictionless, and the same load applied as a circular imprint, a point or a line. Results come out in the rows, units and sign conventions WinJULEA prints, so a run here reads straight across from one there.',
+    desc: "A complete layered-elastic program that runs in the browser. Output follows WinJULEA's format.",
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M10 14 H110" opacity="0.6"/>
       <path d="M10 22 H110" opacity="0.4"/>
@@ -171,7 +171,7 @@ export const tools: Tool[] = [
     color: '#E87722',
     hws: ['HW2'],
     ref: 'MEPDG k₁–k₂–k₃ · Huang Ch. 7',
-    desc: 'Fit two resilient modulus models to editable HW2 test data, inspect residuals, and compare predictions at a stress state you choose.',
+    desc: 'Fit resilient modulus models to triaxial data, and predict modulus at any stress state.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M16 33 Q52 24 108 9"/>
@@ -189,7 +189,7 @@ export const tools: Tool[] = [
     color: '#E87722',
     hws: ['HW2'],
     ref: 'AASHTO T 193 · ASTM D1883',
-    desc: 'Explore the pressure–penetration curve, choose a tangent and origin correction, and calculate CBR from the readings you select.',
+    desc: 'Visualize the pressure-penetration curve, preprocess the raw data, and compute the CBR from the readings you select.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
       <path d="M14 6 V38 H112" opacity="0.35" stroke-width="1.5"/>
       <path class="anim" d="M20 37 C34 36 44 26 60 18 C76 11 92 9 106 8"/>
