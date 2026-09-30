@@ -38,15 +38,15 @@ const guide = hwGuides[hw.id];
 
 const toc = [
   { id: 'overview', label: 'Overview' },
-  ...(guide ? [{ id: 'purpose', label: 'Why this homework' }] : []),
-  { id: 'objectives', label: 'What you\'ll learn' },
-  ...(guide?.concepts.length ? [{ id: 'concepts', label: 'Concepts & equations' }] : []),
-  { id: 'problems', label: 'Problem set' },
-  ...(guide?.steps.length ? [{ id: 'approach', label: 'How to approach it' }] : []),
-  ...(guide?.pitfalls.length ? [{ id: 'pitfalls', label: 'Common pitfalls' }] : []),
-  ...(hw.tools.length ? [{ id: 'tools', label: 'Tools' }] : []),
-  ...(hw.downloads.length ? [{ id: 'downloads', label: 'Downloads' }] : []),
-  ...(hw.chapters.length ? [{ id: 'reading', label: 'Textbook reading' }] : []),
+  ...(guide ? [{ id: 'purpose', label: 'Purpose' }] : []),
+  { id: 'objectives', label: 'Learning Objectives' },
+  ...(guide?.concepts.length ? [{ id: 'concepts', label: 'Concepts and Equations' }] : []),
+  { id: 'problems', label: 'Problem Set' },
+  ...(guide?.steps.length ? [{ id: 'approach', label: 'Solution Strategy' }] : []),
+  ...(guide?.pitfalls.length ? [{ id: 'pitfalls', label: 'Common Errors' }] : []),
+  ...(hw.tools.length ? [{ id: 'tools', label: 'Learning Tools' }] : []),
+  ...(hw.downloads.length ? [{ id: 'downloads', label: 'Course Materials' }] : []),
+  ...(hw.chapters.length ? [{ id: 'reading', label: 'Assigned Reading' }] : []),
 ];
 
 const kindLabel: Record<string, string> = {
@@ -88,13 +88,13 @@ const kindLabel: Record<string, string> = {
 
   {guide && (
     <section class="doc-section" id="purpose" data-section>
-      <h2>Why this homework</h2>
+      <h2>Purpose</h2>
       <p>{guide.purpose}</p>
     </section>
   )}
 
   <section class="doc-section" id="objectives" data-section>
-    <h2>What you'll learn</h2>
+    <h2>Learning Objectives</h2>
     <ul class="doc-list">
       {hw.objectives.map(o => <li>{o}</li>)}
     </ul>
@@ -102,10 +102,10 @@ const kindLabel: Record<string, string> = {
 
   {guide && guide.concepts.length > 0 && (
     <section class="doc-section" id="concepts" data-section data-katex>
-      <h2>Concepts &amp; equations</h2>
+      <h2>Concepts and Equations</h2>
       <p>
-        Everything below comes from the assigned reading. This is the working set
-        you need at your desk while solving the problems.
+        The following concepts and equations support the assignment.
+        Refer to the assigned reading for derivations and additional context.
       </p>
       {guide.concepts.map(c =>
         c.kind === 'equation' ? (
@@ -133,7 +133,7 @@ const kindLabel: Record<string, string> = {
   )}
 
   <section class="doc-section" id="problems" data-section data-katex>
-    <h2>Problem set</h2>
+    <h2>Problem Set</h2>
     <p>
       {hw.downloads.some(d => d.kind === 'assignment')
         ? 'Download the assignment PDF below for the complete problem statements.'
@@ -159,7 +159,7 @@ const kindLabel: Record<string, string> = {
 
   {guide && guide.steps.length > 0 && (
     <section class="doc-section" id="approach" data-section>
-      <h2>How to approach it</h2>
+      <h2>Solution Strategy</h2>
       <div class="doc-steps">
         {guide.steps.map((s, i) => (
           <div class="doc-step">
@@ -173,7 +173,7 @@ const kindLabel: Record<string, string> = {
 
   {guide && guide.pitfalls.length > 0 && (
     <section class="doc-section" id="pitfalls" data-section>
-      <h2>Common pitfalls</h2>
+      <h2>Common Errors</h2>
       <div class="doc-callouts">
         {guide.pitfalls.map(p => (
           <div class="doc-callout doc-callout--note">
@@ -187,7 +187,7 @@ const kindLabel: Record<string, string> = {
 
   {hw.tools.length > 0 && (
     <section class="doc-section" id="tools" data-section>
-      <h2>Tools for this homework</h2>
+      <h2>Learning Tools</h2>
       <div class="doc-link-cards-grid">
         {hw.tools.map(t =>
           t.href ? (
@@ -224,7 +224,7 @@ const kindLabel: Record<string, string> = {
 
   {hw.downloads.length > 0 && (
   <section class="doc-section" id="downloads" data-section>
-    <h2>Downloads</h2>
+    <h2>Course Materials</h2>
     <div class="doc-table-wrap">
       <table class="doc-table">
         <thead>
@@ -246,7 +246,7 @@ const kindLabel: Record<string, string> = {
 
   {hw.chapters.length > 0 && (
     <section class="doc-section" id="reading" data-section>
-      <h2>Textbook reading</h2>
+      <h2>Assigned Reading</h2>
       <div class="doc-link-cards-grid">
         {hw.chapters.map(c => (
           <a href={`${base}textbook/${c.id}/`} class="doc-link-card">

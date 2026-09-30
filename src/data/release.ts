@@ -8,9 +8,8 @@
 //
 // Three separate concerns, deliberately not merged:
 //
-//   1. HOMEWORKS   — sequencing. Released week by week as the class reaches
-//                    them. Locked homeworks render as a grayed card and their
-//                    page is not generated at all.
+//   1. HOMEWORKS   — only released assignments appear in homework lists.
+//                    Unreleased assignments have no cards or generated pages.
 //
 //   2. TOOLS       — sequencing. Same idea, but a tool's page is a real file
 //                    under src/pages/tools/, so hiding the card is not enough
@@ -28,11 +27,10 @@
 // file. Nothing here deletes anything the course owns.
 
 /* ── 1. Homeworks ─────────────────────────────────────────────────────────
-   Add an id to release it. `week` is optional: give it a number and the
-   locked card reads "Releases week 4"; leave it out and it reads
-   "Coming soon". The Fall-2024 `due` dates in homeworks.ts are a stale
-   reference schedule, so no week is assumed here — fill them in as the
-   real semester calendar is set.                                          */
+   Add an id to publish its page and show it in homework lists. Unreleased
+   entries remain internal reference content, without visible placeholders
+   or a promised release schedule. Update their Fall-2024 dates and content
+   from the current assignment before releasing them.                       */
 
 export const RELEASED_HOMEWORKS: Record<string, true> = {
   hw1: true,   // Fall 2026 sheet, due 9/17. Questions only — the PDF stays on

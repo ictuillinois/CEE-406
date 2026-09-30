@@ -6,7 +6,6 @@
 // in every layer displace elastically as the load passes.
 // Static single frame under prefers-reduced-motion.
 import { tools } from '../data/tools';
-import { homeworks } from '../data/homeworks';
 import { chapters, appendices } from '../data/textbook';
 import { releasedToolCount, releasedHomeworkCount } from '../data/release';
 
@@ -33,7 +32,7 @@ const liveHw = releasedHomeworkCount();
     </p>
     <div class="hero-actions gsap-fade-up">
       <a href={`${base}tools/`} class="btn btn-primary">Open the tools</a>
-      <a href={`${base}homeworks/`} class="btn btn-outline">See the homework sequence</a>
+      <a href={`${base}homeworks/`} class="btn btn-outline">View assignments</a>
     </div>
     <dl class="hero-stats gsap-fade-up">
       <div class="hero-stat">
@@ -42,7 +41,7 @@ const liveHw = releasedHomeworkCount();
       </div>
       <div class="hero-stat">
         <dt>Homeworks</dt>
-        <dd>{liveHw} released<span class="hero-stat__of"> of {homeworks.length}</span></dd>
+        <dd>{liveHw} available</dd>
       </div>
       <div class="hero-stat">
         <dt>Textbook chapters</dt>

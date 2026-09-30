@@ -6,10 +6,11 @@ import Icon from '../components/Icon.astro';
 import { homeworks } from '../data/homeworks';
 import { chapters, appendices } from '../data/textbook';
 import { tools, toolHref } from '../data/tools';
-import { homeworkLock, toolLock, TEXTBOOK_LIBRARY_URL } from '../data/release';
+import { isHomeworkReleased, toolLock, TEXTBOOK_LIBRARY_URL } from '../data/release';
 
 const base = import.meta.env.BASE_URL;
 const liveTools = tools.filter(t => toolLock(t.slug).released);
+const releasedHomeworks = homeworks.filter(h => isHomeworkReleased(h.id));
 
 
 ---
@@ -84,39 +85,30 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
       </div>
 
       <ol class="hw-grid stagger-grid" role="list">
-        {homeworks.map(hw => {
-          const lock = homeworkLock(hw.id);
-          const Card = lock.released ? 'a' : 'div';
-          return (
+        {releasedHomeworks.map(hw => (
           <li class="gsap-stagger">
-            <Card
-              href={lock.released ? `${base}homeworks/${hw.id}/` : undefined}
-              class:list={['hw-card', { 'hw-card--locked': !lock.released }]}
+            <a
+              href={`${base}homeworks/${hw.id}/`}
+              class="hw-card"
               data-phase={hw.phase}
-              aria-disabled={lock.released ? undefined : 'true'}
             >
               <div class="hw-card__top">
                 <LayerGlyph focus={hw.layerFocus} />
                 <span class="hw-card__num">HW{hw.num}</span>
-                {lock.released && (
-                  <span class="hw-card__due"><Icon name="calendar" size={13} />{hw.due}</span>
-                )}
+                <span class="hw-card__due"><Icon name="calendar" size={13} />{hw.due}</span>
               </div>
               <h3 class="hw-card__title">{hw.title}</h3>
               <p class="hw-card__desc">{hw.overview}</p>
               <div class="hw-card__foot">
                 <span class="hw-card__phase">{hw.phase}</span>
-                {lock.released && hw.tools.some(t => t.href) && (
+                {hw.tools.some(t => t.href) && (
                   <span class="hw-card__tool"><Icon name="sliders" size={12} />tool</span>
                 )}
-                {lock.released
-                  ? <Icon name="arrow-right" size={15} class="hw-card__go" />
-                  : <span class="hw-card__lock"><Icon name="lock" size={12} />{lock.label}</span>}
+                <Icon name="arrow-right" size={15} class="hw-card__go" />
               </div>
-            </Card>
+            </a>
           </li>
-          );
-        })}
+        ))}
       </ol>
     </div>
   </section>
@@ -437,46 +429,6 @@ const liveTools = tools.filter(t => toolLock(t.slug).released);
   :global([data-theme="dark"]) .hw-card:hover {
     border-color: var(--phase, var(--color-accent));
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.34);
-  }
-
-  /* Not released yet. Rendered as a <div>, so it is already unclickable and
-     out of the tab order; this only makes that visible. The phase color is
-     kept on the rail so the semester still reads as a sequence of phases. */
-  /* Same GSAP caveat as the homeworks index: these carry .gsap-stagger, which
-     animates inline opacity, so the locked state must not be expressed with
-     `opacity` or it is overwritten the moment the card animates in. */
-  .hw-card--locked {
-    cursor: default;
-    border-style: dashed;
-    filter: grayscale(0.7);
-  }
-
-  .hw-card--locked .hw-card__title,
-  .hw-card--locked .hw-card__desc { color: var(--color-text-muted); }
-
-  .hw-card--locked:hover {
-    transform: none;
-    box-shadow: none;
-    border-color: var(--color-border);
-  }
-
-  .hw-card--locked:hover::before { opacity: 0; }
-
-  :global([data-theme="dark"]) .hw-card--locked:hover {
-    border-color: #2D3F59;
-    box-shadow: none;
-  }
-
-  .hw-card__lock {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.28rem;
-    margin-left: auto;
-    font-family: var(--font-mono);
-    font-size: 0.64rem;
-    font-weight: 500;
-    white-space: nowrap;
-    color: var(--color-text-muted);
   }
 
   .tb-actions__lib {
