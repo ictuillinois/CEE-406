@@ -58,6 +58,12 @@ node scripts/us-english.mjs src/components/react/leaps     # last, over everythi
 
 Then `npm run build`.
 
+The transforms also apply `local-patches.mjs`: geometry-based 3-D scene
+bounds and camera refitting, independent X/Y grid spacing, and wider load
+inputs with a narrower Key responses panel. These local fixes are asserted
+against the ported source so a later upstream sync cannot silently remove
+them. When upstream incorporates a fix, remove its corresponding patch.
+
 ### Verifying a sync
 
 A sync that changed nothing upstream must change nothing here: run the three

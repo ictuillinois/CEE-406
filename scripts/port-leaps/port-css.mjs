@@ -30,6 +30,7 @@
  * Usage: node port-css.mjs <upstream styles.css> <out leaps.css>
  */
 import { readFileSync, writeFileSync } from 'node:fs';
+import { patchPanelWidths } from './local-patches.mjs';
 
 const SRC = process.argv[2];
 const OUT = process.argv[3];
@@ -296,6 +297,7 @@ sub('dark palette on the theme override',
     --lp-key-line: #34455f;
 }`);
 
+patchPanelWidths(sub);
 writeFileSync(OUT, s);
 console.log(`port-css: ${SRC} -> ${OUT}`);
 log.forEach(l => console.log('  ' + l));

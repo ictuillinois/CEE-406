@@ -18,6 +18,7 @@
  * Usage: node port-main.mjs <upstream app.js> <out leaps.js>
  */
 import { readFileSync, writeFileSync } from 'node:fs';
+import { patchSceneBounds } from './local-patches.mjs';
 
 const SRC = process.argv[2];
 const OUT = process.argv[3];
@@ -171,6 +172,7 @@ subReMin('icon, literal name',
 /* The invariant, which the counts were only ever standing in for. */
 if (/<i class="fas/.test(s)) throw new Error('an icon shape was not recognized');
 
+patchSceneBounds(sub);
 writeFileSync(OUT, s);
 console.log(`port-main: ${SRC} -> ${OUT}`);
 log.forEach(l => console.log('  ' + l));

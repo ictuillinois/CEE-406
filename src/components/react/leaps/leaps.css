@@ -223,7 +223,7 @@
 
 .lp-body {
     display: grid;
-    grid-template-columns: 300px minmax(420px, 1fr) 320px;
+    grid-template-columns: 420px minmax(420px, 1fr) 288px;
     min-height: 640px;
 }
 
@@ -298,6 +298,7 @@
 
 /* ---------- Side panels ---------- */
 .lp-left, .lp-right {
+    min-width: 0;
     background: var(--lp-bg1);
     overflow-y: auto; max-height: 78vh;
 }
@@ -466,7 +467,7 @@
 .lp-gear-params .lp-field { margin: 0; }
 
 /* ---------- Wheels table ---------- */
-.lp-loads-editor { margin-top: 0.1em; }
+.lp-loads-editor { margin-top: 0.1em; overflow-x: auto; }
 .lp-app table.lp-wtable { width: 100%; border-collapse: collapse; }
 .lp-app .lp-wtable th {
     font-size: 0.62em; letter-spacing: 0.04em; text-transform: uppercase;
@@ -481,8 +482,12 @@
     color: var(--lp-accent); white-space: nowrap;
 }
 .lp-app .lp-wtable td input[type="number"] {
+    min-width: 9ch;
+    appearance: textfield;
     padding: 0.28em 0.2em; text-align: right; font-size: 0.74em; border-radius: 5px;
 }
+.lp-app .lp-wtable input::-webkit-inner-spin-button,
+.lp-app .lp-wtable input::-webkit-outer-spin-button { appearance: none; margin: 0; }
 .lp-wdel { min-width: 1.5em; height: 1.6em; font-size: 0.72em; padding: 0; }
 .lp-wfoot {
     font-family: var(--lp-mono); font-size: 0.62em; color: var(--lp-ink3);
@@ -812,14 +817,14 @@
  * mobile URL bar hides.
  */
 @media (max-width: 1280px) {
-    .lp-body { grid-template-columns: 264px minmax(360px, 1fr) 300px; }
+    .lp-body { grid-template-columns: 420px minmax(0, 1fr) 270px; }
     .lp-prof-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* ---------- Tablet: rail + viewport, right rail below ---------- */
 @media (max-width: 1080px) and (min-width: 720px) {
     .lp-body {
-        grid-template-columns: clamp(240px, 30vw, 300px) minmax(0, 1fr);
+        grid-template-columns: 420px minmax(0, 1fr);
         grid-template-areas:
             "left viewport"
             "right right";

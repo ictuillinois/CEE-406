@@ -522,3 +522,49 @@ test('wheels closer together than wheels can be get no tire at all', () => {
   // but an ordinary gear must never fall back
   assert.ok(mod.app.tireFit(GEARS['dual-tridem'](350, 350).map(([x, y]) => ({ x, y })), 95.4));
 });
+
+test('the 3-D pavement contains the complete gear at independent dual and tandem spacings', () => {
+  const box = { xL: -700, xR: 700, zMax: 750, df: 450 };
+  const a = 95.4;
+  // 100 inches is 2540 mm internally. Include extreme aspect ratios,
+  // translated gears and cramped gears that fall back to contact patches.
+  for (const Sd of [0, 120, 350, 2540, 1e6]) {
+    for (const St of [0, 120, 350, 2540, 1e6]) {
+      for (const [name, make] of Object.entries(GEARS)) {
+        for (const [dx, dy] of [[0, 0], [-5000, 8000]]) {
+          const loads = make(Sd, St).map(([x, y]) => ({ x: x + dx, y: y + dy }));
+          const tire = mod.app.tireFit(loads, a);
+          const sb = mod.app.gearSceneBounds(box, loads, a, tire, 0, 0, 0);
+          const rx = Math.max(a, tire?.w ?? 0), ry = Math.max(a, tire?.R ?? 0);
+          for (const w of loads) {
+            const label = `${name}: Sd=${Sd}, St=${St}, offset=${dx},${dy}`;
+            assert.ok(w.x - rx > sb.xL && w.x + rx < sb.xR, `X containment: ${label}`);
+            assert.ok(w.y - ry > sb.y0 && w.y + ry < sb.y1, `Y containment: ${label}`);
+          }
+          assert.equal(sb.zMax, box.zMax, 'gear spacing must not change pavement depth');
+          assert.ok(sb.y0 <= -60 && sb.y1 >= 60, 'the section needs room on both sides');
+          assert.equal(sb.zTop, tire ? -(tire.h + tire.R) : 0);
+        }
+      }
+    }
+  }
+});
+
+test('scene bounds include long line loads, empty scenes and distant section cuts', () => {
+  const box = { xL: -700, xR: 700, zMax: 750, df: 450 };
+  const loads = [{ x: -3000, y: 12000 }, { x: 9000, y: -5000 }];
+  for (const angle of [0, 30, 90, 135]) {
+    const lineX = 5000 * Math.abs(Math.cos(angle * Math.PI / 180));
+    const lineY = 5000 * Math.abs(Math.sin(angle * Math.PI / 180));
+    const sb = mod.app.gearSceneBounds(box, loads, 60, null, lineX, lineY, 20000);
+    for (const w of loads) {
+      assert.ok(w.x - lineX > sb.xL && w.x + lineX < sb.xR);
+      assert.ok(w.y - lineY > sb.y0 && w.y + lineY < sb.y1);
+    }
+    assert.ok(sb.y1 >= 20060);
+  }
+  const empty = mod.app.gearSceneBounds(box, [], 60, null, 0, 0, -20000);
+  assert.ok(Object.values(empty).every(Number.isFinite));
+  assert.ok(empty.xL < empty.xR && empty.y0 < empty.y1);
+  assert.ok(empty.y0 <= -20060);
+});
