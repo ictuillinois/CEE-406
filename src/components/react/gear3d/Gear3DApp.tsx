@@ -63,7 +63,7 @@ export default function Gear3DApp() {
     <div className="cee-tool g3-tool">
 
       <details className="cee-howto">
-        <summary>How to use this tool</summary>
+        <summary>Getting Started</summary>
         <div className="cee-howto__body">
           <ol>
             <li><strong>Select:</strong> Choose a domain, class and model. Set SI or English units.</li>

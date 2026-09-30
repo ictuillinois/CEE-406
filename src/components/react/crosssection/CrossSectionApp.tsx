@@ -59,7 +59,7 @@ export default function CrossSectionApp() {
     <div className="cee-tool xs-tool">
 
       <details className="cee-howto">
-        <summary>How to use this tool</summary>
+        <summary>Getting Started</summary>
         <div className="cee-howto__body">
             <ol>
               <li><strong>Start:</strong> Choose SI or English units and a template.</li>

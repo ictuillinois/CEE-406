@@ -22,18 +22,14 @@ const locked = tools.filter(t => !toolLock(t.slug).released);
   <div class="container tools-page">
     <header class="tools-header gsap-fade-up">
       <span class="tools-header__eyebrow">Online tools</span>
-      <h1>The homework toolbox</h1>
+      <h1>Toolbox</h1>
       <p>
-        Every tool here exists because a homework needs it, most of them to compute
-        something, one of them to draw the figure the write-up asks for. They run entirely
-        in your browser, with nothing to install and nothing to license. The calculators are
-        built to let you check hand calculations, not skip them.
+        Each application implemented here supports a specific learning objective. Use them
+        to check your hand calculations and to visualize the abstract concepts behind them.
       </p>
       {locked.length > 0 && (
         <p class="tools-header__release">
-          {live.length} of {tools.length} are open. The rest unlock alongside the homework
-          that needs them, so the toolbox grows with the course rather than arriving all at
-          once.
+          {live.length} tools are currently available.
         </p>
       )}
     </header>

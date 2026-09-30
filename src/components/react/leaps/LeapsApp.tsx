@@ -90,7 +90,7 @@ export default function LeapsApp() {
 
       <div className="lp-shell-help">
         <details className="cee-howto">
-          <summary>How to use this tool</summary>
+          <summary>Getting Started</summary>
           <div className="cee-howto__body">
             <ol>
               <li><strong>Start:</strong> Choose units and a template. Set layer thicknesses, moduli and interfaces.</li>

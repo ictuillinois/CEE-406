@@ -175,7 +175,7 @@ export default function ThreeLayerModule() {
 
       <div className="cee-results">
         <details className="cee-howto">
-          <summary>How to use this tool</summary>
+          <summary>Getting Started</summary>
           <div className="cee-howto__body">
             <ol>
               <li><strong>Inputs:</strong> Set layer properties and load geometry, or load an example.</li>

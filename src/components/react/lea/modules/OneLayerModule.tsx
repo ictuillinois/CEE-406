@@ -1268,7 +1268,7 @@ export default function OneLayerModule() {
 
       <div className="cee-results">
         <details className="cee-howto">
-          <summary>How to use this tool</summary>
+          <summary>Getting Started</summary>
           <div className="cee-howto__body">
             <ol>
               <li><strong>Case:</strong> Choose a point load, flexible circle or rigid plate.</li>
