@@ -77,7 +77,7 @@ export const tools: Tool[] = [
     hws: ['HW4', 'HW5', 'Ch. 6'],
     ref: 'FHWA classes 1–13 · FAA Order 5300.7',
     image: 'gear3d.webp',
-    imageAlt: 'Gear3D in quad view: an FHWA class 9 tractor-semitrailer in plan, 3-D, side and front, its five axles drawn to scale inside a translucent tractor and van-trailer body, between the unit controls and the axle structure tree.',
+    imageAlt: 'Gear3D in 3-D view: an FHWA class 9 tractor-semitrailer with a shaded satin body and all five axles visible, between the unit controls and the axle structure tree.',
     desc: 'Truck axles and aicraft landing gear in true-scale 3-D. Measure spacings and dimensions directly from the model. Choose from a library of vehicles to visualize complex loading configurations.',
     glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M18 12h74l10 9v8H18z" opacity="0.5"/>

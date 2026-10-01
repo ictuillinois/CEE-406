@@ -26,11 +26,20 @@ Preserve that note when re-copying.
 
 The October 2026 scenery update originates in upstream `f9f27f1` and `962098b`:
 optional asphalt/concrete textures, sky
-backgrounds, and solid body rendering. Defaults remain publication white,
-studio shadow catcher, and 28% shaded bodies. Scene settings persist in the
+backgrounds, and solid body rendering. The subsequent startup refinement opens
+in 3D with shaded satin bodies at the Detailed preset (60%), 100% intake detail,
+all running gear, and ghost context enabled. Dimension sets, annotations, and
+the scale bar start off. Publication white and the studio shadow catcher remain
+the scene defaults. Scene settings persist in the
 view block; they never change axle layouts or contact calculations. Surface
 textures and sky gradients are procedural and cached, and disposal releases
 them. Range controls use the existing interaction-resolution tier while moving.
+
+Startup defaults and restored checkbox synchronization come from upstream
+`bc10217`. Explicit saved settings are preserved; missing view fields use the
+new defaults. The tool thumbnail matches the new startup view. Validation:
+production build, 196 upstream checks, 36 course checks, and browser checks for
+fresh defaults, active controls, body reset, saved preferences, and legacy files.
 
 ```bash
 UP=../Johann-Cardenas.github.io/e-labs/gear3d

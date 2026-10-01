@@ -150,8 +150,8 @@ export default function Gear3DApp() {
                 wheels" that a single pictorial view answers worst. The
                 V-then-digit shortcuts follow this order. */}
             <div className="g3-viewtabs" role="tablist" aria-label="View mode">
-              <button type="button" className="g3-vtab is-active" data-view="quad" role="tab" aria-selected="true" title="All four views in one frame (V then 1). Click a pane to open it full size">Quad</button>
-              <button type="button" className="g3-vtab" data-view="3d" role="tab" aria-selected="false" title="Free 3D view (V then 2)">3D</button>
+              <button type="button" className="g3-vtab" data-view="quad" role="tab" aria-selected="false" title="All four views in one frame (V then 1). Click a pane to open it full size">Quad</button>
+              <button type="button" className="g3-vtab is-active" data-view="3d" role="tab" aria-selected="true" title="Free 3D view (V then 2)">3D</button>
               <button type="button" className="g3-vtab" data-view="plan" role="tab" aria-selected="false" title="Plan view, locked (V then 3)">Plan</button>
               <button type="button" className="g3-vtab" data-view="side" role="tab" aria-selected="false" title="Side view, locked (V then 4)">Side</button>
               <button type="button" className="g3-vtab" data-view="front" role="tab" aria-selected="false" title="Front view, locked (V then 5)">Front</button>
@@ -267,7 +267,7 @@ export default function Gear3DApp() {
                 </div>
                 <div className="g3-field">
                   <label className="g3-check" htmlFor="g3-ghost">
-                    <input type="checkbox" id="g3-ghost" /> Ghost hidden parts
+                    <input type="checkbox" id="g3-ghost" defaultChecked /> Ghost hidden parts
                   </label>
                 </div>
                 <div className="g3-field">
@@ -278,8 +278,8 @@ export default function Gear3DApp() {
                 <div className="g3-body-style">
                   <div className="g3-field">
                     <label htmlFor="g3-body-opacity">Body opacity</label>
-                    <input type="range" id="g3-body-opacity" className="g3-range" min="10" max="80" step="1" defaultValue="28" />
-                    <output id="g3-body-opacity-value" htmlFor="g3-body-opacity">28%</output>
+                    <input type="range" id="g3-body-opacity" className="g3-range" min="10" max="80" step="1" defaultValue="60" />
+                    <output id="g3-body-opacity-value" htmlFor="g3-body-opacity">60%</output>
                   </div>
                   <div className="g3-field">
                     <label htmlFor="g3-body-color">Body color</label>
@@ -293,14 +293,14 @@ export default function Gear3DApp() {
                   </div>
                   <div className="g3-field">
                     <label htmlFor="g3-body-finish">Finish</label>
-                    <select id="g3-body-finish" className="g3-select" title="Body surface finish; glazing retains its own appearance">
+                    <select id="g3-body-finish" className="g3-select" defaultValue="satin" title="Body surface finish; glazing retains its own appearance">
                       <option value="matte">Matte</option><option value="satin">Satin</option><option value="metallic">Metallic</option>
                     </select>
                   </div>
                   <div className="g3-field">
                     <label htmlFor="g3-body-detail">Intake detail</label>
-                    <input type="range" id="g3-body-detail" className="g3-range" min="0" max="100" step="1" defaultValue="65" title="Aircraft engine intake contrast; illustrative shading only" />
-                    <output id="g3-body-detail-value" htmlFor="g3-body-detail">65%</output>
+                    <input type="range" id="g3-body-detail" className="g3-range" min="0" max="100" step="1" defaultValue="100" title="Aircraft engine intake contrast; illustrative shading only" />
+                    <output id="g3-body-detail-value" htmlFor="g3-body-detail">100%</output>
                   </div>
                   <div className="g3-body-presets" aria-label="Body appearance presets">
                     <button type="button" className="g3-btn" data-body-opacity="16">Faint</button>
@@ -343,11 +343,11 @@ export default function Gear3DApp() {
             <details open>
               <summary><Icon name="ruler-combined" /> Dimensions</summary>
               <div className="g3-group">
-                <div className="g3-field"><label className="g3-check"><input type="checkbox" className="g3-dimset" data-set="longitudinal" defaultChecked /> Longitudinal</label></div>
+                <div className="g3-field"><label className="g3-check"><input type="checkbox" className="g3-dimset" data-set="longitudinal" /> Longitudinal</label></div>
                 <div className="g3-field"><label className="g3-check"><input type="checkbox" className="g3-dimset" data-set="transverse" /> Transverse</label></div>
                 <div className="g3-field"><label className="g3-check"><input type="checkbox" className="g3-dimset" data-set="vertical" /> Vertical</label></div>
                 <div className="g3-field"><label className="g3-check"><input type="checkbox" className="g3-dimset" data-set="aircraft" /> Aircraft gear</label></div>
-                <div className="g3-field"><label className="g3-check"><input type="checkbox" className="g3-dimset" data-set="custom" defaultChecked /> Custom</label></div>
+                <div className="g3-field"><label className="g3-check"><input type="checkbox" className="g3-dimset" data-set="custom" /> Custom</label></div>
                 <hr className="g3-rule" />
 
                 <div className="g3-mini-row">
@@ -374,7 +374,7 @@ export default function Gear3DApp() {
                 </div>
                 <div className="g3-field"><label className="g3-check" htmlFor="g3-dual-units"><input type="checkbox" id="g3-dual-units" /> Show both units</label></div>
                 <div className="g3-field"><label className="g3-check" htmlFor="g3-callouts"><input type="checkbox" id="g3-callouts" /> Axle callouts</label></div>
-                <div className="g3-field"><label className="g3-check" htmlFor="g3-scalebar"><input type="checkbox" id="g3-scalebar" defaultChecked /> Scale bar</label></div>
+                <div className="g3-field"><label className="g3-check" htmlFor="g3-scalebar"><input type="checkbox" id="g3-scalebar" /> Scale bar</label></div>
               </div>
             </details>
 
