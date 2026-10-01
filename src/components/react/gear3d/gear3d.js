@@ -72,7 +72,7 @@ import { LIGHTING_PRESETS } from './engine/scene/lighting.js';
 import { Viewport, RENDER_TIERS } from './engine/scene/renderer.js';
 import { VIEW_META } from './engine/scene/cameras.js';
 import { styleVehicleBody, ensureVehicleBody, vehicleBodyStatus, vehicleBodySpec, disposeVehicleBodies } from './engine/geometry/vehicleBody.js';
-import { buildAssembly } from './engine/geometry/assembly.js';
+import { buildAssembly, clearWheelGeometryCache } from './engine/geometry/assembly.js';
 
 import {
     autoDimensions, renderDimensions, renderCallouts, renderScaleBar, dimensionValue
@@ -401,11 +401,21 @@ function setupViewport() {
    ============================================================ */
 
 /** @param {string} id */
-function loadUnitById(id) {
+async function loadUnitById(id) {
+    const token=app.unitLoadToken=(app.unitLoadToken || 0)+1;
     app.lastWideBase = null;
     $('g3-wbt-report').hidden = true;
     const unit = [...app.library.trucks, ...app.library.aircraft].find((u) => u.id === id);
     if (!unit) { toast(`Unit "${id}" is not in the library.`, 'error'); return; }
+    const previousDoc=app.store.doc;
+    if(app.store.view.showVehicleBody && vehicleBodyStatus(unit)==='loading') {
+        $('g3-status-iso').textContent='Preparing '+unit.name+'...';
+        await ensureVehicleBody(unit,ASSET_BASE);
+        // A newer choice, project restore, edit or unmount wins over this load.
+        if(token!==app.unitLoadToken || app.store.doc!==previousDoc) return;
+    }
+
+    app.viewport.markInteracting();
     app.store.replaceDoc({
         ...app.store.doc,
         unit: structuredClone(unit),
@@ -1345,6 +1355,18 @@ function setupUnitPanel() {
     });
     $('g3-category').addEventListener('change', () => syncUnits({ autoLoad: true }));
     $('g3-unit').addEventListener('change', () => loadUnitById($('g3-unit').value));
+    const warmNeighbors=()=>{
+        if(!app.store.view.showVehicleBody || navigator.connection?.saveData) return;
+        const select=$('g3-unit');
+        const units=[...app.library.trucks,...app.library.aircraft];
+        for(const index of [select.selectedIndex-1,select.selectedIndex+1]) {
+            const unit=units.find(u=>u.id===select.options[index]?.value);
+            if(unit) ensureVehicleBody(unit,ASSET_BASE);
+        }
+    };
+    $('g3-unit').addEventListener('pointerdown',warmNeighbors);
+    $('g3-unit').addEventListener('focus',warmNeighbors);
+
     $('g3-revert-inline').addEventListener('click', revertToReference);
     syncCategories();
     syncUnits();
@@ -3469,6 +3491,7 @@ function esc(s) {
 return function dispose() {
     if (_disposed) return;
     _disposed = true;
+    app.unitLoadToken=(app.unitLoadToken || 0)+1;
     disposeVehicleBodies();
 
     for (const [fn, capture] of _docKeys) document.removeEventListener('keydown', fn, capture);
@@ -3481,6 +3504,7 @@ return function dispose() {
     document.body.classList.remove('g3-modal-open');
 
     try { app.viewport?.dispose(); } catch { /* a context already lost */ }
+    clearWheelGeometryCache();
     try { app.materials?.dispose?.(); } catch { /* ditto */ }
 
     if (window.gear3d === app) delete window.gear3d;

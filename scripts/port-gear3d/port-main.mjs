@@ -255,6 +255,7 @@ s += `
 return function dispose() {
     if (_disposed) return;
     _disposed = true;
+    app.unitLoadToken=(app.unitLoadToken || 0)+1;
     disposeVehicleBodies();
 
     for (const [fn, capture] of _docKeys) document.removeEventListener('keydown', fn, capture);
@@ -267,6 +268,7 @@ return function dispose() {
     document.body.classList.remove('g3-modal-open');
 
     try { app.viewport?.dispose(); } catch { /* a context already lost */ }
+    clearWheelGeometryCache();
     try { app.materials?.dispose?.(); } catch { /* ditto */ }
 
     if (window.gear3d === app) delete window.gear3d;

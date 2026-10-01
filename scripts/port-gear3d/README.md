@@ -24,6 +24,22 @@ Preserve that note when re-copying.
 
 ## Re-running
 
+Vehicle switching in upstream `34fa3bf` and `cf5330e` prepares an uncached body before
+replacing the document and scene, leaving the previous vehicle visible during
+the download. Selection tokens and document identity reject stale requests.
+Opening the vehicle menu warms two neighboring bodies unless Data Saver is on.
+Eight wheel-geometry bundles and four fitted bodies are retained in LRU caches;
+active scenes hold leases so eviction cannot invalidate a live view or export.
+Aircraft intake colors and body materials remain private to each scene.
+Assembly disposal releases instance buffers and leases; island teardown clears
+the caches. Validation includes 72 course checks, 196 upstream checks, and
+browser checks for cold/warm switches, shared geometry, independent intake
+colors, stable GPU geometry counts, and deliberately delayed requests.
+Swaps begin at interaction resolution and restore full quality after settling.
+Repeated A320/737 switches in the final browser run took 26–36 ms in mobile
+emulation and typically 28–33 ms on desktop, with slower outliers. These are
+local browser measurements, not physical-device or network latency guarantees.
+
 The visual refinement in upstream `cb50f96` adds cached aggregate and slab
 textures, adjustable bump relief, and optional cloud cover. Compact and touch
 views cap live rendering at 1.5 million pixels when settled and 0.75 million
