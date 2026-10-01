@@ -5,7 +5,9 @@ import DocChecklist from '../../../components/docs/DocChecklist.astro';
 import DocDecision from '../../../components/docs/DocDecision.astro';
 const product = 'https://www.aashtoware.org/products/pavement/pavement-me-design/';
 const help = 'https://aashtowarepavementme.org/MEDesign/help/';
-const headings = ['Access', 'Manual', 'Workflow', 'Project', 'Traffic', 'Climate', 'Materials', 'Criteria', 'Run', 'Results', 'Compare designs', 'Checks', 'References'];
+const history = 'https://content.aashtowarepavementme.org/Documents/Software/PMED%20Version%20History%20of%20Updates_Feb2024.pdf';
+const release261 = 'https://content.aashtowarepavementme.org/Documents/Software/AASHTOWare%20Pavement%20ME%20Design%20Build%202.6.1%20Release%20Notes.pdf';
+const headings = ['Access', 'Manual', 'Workflow', 'Project', 'Traffic', 'Climate', 'Materials', 'Criteria', 'Assumptions', 'Run', 'Results', 'Compare designs', 'Practice', 'Checks', 'Version notes', 'References'];
 const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label: label === 'Manual' ? 'User’s manual' : label }));
 ---
 <SoftwareDocsLayout title="AASHTOWare Pavement ME Design · CEE 406" description="A course guide to inputs, trial designs, and performance results in AASHTOWare Pavement ME Design." activeModule="pavement-me" toc={toc}>
@@ -42,6 +44,7 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
       <li>Save an alternative, make a documented change, and compare the results.</li>
     </ol>
     <p>Keep a baseline case. A run that completes successfully still needs an input review and a performance check.</p>
+    <p>The mechanistic part calculates pavement response; the empirical models relate that response and other inputs to observed distress. The <a href={`${help}introduction.html`}>user help</a> describes an incremental analysis that considers traffic, climate, and changing material properties over time. A single elastic load calculation and a design-life performance prediction answer different questions.</p>
   </section>
   <section id="project" data-section class="doc-section">
     <h2>Project</h2>
@@ -79,6 +82,14 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>Record the calibration used. Follow the course or agency instructions for local coefficients; do not adjust coefficients simply to make a trial section pass.</p>
     <p>The software’s <a href={`${help}introduction.html`}>design process</a> checks distress and smoothness predictions against the selected criteria at the specified reliability.</p>
   </section>
+  <section id="assumptions" data-section class="doc-section">
+    <h2>Assumptions</h2>
+    <p>A prediction belongs to its trial section and input set. Traffic growth, climate selection, material characterization, and calibration are assumptions you need to document. An unrecorded default is still an assumption.</p>
+    <p>Input levels describe the available evidence; reliability describes the performance check. A project can use measured material data and still need a reliability level for each criterion. Do not treat a change in input level as a change in reliability.</p>
+    <p>Keep the meaning of a performance measure with its value. Asphalt rut depth, total pavement rut depth, cracking area, transverse crack length, and IRI describe different outcomes. A number without the model and unit cannot establish that a design meets its limit.</p>
+    <p>Calibration is part of the model. Use the coefficients required by the assignment or agency and record their source. A fitted coefficient is not a construction adjustment; changing it just to obtain a passing section removes the basis for the comparison.</p>
+    <DocCallout kind="note" label="Feasible under these inputs">A passing run meets the entered performance checks under the modeled conditions. Your recommendation still needs the course’s construction, cost, and data-quality considerations.</DocCallout>
+  </section>
   <section id="run" data-section class="doc-section">
     <h2>Run</h2>
     <ol class="doc-list">
@@ -113,6 +124,40 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
       <p>Compare every applicable distress and smoothness result. Report the thickness change, governing criterion, and whether either design meets all limits. This is a sensitivity exercise; no improvement is assumed before the run.</p>
     </details>
   </section>
+  <section id="practice" data-section class="doc-section">
+    <h2>Practice</h2>
+    <p>Use the class trial section, traffic source, climate record, and performance limits. These exercises teach input review and comparison; they do not supply a complete design dataset or an official benchmark result.</p>
+    <h3>Build a baseline</h3>
+    <ol class="doc-list">
+      <li>Create a project and select the assigned design strategy. Name the design “Baseline” and record the version and dates.</li>
+      <li>Enter the layer sequence. Compare it with a sketch showing every material and thickness.</li>
+      <li>Enter two-way base-year AADTT, direction and lane percentages, distributions, axle loads, and growth. Keep the original traffic source beside the inputs.</li>
+      <li>Select the assigned climate record. Record its location and the groundwater assumption.</li>
+      <li>Review every material input and its level. Mark defaults in your case log rather than silently treating them as measurements.</li>
+      <li>Enter the limits, reliability, and assigned calibration. Review the complete input summary before running.</li>
+      <li>Run the design, read warnings, and save the report. List every applicable performance measure with its predicted value, unit, limit, and pass/fail status.</li>
+    </ol>
+    <DocCallout kind="tip" label="Check the truck count by hand">For an illustrative two-way AADTT of 2,000, 50% in the design direction, and 80% in the design lane, the base-year design-lane count is 2,000 × 0.50 × 0.80 = 800 trucks/day. Enter 2,000 in the two-way field, not 800. This checks the factors; it does not replace axle-load spectra.</DocCallout>
+    <h3>Change one layer</h3>
+    <ol class="doc-list">
+      <li>Copy the baseline and name it for the changed thickness. Use the increment assigned in class.</li>
+      <li>Change only that layer’s thickness. Compare the input summaries to confirm that traffic, climate, criteria, reliability, and calibration are identical.</li>
+      <li>Run the alternative. Compare all applicable performance outputs at the same design age, including smoothness.</li>
+      <li>Identify the governing criterion in each design. Record whether the governing criterion changed and whether either design satisfies every required limit.</li>
+      <li>Inspect the curves, not only the terminal values. If a limit is reached earlier, record that age.</li>
+      <li>Explain the result using the relevant response and distress model. Do not assume every criterion must improve by the same amount.</li>
+    </ol>
+    <h3>Test an uncertain input</h3>
+    <ol class="doc-list">
+      <li>Return to the baseline and choose one uncertain input allowed by the assignment, such as truck growth or an unbound material property.</li>
+      <li>Define a supported low and high value. Keep the traffic growth function with its rate; a compound forecast differs from a linear one.</li>
+      <li>Save and run both cases with the original structure and design criteria.</li>
+      <li>Compare the governing outputs. State whether the recommendation depends on the uncertain input.</li>
+      <li>Identify the additional measurement or source that would most help resolve that uncertainty.</li>
+    </ol>
+    <p>Submit the saved designs, input sources, reports, and a comparison table. Use one row per case: changed input, governing criterion, predicted value, limit, and whether all criteria pass.</p>
+    <p>For historical worked design examples, the official documents page includes <a href="https://content.aashtowarepavementme.org/Documents/1-37A/appendix_D_Examples%20Users%20Guide.pdf">NCHRP 1-37A Appendix D</a>. Those examples use the earlier research software; do not expect current versions to reproduce their screens or results exactly.</p>
+  </section>
   <section id="checks" data-section class="doc-section">
     <h2>Checks</h2>
     <DocChecklist id="pavement-me-run-v2" title="Before you submit" items={['Two-way AADTT and direction/lane factors match the source.', 'Traffic distribution totals match the user help.', 'Material input levels match the available data.', 'Climate, dates, version, and calibration are recorded.', 'Every applicable distress and smoothness limit is checked.', 'Baseline and alternative reports are saved with the inputs.']} />
@@ -126,6 +171,17 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
       <li>All applicable criteria are reviewed, with reports saved.</li>
     </ul>
     <p>If two runs differ unexpectedly, compare their input summaries before interpreting the performance curves. Check versions and calibration as well as the visible structural inputs.</p>
+  </section>
+  <section id="version-notes" data-section class="doc-section">
+    <h2>Version notes</h2>
+    <p>Keep the exact version with the report. The official <a href={history}>version history, dated 26 February 2024</a>, records changes in climate data, defaults, calibration, and analysis features. A difference between versions needs an input and model review before it is attributed to your structural change.</p>
+    <p>The <a href={release261}>2.6.1 release notes, August 2021</a>, document these historical fixes. They are resolved issues in that release, not claims about current web software:</p>
+    <ul class="doc-list">
+      <li>Reliability-adjusted JPCP cracking was capped at 100%.</li>
+      <li>For AC over JPCP, asphalt below the slab was excluded from the asphalt thickness used by the top-down cracking conversion.</li>
+      <li>Fitting procedures in the top-down cracking data conversion were corrected or revised.</li>
+    </ul>
+    <DocCallout kind="tip" label="When two runs disagree">Compare versions, input summaries, and calibration first. If the difference remains unexplained, keep both reports and input files and describe the exact output that changed. Check the <a href="https://aashtowarepavementme.org/MEDesign/Content/Documents">official release documents</a> for the version involved.</DocCallout>
   </section>
   <section id="references" data-section class="doc-section">
     <h2>References</h2>

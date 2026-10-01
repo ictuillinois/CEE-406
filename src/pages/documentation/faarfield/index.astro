@@ -7,7 +7,7 @@ import DocDecision from '../../../components/docs/DocDecision.astro';
 import FaarfieldManual from '../../../components/docs/FaarfieldManual.astro';
 const base = import.meta.env.BASE_URL;
 const reference = `${base}documentation/faarfield/reference/`;
-const toc = ['Download', 'Start a job', 'Pavement', 'Traffic', 'Run', 'Results', 'Troubleshooting', 'User’s manual', 'Sources'].map(label => ({ id: label === 'User’s manual' ? 'manual' : label.toLowerCase().replaceAll(' ', '-'), label }));
+const toc = ['Download', 'Start a job', 'Pavement', 'Traffic', 'Run', 'Results', 'Concepts', 'Exercises', 'Assumptions', 'Troubleshooting', 'User’s manual', 'Sources'].map(label => ({ id: label === 'User’s manual' ? 'manual' : label.toLowerCase().replaceAll(' ', '-'), label }));
 const modes = [
   { value: 'design', label: 'Find a pavement thickness', title: 'Thickness Design', body: 'Enter the section, traffic mix, and design life. FAARFIELD varies the selected design layer. Check that this is the layer you intend to change.', href: `${reference}designmode/`, linkLabel: 'Thickness design steps' },
   { value: 'life', label: 'Check an existing section’s life', title: 'Life', body: 'Enter the section’s actual thicknesses and the traffic mix. Review the calculated structural life and its CDF results. This mode holds layer thicknesses fixed.', href: `${reference}pavementlifemode/`, linkLabel: 'Life analysis steps' },
@@ -66,8 +66,80 @@ const modes = [
     <p>See <a href={`${reference}appendixbcumulativedamagefactor/`}>CDF</a>, <a href={`${reference}reportsandgraphs/`}>reports</a>, and <a href={`${reference}pdfoutputsofreportsandgraphs/`}>PDF output</a>.</p>
     <p>Design basis: <a href="https://www.faa.gov/documentLibrary/media/Advisory_Circular/150-5320-6G-Pavement-Design.pdf">AC 150/5320-6G</a>, §3.12.9, explains CDF and its lateral distribution.</p>
   </section>
+  <section id="concepts" data-section class="doc-section">
+    <h2>Concepts</h2>
+    <details open><summary>Response, damage, and thickness</summary><p>A structural model computes load-induced stresses or strains. A failure relationship converts that response into allowable departures. Applied departures divided by allowable departures gives each aircraft’s damage contribution; contributions are combined at each lateral location. Thickness design iterates a selected layer until the governing damage criterion is met. Life analysis keeps the section fixed instead. See <a href={`${reference}appendixatheoreticalapproachtopavementdesignprocedures/`}>Appendix A</a> and <a href={`${reference}appendixbcumulativedamagefactor/`}>Appendix B</a>.</p></details>
+    <details><summary>Flexible and rigid pavement checks</summary><p>Flexible design checks vertical strain at the subgrade; the <strong>Calculate HMA CDF</strong> option also reports asphalt fatigue damage associated with horizontal strain. Check each HMA layer, including stabilized asphalt base. Rigid design uses concrete tensile stress and a fatigue relationship. A concrete modulus and flexural strength describe different properties; do not enter one in place of the other. Read <a href={`${reference}newflexibleandhmaonflexible/`}>flexible theory</a>, <a href={`${reference}newrigidpavement/`}>rigid theory</a>, and <a href={`${reference}calculatehmacdf/`}>HMA CDF</a>.</p></details>
+    <details><summary>Aggregate layers are not a single fixed modulus</summary><p>For library unbound aggregates such as P-209 and P-154, FAARFIELD internally subdivides the layer and assigns moduli recursively. The assignment depends on layer thickness and support below it. A change in base thickness can change both geometry and assigned stiffness. Do not expect a separate elastic analysis with one arbitrary base modulus to reproduce the same result. <a href={`${reference}appendixcmodulusassignmentprocedureforaggregatelayers/`}>Appendix C</a> gives the sublayer rules and equations.</p></details>
+    <details><summary>Existing concrete condition</summary><p>Overlay design includes deterioration of the existing rigid pavement. Its Structural Condition Index (SCI) is not a general pavement condition score. Percent CDF Used describes consumed fatigue life and is not interchangeable with SCI. In the manual’s SCI = 70 example, percent CDF Used is fixed at 100. The existing PCC modulus shown in the report can be its undamaged reference value rather than the reduced value used during the calculation. See <a href={`${reference}pccoverlayonrigiddesignexample/`}>the overlay example</a>.</p></details>
+  </section>
+  <section id="exercises" data-section class="doc-section">
+    <h2>Exercises</h2>
+    <p>Work through these with the supplied manual open. They are practice exercises, separate from homework. Save the inputs, options, software version, aircraft library date, and reports for each run.</p>
+    <DocCallout label="Reproducing an example" kind="note"><p>Use the manual’s complete “Design Examples” traffic mix, including aircraft weights, departures, and growth. If it is absent from your installation, transcribe Figure E-2 in <a href={`${reference}newflexibledesignexample/`}>the flexible example</a>. A similarly named mix or a newer aircraft library may give different results. The numbers below are published manual results, not runs performed for this website.</p></DocCallout>
+    <details open><summary>1. Design a flexible section, then verify its life</summary>
+      <p>Follow <a href={`${reference}newflexibledesignexample/`}>Appendix E: New Flexible</a>, Figures E-1–E-16.</p>
+      <ol class="doc-list">
+        <li>Create a job named “Flexible practice” and a baseline section. Select US Customary units, New Flexible, Thickness Design, and a 20-year design life.</li>
+        <li>Load the manual’s Design Examples traffic mix. Enter a 5-in. HMA surface, a starting 5-in. P-401/P-403 stabilized base, a P-209 aggregate layer, and subgrade CBR = 8. Check the full section against Figure E-3.</li>
+        <li>Retain the example’s default options for the first run. Save and run. Record the final base and aggregate thicknesses and subgrade CDF.</li>
+        <li>Copy the section. Enable Calculate HMA CDF and run again. Record subgrade CDF and fatigue CDF for both asphalt layers; identify which asphalt layer has the higher fatigue damage.</li>
+        <li>Switch the completed section to Life without changing thicknesses or traffic. Run and compare the calculated life with the 20-year design target.</li>
+        <li>Open the CDF Graph. Record the location of maximum total CDF and each aircraft’s contribution at that location. Explain why the heaviest aircraft need not govern.</li>
+        <li>Run Life and Compaction. Read the separate cohesive and non-cohesive requirements and their depth references. Export the Section Report and CDF Graph; save the job.</li>
+      </ol>
+      <DocCallout label="Manual inconsistency" kind="note"><p>The text reports 18.8 in. of aggregate on the initial run and 18.5 in. after enabling HMA CDF, then returns to 18.8 in. in its final-design paragraph. Keep the report for your actual run and compare the figures; do not silently combine results from different runs. This is a documentation inconsistency, not a confirmed software bug.</p></DocCallout>
+      <p><strong>Explain:</strong> Which criterion controls thickness? Which aircraft controls compaction? Why can these answers differ? Repeat with only subgrade CBR changed and describe what moved in the report.</p>
+    </details>
+    <details><summary>2. Design a rigid section</summary>
+      <p>Follow <a href={`${reference}newrigiddesignexample/`}>Appendix E: New Rigid</a>, Figures E-23–E-30.</p>
+      <ol class="doc-list">
+        <li>Create a separate New Rigid section with the same complete traffic mix and 20-year design life.</li>
+        <li>Use P-501 PCC with flexural strength 675 psi, an 8-in. P-304 cement-treated base, P-209 below it, and subgrade k = 120 pci. Copy all remaining properties from the example’s section figure.</li>
+        <li>Confirm the PCC surface is the design layer. Save, run Thickness Design, and read concrete thickness and PCC CDF.</li>
+        <li>Run Life and Compaction with the final thicknesses fixed. Compare life with the design target and inspect the report’s aircraft damage contributions.</li>
+        <li>Copy the section, change only flexural strength, and rerun. Compare thickness, CDF, and governing aircraft. Restore the baseline before making another change.</li>
+      </ol>
+      <p>The supplied manual reports a 17.0-in. PCC surface and PCC CDF = 1.0 for its original setup. Treat this as a versioned example, not a tolerance for a different aircraft library. Its rigid-example paragraph calls the graph a subgrade CDF; use the actual report’s PCC criterion and figure labels when interpreting the rigid design.</p>
+    </details>
+    <details><summary>3. Compare PCC and HMA overlays</summary>
+      <p>Use the <a href={`${reference}pccoverlayonrigiddesignexample/`}>PCC overlay</a> and <a href={`${reference}hmaoverlayonrigiddesignexample/`}>HMA overlay</a> examples, Figures E-37–E-58.</p>
+      <ol class="doc-list">
+        <li>Rebuild the existing structure from Figure E-37; do not use the newly designed section from Exercise 2 as a substitute. Use the example’s traffic mix, SCI = 70, k = 120 pci, and 20-year overlay life.</li>
+        <li>Make two copies. Add an unbonded P-501 PCC overlay to one and the specified HMA overlay to the other. For the PCC overlay, use flexural strength 650 psi.</li>
+        <li>Check the pavement type, overlay design layer, and existing-layer condition. Note why percent CDF Used cannot be edited for this SCI in the example.</li>
+        <li>Run each design and export its report. Compare overlay thickness, controlling criterion, and aircraft damage contributions. The manual reports 5.0-in. PCC and 7.6-in. HMA overlays for its respective cases.</li>
+        <li>Explain why the reported existing-PCC modulus is not necessarily the effective modulus used throughout the deterioration calculation. If exploring a deteriorated base, use a separate copy and an explicitly stated condition assumption.</li>
+      </ol>
+      <p><strong>Limit:</strong> A thinner overlay is not automatically the better alternative. These calculations do not compare construction staging, drainage repairs, reflective cracking treatment, or project cost.</p>
+    </details>
+    <details><summary>4. Separate strength reporting from design</summary>
+      <ol class="doc-list">
+        <li>Use a saved completed example section. Record its thicknesses and traffic before switching to ACR/PCR.</li>
+        <li>Follow the example’s PCR steps and enable Compute ACR for All Subgrade Categories when requested. Run and open the PCR Report, PCR Graph, and Form 5010.</li>
+        <li>Identify the critical aircraft and decode the rating’s pavement type, subgrade category, tire-pressure category, and evaluation method.</li>
+        <li>Compare the aircraft controlling PCR with those controlling design CDF and compaction. Explain why those are separate questions.</li>
+        <li>Check the reporting procedure against current AC 150/5335-5D and its errata before using a rating beyond this exercise.</li>
+      </ol>
+      <p>Read the full <a href={`${reference}pcrmode/`}>ACR/PCR mode instructions</a>. Do not interpret PCR as remaining life or use it to replace thickness design.</p>
+    </details>
+    <DocChecklist id="faarfield-exercises-v1" title="Keep with your exercise" items={['Saved baseline and clearly named alternatives.', 'Complete traffic mix, units, material inputs, and design options.', 'Software version and aircraft library date.', 'Section Report and CDF Graph for each comparison.', 'A short explanation of the governing criterion and the assumptions.']} />
+  </section>
+  <section id="assumptions" data-section class="doc-section">
+    <h2>Assumptions and limits</h2>
+    <ul class="doc-list">
+      <li><strong>Structural representation.</strong> Flexible analysis uses a layered elastic representation; rigid analysis uses a 3-D finite element model. A subgrade thickness of zero in the flexible report denotes an infinitely deep supporting layer, not missing soil.</li>
+      <li><strong>Traffic.</strong> Forecast departures, growth, aircraft weights, gear, and lateral distribution are model inputs. A calculated life is conditional on those assumptions; it is not a guaranteed service date.</li>
+      <li><strong>Material properties.</strong> Library properties and aggregate modulus assignment are part of the model. Use the applicable testing and FAA guidance for selecting design values; do not treat a default as a measured site property.</li>
+      <li><strong>Existing pavement.</strong> Overlay results depend on condition and support estimates. A modeled SCI or modulus cannot replace a field survey.</li>
+      <li><strong>Design completeness.</strong> Meeting a damage criterion does not by itself resolve minimum layer requirements, drainage, frost, constructability, joints, or rehabilitation details. Check the applicable FAA guidance separately.</li>
+      <li><strong>Options and version.</strong> Advanced options change the calculation. Keep defaults for these exercises unless a step explicitly changes them, and record every change. See <a href={`${reference}advancedoptions/`}>advanced options</a> and <a href={`${reference}appendixddatafiles/`}>data files</a> for reproducible records.</li>
+    </ul>
+  </section>
   <section id="troubleshooting" data-section class="doc-section">
     <h2>Troubleshooting</h2>
+    <DocCallout label="Bugs and version notes" kind="info"><p>No current FAARFIELD bug list was verified for this guide. The FAA download page links the release README; its download could not be retrieved during this source check. Check that file for your installed version before treating older release issues as current. The example-text discrepancies noted above are confirmed in the supplied manual, but are not evidence of a solver defect.</p></DocCallout>
+    <p>If a run fails, preserve the job file, exact error message, calculation mode, options, software version, and aircraft library date. Try a copy of the smallest section that reproduces the issue. Use the support contact on the <a href={faarfieldDownload}>FAA page</a>; do not change engineering inputs just to suppress an error.</p>
     <details><summary>The wrong layer thickness changed</summary><p>Recheck the selected design layer and active section. Compare the input and final section in the report. See <a href={`${reference}designlayer/`}>design layer</a>.</p></details>
     <details><summary>The result changed after reopening the job</summary><p>Check the section, software version, aircraft library, and saved design options. Record the version and inputs with your report so a comparison can be repeated.</p></details>
     <details><summary>The job is taking longer than expected</summary><p>Read Calculation Status before restarting. Rigid designs use a 3-D finite element analysis and can take longer. See <a href={`${reference}solutiontimes/`}>solution times</a>.</p></details>

@@ -9,7 +9,7 @@ interface Props {
 }
 const base = import.meta.env.BASE_URL;
 ---
-<DocsLayout {...Astro.props} sidebarLabel="Software" sidebarModules={documentationModules(base)}>
+<DocsLayout {...Astro.props} variant="software" sidebarLabel="Software" sidebarModules={documentationModules(base)}>
  <div class="software-docs" data-library={Astro.props.activeModule === 'index' ? '' : undefined}>
   {Astro.props.activeModule !== 'index' && <nav class="doc-breadcrumb" aria-label="Breadcrumb">
     <a href={`${base}documentation/`}>Documentation</a>
@@ -25,6 +25,10 @@ const base = import.meta.env.BASE_URL;
 </DocsLayout>
 <script>
   function initSoftwareTools() {
+    document.querySelectorAll<HTMLElement>('.software-mobile').forEach(nav => {
+      const current = nav.querySelector<HTMLElement>('[aria-current="page"]');
+      if (current && current.offsetLeft > nav.clientWidth / 2) nav.scrollLeft = current.offsetLeft - nav.offsetLeft - 24;
+    });
     document.querySelectorAll<HTMLButtonElement>('[data-print-guide]').forEach(button => {
       if (button.dataset.ready) return;
       button.dataset.ready = 'true';
@@ -74,8 +78,10 @@ const base = import.meta.env.BASE_URL;
     :global(.software-docs h2), :global(.software-docs h3) { break-after: avoid; }
     :global(.software-docs figure), :global(.software-docs .doc-callout) { break-inside: avoid; }
   }
-  .software-mobile { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-bottom: 1.5rem; font-size: .8125rem; }
-  .software-mobile a { color: var(--color-text-muted); }
-  .software-mobile a[aria-current] { color: var(--color-accent); }
+  .software-mobile { display: flex; gap: 1rem; overflow-x: auto; scrollbar-width: thin; scroll-snap-type: x proximity; border-bottom: 1px solid var(--color-border); margin-bottom: 1.5rem; font-size: .8125rem; }
+  .software-mobile a { display: flex; align-items: center; flex-shrink: 0; min-height: 44px; padding: .35rem .125rem .6rem; color: var(--color-text-muted); border-bottom: 2px solid transparent; scroll-snap-align: start; transition: color .18s ease; }
+  .software-mobile a:hover { color: var(--color-text); }
+  .software-mobile a[aria-current] { color: var(--color-text); font-weight: 600; border-bottom-color: var(--color-accent); }
+  @media (prefers-reduced-motion: reduce) { .software-mobile a { transition: none; } }
   @media (min-width: 768px) { .software-mobile { display: none; } }
 </style>

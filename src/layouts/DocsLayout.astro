@@ -15,6 +15,7 @@ interface Props {
   sidebarModules?: SidebarModule[];
   activeModule: string;
   toc?: { id: string; label: string }[];
+  variant?: 'software';
 }
 
 const base = import.meta.env.BASE_URL;
@@ -34,23 +35,17 @@ const modules = sidebarModules;
 ---
 
 <BaseLayout title={title} description={description} indexMain={false}>
-  <div class="docs-shell">
+  <div class="docs-shell" data-docs-variant={Astro.props.variant}>
     <!-- Left sidebar: submodule nav -->
     <aside class="docs-sidebar" id="docs-sidebar">
-      <div class="docs-sidebar__search">
+      <button class="docs-sidebar__search" id="sidebar-search-input" type="button" aria-label="Search documentation">
         <svg class="docs-sidebar__search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="8"/>
           <line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input
-          type="text"
-          class="docs-sidebar__search-input"
-          id="sidebar-search-input"
-          placeholder="Search docs..."
-          readonly
-        />
+        <span class="docs-sidebar__search-input">Search docs</span>
         <kbd class="docs-sidebar__search-kbd">⌘K</kbd>
-      </div>
+      </button>
       <div class="docs-sidebar__section">
         <div class="docs-sidebar__label">{sidebarLabel}</div>
         <nav class="docs-sidebar__nav" aria-label={`${sidebarLabel} modules`}>
@@ -58,13 +53,16 @@ const modules = sidebarModules;
             <a
               href={mod.href}
               class:list={['docs-sidebar__link', { active: activeModule === mod.id }]}
+              aria-current={activeModule === mod.id ? 'page' : undefined}
+              data-module={mod.id}
             >
               {mod.icon.startsWith('text:') ? (
-                <span class="docs-sidebar__badge">{mod.icon.slice(5)}</span>
+                <span class="docs-sidebar__badge" aria-hidden="true">{mod.icon.slice(5)}</span>
               ) : (
-                <svg class="docs-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d={mod.icon} /></svg>
+                <svg class="docs-sidebar__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={mod.icon} /></svg>
               )}
               <span>{mod.label}</span>
+              {Astro.props.variant === 'software' && <svg class="docs-sidebar__arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 4 4 4-4 4" /></svg>}
             </a>
           ))}
         </nav>
@@ -99,22 +97,32 @@ const modules = sidebarModules;
 </BaseLayout>
 
 <script>
+  let cleanupDocsToc = () => {};
   function initDocsToc() {
+    cleanupDocsToc();
     const links = document.querySelectorAll('[data-toc-link]');
     const sections = document.querySelectorAll('[data-section]');
     const progressBar = document.getElementById('toc-progress');
     if (!links.length) return;
+    const controller = new AbortController();
+    let observer: IntersectionObserver | undefined;
+    cleanupDocsToc = () => { controller.abort(); observer?.disconnect(); };
 
     if (sections.length) {
-      const observer = new IntersectionObserver((entries) => {
+      observer = new IntersectionObserver((entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const id = entry.target.getAttribute('data-section') || entry.target.id;
-            links.forEach(l => l.classList.toggle('active', l.getAttribute('data-toc-link') === id));
+            links.forEach(l => {
+              const active = l.getAttribute('data-toc-link') === id;
+              l.classList.toggle('active', active);
+              if (active) l.setAttribute('aria-current', 'location');
+              else l.removeAttribute('aria-current');
+            });
           }
         }
       }, { rootMargin: '-15% 0px -65% 0px', threshold: 0 });
-      sections.forEach(s => observer.observe(s));
+      sections.forEach(s => observer!.observe(s));
     }
 
     // Progress
@@ -124,20 +132,25 @@ const modules = sidebarModules;
       const rect = content.getBoundingClientRect();
       const total = content.scrollHeight - window.innerHeight;
       const scrolled = -rect.top;
-      const pct = Math.max(0, Math.min(100, (scrolled / total) * 100));
+      const pct = total > 0 ? Math.max(0, Math.min(100, (scrolled / total) * 100)) : 100;
       progressBar.style.width = pct + '%';
     }
-    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('scroll', updateProgress, { passive: true, signal: controller.signal });
     updateProgress();
 
     // Smooth scroll
     links.forEach(link => {
       link.addEventListener('click', (e) => {
-        e.preventDefault();
+        if (e instanceof MouseEvent && (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey)) return;
         const id = link.getAttribute('data-toc-link');
         const target = document.getElementById(id || '');
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
+        if (!target) return;
+        e.preventDefault();
+        history.pushState(null, '', `#${id}`);
+        target.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+        if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+        target.focus({ preventScroll: true });
+      }, { signal: controller.signal });
     });
   }
 
@@ -187,6 +200,9 @@ const modules = sidebarModules;
 
   /* ── Sidebar search ── */
   .docs-sidebar__search {
+    width: 100%;
+    text-align: left;
+    font: inherit;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -203,6 +219,7 @@ const modules = sidebarModules;
     border-color: var(--color-accent);
     background: rgba(232, 119, 34, 0.04);
   }
+  .docs-sidebar__search > * { pointer-events: none; }
 
   .docs-sidebar__search-icon {
     width: 0.875rem;
@@ -410,5 +427,27 @@ const modules = sidebarModules;
 
   :global([data-theme="dark"]) .docs-sidebar__link.active {
     background: rgba(232, 119, 34, 0.08);
+  }
+  /* Software navigation keeps one clear current-page marker. */
+  [data-docs-variant="software"] .docs-sidebar { align-self: start; padding-right: 1.25rem; border-right: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); }
+  [data-docs-variant="software"] .docs-sidebar__search { min-height: 42px; border-color: color-mix(in srgb, var(--color-border) 75%, transparent); border-radius: 8px; background: transparent; margin-bottom: 1.75rem; }
+  [data-docs-variant="software"] .docs-sidebar__search:hover { border-color: var(--color-accent); background: var(--color-surface-alt); }
+  [data-docs-variant="software"] .docs-sidebar__label { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: .75rem; padding: 0 .75rem; margin-bottom: .75rem; }
+  [data-docs-variant="software"] .docs-sidebar__nav { gap: .375rem; }
+  [data-docs-variant="software"] .docs-sidebar__link { position: relative; min-height: 46px; padding: .65rem .65rem .65rem .75rem; gap: .65rem; border-radius: 8px; font-size: .8125rem; transition: color .18s ease, background .18s ease; }
+  [data-docs-variant="software"] .docs-sidebar__link:first-child { margin-bottom: .6rem; }
+  [data-docs-variant="software"] .docs-sidebar__link::before { content: ''; position: absolute; inset: .85rem auto .85rem 0; width: 2px; border-radius: 2px; background: var(--color-accent); opacity: 0; transform: scaleY(.4); transition: opacity .2s ease, transform .2s ease; }
+  [data-docs-variant="software"] .docs-sidebar__link.active::before { opacity: 1; transform: scaleY(1); }
+  [data-docs-variant="software"] .docs-sidebar__link.active { background: color-mix(in srgb, var(--color-accent) 7%, transparent); color: var(--color-text); font-weight: 600; }
+  [data-docs-variant="software"] .docs-sidebar__badge { display: flex; align-items: center; justify-content: center; width: 1.7rem; height: 1.7rem; min-width: 1.7rem; padding: 0; font-size: .65rem; font-weight: 500; border: 0; border-radius: 6px; color: var(--nav-color, var(--color-text-muted)); background: color-mix(in srgb, var(--nav-color, var(--color-text-muted)) 8%, transparent); }
+  [data-docs-variant="software"] [data-module="faarfield"] { --nav-color: var(--phase-design); }
+  [data-docs-variant="software"] [data-module="winjulea"] { --nav-color: var(--phase-analysis); }
+  [data-docs-variant="software"] [data-module="drip"] { --nav-color: var(--phase-materials); }
+  [data-docs-variant="software"] [data-module="pavement-me"] { --nav-color: var(--phase-loads); }
+  .docs-sidebar__arrow { width: .8rem; height: .8rem; flex-shrink: 0; margin-left: auto; color: var(--color-text-muted); opacity: 0; transform: translateX(-3px); transition: opacity .18s ease, transform .18s ease; }
+  .docs-sidebar__link:hover .docs-sidebar__arrow, .docs-sidebar__link:focus-visible .docs-sidebar__arrow, .docs-sidebar__link.active .docs-sidebar__arrow { opacity: 1; transform: none; }
+  [data-docs-variant="software"] .docs-toc { align-self: start; }
+  @media (prefers-reduced-motion: reduce) {
+    [data-docs-variant="software"] .docs-sidebar__link, [data-docs-variant="software"] .docs-sidebar__link::before, .docs-sidebar__arrow { transition: none; }
   }
 </style>

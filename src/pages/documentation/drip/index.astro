@@ -5,7 +5,8 @@ import DocChecklist from '../../../components/docs/DocChecklist.astro';
 import DocDecision from '../../../components/docs/DocDecision.astro';
 const download = 'https://me-design.com/medesign/DRIP.html?AspxAutoDetectCookieSupport=1';
 const manual = 'https://www.fhwa.dot.gov/pavement/pubs/010942.pdf';
-const headings = ['Download', 'Manual', 'Start a case', 'Geometry', 'Materials', 'Inflow', 'Permeable base', 'Separator', 'Edgedrain', 'Results', 'Checks', 'References'];
+const appendix = 'https://content.aashtowarepavementme.org/Documents/1-37A/2appendices_TT.pdf';
+const headings = ['Download', 'Manual', 'Start a case', 'Geometry', 'Materials', 'Inflow', 'Permeable base', 'Separator', 'Edgedrain', 'Assumptions', 'Practice', 'Results', 'Checks', 'Troubleshooting', 'References'];
 const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label: label === 'Manual' ? 'User’s manual' : label }));
 ---
 <SoftwareDocsLayout title="DRIP · CEE 406" description="A course guide to pavement subsurface drainage with DRIP." activeModule="drip" toc={toc}>
@@ -31,12 +32,14 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
       <li><strong>Chapter 6:</strong> sensitivity studies.</li>
     </ul>
     <DocCallout kind="note" label="Version matters">This archived manual covers DRIP 2.0. Its installation instructions describe the Windows systems of that period; check the course setup instructions for your machine.</DocCallout>
+    <p>If the FHWA file is unavailable, use <a href={appendix}>NCHRP 1-37A Appendix TT</a> (February 2004), adapted from the FHWA guide. Its section 4 covers operation, section 5 has worked examples, and section 6 has sensitivity studies. Its section numbers differ from the FHWA manual.</p>
   </section>
   <section id="start-a-case" data-section class="doc-section">
     <h2>Start a case</h2>
     <p>Save a case for the assigned section. Choose the unit system and write down the drainage objective before entering values: carry an inflow, meet a time-to-drain target, or check an existing system.</p>
     <p>Work through geometry, material gradations, inflow, the permeable base, separation, and the edgedrain. Keep a sketch beside the inputs so every width, slope, and outlet location has a clear meaning.</p>
     <p>Use one case per alternative. For comparisons, change one input at a time and retain the original case.</p>
+    <DocCallout kind="tip" label="Leave Normal mode on">Normal mode shows input and dependent-value warnings; Expert mode suppresses them. Right-click a variable for help. Underlined variables link to their source page. See <a href={`${appendix}#page=10`}>Appendix TT, section 4</a>.</DocCallout>
     <DocDecision id="drip-objective" label="What does your case need to check?" choices={[
       { value: 'capacity', label: 'Carry an inflow', title: 'Use depth of flow', body: 'Compare calculated flow depth with the available permeable-base thickness. Record the chosen inflow method and event.', href: '#permeable-base', linkLabel: 'Check the permeable base' },
       { value: 'time', label: 'Drain within a target time', title: 'Use time to drain', body: 'Record the degree of drainage and its time target. Capacity alone does not answer this question.', href: '#permeable-base', linkLabel: 'Check drainage time' },
@@ -83,6 +86,39 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>Trace the full route from base to collector to outlet. Check that the collector receives the intended contributing flow, and record its slope, outlet spacing, and applicable material properties.</p>
     <p>Do not assume that a larger pipe fixes an obstructed outlet or a discontinuous connection to the base. In a design sketch, show where water leaves the system and how the outlet can be inspected.</p>
   </section>
+  <section id="assumptions" data-section class="doc-section">
+    <h2>Assumptions</h2>
+    <p>DRIP is a hydraulic design tool. A drainage calculation does not establish the structural thickness of the pavement, and an acceptable structural section does not establish its drainage performance. Keep both sets of checks in the design record.</p>
+    <p>Permeability describes how readily water moves through the material. Total porosity describes its void volume; effective porosity describes the portion available for drainage. They are different inputs. Appendix TT recommends laboratory values for permeability and effective porosity when available (<a href={`${appendix}#page=37`}>permeable-base analysis</a>).</p>
+    <p>Time to drain needs a stated drainage criterion. Removing a percentage of drainable water and reaching a percentage saturation are different questions. Keep the chosen criterion with the computed time.</p>
+    <p>The calculations use the geometry and material properties you enter. A blocked outlet, construction segregation, or fines entering the base can change actual performance. Describe how the base connects to the collector and how water reaches an open outlet.</p>
+    <DocCallout kind="note" label="A shorter time needs context">Do not improve a result by choosing an unjustified porosity, permeability, or drainage target. Change a physical design feature or use supported material data, then repeat the check.</DocCallout>
+  </section>
+  <section id="practice" data-section class="doc-section">
+    <h2>Practice</h2>
+    <h3>Repeat a published example</h3>
+    <p>Start with <a href={`${appendix}#page=45`}>Appendix TT, example 1</a>. Use the complete statement, material table, and solution in the manual. This is a published software exercise; the sensitivity study below is a class extension.</p>
+    <ol class="doc-list">
+      <li>Start a new case, select the example’s units, and save it before entering values. Keep Normal mode enabled.</li>
+      <li>Sketch the contributing width and drain location. Enter Roadway Geometry and compare the resultant slope and flow length with the example.</li>
+      <li>Enter the example’s base and subgrade gradations. Check the percent-passing sequence before calculating properties.</li>
+      <li>Use the example’s inflow method and crack or rainfall inputs. Check the computed inflow before continuing.</li>
+      <li>Complete the permeable-base analysis. Record the minimum required thickness separately from the selected construction thickness.</li>
+      <li>Complete the separator and collector checks. Compare each output with the corresponding manual screen, with units attached.</li>
+      <li>Export the summary and reopen the saved case. If a value differs, compare the preceding inputs and dependencies before moving to the next page.</li>
+    </ol>
+    <h3>Check sensitivity</h3>
+    <p>Use a class-approved baseline with a fixed drainage criterion. The changes below are deliberate perturbations for learning; they are not material recommendations.</p>
+    <ol class="doc-list">
+      <li>Copy the baseline as a low-permeability case. Set base permeability to half its original value and hold geometry, thickness, inflow, and porosity fixed.</li>
+      <li>Recalculate flow depth or drainage time, then the collector check. Record which target governs.</li>
+      <li>Restore the baseline in a separate case. Increase the contributing width by 25%, preserving the intended cross section, and recalculate the drainage path and dependent inputs.</li>
+      <li>Compare the two alternatives with the baseline. Report the actual changes in depth or time; do not assume an identical percentage change in every output.</li>
+      <li>Propose one physical change to address the governing check. Rerun that alternative with the original design targets.</li>
+      <li>Save a table with case name, changed input, flow depth or drainage time, target, separator result, and outlet spacing. State whether all required checks pass.</li>
+    </ol>
+    <p>For a second published exercise, follow <a href={`${appendix}#page=54`}>example 2</a>, which uses time to drain, a geotextile separator, and a geocomposite collector. Do not carry a pipe capacity equation into the geocomposite case.</p>
+  </section>
   <section id="results" data-section class="doc-section">
     <h2>Results</h2>
     <p>Use <strong>File → Export Summary</strong> for an HTML record of inputs and results, or <strong>Print Summary</strong>. Save the case file as well.</p>
@@ -102,11 +138,20 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     </ul>
     <p>If a result looks unreasonable, start with units and geometry. Then review the selected method and its assumptions before changing the material inputs.</p>
   </section>
+  <section id="troubleshooting" data-section class="doc-section">
+    <h2>Troubleshooting</h2>
+    <details><summary>The calculator is inactive</summary><p>Check the required upstream inputs and selected analysis mode. A blank input is different from an intentional zero. Follow linked variables back to their source page.</p></details>
+    <details><summary>A value changed on another page</summary><p>The property pages share inputs. Recheck the source value and dependent calculations, then compare the exported summary with the saved baseline.</p></details>
+    <details><summary>The gradation looks wrong</summary><p>Check sieve units, sieve order, and whether you entered percent passing. Do not substitute percent retained without converting it.</p></details>
+    <details><summary>The summary has a heading but no results</summary><p>Complete that module and recalculate before exporting again. A summary heading alone is not evidence that a separator or outlet check was performed.</p></details>
+    <p>These are input and workflow checks, not a list of confirmed software bugs. Record the program version, case file, and exact message when a run behaves unexpectedly.</p>
+  </section>
   <section id="references" data-section class="doc-section">
     <h2>References</h2>
     <ul class="doc-list">
       <li><a href={download}>DRIP download and resources</a>.</li>
       <li><a href={manual}>FHWA DRIP 2.0 User’s Guide</a>: operation, technical background, examples, and sensitivity analysis.</li>
+      <li><a href={appendix}>NCHRP 1-37A Appendix TT</a>: an alternate manual copy with published examples and sensitivity studies.</li>
       <li><a href="https://www.fhwa.dot.gov/PAVEMENT/pub_details.cfm?id=43">FHWA publication record</a>, FHWA-IF-02-053.</li>
     </ul>
   </section>

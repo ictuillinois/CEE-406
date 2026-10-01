@@ -4,7 +4,7 @@ import DocCallout from '../../../components/docs/DocCallout.astro';
 import DocChecklist from '../../../components/docs/DocChecklist.astro';
 import DocDecision from '../../../components/docs/DocDecision.astro';
 const base = import.meta.env.BASE_URL;
-const headings = ['Setup', 'Model', 'Units', 'Layers', 'Loads', 'Evaluation points', 'Run and save', 'Read the output', 'Example', 'Multiple wheels', 'Sublayers', 'Checks', 'Troubleshooting', 'Manual', 'References'];
+const headings = ['Setup', 'Model', 'Assumptions', 'Units', 'Layers', 'Loads', 'Evaluation points', 'Run and save', 'Read the output', 'Example', 'Practice', 'Multiple wheels', 'Sublayers', 'Checks', 'Troubleshooting', 'Manual', 'References'];
 const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label: label === 'Manual' ? 'User’s manual' : label }));
 ---
 <SoftwareDocsLayout title="WinJULEA · CEE 406" description="A course guide to layered elastic pavement analysis with WinJULEA." activeModule="winjulea" toc={toc}>
@@ -24,6 +24,13 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>A layered elastic analysis represents the pavement as horizontal layers. Each layer has a thickness, elastic modulus E, and Poisson’s ratio ν. The bottom layer extends indefinitely downward.</p>
     <p>The usual wheel model is a static vertical pressure distributed uniformly over a circular area. Layers are homogeneous, isotropic, and linear elastic, and extend indefinitely sideways. Choose interface conditions to match the intended bond between layers.</p>
     <p>The analysis gives the response to a load. Fatigue life and permanent deformation require separate relationships and traffic inputs. Asphalt temperature and loading rate enter through your choice of modulus; an elastic run does not calculate their effects on its own.</p>
+  </section>
+  <section id="assumptions" data-section class="doc-section">
+    <h2>Assumptions</h2>
+    <p>Homogeneous means that a layer has the same properties throughout. Isotropic means those properties are the same in every direction. Linear elastic means the response scales with load and disappears when the load is removed. These are the standard layered elastic idealizations described in the <a href="https://www.fhwa.dot.gov/publications/research/infrastructure/pavements/15063/002.cfm">FHWA review of pavement response models</a>.</p>
+    <p>A halfspace is the foundation below the finite pavement layers. Its infinite depth is a mathematical boundary condition, not a claim about the actual depth of soil. Bedrock or another stiff layer close to the surface may need an explicit finite layer above the foundation.</p>
+    <p>This model does not resolve a pavement edge, a crack, or a concrete joint. It also does not generate permanent strain, nonlinear granular behavior, or the time history of a moving wheel. Use a modulus appropriate to the assigned condition and state that condition with the results.</p>
+    <DocCallout kind="note" label="Response is not life">A tensile strain is a response to the modeled wheel load. Turning that strain into allowable repetitions requires a separate fatigue relationship, its units, and its calibration. Do not report a life from an elastic run alone.</DocCallout>
   </section>
   <section id="units" data-section class="doc-section">
     <h2>Units</h2>
@@ -133,6 +140,34 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     </ol>
     <p>The pressure scaling check tests your setup without needing a reference solution. When comparing programs, align units, signs, bond conditions, and the side of each interface first.</p>
   </section>
+  <section id="practice" data-section class="doc-section">
+    <h2>Practice</h2>
+    <p>Continue the three-layer example above. These are class exercises for checking a model, not official WinJULEA benchmarks. Keep the original file and use a separate file for each exercise.</p>
+    <h3>Find the peak</h3>
+    <ol class="doc-list">
+      <li>Restore the original 0.70 MPa pressure and 100 mm radius.</li>
+      <li>At 99.9 mm depth, sample points along x = 0, 50, 100, 150, 200, and 300 mm, with y = 0. Record both horizontal strain components.</li>
+      <li>Repeat at 350.1 mm depth for vertical strain in the subgrade. Keep signed output and a separate column for any magnitude used by a transfer function.</li>
+      <li>Add points on both sides of the largest relevant response. Halve the spacing and compare the peak location and value.</li>
+      <li>State your final spacing and why further refinement was unnecessary. A rounded coordinate is not evidence that the peak is exactly beneath a wheel.</li>
+    </ol>
+    <h3>Compare a dual pair</h3>
+    <ol class="doc-list">
+      <li>Copy the original case. Place two contacts at x = −150 and +150 mm, with y = 0. Keep each contact at 0.70 MPa and 100 mm radius.</li>
+      <li>Record the total force: this case has twice the original single-wheel force. It is a wheel-group exercise, not a constant-total-load comparison.</li>
+      <li>Evaluate beneath each wheel and at the midpoint. Refine the same response locations used in the first exercise.</li>
+      <li>Compare symmetric points. Matching normal responses are a useful check on coordinates; shear components may change sign under reflection.</li>
+      <li>Compare the peak with the single-wheel case and explain the contribution from the second contact. Use the combined response, not a sum of separate principal values.</li>
+    </ol>
+    <h3>Test a warmer asphalt condition</h3>
+    <ol class="doc-list">
+      <li>Copy the original single-wheel case and change only asphalt E from 3,000 to 1,500 MPa. This is an illustrative stiffness change, not a temperature-to-modulus calibration.</li>
+      <li>Rerun the depth and horizontal profiles at the same points.</li>
+      <li>Compare surface displacement, asphalt horizontal strain, and subgrade vertical strain. Report the signed values, units, and locations.</li>
+      <li>Explain what changed and what the elastic model cannot tell you about accumulated rutting or fatigue life.</li>
+    </ol>
+    <p>Submit a short table with the case name, changed input, response component, location, and value. Include the input files so someone else can repeat the comparison.</p>
+  </section>
   <section id="multiple-wheels" data-section class="doc-section">
     <h2>Multiple wheels</h2>
     <p>Represent each tire contact separately. Use center-to-center spacing, and keep each wheel’s force, pressure, radius, and location consistent.</p>
@@ -186,6 +221,7 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
       <li><a href="https://transportation.erdc.dren.mil/triservice/softwarePCASE.aspx">USACE PCASE software and user guides</a>. Current PCASE resources; the historical WinJULEA reference is described above.</li>
       <li>Huang, <em>Pavement Analysis and Design</em>, 2nd edition: layered elastic theory and pavement response. See the <a href={`${base}textbook/`}>course reading map</a>.</li>
       <li><a href="https://www.johanncardenas.com/e-labs/leaps/documentation.html">LEAPS documentation</a>: comparison solver, circular loading, units, and interface assumptions.</li>
+      <li><a href="https://www.fhwa.dot.gov/publications/research/infrastructure/pavements/15063/002.cfm">FHWA-HRT-15-063, chapter 2</a>: forward calculation and layered elastic assumptions. This supports the model concepts, not WinJULEA menu labels.</li>
     </ul>
     <p>This is a course workflow guide, not an official WinJULEA manual. Version-specific screenshots and verified output labels can be added from the class installation.</p>
   </section>

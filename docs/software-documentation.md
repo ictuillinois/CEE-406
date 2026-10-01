@@ -50,6 +50,39 @@ guide covers trial designs, criteria/reliability, reports, and alternatives.
 The commercial Manual of Practice is not copied. Resources checked October 1,
 2026; version-specific interface screenshots should follow the class installation.
 
+## Third iteration
+
+Library cards add staggered entry and filter-position animations, fine-pointer
+hover feedback, and inset keyboard outlines. Motion is disabled for reduced-motion
+users. Software navigation has larger targets, a current-page rail, colored
+monograms, and scrollable mobile tabs. Sidebar search is a native button; section
+links preserve hashes and move keyboard focus.
+
+The FAARFIELD guide now connects the imported theory, aggregate modulus procedure,
+condition inputs, and four Appendix E examples to guided practice. Published
+example results are explicitly distinguished from website verification runs.
+The flexible example's 18.5/18.8-in. discrepancy and the rigid example's subgrade
+CDF wording are flagged as documentation inconsistencies. The original manual
+remains unchanged. The FAA README download could not be retrieved; current bugs
+are not asserted without a verified release source.
+
+WinJULEA adds response-grid, dual-wheel, and stiffness exercises, supported by
+FHWA-HRT-15-063's explanation of layered elastic assumptions. DRIP adds manual
+example replay and hydraulic sensitivity work, with the official NCHRP Appendix
+TT as an alternate manual. Pavement ME adds baseline, layer-thickness, and input
+uncertainty exercises. Its 2.6.1 fixes are sourced to official release notes and
+clearly marked historical and resolved, alongside the February 2024 history.
+None of these exercises supplies homework solutions or claims unperformed solver
+validation. Installed software and current-version benchmark runs remain outside
+the website checks.
+
+Validation: production build and Pagefind indexing; all 169 documentation routes'
+local links, figures, and fragments; 320/768/1024/1440-px light/dark layouts; filters,
+manual search and URL restoration; checklist persistence/reset; print restoration;
+figure keyboard dialog; site search; no-JavaScript access; reduced-motion behavior,
+hover, sidebar keyboard search, section focus, and mobile active-tab visibility.
+The release and math checks passed (14 tests).
+
 ## Second iteration
 
 Each software entry now combines the course workflow with an explicit user's
