@@ -1,9 +1,12 @@
 ---
 import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
+import DocCallout from '../../../components/docs/DocCallout.astro';
+import DocChecklist from '../../../components/docs/DocChecklist.astro';
+import DocDecision from '../../../components/docs/DocDecision.astro';
 const download = 'https://me-design.com/medesign/DRIP.html?AspxAutoDetectCookieSupport=1';
 const manual = 'https://www.fhwa.dot.gov/pavement/pubs/010942.pdf';
-const headings = ['Download', 'Start a case', 'Geometry', 'Materials', 'Inflow', 'Permeable base', 'Separator', 'Edgedrain', 'Results', 'Checks', 'References'];
-const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label }));
+const headings = ['Download', 'Manual', 'Start a case', 'Geometry', 'Materials', 'Inflow', 'Permeable base', 'Separator', 'Edgedrain', 'Results', 'Checks', 'References'];
+const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label: label === 'Manual' ? 'User’s manual' : label }));
 ---
 <SoftwareDocsLayout title="DRIP · CEE 406" description="A course guide to pavement subsurface drainage with DRIP." activeModule="drip" toc={toc}>
   <header class="doc-header">
@@ -15,13 +18,30 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <h2>Download</h2>
     <p>The <a href={download}>Pavement ME resource page</a> provides a DRIP 2.0 download and user guide. DRIP is a Windows program developed by FHWA and Applied Research Associates for subsurface drainage calculations.</p>
     <p>Extract the download and read its installation instructions. Keep the supplied files together. The documentation is for an older Windows application; modern Windows compatibility has not been tested here.</p>
-    <p>Use the <a href={manual}>FHWA user guide</a> alongside this page. It is an archived 2002 reference.</p>
+    <p>Keep the <a href={manual}>FHWA user’s manual</a> beside your first case. Start with its worked examples before entering the assignment inputs.</p>
+  </section>
+  <section id="manual" data-section class="doc-section">
+    <h2>User’s manual</h2>
+    <p><a href={manual}>DRIP 2.0 User’s Guide</a>, FHWA-IF-02-053, July 2002. The <a href="https://www.fhwa.dot.gov/PAVEMENT/pub_details.cfm?id=43">FHWA publication record</a> identifies this as the software’s operating and technical guide.</p>
+    <ul class="doc-list">
+      <li><strong>Chapter 2:</strong> installation.</li>
+      <li><strong>Chapter 3:</strong> screens, files, plots, and output.</li>
+      <li><strong>Chapter 4:</strong> methods and assumptions.</li>
+      <li><strong>Chapter 5:</strong> worked examples.</li>
+      <li><strong>Chapter 6:</strong> sensitivity studies.</li>
+    </ul>
+    <DocCallout kind="note" label="Version matters">This archived manual covers DRIP 2.0. Its installation instructions describe the Windows systems of that period; check the course setup instructions for your machine.</DocCallout>
   </section>
   <section id="start-a-case" data-section class="doc-section">
     <h2>Start a case</h2>
     <p>Save a case for the assigned section. Choose the unit system and write down the drainage objective before entering values: carry an inflow, meet a time-to-drain target, or check an existing system.</p>
     <p>Work through geometry, material gradations, inflow, the permeable base, separation, and the edgedrain. Keep a sketch beside the inputs so every width, slope, and outlet location has a clear meaning.</p>
     <p>Use one case per alternative. For comparisons, change one input at a time and retain the original case.</p>
+    <DocDecision id="drip-objective" label="What does your case need to check?" choices={[
+      { value: 'capacity', label: 'Carry an inflow', title: 'Use depth of flow', body: 'Compare calculated flow depth with the available permeable-base thickness. Record the chosen inflow method and event.', href: '#permeable-base', linkLabel: 'Check the permeable base' },
+      { value: 'time', label: 'Drain within a target time', title: 'Use time to drain', body: 'Record the degree of drainage and its time target. Capacity alone does not answer this question.', href: '#permeable-base', linkLabel: 'Check drainage time' },
+      { value: 'outlet', label: 'Check the collector and outlet', title: 'Follow the water to the outlet', body: 'Check contributing flow, collector capacity, outlet spacing, and the connection from base to drain.', href: '#edgedrain', linkLabel: 'Check the edgedrain' },
+    ]} />
   </section>
   <section id="geometry" data-section class="doc-section">
     <h2>Geometry</h2>
@@ -35,16 +55,17 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>Check that sieve openings use the selected length unit and that percent passing stays between 0 and 100. Passing should increase as sieve opening increases. Keep measured permeability separate from a gradation-based estimate.</p>
     <p>Confirm the time unit of permeability. A value in cm/s cannot be entered unchanged in a field requesting m/day. For reference, 1 cm/s = 864 m/day.</p>
     <p>For a sensitivity study, vary permeability over a justified range rather than assuming one estimate describes every field condition.</p>
+    <DocCallout kind="tip" label="Keep the time unit">Write permeability as a length per time in your case log. A copied number without its time unit can change a result by orders of magnitude.</DocCallout>
   </section>
   <section id="inflow" data-section class="doc-section">
     <h2>Inflow</h2>
-    <p>The program includes infiltration-ratio and crack-infiltration approaches, with meltwater calculations.</p>
+    <p>The program includes infiltration-ratio and crack-infiltration approaches, with meltwater calculations. See the inflow property pages in <a href={manual}>manual chapter 3</a> and the equations in chapter 4.</p>
     <p>Use the method specified in the assignment. Record the rainfall source, event duration, infiltration assumptions, and contributing width. Rainfall intensity and total rainfall depth are different inputs.</p>
     <p>Do not count the same water twice by combining alternative infiltration estimates. If another source of water is included, identify it separately and explain the assumption.</p>
   </section>
   <section id="permeable-base" data-section class="doc-section">
     <h2>Permeable base</h2>
-    <p>DRIP offers depth-of-flow and time-to-drain analyses. Use the mode that matches the question.</p>
+    <p>DRIP offers depth-of-flow and time-to-drain analyses (<a href={manual}>manual chapters 3–4</a>). Use the mode that matches the question.</p>
     <p>For a flow-capacity check, compare the calculated water depth with the available drainage-layer thickness. For a time check, record the specified degree of drainage and compare the calculated time with its target.</p>
     <p>Keep these conclusions separate. A layer that carries the selected inflow does not automatically meet a drainage-time target.</p>
     <p>Test an alternative thickness, permeability, or drainage path. Record the changed input and resulting flow depth or drainage time. Avoid changing several variables together until you understand their individual effects.</p>
@@ -70,6 +91,7 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   </section>
   <section id="checks" data-section class="doc-section">
     <h2>Checks</h2>
+    <DocChecklist id="drip-run-v2" title="Before you submit" items={['Drainage width and path agree with the sketch.', 'Slope, rainfall, and permeability units are recorded.', 'The inflow method and water sources are stated.', 'The result is compared with the assigned depth or time target.', 'Separator, collector, and outlet checks are included.', 'The case file and exported summary are saved.']} />
     <ul class="doc-list">
       <li>Width and drainage path match the sketch.</li>
       <li>Slopes, permeability, rainfall, and flow rates use the displayed units.</li>

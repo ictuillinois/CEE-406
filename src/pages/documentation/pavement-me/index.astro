@@ -1,9 +1,12 @@
 ---
 import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
+import DocCallout from '../../../components/docs/DocCallout.astro';
+import DocChecklist from '../../../components/docs/DocChecklist.astro';
+import DocDecision from '../../../components/docs/DocDecision.astro';
 const product = 'https://www.aashtoware.org/products/pavement/pavement-me-design/';
 const help = 'https://aashtowarepavementme.org/MEDesign/help/';
-const headings = ['Access', 'Workflow', 'Project', 'Traffic', 'Climate', 'Materials', 'Criteria', 'Run', 'Results', 'Compare designs', 'Checks', 'References'];
-const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label }));
+const headings = ['Access', 'Manual', 'Workflow', 'Project', 'Traffic', 'Climate', 'Materials', 'Criteria', 'Run', 'Results', 'Compare designs', 'Checks', 'References'];
+const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label: label === 'Manual' ? 'User’s manual' : label }));
 ---
 <SoftwareDocsLayout title="AASHTOWare Pavement ME Design · CEE 406" description="A course guide to inputs, trial designs, and performance results in AASHTOWare Pavement ME Design." activeModule="pavement-me" toc={toc}>
   <header class="doc-header">
@@ -15,7 +18,18 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <h2>Access</h2>
     <p>Use the version and access instructions provided in class. The <a href={product}>AASHTOWare product page</a> lists web subscriptions, licensing, and an educational option managed by eligible institutions. The educational license is for classroom teaching and is not offered directly to individuals.</p>
     <p>For web access, use the <a href="https://aashtowarepavementme.org/MEDesignWebAppIdp/Account/Login">Pavement ME sign-in page</a> with your assigned account. Older desktop versions may use different screens and file handling. Record your version when reporting results.</p>
-    <p>Keep the <a href={`${help}index.html`}>official help manual</a> open for field definitions. This course guide focuses on the analysis workflow.</p>
+    <p>Keep the <a href={`${help}index.html`}>official user’s manual</a> open for field definitions. Record the version used for every submitted design.</p>
+  </section>
+  <section id="manual" data-section class="doc-section">
+    <h2>User’s manual</h2>
+    <p>The <a href={`${help}index.html`}>AASHTOWare Pavement ME Design User Help Manual</a> explains the interface and its inputs. Use the help for your installed or web version when the screens differ.</p>
+    <ul class="doc-list">
+      <li><a href={`${help}introduction.html`}>Introduction:</a> trial designs and the analysis process.</li>
+      <li><a href={`${help}traffic.html`}>Traffic:</a> truck volumes, distributions, growth, and axle loads.</li>
+      <li><a href={`${help}climate.html`}>Climate:</a> location and climate data.</li>
+      <li><a href={`${help}new_flexible_design.html`}>New flexible design:</a> layer properties and asphalt input levels.</li>
+    </ul>
+    <DocCallout kind="note" label="Two references">The online user help covers software operation. The AASHTO <em>Mechanistic-Empirical Pavement Design Guide: A Manual of Practice</em> covers the design methodology and is a separate publication. This page links to user help; it does not reproduce that manual.</DocCallout>
   </section>
   <section id="workflow" data-section class="doc-section">
     <h2>Workflow</h2>
@@ -40,6 +54,7 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>Enter the base-year two-way average annual daily truck traffic (AADTT), then its design-direction and design-lane percentages. AADTT counts trucks; AADT includes other vehicles. Check these fields before applying distribution factors.</p>
     <p>Review vehicle-class distributions, growth functions, axle-load spectra, axles per truck, and wheel geometry. These describe load applications rather than a single ESAL total. The <a href={`${help}traffic.html`}>traffic help</a> defines the fields.</p>
     <p>Class percentages total 100. Monthly adjustment factors total 12 per class; they are not monthly percentages totaling 100. Where hourly percentages are required for a rigid design, they total 100.</p>
+    <DocCallout kind="tip" label="Avoid applying the lane factors twice">If your source already gives design-lane truck traffic, recover or confirm the two-way value before entering it in the two-way AADTT field. Keep the direction and lane percentages with your source. See the <a href={`${help}traffic.html`}>general traffic inputs</a>.</DocCallout>
     <p>Use project data when available, then the regional or default data allowed by the assignment. Record the source. Keep the selected growth function with the growth rate: linear and compound growth are different forecasts.</p>
   </section>
   <section id="climate" data-section class="doc-section">
@@ -81,6 +96,11 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>For a flexible section, distinguish total rutting from layer contributions where those outputs are available. For cracking, keep the model’s measure and units with the result. Different cracking measures cannot be compared as if they were the same percentage.</p>
     <p>For rigid pavement, review the outputs applicable to its strategy. Check smoothness as well as structural distress. A design can satisfy one limit and fail another.</p>
     <p>Use the report’s applicable performance check. Do not compare a mean prediction with a reliability-adjusted limit or output without confirming how the report expresses reliability.</p>
+    <DocDecision id="pavement-me-review" label="Where did the trial design fall short?" choices={[
+      { value: 'rutting', label: 'Rutting', title: 'Review the layer contributions', body: 'For flexible designs, identify which layers contribute to the reported rutting. Check the relevant material inputs before changing the trial section.', href: '#materials', linkLabel: 'Review material inputs' },
+      { value: 'cracking', label: 'Cracking', title: 'Read the exact cracking measure', body: 'Keep the model, units, and applicable reliability with the result. Review the inputs for that distress rather than treating every cracking output as the same percentage.', href: '#criteria', linkLabel: 'Review the performance criteria' },
+      { value: 'iri', label: 'Smoothness', title: 'Review the curve and related distress', body: 'Check the initial smoothness assumption and when the predicted curve reaches its limit. A section still needs to satisfy its other applicable criteria.', href: '#compare-designs', linkLabel: 'Compare a documented alternative' },
+    ]} />
   </section>
   <section id="compare-designs" data-section class="doc-section">
     <h2>Compare designs</h2>
@@ -88,9 +108,14 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>For each alternative, record the changed input, governing criterion, predicted performance, and whether every required limit is met. Explain the improvement and any remaining failure.</p>
     <p>After understanding individual effects, compare practical combinations. A passing prediction establishes feasibility under the modeled conditions; selecting an alternative also requires the assignment’s cost and construction considerations.</p>
     <p>A useful submission includes the saved designs, input sources, baseline and alternative reports, a short comparison table, and the reason for your selected section.</p>
+    <details class="doc-example"><summary>Try a thickness comparison</summary>
+      <p>Copy the baseline, increase one layer’s thickness by the assigned increment, and rerun. Keep traffic, climate, materials, criteria, reliability, and calibration fixed.</p>
+      <p>Compare every applicable distress and smoothness result. Report the thickness change, governing criterion, and whether either design meets all limits. This is a sensitivity exercise; no improvement is assumed before the run.</p>
+    </details>
   </section>
   <section id="checks" data-section class="doc-section">
     <h2>Checks</h2>
+    <DocChecklist id="pavement-me-run-v2" title="Before you submit" items={['Two-way AADTT and direction/lane factors match the source.', 'Traffic distribution totals match the user help.', 'Material input levels match the available data.', 'Climate, dates, version, and calibration are recorded.', 'Every applicable distress and smoothness limit is checked.', 'Baseline and alternative reports are saved with the inputs.']} />
     <ul class="doc-list">
       <li>AADTT, direction, and lane factors have not been applied twice.</li>
       <li>Traffic distributions and their totals match the field definitions.</li>
@@ -106,7 +131,7 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <h2>References</h2>
     <ul class="doc-list">
       <li><a href={product}>AASHTOWare product and licensing page</a>.</li>
-      <li><a href={`${help}index.html`}>Official user help</a>.</li>
+      <li><a href={`${help}index.html`}>Official User Help Manual</a>.</li>
       <li><a href="https://aashtowarepavementme.org/MEDesign/Content/Documents">Documents and release notes</a>.</li>
       <li><a href="https://www.aashtoware.org/support/user-support/">Licensed-user support</a>.</li>
     </ul>

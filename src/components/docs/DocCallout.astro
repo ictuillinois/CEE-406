@@ -1,0 +1,12 @@
+---
+interface Props { label?: string; kind?: 'tip' | 'note' | 'info'; }
+const { label = 'Tip', kind = 'tip' } = Astro.props;
+---
+<aside class={`doc-callout doc-callout--${kind}`} aria-label={label}>
+  <div><strong>{label}</strong><slot /></div>
+</aside>
+<style>
+  aside { margin: 1rem 0; }
+  strong { display: block; font-size: .8125rem; margin-bottom: .25rem; }
+  aside :global(p) { font-size: .875rem; margin: 0; line-height: 1.55; }
+</style>

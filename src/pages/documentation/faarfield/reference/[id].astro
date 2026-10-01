@@ -9,19 +9,49 @@ const base = import.meta.env.BASE_URL;
 const previous = topics[index - 1];
 const next = topics[index + 1];
 ---
-<SoftwareDocsLayout title={`${topic.title} · CEE 406`} description={`FAARFIELD help reference: ${topic.title}.`} activeModule="reference">
+<SoftwareDocsLayout title={`${topic.title} · CEE 406`} description={`FAARFIELD help reference: ${topic.title}.`} activeModule="faarfield">
   <header class="doc-header">
-    <span class="doc-header__badge">FAARFIELD reference</span>
+    <span class="doc-header__badge">FAARFIELD user’s manual</span>
     <h1 class="doc-header__title">{topic.title}</h1>
     <p class="source-note">FAA help text · supplied FAARFIELD 2.1.1 documentation</p>
+    <p class="source-note"><a href={`${base}documentation/faarfield/`}>Course guide</a> · <a href={`${base}documentation/faarfield/#manual`}>Browse the manual</a></p>
   </header>
   <div class="doc-section faa-reference" set:html={topic.html.replaceAll('__BASE__', base)} />
+  <dialog class="figure-viewer" aria-label="Manual figure" data-pagefind-ignore>
+    <div class="figure-viewer-toolbar"><span>Manual figure</span><button type="button" aria-label="Close figure">Close ×</button></div>
+    <img alt="" />
+  </dialog>
   <nav class="reference-pagination" aria-label="Reference topics">
     {previous && <a href={`${base}documentation/faarfield/reference/${previous.id}/`}>← {previous.title}</a>}
-    <a href={`${base}documentation/faarfield/reference/`}>All topics</a>
+    <a href={`${base}documentation/faarfield/#manual`}>All topics</a>
     {next && <a href={`${base}documentation/faarfield/reference/${next.id}/`}>{next.title} →</a>}
   </nav>
 </SoftwareDocsLayout>
+<script>
+  const viewer = document.querySelector<HTMLDialogElement>('.figure-viewer');
+  const enlarged = viewer?.querySelector('img');
+  if (viewer && enlarged) {
+    viewer.querySelector('button')!.addEventListener('click', () => viewer.close());
+    viewer.addEventListener('click', event => {
+      if (event.target === viewer) viewer.close();
+    });
+    document.querySelectorAll<HTMLImageElement>('.faa-reference img').forEach(img => {
+      if (img.closest('a[href]')) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'figure-open';
+      button.setAttribute('aria-label', `Enlarge ${img.alt || 'manual figure'}`);
+      button.title = 'Click to enlarge';
+      img.before(button);
+      button.append(img);
+      button.addEventListener('click', () => {
+        enlarged.src = img.src;
+        enlarged.alt = img.alt;
+        viewer.showModal();
+      });
+    });
+  }
+</script>
 <style>
   .source-note { font-size: .75rem; color: var(--color-text-muted); }
   .faa-reference { overflow-wrap: anywhere; overflow-x: auto; }
@@ -33,4 +63,13 @@ const next = topics[index + 1];
   .faa-reference :global(.doc-code) { font-family: var(--font-mono); font-size: .875em; }
   .reference-pagination { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--color-border); padding-top: 1rem; font-size: .8125rem; }
   .reference-pagination a { color: var(--color-accent); }
+  .faa-reference :global(.figure-open) { display: block; max-width: 100%; padding: 0; border: 0; margin: 1rem auto; background: transparent; cursor: zoom-in; }
+  .faa-reference :global(.figure-open img) { margin: 0; }
+  .faa-reference :global(.figure-open:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  .figure-viewer { width: min(90vw, 80rem); max-height: 90vh; border: 1px solid var(--color-border); border-radius: 10px; padding: 1rem; background: var(--color-surface); color: var(--color-text); }
+  .figure-viewer::backdrop { background: rgb(10 20 36 / .7); backdrop-filter: blur(5px); }
+  .figure-viewer img { display: block; max-width: 100%; height: auto; margin: 1rem auto 0; background: white; }
+  .figure-viewer-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: .8125rem; }
+  .figure-viewer-toolbar button { font: inherit; color: var(--color-text); background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 5px; padding: .5rem .75rem; cursor: pointer; }
+  @media print { .figure-viewer { display: none; } }
 </style>

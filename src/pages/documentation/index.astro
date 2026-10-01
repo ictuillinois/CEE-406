@@ -1,16 +1,106 @@
 ---
 import SoftwareDocsLayout from '../../layouts/SoftwareDocsLayout.astro';
 const base = import.meta.env.BASE_URL;
+const software = [
+  { id: 'faarfield', name: 'FAARFIELD', short: 'F', category: 'Design', purpose: 'Airport pavements', description: 'Build an aircraft mix, design a section, and check pavement life.', color: 'var(--phase-design)', topics: 'Aircraft · Layers · CDF', path: 'M20 28h80M28 38h64M36 48h48M44 58h32M60 12v54M50 22l10-10 10 10' },
+  { id: 'winjulea', name: 'WinJULEA', short: 'W', category: 'Analysis', purpose: 'Layered elastic analysis', description: 'Apply wheel loads and read stresses, strains, and deflections.', color: 'var(--phase-analysis)', topics: 'Loads · Moduli · Response', path: 'M20 30h80M20 43h80M20 58h80M60 12v18m-6-6 6 6 6-6M30 30c10 0 12 13 30 13s20-13 30-13' },
+  { id: 'drip', name: 'DRIP', short: 'D', category: 'Drainage', purpose: 'Subsurface drainage', description: 'Check water inflow, a permeable base, and edgedrain spacing.', color: 'var(--phase-materials)', topics: 'Inflow · Base · Edgedrains', path: 'M20 25h80M20 38l80 10M20 55h80M30 14v10m20-10v10m20-10v10M82 46v15m-6-6 6 6 6-6' },
+  { id: 'pavement-me', name: 'AASHTOWare Pavement ME Design', short: 'ME', category: 'Design', purpose: 'Pavement performance', description: 'Set design criteria and compare predicted distress for trial sections.', color: 'var(--phase-loads)', topics: 'Traffic · Climate · Distress', path: 'M24 15v46h76M30 52c20-3 24-20 35-18s15-8 28-17M30 43c18 0 24-5 34-6s20-7 29-12' },
+];
 ---
-<SoftwareDocsLayout title="Documentation · CEE 406" description="Guides for the software used in CEE 406." activeModule="index">
-  <header class="doc-header">
-    <h1 class="doc-header__title">Documentation</h1>
-    <p class="doc-header__desc">Setup, inputs, and results for the software we use in class.</p>
+<SoftwareDocsLayout title="Documentation · CEE 406" description="Guides and user manuals for the software used in CEE 406." activeModule="index">
+  <header class="library-header">
+    <h1>Documentation</h1>
+    <p>Guides and user’s manuals for the software we use in class.</p>
   </header>
-  <section aria-label="Software guides">
-    <a class="doc-link-card" href={`${base}documentation/faarfield/`}><div><strong>FAARFIELD</strong><span>Airport pavement design and evaluation. Start with the course guide or browse the help reference.</span></div></a>
-    <a class="doc-link-card" href={`${base}documentation/winjulea/`}><div><strong>WinJULEA</strong><span>Layered elastic analysis. Build a section, apply wheel loads, and read stresses and strains.</span></div></a>
-    <a class="doc-link-card" href={`${base}documentation/drip/`}><div><strong>DRIP</strong><span>Subsurface drainage. Check inflow, a permeable base, separators, and edgedrains.</span></div></a>
-    <a class="doc-link-card" href={`${base}documentation/pavement-me/`}><div><strong>AASHTOWare Pavement ME Design</strong><span>Predict pavement performance and compare trial sections against design criteria.</span></div></a>
+  <section aria-label="Software guides" data-software-library>
+    <div class="library-tools" hidden>
+      <label class="library-search"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span class="sr-only">Find software</span><input type="search" placeholder="Find software or a topic…" data-software-search autocomplete="off" /></label>
+      <div class="library-filters" role="group" aria-label="Filter software">{['All', 'Design', 'Analysis', 'Drainage'].map((category, i) => <button type="button" aria-pressed={i === 0 ? 'true' : 'false'} data-software-filter={category}>{category}</button>)}</div>
+    </div>
+    <div class="library-results"><h2>Software guides</h2><span data-software-count aria-live="polite" aria-atomic="true">4 guides</span></div>
+    <div class="library-grid">
+      {software.map(item => <article class="software-card" style={`--software-color: ${item.color}`} data-software-card data-category={item.category} data-search={`${item.name} ${item.category} ${item.purpose} ${item.description} ${item.topics}`.toLowerCase()}>
+        <a class="software-card-main" href={`${base}documentation/${item.id}/`} aria-label={`${item.name} guide`}>
+          <div class="software-card-art" aria-hidden="true"><span class="software-monogram">{item.short}</span><svg viewBox="0 0 120 76" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d={item.path}/></svg></div>
+          <div class="software-card-copy"><h3>{item.name}</h3><span class="software-purpose">{item.purpose}</span><p>{item.description}</p><span class="software-open">Open guide <span aria-hidden="true">→</span></span></div>
+        </a>
+        <a class="software-manual" href={`${base}documentation/${item.id}/#manual`} aria-label={`${item.name} user's manual`}>User’s manual <span aria-hidden="true">→</span></a>
+      </article>)}
+    </div>
+    <div class="library-empty" hidden><p>No guides match your search.</p><button type="button" data-software-reset>Clear filters</button></div>
   </section>
+  <aside class="library-note"><p>Start with the guide. Use the manual for command details and version-specific instructions.</p></aside>
 </SoftwareDocsLayout>
+<script>
+  function initSoftwareLibrary() {
+    const library = document.querySelector<HTMLElement>('[data-software-library]');
+    if (!library || library.dataset.ready) return;
+    library.dataset.ready = 'true';
+    const input = library.querySelector<HTMLInputElement>('[data-software-search]')!;
+    const cards = [...library.querySelectorAll<HTMLElement>('[data-software-card]')];
+    const buttons = [...library.querySelectorAll<HTMLButtonElement>('[data-software-filter]')];
+    const count = library.querySelector<HTMLElement>('[data-software-count]')!;
+    const empty = library.querySelector<HTMLElement>('.library-empty')!;
+    let category = 'All';
+    library.querySelector<HTMLElement>('.library-tools')!.hidden = false;
+    const filter = () => {
+      const terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      let visible = 0;
+      cards.forEach(card => {
+        card.hidden = !(category === 'All' || category === card.dataset.category) || !terms.every(term => card.dataset.search?.includes(term));
+        if (!card.hidden) visible++;
+      });
+      buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.softwareFilter === category)));
+      count.textContent = `${visible} ${visible === 1 ? 'guide' : 'guides'}`;
+      empty.hidden = visible !== 0;
+    };
+    input.addEventListener('input', filter);
+    buttons.forEach(button => button.addEventListener('click', () => { category = button.dataset.softwareFilter!; filter(); }));
+    library.querySelector('[data-software-reset]')!.addEventListener('click', () => { input.value = ''; category = 'All'; filter(); input.focus(); });
+  }
+  initSoftwareLibrary();
+  document.addEventListener('astro:page-load', initSoftwareLibrary);
+</script>
+<style>
+  .library-header { padding: .5rem 0 2rem; margin-bottom: 1.75rem; border-bottom: 1px solid var(--color-border); }
+  .library-header h1 { font-size: clamp(2rem, 4vw, 2.75rem); margin: 0 0 .75rem; letter-spacing: -.04em; }
+  .library-header p { max-width: 35rem; font-size: 1rem; color: var(--color-text-muted); line-height: 1.65; margin: 0; }
+  .library-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+  .library-tools[hidden], [hidden] { display: none !important; }
+  .library-search { flex: 1 1 15rem; display: flex; align-items: center; gap: .6rem; border: 1px solid var(--color-border); border-radius: 8px; padding: .65rem .85rem; background: var(--color-surface); }
+  .library-search:focus-within { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+  .library-search svg { width: 1rem; height: 1rem; color: var(--color-text-muted); flex-shrink: 0; }
+  .library-search input { border: 0; outline: none; width: 100%; min-width: 0; background: transparent; color: var(--color-text); font: inherit; font-size: .85rem; }
+  .library-search input::placeholder { color: var(--color-text-muted); }
+  .library-filters { display: flex; gap: .25rem; }
+  .library-filters button { border: 0; border-bottom: 2px solid transparent; min-height: 44px; padding: .5rem .65rem; background: transparent; color: var(--color-text-muted); font: inherit; font-size: .8rem; cursor: pointer; transition: color .15s ease; }
+  .library-filters button:hover { color: var(--color-text); }
+  .library-filters button[aria-pressed="true"] { border-bottom-color: var(--color-accent); color: var(--color-text); }
+  .library-results { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .85rem; }
+  .library-results h2 { font-size: 1rem; margin: 0; }
+  .library-results > span { font-family: var(--font-mono); font-size: .7rem; color: var(--color-text-muted); }
+  .library-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+  .software-card { border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); overflow: hidden; display: flex; flex-direction: column; transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+  .software-card:hover, .software-card:focus-within { border-color: color-mix(in srgb, var(--software-color) 65%, var(--color-border)); box-shadow: 0 8px 24px #00000008; }
+  .software-card-main { flex: 1; display: flex; flex-direction: column; }
+  .software-card-art { height: 6.25rem; display: flex; align-items: center; justify-content: space-between; position: relative; padding: 1rem 1.5rem; background: linear-gradient(135deg, color-mix(in srgb, var(--software-color) 6%, var(--color-surface)), var(--color-surface-alt)); color: var(--software-color); }
+  .software-card-art svg { width: 7.5rem; height: 4.75rem; opacity: .75; margin-right: -.3rem; }
+  .software-monogram { font-family: var(--font-heading); font-size: 1.8rem; font-weight: 500; letter-spacing: -.05em; }
+  .software-card-copy { padding: 1.4rem 1.5rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+  .software-purpose { font-size: .75rem; color: var(--color-text-muted); margin-bottom: .75rem; }
+  .software-card h3 { font-size: 1.0625rem; line-height: 1.4; margin: 0 0 .3rem; color: var(--color-text); }
+  .software-card p { font-size: .875rem; color: var(--color-text-muted); line-height: 1.65; margin: 0 0 1.25rem; }
+  .software-open { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; font-weight: 500; margin-top: auto; color: var(--color-text); }
+  .software-open > span { color: var(--software-color); font-size: 1rem; transition: transform .2s ease; }
+  .software-card-main:hover .software-open > span { transform: translateX(3px); }
+  .software-manual { display: flex; justify-content: space-between; align-items: center; min-height: 44px; border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); padding: .65rem 1.5rem; font-size: .75rem; color: var(--color-text-muted); }
+  .software-manual:hover { color: var(--software-color); }
+  .library-note { margin-top: 1.5rem; padding: .5rem 0; }
+  .library-note p { margin: 0; font-size: .8rem; line-height: 1.6; color: var(--color-text-muted); }
+  .library-empty { text-align: center; padding: 2rem; border: 1px dashed var(--color-border); border-radius: 10px; color: var(--color-text-muted); font-size: .85rem; }
+  .library-empty button { font: inherit; color: var(--color-accent); background: transparent; border: 0; text-decoration: underline; cursor: pointer; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  @media (max-width: 560px) { .library-grid { grid-template-columns: 1fr; } .library-tools { gap: .5rem; } .library-filters { width: 100%; } .library-filters button { flex: 1; } }
+  @media (prefers-reduced-motion: reduce) { .software-card, .software-open > span { transition: none; } .software-card:hover, .software-card-main:hover .software-open > span { transform: none; } }
+</style>

@@ -1,19 +1,22 @@
 ---
 import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
+import DocCallout from '../../../components/docs/DocCallout.astro';
+import DocChecklist from '../../../components/docs/DocChecklist.astro';
+import DocDecision from '../../../components/docs/DocDecision.astro';
 const base = import.meta.env.BASE_URL;
-const headings = ['Setup', 'Model', 'Units', 'Layers', 'Loads', 'Evaluation points', 'Run and save', 'Read the output', 'Example', 'Multiple wheels', 'Sublayers', 'Checks', 'Troubleshooting', 'References'];
-const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label }));
+const headings = ['Setup', 'Model', 'Units', 'Layers', 'Loads', 'Evaluation points', 'Run and save', 'Read the output', 'Example', 'Multiple wheels', 'Sublayers', 'Checks', 'Troubleshooting', 'Manual', 'References'];
+const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label: label === 'Manual' ? 'User’s manual' : label }));
 ---
 <SoftwareDocsLayout title="WinJULEA · CEE 406" description="A course guide to layered elastic pavement analysis with WinJULEA." activeModule="winjulea" toc={toc}>
   <header class="doc-header">
-    <span class="doc-header__badge">Course guide · first draft</span>
+    <span class="doc-header__badge">Course guide · layered elastic analysis</span>
     <h1 class="doc-header__title">WinJULEA</h1>
     <p class="doc-header__desc">Calculate pavement stresses, strains, and displacements under wheel loads.</p>
   </header>
   <section id="setup" data-section class="doc-section">
     <h2>Setup</h2>
     <p>Use the Windows copy provided in class. Keep its accompanying files together and save your analyses in a folder you can write to.</p>
-    <p>The <a href="https://transportation.erdc.dren.mil/pcase/downloads/PCASE209%20User%20Manual.pdf">USACE PCASE 2.09 manual</a> lists WinJULEA under Utilities. That is a historical distribution reference; a current standalone installer has not been verified. Use the course copy for a consistent version.</p>
+    <p>The historical PCASE 2.09 user’s manual lists WinJULEA under Utilities (§2.8, p. 9). Its old download address now redirects to the <a href="https://transportation.erdc.dren.mil/triservice/softwarePCASE.aspx">current USACE PCASE page</a>. Use the class copy; a current standalone WinJULEA installer has not been verified.</p>
     <p>This guide covers the analysis workflow. Menu labels, file formats, and output conventions should be checked against the copy used in class.</p>
   </section>
   <section id="model" data-section class="doc-section">
@@ -38,6 +41,7 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     </table></div>
     <p>If you use kPa and mm, the corresponding force unit is 0.001 N. Convert pressure to MPa when calculating a wheel force in N from an area in mm².</p>
     <p>1 MPa = 1,000 kPa. 1 ksi = 1,000 psi. Strain of 0.0002 is 200 microstrain (µε). Convert strain only after checking how the output displays it.</p>
+    <DocCallout kind="tip" label="Before converting">Keep the original output value beside its converted value. For example, 0.0002 strain = 200 µε; the material response has not changed.</DocCallout>
   </section>
   <section id="layers" data-section class="doc-section">
     <h2>Layers</h2>
@@ -70,6 +74,11 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     </ul>
     <p>A point exactly at an interface can be ambiguous because strain depends on the material. Select the layer explicitly if the program permits it. Otherwise use points just above and below the boundary, with a small offset relative to the layer thickness, and record that offset.</p>
     <p>A sparse set of points can miss the critical response. Add points around the largest value and repeat until the location and value change little.</p>
+    <DocDecision id="winjulea-response" label="What are you checking?" choices={[
+      { value: 'fatigue', label: 'Asphalt fatigue', title: 'Start at the bottom of asphalt', body: 'Sample horizontal strains on the asphalt side of the interface, beneath and between wheels. Use the component required by the assigned fatigue relationship.', href: '#read-the-output', linkLabel: 'Read strains and signs' },
+      { value: 'rutting', label: 'Subgrade rutting', title: 'Start just inside the subgrade', body: 'Sample vertical strain on the subgrade side. Record the depth and interface offset so you can repeat the check.', href: '#evaluation-points', linkLabel: 'Choose evaluation points' },
+      { value: 'deflection', label: 'Surface deflection', title: 'Build a surface profile', body: 'Sample vertical displacement at the surface under and around the wheel group. Keep the displacement unit with every value.', href: '#units', linkLabel: 'Check units' },
+    ]} />
   </section>
   <section id="run-and-save" data-section class="doc-section">
     <h2>Run and save</h2>
@@ -138,6 +147,7 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   </section>
   <section id="checks" data-section class="doc-section">
     <h2>Checks</h2>
+    <DocChecklist id="winjulea-run-v2" title="Before you submit" items={['Wheel force agrees with pressure × circular area.', 'Layer depths and interface sides match the section.', 'Output signs and strain units are recorded.', 'The pressure scaling check passes at fixed radius.', 'Points around the peak have been refined.', 'Input file and labelled results are saved.']} />
     <ul class="doc-list">
       <li><strong>Force:</strong> pressure × contact area equals the intended force per wheel.</li>
       <li><strong>Depth:</strong> cumulative thickness agrees with every interface and evaluation layer.</li>
@@ -164,10 +174,16 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     </table></div>
     <p>When asking for help, include the input file, software version, unit system, error message, and the evaluation point you are checking.</p>
   </section>
+  <section id="manual" data-section class="doc-section">
+    <h2>User’s manual</h2>
+    <p>Use the help supplied with the class installation for exact field names, interface parameters, and output conventions. We have not located a verified standalone WinJULEA user’s manual.</p>
+    <DocCallout kind="note" label="Historical reference">The USACE PCASE 2.09 user’s manual (30 September 2010, §2.8) identifies WinJULEA as a multilayer linear elastic utility. It is a PCASE manual, not a WinJULEA operating manual. The former PDF link now redirects to the <a href="https://transportation.erdc.dren.mil/triservice/softwarePCASE.aspx">PCASE download and user guides page</a>.</DocCallout>
+    <p>The examples and checks above are course exercises based on layered elastic theory. Their inputs are illustrative; they are not published WinJULEA benchmark results.</p>
+  </section>
   <section id="references" data-section class="doc-section">
     <h2>References</h2>
     <ul class="doc-list">
-      <li><a href="https://transportation.erdc.dren.mil/pcase/downloads/PCASE209%20User%20Manual.pdf">USACE PCASE 2.09 User Manual</a>, Utilities menu: identifies WinJULEA as a multilayer linear elastic analysis utility.</li>
+      <li><a href="https://transportation.erdc.dren.mil/triservice/softwarePCASE.aspx">USACE PCASE software and user guides</a>. Current PCASE resources; the historical WinJULEA reference is described above.</li>
       <li>Huang, <em>Pavement Analysis and Design</em>, 2nd edition: layered elastic theory and pavement response. See the <a href={`${base}textbook/`}>course reading map</a>.</li>
       <li><a href="https://www.johanncardenas.com/e-labs/leaps/documentation.html">LEAPS documentation</a>: comparison solver, circular loading, units, and interface assumptions.</li>
     </ul>

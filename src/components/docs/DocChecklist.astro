@@ -1,0 +1,51 @@
+---
+interface Props { id: string; title: string; items: string[]; }
+const { id, title, items } = Astro.props;
+---
+<fieldset class="doc-checklist" data-checklist={id}>
+  <legend>{title}</legend>
+  <p class="checklist-note">Mark each item as you check your case.</p>
+  {items.map((item, index) => <label><input type="checkbox" value={index} /><span>{item}</span></label>)}
+  <div class="checklist-actions" hidden>
+    <span class="checklist-count" role="status" aria-live="polite"></span>
+    <button type="button">Reset</button>
+  </div>
+</fieldset>
+<script>
+  document.querySelectorAll<HTMLFieldSetElement>('[data-checklist]').forEach(list => {
+    const key = `cee406-doc-checklist-${list.dataset.checklist}`;
+    const inputs = [...list.querySelectorAll<HTMLInputElement>('input')];
+    const actions = list.querySelector<HTMLElement>('.checklist-actions');
+    const count = list.querySelector<HTMLElement>('.checklist-count');
+    let storageAvailable = true;
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(key) || '[]');
+      if (Array.isArray(saved)) inputs.forEach(input => { input.checked = saved.includes(input.value); });
+    } catch { storageAvailable = false; }
+    function update(save = false) {
+      const checked = inputs.filter(input => input.checked).map(input => input.value);
+      if (save && storageAvailable) {
+        try { localStorage.setItem(key, JSON.stringify(checked)); } catch { storageAvailable = false; }
+      }
+      if (count) count.textContent = `${checked.length} of ${inputs.length} checked${storageAvailable ? ' · saved in this browser' : ''}`;
+    }
+    inputs.forEach(input => input.addEventListener('change', () => update(true)));
+    list.querySelector('button')?.addEventListener('click', () => {
+      inputs.forEach(input => { input.checked = false; });
+      update(true);
+    });
+    if (actions) actions.hidden = false;
+    update();
+  });
+</script>
+<style>
+  fieldset { min-width: 0; margin: 1.5rem 0; padding: 1rem; border: 1px solid var(--color-border); border-radius: 8px; }
+  legend { font-family: var(--font-heading); font-size: .9375rem; font-weight: 600; padding: 0 .25rem; }
+  .checklist-note { font-size: .8125rem; color: var(--color-text-muted); }
+  label { display: flex; align-items: flex-start; gap: .65rem; padding: .45rem 0; font-size: .875rem; line-height: 1.5; cursor: pointer; }
+  input { flex-shrink: 0; margin-top: .25rem; width: 1rem; height: 1rem; accent-color: var(--color-accent); }
+  .checklist-actions:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-top: .75rem; }
+  .checklist-count { font-size: .75rem; color: var(--color-text-muted); }
+  button { font: inherit; font-size: .8125rem; color: var(--color-text); background: var(--color-surface-alt); border: 1px solid var(--color-border); padding: .4rem .75rem; border-radius: 5px; cursor: pointer; }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+</style>

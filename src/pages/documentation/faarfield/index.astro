@@ -1,9 +1,19 @@
 ---
 import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
 import { faarfieldDownload } from '../../../data/documentation';
+import DocCallout from '../../../components/docs/DocCallout.astro';
+import DocChecklist from '../../../components/docs/DocChecklist.astro';
+import DocDecision from '../../../components/docs/DocDecision.astro';
+import FaarfieldManual from '../../../components/docs/FaarfieldManual.astro';
 const base = import.meta.env.BASE_URL;
 const reference = `${base}documentation/faarfield/reference/`;
-const toc = ['Download', 'Start a job', 'Pavement', 'Traffic', 'Run', 'Results', 'Reference'].map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label }));
+const toc = ['Download', 'Start a job', 'Pavement', 'Traffic', 'Run', 'Results', 'Troubleshooting', 'User’s manual', 'Sources'].map(label => ({ id: label === 'User’s manual' ? 'manual' : label.toLowerCase().replaceAll(' ', '-'), label }));
+const modes = [
+  { value: 'design', label: 'Find a pavement thickness', title: 'Thickness Design', body: 'Enter the section, traffic mix, and design life. FAARFIELD varies the selected design layer. Check that this is the layer you intend to change.', href: `${reference}designmode/`, linkLabel: 'Thickness design steps' },
+  { value: 'life', label: 'Check an existing section’s life', title: 'Life', body: 'Enter the section’s actual thicknesses and the traffic mix. Review the calculated structural life and its CDF results. This mode holds layer thicknesses fixed.', href: `${reference}pavementlifemode/`, linkLabel: 'Life analysis steps' },
+  { value: 'compaction', label: 'Check subgrade compaction requirements', title: 'Life and Compaction', body: 'Use the completed section and traffic mix. Read the cohesive and non-cohesive soil tables in the Section Report, including their depth references and Proctor-test notes.', href: `${reference}lifeandcompactionmode/`, linkLabel: 'Compaction analysis steps' },
+  { value: 'pcr', label: 'Report pavement strength', title: 'ACR/PCR', body: 'Use the pavement-strength reporting procedure and the relevant traffic inputs. A PCR result is a strength rating, not a pavement thickness or remaining-life estimate.', href: `${reference}pcrmode/`, linkLabel: 'ACR/PCR mode' },
+];
 ---
 <SoftwareDocsLayout title="FAARFIELD · CEE 406" description="A course guide to FAARFIELD, with the FAA help reference." activeModule="faarfield" toc={toc}>
   <header class="doc-header">
@@ -14,7 +24,7 @@ const toc = ['Download', 'Start a job', 'Pavement', 'Traffic', 'Run', 'Results',
   <section id="download" data-section class="doc-section">
     <h2>Download</h2>
     <p>Get the installer and readme from the <a href={faarfieldDownload}>FAA download page</a>. The FAA recommends Windows 10 or newer. Follow the readme for installation.</p>
-    <p>This reference was copied from the prepared FAARFIELD 2.1.1 documentation. The FAA now lists version 2.1.2. Some help topics retain older version labels; use the current readme for installation and the version assigned in class for coursework.</p>
+    <DocCallout label="Version" kind="info"><p>The FAA lists 2.1.2. Our reference comes from the supplied 2.1.1 help and retains some 2.0 labels. Use the version assigned in class and its readme. Download source checked October 1, 2026.</p></DocCallout>
   </section>
   <section id="start-a-job" data-section class="doc-section">
     <h2>Start a job</h2>
@@ -25,39 +35,63 @@ const toc = ['Download', 'Start a job', 'Pavement', 'Traffic', 'Run', 'Results',
       <li>Check <strong>Units</strong> in Design Options. Choose Metric (SI) or US Customary before entering values.</li>
     </ol>
     <p>See <a href={`${reference}jobsandjobfiles/`}>jobs and job files</a> and <a href={`${reference}units/`}>units</a>.</p>
+    <DocCallout><p>Name sections by the change, such as “Base 250 mm.” Keep the original section as your baseline.</p></DocCallout>
   </section>
   <section id="pavement" data-section class="doc-section">
     <h2>Pavement</h2>
     <p>Select the pavement type first: a new flexible or rigid section, or the appropriate overlay type. Enter the design life, layer materials, thicknesses, and the required material properties.</p>
     <p>For thickness design, check which layer the program will adjust. For a life analysis, enter the existing section thicknesses. Use the assignment values; library defaults are not a substitute for the specified inputs.</p>
     <p>See <a href={`${reference}definingpavementstructure/`}>pavement structure</a>, <a href={`${reference}materiallibrary/`}>materials</a>, and <a href={`${reference}designlayer/`}>design layer</a>.</p>
+    <DocCallout label="Design layer" kind="note"><p>The selected design layer has a red arrow in the grid and a green outline in the section image. Confirm it before running a thickness design.</p></DocCallout>
   </section>
   <section id="traffic" data-section class="doc-section">
     <h2>Traffic</h2>
     <p>Add each aircraft from the library. Check its model, gear configuration, gross weight, annual departures, and annual growth. Similar aircraft names can have different landing gear.</p>
-    <p>Enter annual departures in the departures field. Keep the design life separate; do not enter total lifetime departures as an annual value.</p>
+    <p>Annual departures means departures in the first year of the design life, before growth. Keep design life and annual growth in their own fields.</p>
     <p>See <a href={`${reference}definingsectiontrafficmix/`}>traffic mix</a> and <a href={`${reference}viewingaircraftgearconfigurations/`}>gear configurations</a>.</p>
+    <DocCallout label="Traffic check" kind="note"><p>Use departures, not total arrivals plus departures. Follow the assignment for any traffic adjustments. If one aircraft operates at distinct weights, keep the weight groups separate when specified.</p></DocCallout>
   </section>
   <section id="run" data-section class="doc-section">
     <h2>Run</h2>
-    <ul class="doc-list">
-      <li><strong>Thickness Design:</strong> find a thickness for the section and traffic you entered.</li>
-      <li><strong>Life:</strong> estimate structural life with the section thicknesses held fixed.</li>
-      <li><strong>Life and Compaction:</strong> see the <a href={`${reference}lifeandcompactionmode/`}>mode reference</a> for the additional compaction analysis.</li>
-      <li><strong>ACR/PCR:</strong> evaluate pavement strength reporting. This answers a different question from thickness design.</li>
-    </ul>
+    <DocDecision id="faarfield-mode" label="What are you checking?" choices={modes} />
+    <DocChecklist id="faarfield-run-v1" title="Before running" items={['The selected section and units are correct.', 'Layer materials, thicknesses, and properties match the assignment.', 'The design layer and analysis mode match the question.', 'Aircraft models, weights, first-year departures, and growth are checked.', 'The job is saved with a separate baseline section.']} />
     <p>Select the mode for the current section, check the inputs, and click <strong>Run</strong>. Read the Calculation Status tab for progress and messages. Rigid pavement calculations can take longer.</p>
   </section>
   <section id="results" data-section class="doc-section">
     <h2>Results</h2>
     <p>Open the <strong>Section Report</strong> and <strong>CDF Graph</strong> from the Explorer. Check the final layer thicknesses, calculated life, traffic, and options before using the result.</p>
-    <p>Cumulative damage factor (CDF) compares applied traffic with the model’s allowable traffic. A value of 1 represents the model’s damage limit. Read the CDF profile across the pavement; the largest aircraft by weight may not control the design.</p>
+    <p>Cumulative damage factor (CDF) sums the fatigue damage from the traffic mix. CDF = 1 is the design model’s failure criterion for the mode being checked. Read the CDF profile across the pavement; the largest aircraft by weight may not control the design.</p>
+    <DocCallout label="Read the total CDF" kind="note"><p>Aircraft can peak at different lateral offsets. Do not add each aircraft’s separate maximum and call it the total maximum. Use the total CDF curve. CDF above 1 means the modeled criterion is exceeded, not that the pavement immediately becomes unusable.</p></DocCallout>
     <p>Use <strong>Save As PDF</strong> to export reports and graphs. Save the job file too, so you can reopen the inputs. For a comparison, record what changed and keep the other inputs fixed.</p>
     <p>See <a href={`${reference}appendixbcumulativedamagefactor/`}>CDF</a>, <a href={`${reference}reportsandgraphs/`}>reports</a>, and <a href={`${reference}pdfoutputsofreportsandgraphs/`}>PDF output</a>.</p>
+    <p>Design basis: <a href="https://www.faa.gov/documentLibrary/media/Advisory_Circular/150-5320-6G-Pavement-Design.pdf">AC 150/5320-6G</a>, §3.12.9, explains CDF and its lateral distribution.</p>
   </section>
-  <section id="reference" data-section class="doc-section">
-    <h2>Reference</h2>
-    <p>The <a href={reference}>FAA help reference</a> includes all 163 imported topics, figures, material definitions, design options, and worked examples. Its technical text is retained from the supplied help documentation.</p>
+  <section id="troubleshooting" data-section class="doc-section">
+    <h2>Troubleshooting</h2>
+    <details><summary>The wrong layer thickness changed</summary><p>Recheck the selected design layer and active section. Compare the input and final section in the report. See <a href={`${reference}designlayer/`}>design layer</a>.</p></details>
+    <details><summary>The result changed after reopening the job</summary><p>Check the section, software version, aircraft library, and saved design options. Record the version and inputs with your report so a comparison can be repeated.</p></details>
+    <details><summary>The job is taking longer than expected</summary><p>Read Calculation Status before restarting. Rigid designs use a 3-D finite element analysis and can take longer. See <a href={`${reference}solutiontimes/`}>solution times</a>.</p></details>
+    <details><summary>I need to compare two designs</summary><p>Copy the baseline section and change one input. Keep traffic, design life, units, and other options fixed. Save the job and both Section Reports.</p></details>
+  </section>
+  <section id="manual" data-section class="doc-section">
+    <h2>User’s manual</h2>
+    <p>Browse the supplied FAARFIELD 2.1.1 help by chapter, or search its topic text. All 163 topics and their figures are included. Original technical text and version labels are retained.</p>
+    <FaarfieldManual />
+  </section>
+  <section id="sources" data-section class="doc-section">
+    <h2>Sources</h2>
     <p>For current software and guidance, use the <a href={faarfieldDownload}>FAA FAARFIELD page</a>.</p>
+    <ul class="doc-list">
+      <li><a href="https://www.faa.gov/airports/resources/advisory_circulars/index.cfm/go/document.current/documentNumber/150_5320-6">AC 150/5320-6G</a>: pavement design and evaluation.</li>
+      <li><a href="https://www.faa.gov/airports/resources/advisory_circulars/index.cfm/go/document.current/documentnumber/150_5335-5">AC 150/5335-5D and its errata</a>: ACR/PCR reporting.</li>
+    </ul>
+    <p class="source-date">Sources checked October 1, 2026. The imported help is a versioned reference; current FAA guidance is linked above.</p>
   </section>
 </SoftwareDocsLayout>
+<style>
+  details { border-bottom: 1px solid var(--color-border); padding: .75rem 0; }
+  summary { cursor: pointer; font-size: .9375rem; font-weight: 500; line-height: 1.5; }
+  summary:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; }
+  details p { margin: .75rem 0 0; }
+  .source-date { color: var(--color-text-muted); font-size: .75rem; }
+</style>
