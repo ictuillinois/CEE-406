@@ -6,6 +6,30 @@ import {setNominalTable,resolveTire} from './engine/core/tires.js';
 import {serializeProject,parseProject} from './engine/io/project.js';
 import {styleVehicleBody} from './engine/geometry/vehicleBody.js';
 import * as THREE from 'three';
+test('solid bodies write depth and cast shadows, then restore the original translucent appearance',()=>{
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshStandardMaterial({opacity:.28,transparent:true,depthWrite:false,color:0x71899b}));
+    const geometry=mesh.geometry,positions=geometry.attributes.position.array.slice();
+    styleVehicleBody(mesh,{surface:'solid'});
+    assert.equal(mesh.material.opacity,1);
+    assert.equal(mesh.material.transparent,false);
+    assert.equal(mesh.material.depthWrite,true);
+    assert.equal(mesh.castShadow,true);
+    styleVehicleBody(mesh,{surface:'shaded'});
+    assert.equal(mesh.material.opacity,.28);
+    assert.equal(mesh.material.transparent,true);
+    assert.equal(mesh.material.depthWrite,false);
+    assert.equal(mesh.castShadow,false);
+    assert.equal(mesh.geometry,geometry);
+    assert.deepEqual(geometry.attributes.position.array,positions);
+    mesh.geometry.dispose();mesh.material.dispose();
+});
+
+test('project serialization preserves scenery without changing engineering inputs',()=>{
+    const unit={id:'example',axles:[{x:1200,trackWidth:1800}]};
+    const view={groundSurface:'concrete',surfaceScale:7,background:'sky',bodySurface:'solid'};
+    const saved=parseProject(serializeProject({unit,view}));
+    assert.deepEqual(saved.view,view);assert.deepEqual(saved.unit,unit);
+});
 setNominalTable(JSON.parse(readFileSync('public/gear3d/data/tires.json')).nominal);
 const units=readdirSync('public/gear3d/data/trucks').filter(f=>f.endsWith('.json')).flatMap(f=>JSON.parse(readFileSync('public/gear3d/data/trucks/'+f)).units || []);
 

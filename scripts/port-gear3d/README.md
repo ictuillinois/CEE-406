@@ -24,6 +24,14 @@ Preserve that note when re-copying.
 
 ## Re-running
 
+The October 2026 scenery update originates in upstream `f9f27f1` and `962098b`:
+optional asphalt/concrete textures, sky
+backgrounds, and solid body rendering. Defaults remain publication white,
+studio shadow catcher, and 28% shaded bodies. Scene settings persist in the
+view block; they never change axle layouts or contact calculations. Surface
+textures and sky gradients are procedural and cached, and disposal releases
+them. Range controls use the existing interaction-resolution tier while moving.
+
 ```bash
 UP=../Johann-Cardenas.github.io/e-labs/gear3d
 

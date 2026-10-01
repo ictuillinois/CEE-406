@@ -286,9 +286,9 @@ export default function Gear3DApp() {
                     <input type="color" id="g3-body-color" className="g3-color" defaultValue="#71899b" />
                   </div>
                   <div className="g3-field">
-                    <label htmlFor="g3-body-surface">Surface</label>
-                    <select id="g3-body-surface" className="g3-select" title="Shaded surfaces or the airframe mesh; wheel geometry is unchanged">
-                      <option value="shaded">Shaded</option><option value="wireframe">Wireframe</option>
+                    <label htmlFor="g3-body-surface">Body rendering</label>
+                    <select id="g3-body-surface" className="g3-select" title="Translucent, solid, or wireframe body; wheel geometry is unchanged">
+                      <option value="shaded">Shaded</option><option value="solid">Solid body</option><option value="wireframe">Wireframe</option>
                     </select>
                   </div>
                   <div className="g3-field">
@@ -571,16 +571,20 @@ export default function Gear3DApp() {
             </details>
 
             <details>
-              <summary><Icon name="fill-drip" /> Background</summary>
+              <summary><Icon name="fill-drip" /> Scene</summary>
               <div className="g3-group">
                 <div className="g3-field">
                   <label htmlFor="g3-bg-mode">Mode</label>
                   <select id="g3-bg-mode" className="g3-select" defaultValue="white">
                     <option value="white">Publication white</option>
-                    <option value="color">Custom color</option>
+                    <option value="sky">Daylight sky</option><option value="sunset">Evening sky</option><option value="color">Custom color</option>
                     <option value="transparent">Transparent</option>
                   </select>
                 </div>
+                <div className="g3-field"><label htmlFor="g3-ground-surface">Pavement</label><select id="g3-ground-surface" className="g3-select" defaultValue="studio"><option value="studio">Studio — current view</option><option value="asphalt">Asphalt</option><option value="concrete">Concrete slabs</option></select></div>
+                <div className="g3-field"><label htmlFor="g3-surface-scale">Texture tile</label><input type="range" id="g3-surface-scale" className="g3-range" min="1" max="20" step="1" defaultValue="4" /><output id="g3-surface-scale-value">4 m</output></div>
+                <p className="g3-note">Surface and sky are visual settings. They do not change loads, contact areas, or pavement properties.</p>
+                <button type="button" id="g3-scene-reset" className="g3-btn">Reset scene</button>
                 <div className="g3-field" id="g3-bg-color-field">
                   <label htmlFor="g3-bg-color">Color</label>
                   <input type="color" id="g3-bg-color" className="g3-color" defaultValue="#eef1f4" />
