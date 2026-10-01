@@ -480,9 +480,7 @@ export default function Gear3DApp() {
                   </select>
                 </div>
                 <p className="g3-note">
-                  The viewport renders into a buffer larger than itself and the browser
-                  downsamples it, which is the same supersampling the figure export has
-                  always used. <strong>Orbiting drops to a lighter ratio and the full
+                  Live resolution follows the selected quality and the device budget. Figure exports keep their requested size. <strong>Orbiting drops to a lighter ratio and the full
                   frame is drawn once the view settles</strong>, so the cost lands on the
                   still image rather than on the drag.
                 </p>
@@ -583,6 +581,8 @@ export default function Gear3DApp() {
                 </div>
                 <div className="g3-field"><label htmlFor="g3-ground-surface">Pavement</label><select id="g3-ground-surface" className="g3-select" defaultValue="studio"><option value="studio">Studio — current view</option><option value="asphalt">Asphalt</option><option value="concrete">Concrete slabs</option></select></div>
                 <div className="g3-field"><label htmlFor="g3-surface-scale">Texture tile</label><input type="range" id="g3-surface-scale" className="g3-range" min="1" max="20" step="1" defaultValue="4" /><output id="g3-surface-scale-value">4 m</output></div>
+                <div className="g3-field"><label htmlFor="g3-surface-relief">Surface relief</label><input type="range" id="g3-surface-relief" className="g3-range" min="0" max="100" step="1" defaultValue="35" /><output id="g3-surface-relief-value" htmlFor="g3-surface-relief">35%</output></div>
+                <div className="g3-field"><label htmlFor="g3-sky-clouds">Cloud cover</label><select id="g3-sky-clouds" className="g3-select" defaultValue="clear"><option value="clear">Clear</option><option value="scattered">Scattered</option><option value="overcast">Soft overcast</option></select></div>
                 <p className="g3-note">Surface and sky are visual settings. They do not change loads, contact areas, or pavement properties.</p>
                 <button type="button" id="g3-scene-reset" className="g3-btn">Reset scene</button>
                 <div className="g3-field" id="g3-bg-color-field">

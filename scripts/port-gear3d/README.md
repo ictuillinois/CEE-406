@@ -24,6 +24,17 @@ Preserve that note when re-copying.
 
 ## Re-running
 
+The visual refinement in upstream `cb50f96` adds cached aggregate and slab
+textures, adjustable bump relief, and optional cloud cover. Compact and touch
+views cap live rendering at 1.5 million pixels when settled and 0.75 million
+while moving, with 1024-pixel shadow maps. Auto geometry retains its own detail
+selection on mobile instead of inheriting the Ultra tier's geometry floor.
+Offscreen and hidden views pause rendering. Figure export resolution and the
+startup scene are unchanged. Validation: production build, 70 course checks,
+196 upstream checks, and desktop/mobile browser checks for cache reuse, scene
+controls, project persistence, viewport resizing, and offscreen pausing. Mobile
+checks use browser emulation; physical-device frame rates were not measured.
+
 The October 2026 scenery update originates in upstream `f9f27f1` and `962098b`:
 optional asphalt/concrete textures, sky
 backgrounds, and solid body rendering. The subsequent startup refinement opens
