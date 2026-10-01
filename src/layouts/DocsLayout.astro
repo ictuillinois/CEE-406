@@ -448,7 +448,7 @@ const modules = sidebarModules;
   [data-docs-variant="software"] [data-module="pavement-me"] { --nav-color: var(--phase-loads); }
   .docs-sidebar__arrow { width: .8rem; height: .8rem; flex-shrink: 0; margin-left: auto; color: var(--color-text-muted); opacity: 0; transform: translateX(-3px); transition: opacity .18s ease, transform .18s ease; }
   .docs-sidebar__brand { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 1.8rem; height: 1.8rem; background: #fff; border: 1px solid #e4e8ef; border-radius: 6px; box-shadow: 0 1px 3px #00000008; }
-  .docs-sidebar__brand img { display: block; width: 24px; height: 24px; object-fit: contain; }
+  .docs-sidebar__brand img { display: block; flex-shrink: 0; width: 24px; height: 24px; max-width: none; object-fit: contain; }
   .docs-sidebar__link:hover .docs-sidebar__arrow, .docs-sidebar__link:focus-visible .docs-sidebar__arrow, .docs-sidebar__link.active .docs-sidebar__arrow { opacity: 1; transform: none; }
   [data-docs-variant="software"] .docs-toc { align-self: start; }
   @media (prefers-reduced-motion: reduce) {

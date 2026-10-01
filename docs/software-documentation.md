@@ -144,3 +144,29 @@ cover library filters, decision selectors, manual search/chapter filtering and
 query restoration, checklist persistence/reset, print expansion/restoration,
 the legacy index redirect, figure dialog/Escape/focus return, site search, and
 guide/manual access with JavaScript disabled.
+
+## DRIP manual refinement — October 1, 2026
+
+Reviewed the supplied `DRIP_manual.pdf` from the Lecture 6 Drainage materials:
+114 PDF pages, FHWA-IF-02-053, July 2002. SHA-256:
+`17100C44EC14FC8DEC3929D077C9E4D87B8E8971E12DC77B3A2BDCEE2CC500A4`.
+The website links to FHWA's published PDF; the supplied file was not added to
+the repository. Page links use physical PDF page numbers, while labels identify
+printed chapter pages.
+
+The guide now covers file/library handling, screen controls, flow-rate units,
+porosity methods, separate hydraulic checks, collector discharge approaches,
+all three worked examples, and sensitivity exercises. Published checkpoints are
+identified as manual results; the Windows application was not run here.
+
+Manual discrepancies are documented with source pages: the flow-length unit on
+5-2; permeability and meltwater conflicts across 5-1, 5-4, and worked screens;
+changed base density and fabric AOS in example 2 (figure 5-11 shows 0.075 in.,
+while 5-12 proposes 1/6 in.); and the effective-porosity denominator in 4-3 versus
+equations 4-10/4-13. These are not described as confirmed software defects.
+
+Software logos now also appear in the mobile guide tabs. Browser validation
+covers their visibility after navigation across all four guides and a FAARFIELD
+manual topic, plus DRIP exercise disclosure, checklist persistence, and narrow
+layouts. Production build, documentation link checks, and 14 release/math
+checks pass.

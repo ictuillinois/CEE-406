@@ -16,7 +16,10 @@ const base = import.meta.env.BASE_URL;
     {Astro.props.activeModule !== 'index' && <><span aria-hidden="true"> / </span><span>{Astro.props.title.replace(' · CEE 406', '')}</span></>}
   </nav>}
   {Astro.props.activeModule !== 'index' && <nav class="software-mobile" aria-label="Software guides">
-    {documentationModules(base).map(item => <a href={item.href} aria-current={item.id === Astro.props.activeModule ? 'page' : undefined}>{item.label}</a>)}
+    {documentationModules(base).map(item => <a href={item.href} aria-current={item.id === Astro.props.activeModule ? 'page' : undefined}>
+      {item.icon.startsWith('image:') && <span class="software-mobile__brand" aria-hidden="true"><img src={item.icon.slice(6)} width="24" height="24" alt="" /></span>}
+      <span>{item.label}</span>
+    </a>)}
   </nav>}
   {!!Astro.props.toc?.length && <details class="software-sections"><summary>On this page <span>{Astro.props.toc.length} sections</span></summary><nav aria-label="Page sections">{Astro.props.toc.map(item => <a href={`#${item.id}`}>{item.label}</a>)}</nav></details>}
   <slot />
@@ -92,6 +95,8 @@ const base = import.meta.env.BASE_URL;
   .software-mobile { display: flex; gap: 1rem; overflow-x: auto; scrollbar-width: thin; scroll-snap-type: x proximity; border-bottom: 1px solid var(--color-border); margin-bottom: 1.5rem; font-size: .8125rem; }
   .software-mobile a { display: flex; align-items: center; flex-shrink: 0; min-height: 44px; padding: .35rem .125rem .6rem; color: var(--color-text-muted); border-bottom: 2px solid transparent; scroll-snap-align: start; transition: color .18s ease; }
   .software-mobile a:hover { color: var(--color-text); }
+  .software-mobile__brand { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 30px; height: 30px; margin-right: .5rem; border: 1px solid #e4e8ef; border-radius: 6px; background: #fff; }
+  .software-mobile__brand img { display: block; width: 24px; height: 24px; object-fit: contain; }
   .software-mobile a[aria-current] { color: var(--color-text); font-weight: 600; border-bottom-color: var(--color-accent); }
   @media (prefers-reduced-motion: reduce) { .software-mobile a { transition: none; } }
   @media (min-width: 768px) { .software-mobile { display: none; } }
