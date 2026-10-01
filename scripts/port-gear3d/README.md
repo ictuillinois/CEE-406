@@ -24,6 +24,20 @@ Preserve that note when re-copying.
 
 ## Re-running
 
+Interaction rendering in upstream `ac29062` reuses directional-light shadow
+maps during camera movement and buffer resizing. Scene edits, lighting changes,
+resizes affecting the shadow budget, and context restoration refresh them.
+Quad views share one shadow update. Ground refits retain one scaled unit plane
+and its material; pavement repeats still follow physical size. Hover picking
+coalesces pointer moves into one raycast per frame and skips orbit drags.
+Validation: production build, 196 upstream checks, a ground-resource/coverage
+regression test, and desktop/mobile browser checks for identical cached versus
+fresh shadows, quad updates, hover batching, surface controls, saved projects,
+and cold/warm switching. Counting all shadow passes gives 241 versus 168 draw
+calls (30% fewer) for camera-only redraws of the default truck. Final repeated
+mobile-emulated A320/737 switches took 22–25 ms on the local test machine;
+physical-device frame rates and remote-network latency remain unmeasured.
+
 Vehicle switching in upstream `34fa3bf` and `cf5330e` prepares an uncached body before
 replacing the document and scene, leaving the previous vehicle visible during
 the download. Selection tokens and document identity reject stale requests.
