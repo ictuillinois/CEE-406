@@ -1,0 +1,92 @@
+---
+interface Props { sections: { id: string; label: string }[]; }
+const { sections } = Astro.props;
+---
+<div class="guide-tools" data-guide-tools hidden>
+  <label>Jump to
+    <select aria-label="Jump to a guide section" data-guide-jump>
+      <option value="">Choose a section</option>
+      {sections.map(section => <option value={section.id}>{section.label}</option>)}
+    </select>
+  </label>
+  <div class="guide-tools__actions">
+    <button type="button" data-guide-expand hidden aria-expanded="false">Open exercises</button>
+    <button type="button" data-guide-copy>Copy page link</button>
+  </div>
+  <span class="guide-tools__status" role="status" data-guide-status></span>
+</div>
+<script>
+  function initGuideTools() {
+    document.querySelectorAll<HTMLElement>('[data-guide-tools]').forEach(tools => {
+      if (tools.dataset.ready) return;
+      tools.dataset.ready = 'true';
+      tools.hidden = false;
+      const select = tools.querySelector<HTMLSelectElement>('[data-guide-jump]')!;
+      const status = tools.querySelector<HTMLElement>('[data-guide-status]')!;
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+      select.addEventListener('change', () => {
+        const section = document.getElementById(select.value);
+        if (!section) return;
+        history.pushState(null, '', `#${section.id}`);
+        const heading = section.querySelector<HTMLElement>('h2') ?? section;
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+        section.scrollIntoView({ behavior: reduced.matches ? 'instant' : 'smooth', block: 'start' });
+        select.value = '';
+      });
+      const exercises = [...document.querySelectorAll<HTMLDetailsElement>('#practice details, #exercises details')];
+      const expand = tools.querySelector<HTMLButtonElement>('[data-guide-expand]')!;
+      if (exercises.length) {
+        expand.hidden = false;
+        const update = () => {
+          const allOpen = exercises.every(panel => panel.open);
+          expand.textContent = allOpen ? 'Close exercises' : 'Open exercises';
+          expand.setAttribute('aria-expanded', String(allOpen));
+        };
+        expand.addEventListener('click', () => {
+          const open = !exercises.every(panel => panel.open);
+          exercises.forEach(panel => { panel.open = open; });
+          update();
+        });
+        exercises.forEach(panel => panel.addEventListener('toggle', update));
+        update();
+      }
+      async function copyLink(url: string) {
+        try {
+          await navigator.clipboard.writeText(url);
+          status.textContent = 'Link copied';
+        } catch {
+          status.textContent = 'Copy the link from your address bar.';
+        }
+      }
+      tools.querySelector('[data-guide-copy]')!.addEventListener('click', () => { void copyLink(location.href); });
+      document.querySelectorAll<HTMLElement>('.software-docs section[data-section] > h2').forEach(heading => {
+        const id = heading.parentElement!.id;
+        const link = document.createElement('a');
+        link.href = `#${id}`;
+        link.className = 'guide-section-link';
+        link.textContent = '#';
+        link.setAttribute('aria-label', `Link to ${heading.textContent}`);
+        heading.append(link);
+      });
+    });
+  }
+  initGuideTools();
+  document.addEventListener('astro:page-load', initGuideTools);
+</script>
+<style>
+  .guide-tools { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: .65rem 1rem; padding: .8rem 1rem; margin: 0 0 1.5rem; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface-alt); }
+  .guide-tools[hidden], button[hidden] { display: none; }
+  label { display: flex; align-items: center; gap: .65rem; font-size: .75rem; color: var(--color-text-muted); }
+  select { min-height: 40px; max-width: 100%; border: 1px solid var(--color-border); border-radius: 6px; padding: .4rem .6rem; font: inherit; color: var(--color-text); background: var(--color-surface); }
+  .guide-tools__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-left: auto; }
+  button { min-height: 40px; padding: .4rem .65rem; border: 1px solid var(--color-border); border-radius: 6px; font: inherit; font-size: .75rem; color: var(--color-text-muted); background: var(--color-surface); cursor: pointer; transition: border-color .18s ease, color .18s ease; }
+  button:hover { color: var(--color-text); border-color: var(--color-accent); }
+  .guide-tools__status { width: 100%; font-size: .75rem; color: var(--color-text-muted); }
+  .guide-tools__status:empty { display: none; }
+  :global(.guide-section-link) { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; margin-left: .35rem; font-size: .9rem; font-weight: 400; color: var(--color-text-muted); opacity: .4; transition: opacity .18s ease; }
+  :global(h2:hover > .guide-section-link), :global(.guide-section-link:focus-visible) { opacity: 1; color: var(--color-accent); }
+  @media (max-width: 560px) { label { width: 100%; } select { flex: 1; min-width: 0; } .guide-tools__actions { margin-left: 0; } }
+  @media (prefers-reduced-motion: reduce) { button, :global(.guide-section-link) { transition: none; } }
+  @media print { .guide-tools, :global(.guide-section-link) { display: none; } }
+</style>

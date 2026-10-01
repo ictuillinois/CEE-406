@@ -170,3 +170,22 @@ covers their visibility after navigation across all four guides and a FAARFIELD
 manual topic, plus DRIP exercise disclosure, checklist persistence, and narrow
 layouts. Production build, documentation link checks, and 14 release/math
 checks pass.
+
+## Guide navigation refinement — October 1, 2026
+
+Guide pages now share a section jump menu, copy-page-link action, and section
+permalinks. Jumping updates the URL and moves keyboard focus to the heading;
+reduced-motion preferences disable smooth scrolling. An exercise control opens
+or closes the practice disclosures without changing the manual browser. Guide
+footers link to the next software guide, and library cards link directly to
+practice as well as each user's manual.
+
+Library searches and category filters persist in URL parameters and restore on
+reload or history navigation. Without JavaScript, guides, exercise disclosures,
+manual links, and section navigation remain accessible. Shared decision widgets
+initialize on Astro page-load events without duplicate listeners.
+
+Validation: production build; links, images, and fragments across all 169
+documentation routes; light/dark layouts at 320, 768, 1024, and 1440 px; focused
+browser checks for section focus, clipboard, exercise expansion, next-guide
+navigation, filter restoration, and no-JavaScript access; 14 release/math checks.

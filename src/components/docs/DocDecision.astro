@@ -18,7 +18,9 @@ const { id, label, choices } = Astro.props;
   </div>
 </div>
 <script>
-  document.querySelectorAll<HTMLElement>('[data-decision]').forEach(widget => {
+  function initDecisions() { document.querySelectorAll<HTMLElement>('[data-decision]').forEach(widget => {
+    if (widget.dataset.ready) return;
+    widget.dataset.ready = 'true';
     const select = widget.querySelector('select');
     if (!select) return;
     const update = () => widget.querySelectorAll<HTMLElement>('[data-choice]').forEach(panel => {
@@ -27,7 +29,9 @@ const { id, label, choices } = Astro.props;
     widget.querySelector('label')!.hidden = false;
     select.addEventListener('change', update);
     update();
-  });
+  }); }
+  initDecisions();
+  document.addEventListener('astro:page-load', initDecisions);
 </script>
 <style>
   .doc-decision { border: 1px solid var(--color-border); border-radius: 8px; padding: 1rem; margin: 1rem 0; }

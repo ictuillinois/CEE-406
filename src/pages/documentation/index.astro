@@ -25,7 +25,7 @@ const software = [
           <div class="software-card-art" data-brand={item.id} aria-hidden="true"><div class="software-logo-stage"><img class="software-logo" src={`${base}documentation/branding/${item.id}-logo.png`} width="320" height="160" alt="" decoding="async" /></div>{item.id === 'winjulea' && <span class="software-art-caption">Historical splash screen</span>}</div>
           <div class="software-card-copy"><h3>{item.name}</h3><span class="software-purpose">{item.purpose}</span><p>{item.description}</p><span class="software-open">Open guide <span aria-hidden="true">→</span></span></div>
         </a>
-        <a class="software-manual" href={`${base}documentation/${item.id}/#manual`} aria-label={`${item.name} user's manual`}>User’s manual <span aria-hidden="true">→</span></a>
+        <div class="software-card-links"><a class="software-manual" href={`${base}documentation/${item.id}/#${item.id === 'faarfield' ? 'exercises' : 'practice'}`} aria-label={`${item.name} exercises`}>Practice <span aria-hidden="true">↗</span></a><a class="software-manual" href={`${base}documentation/${item.id}/#manual`} aria-label={`${item.name} user's manual`}>User’s manual <span aria-hidden="true">↗</span></a></div>
       </article>)}
     </div>
     <div class="library-empty" hidden><p>No guides match your search.</p><button type="button" data-software-reset>Clear filters</button></div>
@@ -50,7 +50,7 @@ const software = [
     };
     cards.forEach((card, index) => reveal(card, index * 45));
     library.querySelector<HTMLElement>('.library-tools')!.hidden = false;
-    const filter = () => {
+    const filter = (save = true) => {
       const previous = new Map(cards.filter(card => !card.hidden).map(card => [card, card.getBoundingClientRect()]));
       const terms = input.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
       let visible = 0;
@@ -61,6 +61,12 @@ const software = [
       buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.softwareFilter === category)));
       count.textContent = `${visible} ${visible === 1 ? 'guide' : 'guides'}`;
       empty.hidden = visible !== 0;
+      if (save) {
+        const url = new URL(location.href);
+        input.value.trim() ? url.searchParams.set('q', input.value.trim()) : url.searchParams.delete('q');
+        category !== 'All' ? url.searchParams.set('category', category) : url.searchParams.delete('category');
+        history.replaceState(null, '', url);
+      }
       cards.filter(card => !card.hidden).forEach(card => {
         if (!previous.has(card)) { reveal(card); return; }
         if (reducedMotion.matches) return;
@@ -71,7 +77,16 @@ const software = [
         if (x || y) card.animate([{ transform: `translate(${x}px, ${y}px)` }, { transform: 'translate(0, 0)' }], { duration: 250, easing: 'cubic-bezier(.2,.7,.2,1)' });
       });
     };
-    input.addEventListener('input', filter);
+    const restore = () => {
+      const params = new URL(location.href).searchParams;
+      input.value = params.get('q') ?? '';
+      const stored = params.get('category');
+      category = buttons.some(button => button.dataset.softwareFilter === stored) ? stored! : 'All';
+      filter(false);
+    };
+    restore();
+    window.addEventListener('popstate', restore);
+    input.addEventListener('input', () => filter());
     buttons.forEach(button => button.addEventListener('click', () => { category = button.dataset.softwareFilter!; filter(); }));
     library.querySelector('[data-software-reset]')!.addEventListener('click', () => { input.value = ''; category = 'All'; filter(); input.focus(); });
   }
@@ -121,6 +136,9 @@ const software = [
   .software-open > span { color: var(--software-color); font-size: 1rem; transition: transform .2s ease; }
   .software-card-main:hover .software-open > span { transform: translateX(3px); }
   .software-manual { display: flex; justify-content: space-between; align-items: center; min-height: 44px; border-top: 1px solid color-mix(in srgb, var(--color-border) 60%, transparent); padding: .65rem 1.5rem; font-size: .75rem; color: var(--color-text-muted); }
+  .software-card-links { display: grid; grid-template-columns: 1fr 1fr; }
+  .software-card-links .software-manual { gap: .4rem; padding-inline: 1rem; }
+  .software-card-links .software-manual + .software-manual { border-left: 1px solid var(--color-border); }
   .software-manual { transition: color .2s ease, background .2s ease; }
   .software-manual > span { transition: transform .2s ease; }
   .software-manual:hover { color: var(--software-color); background: color-mix(in srgb, var(--software-color) 3%, transparent); }
