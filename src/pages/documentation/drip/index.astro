@@ -18,27 +18,37 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   <section id="download" data-section class="doc-section">
     <h2>Download</h2>
     <p>The <a href={download}>Pavement ME resource page</a> provides a DRIP 2.0 download and user guide. DRIP is a Windows program developed by FHWA and Applied Research Associates for subsurface drainage calculations.</p>
-    <p>Extract the download and read its installation instructions. Keep the supplied files together. The documentation is for an older Windows application; modern Windows compatibility has not been tested here.</p>
-    <p>Keep the <a href={manual}>FHWA user’s manual</a> beside your first case. Start with its worked examples before entering the assignment inputs.</p>
+    <ol class="doc-list">
+      <li>Extract the download and read its installation instructions.<ul><li>Keep the supplied files together.</li><li>The documentation is for an older Windows application; modern Windows compatibility has not been tested here.</li></ul></li>
+    </ol>
+    <ol class="doc-list">
+      <li>Keep the <a href={manual}>FHWA user’s manual</a> beside your first case.<ul><li>Start with its worked examples before entering the assignment inputs.</li></ul></li>
+    </ol>
   </section>
   <section id="manual" data-section class="doc-section">
     <h2>User’s manual</h2>
     <p><a href={manual}>DRIP 2.0 User’s Guide</a>, FHWA-IF-02-053, July 2002. The <a href="https://www.fhwa.dot.gov/PAVEMENT/pub_details.cfm?id=43">FHWA publication record</a> identifies this as the software’s operating and technical guide.</p>
     <ul class="doc-list">
-      <li><strong>Chapter 2:</strong> installation.</li>
-      <li><strong>Chapter 3:</strong> screens, files, plots, and output.</li>
-      <li><strong>Chapter 4:</strong> methods and assumptions.</li>
-      <li><strong>Chapter 5:</strong> worked examples.</li>
-      <li><strong>Chapter 6:</strong> sensitivity studies.</li>
+      <li><strong>Chapter 2:</strong><ul><li>Installation.</li></ul></li>
+      <li><strong>Chapter 3:</strong><ul><li>Screens, files, plots, and output.</li></ul></li>
+      <li><strong>Chapter 4:</strong><ul><li>Methods and assumptions.</li></ul></li>
+      <li><strong>Chapter 5:</strong><ul><li>Worked examples.</li></ul></li>
+      <li><strong>Chapter 6:</strong><ul><li>Sensitivity studies.</li></ul></li>
     </ul>
     <DocCallout kind="note" label="Version matters">This archived manual covers DRIP 2.0. Its installation instructions describe the Windows systems of that period; check the course setup instructions for your machine.</DocCallout>
     <p>If the FHWA file is unavailable, use <a href={appendix}>NCHRP 1-37A Appendix TT</a> (February 2004), adapted from the FHWA guide. Its section 4 covers operation, section 5 has worked examples, and section 6 has sensitivity studies. Its section numbers differ from the FHWA manual.</p>
   </section>
   <section id="start-a-case" data-section class="doc-section">
     <h2>Start a case</h2>
-    <p>Save a case for the assigned section. Choose the unit system and write down the drainage objective before entering values: carry an inflow, meet a time-to-drain target, or check an existing system.</p>
-    <p>Work through geometry, material gradations, inflow, the permeable base, separation, and the edgedrain. Keep a sketch beside the inputs so every width, slope, and outlet location has a clear meaning.</p>
-    <p>Use one case per alternative. For comparisons, change one input at a time and retain the original case.</p>
+    <ol class="doc-list">
+      <li>Save a case for the assigned section.<ul><li>Choose the unit system and write down the drainage objective before entering values: carry an inflow, meet a time-to-drain target, or check an existing system.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Work through geometry, material gradations, inflow, the permeable base, separation, and the edgedrain.<ul><li>Keep a sketch beside the inputs so every width, slope, and outlet location has a clear meaning.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Use one case per alternative.<ul><li>For comparisons, change one input at a time and retain the original case.</li></ul></li>
+    </ol>
     <DocCallout kind="tip" label="Leave Normal mode on">Normal mode shows input and dependent-value warnings; Expert mode suppresses them. Right-click a variable for help. Underlined variables link to their source page. See <a href={`${appendix}#page=10`}>Appendix TT, section 4</a>.</DocCallout>
     <DocDecision id="drip-objective" label="What does your case need to check?" choices={[
       { value: 'capacity', label: 'Carry an inflow', title: 'Use depth of flow', body: 'Compare calculated flow depth with the available permeable-base thickness. Record the chosen inflow method and event.', href: '#permeable-base', linkLabel: 'Check the permeable base' },
@@ -49,49 +59,73 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   <section id="geometry" data-section class="doc-section">
     <h2>Geometry</h2>
     <p>DRIP supports crowned and uniformly sloped sections and calculates a drainage path from transverse and longitudinal slopes.</p>
-    <p>Sketch the crown or high point, the edge that receives the flow, and the drain location. Check which part of the pavement contributes water to that drain. The total roadway width is not always the width feeding one side.</p>
-    <p>Keep percent and decimal slopes distinct: 2% is 0.02. Follow the unit shown beside the input. Do not replace the drainage path with the transverse width without checking the geometry.</p>
+    <ol class="doc-list">
+      <li>Sketch the crown or high point, the edge that receives the flow, and the drain location.<ul><li>Check which part of the pavement contributes water to that drain.</li><li>The total roadway width is not always the width feeding one side.</li></ul></li>
+      <li>Keep percent and decimal slopes distinct: 2% is 0.02.<ul><li>Follow the unit shown beside the input.</li><li>Do not replace the drainage path with the transverse width without checking the geometry.</li></ul></li>
+    </ol>
   </section>
   <section id="materials" data-section class="doc-section">
     <h2>Materials</h2>
-    <p>Use sieve data for the base, subgrade, and proposed separator. DRIP can calculate gradation characteristics, porosity, and estimated permeability from a gradation.</p>
-    <p>Check that sieve openings use the selected length unit and that percent passing stays between 0 and 100. Passing should increase as sieve opening increases. Keep measured permeability separate from a gradation-based estimate.</p>
-    <p>Confirm the time unit of permeability. A value in cm/s cannot be entered unchanged in a field requesting m/day. For reference, 1 cm/s = 864 m/day.</p>
+    <ol class="doc-list">
+      <li>Use sieve data for the base, subgrade, and proposed separator.<ul><li>DRIP can calculate gradation characteristics, porosity, and estimated permeability from a gradation.</li></ul></li>
+      <li>Check that sieve openings use the selected length unit and that percent passing stays between 0 and 100.<ul><li>Passing should increase as sieve opening increases.</li><li>Keep measured permeability separate from a gradation-based estimate.</li></ul></li>
+      <li>Confirm the time unit of permeability.<ul><li>A value in cm/s cannot be entered unchanged in a field requesting m/day.</li><li>For reference, 1 cm/s = 864 m/day.</li></ul></li>
+    </ol>
     <p>For a sensitivity study, vary permeability over a justified range rather than assuming one estimate describes every field condition.</p>
     <DocCallout kind="tip" label="Keep the time unit">Write permeability as a length per time in your case log. A copied number without its time unit can change a result by orders of magnitude.</DocCallout>
   </section>
   <section id="inflow" data-section class="doc-section">
     <h2>Inflow</h2>
-    <p>The program includes infiltration-ratio and crack-infiltration approaches, with meltwater calculations. See the inflow property pages in <a href={manual}>manual chapter 3</a> and the equations in chapter 4.</p>
-    <p>Use the method specified in the assignment. Record the rainfall source, event duration, infiltration assumptions, and contributing width. Rainfall intensity and total rainfall depth are different inputs.</p>
-    <p>Do not count the same water twice by combining alternative infiltration estimates. If another source of water is included, identify it separately and explain the assumption.</p>
+    <ul class="doc-list">
+      <li>The program includes infiltration-ratio and crack-infiltration approaches, with meltwater calculations.<ul><li>See the inflow property pages in <a href={manual}>manual chapter 3</a> and the equations in chapter 4.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Use the method specified in the assignment.<ul><li>Record the rainfall source, event duration, infiltration assumptions, and contributing width.</li><li>Rainfall intensity and total rainfall depth are different inputs.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Do not count the same water twice by combining alternative infiltration estimates.<ul><li>If another source of water is included, identify it separately and explain the assumption.</li></ul></li>
+    </ul>
   </section>
   <section id="permeable-base" data-section class="doc-section">
     <h2>Permeable base</h2>
-    <p>DRIP offers depth-of-flow and time-to-drain analyses (<a href={manual}>manual chapters 3–4</a>). Use the mode that matches the question.</p>
-    <p>For a flow-capacity check, compare the calculated water depth with the available drainage-layer thickness. For a time check, record the specified degree of drainage and compare the calculated time with its target.</p>
-    <p>Keep these conclusions separate. A layer that carries the selected inflow does not automatically meet a drainage-time target.</p>
-    <p>Test an alternative thickness, permeability, or drainage path. Record the changed input and resulting flow depth or drainage time. Avoid changing several variables together until you understand their individual effects.</p>
+    <ul class="doc-list">
+      <li>DRIP offers depth-of-flow and time-to-drain analyses (<a href={manual}>manual chapters 3–4</a>).<ul><li>Use the mode that matches the question.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>For a flow-capacity check, compare the calculated water depth with the available drainage-layer thickness.<ul><li>For a time check, record the specified degree of drainage and compare the calculated time with its target.</li></ul></li>
+      <li>Keep these conclusions separate.<ul><li>A layer that carries the selected inflow does not automatically meet a drainage-time target.</li></ul></li>
+      <li>Test an alternative thickness, permeability, or drainage path.<ul><li>Record the changed input and resulting flow depth or drainage time.</li><li>Avoid changing several variables together until you understand their individual effects.</li></ul></li>
+    </ol>
   </section>
   <section id="separator" data-section class="doc-section">
     <h2>Separator</h2>
     <p>The separator analysis covers aggregate layers and geotextiles.</p>
-    <p>Check both particle retention and water movement. A permeable base can lose drainage capacity if adjacent fines migrate into it.</p>
-    <p>Identify the material on each side of a proposed separator. Record the gradations or fabric properties used and the criterion that controls. If a check fails, describe the needed change rather than reporting only “failed.”</p>
-    <p>A hydraulic check does not establish construction survivability or long-term field performance. Include those requirements when selecting a material for an actual project.</p>
+    <ol class="doc-list">
+      <li>Check both particle retention and water movement.<ul><li>A permeable base can lose drainage capacity if adjacent fines migrate into it.</li></ul></li>
+      <li>Identify the material on each side of a proposed separator.<ul><li>Record the gradations or fabric properties used and the criterion that controls.</li><li>If a check fails, describe the needed change rather than reporting only “failed.”</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>A hydraulic check does not establish construction survivability or long-term field performance.<ul><li>Include those requirements when selecting a material for an actual project.</li></ul></li>
+    </ul>
   </section>
   <section id="edgedrain" data-section class="doc-section">
     <h2>Edgedrain</h2>
     <p>DRIP includes pipe and geocomposite fin-drain analyses, including capacity and outlet spacing.</p>
-    <p>Trace the full route from base to collector to outlet. Check that the collector receives the intended contributing flow, and record its slope, outlet spacing, and applicable material properties.</p>
-    <p>Do not assume that a larger pipe fixes an obstructed outlet or a discontinuous connection to the base. In a design sketch, show where water leaves the system and how the outlet can be inspected.</p>
+    <ol class="doc-list">
+      <li>Trace the full route from base to collector to outlet.<ul><li>Check that the collector receives the intended contributing flow, and record its slope, outlet spacing, and applicable material properties.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Do not assume that a larger pipe fixes an obstructed outlet or a discontinuous connection to the base.<ul><li>In a design sketch, show where water leaves the system and how the outlet can be inspected.</li></ul></li>
+    </ul>
   </section>
   <section id="assumptions" data-section class="doc-section">
     <h2>Assumptions</h2>
-    <p>DRIP is a hydraulic design tool. A drainage calculation does not establish the structural thickness of the pavement, and an acceptable structural section does not establish its drainage performance. Keep both sets of checks in the design record.</p>
-    <p>Permeability describes how readily water moves through the material. Total porosity describes its void volume; effective porosity describes the portion available for drainage. They are different inputs. Appendix TT recommends laboratory values for permeability and effective porosity when available (<a href={`${appendix}#page=37`}>permeable-base analysis</a>).</p>
-    <p>Time to drain needs a stated drainage criterion. Removing a percentage of drainable water and reaching a percentage saturation are different questions. Keep the chosen criterion with the computed time.</p>
-    <p>The calculations use the geometry and material properties you enter. A blocked outlet, construction segregation, or fines entering the base can change actual performance. Describe how the base connects to the collector and how water reaches an open outlet.</p>
+    <ul class="doc-list">
+      <li>DRIP is a hydraulic design tool.<ul><li>A drainage calculation does not establish the structural thickness of the pavement, and an acceptable structural section does not establish its drainage performance.</li><li>Keep both sets of checks in the design record.</li></ul></li>
+      <li>Permeability describes how readily water moves through the material.<ul><li>Total porosity describes its void volume; effective porosity describes the portion available for drainage.</li><li>They are different inputs.</li><li>Appendix TT recommends laboratory values for permeability and effective porosity when available (<a href={`${appendix}#page=37`}>permeable-base analysis</a>).</li></ul></li>
+      <li>Time to drain needs a stated drainage criterion.<ul><li>Removing a percentage of drainable water and reaching a percentage saturation are different questions.</li><li>Keep the chosen criterion with the computed time.</li></ul></li>
+      <li>The calculations use the geometry and material properties you enter.<ul><li>A blocked outlet, construction segregation, or fines entering the base can change actual performance.</li><li>Describe how the base connects to the collector and how water reaches an open outlet.</li></ul></li>
+    </ul>
     <DocCallout kind="note" label="A shorter time needs context">Do not improve a result by choosing an unjustified porosity, permeability, or drainage target. Change a physical design feature or use supported material data, then repeat the check.</DocCallout>
   </section>
   <section id="practice" data-section class="doc-section">
@@ -99,31 +133,45 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <h3>Repeat a published example</h3>
     <p>Start with <a href={`${appendix}#page=45`}>Appendix TT, example 1</a>. Use the complete statement, material table, and solution in the manual. This is a published software exercise; the sensitivity study below is a class extension.</p>
     <ol class="doc-list">
-      <li>Start a new case, select the example’s units, and save it before entering values. Keep Normal mode enabled.</li>
-      <li>Sketch the contributing width and drain location. Enter Roadway Geometry and compare the resultant slope and flow length with the example.</li>
-      <li>Enter the example’s base and subgrade gradations. Check the percent-passing sequence before calculating properties.</li>
-      <li>Use the example’s inflow method and crack or rainfall inputs. Check the computed inflow before continuing.</li>
-      <li>Complete the permeable-base analysis. Record the minimum required thickness separately from the selected construction thickness.</li>
-      <li>Complete the separator and collector checks. Compare each output with the corresponding manual screen, with units attached.</li>
-      <li>Export the summary and reopen the saved case. If a value differs, compare the preceding inputs and dependencies before moving to the next page.</li>
+      <li>Start a new case, select the example’s units, and save it before entering values.<ul><li>Keep Normal mode enabled.</li></ul></li>
+      <li>Sketch the contributing width and drain location.<ul><li>Enter Roadway Geometry and compare the resultant slope and flow length with the example.</li></ul></li>
+      <li>Enter the example’s base and subgrade gradations.<ul><li>Check the percent-passing sequence before calculating properties.</li></ul></li>
+      <li>Use the example’s inflow method and crack or rainfall inputs.<ul><li>Check the computed inflow before continuing.</li></ul></li>
+      <li>Complete the permeable-base analysis.<ul><li>Record the minimum required thickness separately from the selected construction thickness.</li></ul></li>
+      <li>Complete the separator and collector checks.<ul><li>Compare each output with the corresponding manual screen, with units attached.</li></ul></li>
+      <li>Export the summary and reopen the saved case.<ul><li>If a value differs, compare the preceding inputs and dependencies before moving to the next page.</li></ul></li>
     </ol>
     <h3>Check sensitivity</h3>
     <p>Use a class-approved baseline with a fixed drainage criterion. The changes below are deliberate perturbations for learning; they are not material recommendations.</p>
     <ol class="doc-list">
-      <li>Copy the baseline as a low-permeability case. Set base permeability to half its original value and hold geometry, thickness, inflow, and porosity fixed.</li>
-      <li>Recalculate flow depth or drainage time, then the collector check. Record which target governs.</li>
-      <li>Restore the baseline in a separate case. Increase the contributing width by 25%, preserving the intended cross section, and recalculate the drainage path and dependent inputs.</li>
-      <li>Compare the two alternatives with the baseline. Report the actual changes in depth or time; do not assume an identical percentage change in every output.</li>
-      <li>Propose one physical change to address the governing check. Rerun that alternative with the original design targets.</li>
-      <li>Save a table with case name, changed input, flow depth or drainage time, target, separator result, and outlet spacing. State whether all required checks pass.</li>
+      <li>Copy the baseline as a low-permeability case.<ul><li>Set base permeability to half its original value and hold geometry, thickness, inflow, and porosity fixed.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Recalculate flow depth or drainage time, then the collector check.<ul><li>Record which target governs.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Restore the baseline in a separate case.<ul><li>Increase the contributing width by 25%, preserving the intended cross section, and recalculate the drainage path and dependent inputs.</li></ul></li>
+      <li>Compare the two alternatives with the baseline.<ul><li>Report the actual changes in depth or time; do not assume an identical percentage change in every output.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Propose one physical change to address the governing check.<ul><li>Rerun that alternative with the original design targets.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Save a table with case name, changed input, flow depth or drainage time, target, separator result, and outlet spacing.<ul><li>State whether all required checks pass.</li></ul></li>
     </ol>
     <p>For a second published exercise, follow <a href={`${appendix}#page=54`}>example 2</a>, which uses time to drain, a geotextile separator, and a geocomposite collector. Do not carry a pipe capacity equation into the geocomposite case.</p>
   </section>
   <section id="results" data-section class="doc-section">
     <h2>Results</h2>
-    <p>Use <strong>File → Export Summary</strong> for an HTML record of inputs and results, or <strong>Print Summary</strong>. Save the case file as well.</p>
-    <p>For coursework, report the unit system, geometry, inflow method, material inputs, flow depth or drainage time, separator check, and collector/outlet check. State which target governs and what you changed to meet it.</p>
-    <p>Keep plots tied to their case names. A graph without units or the changed input is difficult to interpret.</p>
+    <ol class="doc-list">
+      <li>Use <strong>File → Export Summary</strong> for an HTML record of inputs and results, or <strong>Print Summary</strong>.<ul><li>Save the case file as well.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>For coursework, report the unit system, geometry, inflow method, material inputs, flow depth or drainage time, separator check, and collector/outlet check.<ul><li>State which target governs and what you changed to meet it.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Keep plots tied to their case names.<ul><li>A graph without units or the changed input is difficult to interpret.</li></ul></li>
+    </ol>
   </section>
   <section id="checks" data-section class="doc-section">
     <h2>Checks</h2>
@@ -140,10 +188,16 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   </section>
   <section id="troubleshooting" data-section class="doc-section">
     <h2>Troubleshooting</h2>
-    <details><summary>The calculator is inactive</summary><p>Check the required upstream inputs and selected analysis mode. A blank input is different from an intentional zero. Follow linked variables back to their source page.</p></details>
+    <details><summary>The calculator is inactive</summary><ol class="doc-list">
+      <li>Check the required upstream inputs and selected analysis mode.<ul><li>A blank input is different from an intentional zero.</li><li>Follow linked variables back to their source page.</li></ul></li>
+    </ol></details>
     <details><summary>A value changed on another page</summary><p>The property pages share inputs. Recheck the source value and dependent calculations, then compare the exported summary with the saved baseline.</p></details>
-    <details><summary>The gradation looks wrong</summary><p>Check sieve units, sieve order, and whether you entered percent passing. Do not substitute percent retained without converting it.</p></details>
-    <details><summary>The summary has a heading but no results</summary><p>Complete that module and recalculate before exporting again. A summary heading alone is not evidence that a separator or outlet check was performed.</p></details>
+    <details><summary>The gradation looks wrong</summary><ol class="doc-list">
+      <li>Check sieve units, sieve order, and whether you entered percent passing.<ul><li>Do not substitute percent retained without converting it.</li></ul></li>
+    </ol></details>
+    <details><summary>The summary has a heading but no results</summary><ol class="doc-list">
+      <li>Complete that module and recalculate before exporting again.<ul><li>A summary heading alone is not evidence that a separator or outlet check was performed.</li></ul></li>
+    </ol></details>
     <p>These are input and workflow checks, not a list of confirmed software bugs. Record the program version, case file, and exact message when a run behaves unexpectedly.</p>
   </section>
   <section id="references" data-section class="doc-section">

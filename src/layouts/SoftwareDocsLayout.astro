@@ -69,6 +69,17 @@ const base = import.meta.env.BASE_URL;
   :global(.docs-content:has(.software-docs[data-library])) { max-width: none; }
   @media (min-width: 768px) { :global(.docs-shell:has(.software-docs[data-library])) { grid-template-columns: 13rem minmax(0, 1fr); } }
   @media (min-width: 1200px) { .software-sections { display: none; } }
+  :global(.software-docs ol.doc-list) { list-style-type: decimal; }
+  :global(.software-docs ul.doc-list) { list-style-type: disc; }
+  :global(.software-docs .doc-list > li) { margin-bottom: .65rem; }
+  :global(.software-docs .doc-list :is(ul, ol)) { margin: .35rem 0 .6rem; padding-left: 1.1rem; font-size: .9rem; line-height: 1.65; color: var(--color-text-muted); }
+  :global(.software-docs .doc-list ul) { list-style-type: disc; }
+  :global(.software-docs ul.doc-list > li > ul) { list-style-type: circle; }
+  :global(.software-docs .doc-list ul ul) { list-style-type: circle; }
+  :global(.software-docs .doc-list ol ol) { list-style-type: lower-alpha; }
+  :global(.software-docs .doc-list :is(ul, ol) > li) { margin-bottom: .3rem; }
+  :global(.software-docs .doc-list > li::marker) { color: var(--color-accent); font-weight: 500; }
+  @media (max-width: 480px) { :global(.software-docs .doc-list :is(ul, ol)) { padding-left: 1rem; } }
   @media print {
     :global(#main-nav), :global(body > footer), :global(.docs-sidebar), :global(.docs-toc), .software-mobile, .software-footer, .software-sections { display: none !important; }
     .software-docs { --color-text: #1a1a2e; --color-text-muted: #545b67; --color-surface: #fff; --color-surface-alt: #f5f5f5; --color-border: #ccc; }

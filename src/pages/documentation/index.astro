@@ -2,10 +2,10 @@
 import SoftwareDocsLayout from '../../layouts/SoftwareDocsLayout.astro';
 const base = import.meta.env.BASE_URL;
 const software = [
-  { id: 'faarfield', name: 'FAARFIELD', short: 'F', category: 'Design', purpose: 'Airport pavements', description: 'Build an aircraft mix, design a section, and check pavement life.', color: 'var(--phase-design)', topics: 'Aircraft · Layers · CDF', path: 'M20 28h80M28 38h64M36 48h48M44 58h32M60 12v54M50 22l10-10 10 10' },
-  { id: 'winjulea', name: 'WinJULEA', short: 'W', category: 'Analysis', purpose: 'Layered elastic analysis', description: 'Apply wheel loads and read stresses, strains, and deflections.', color: 'var(--phase-analysis)', topics: 'Loads · Moduli · Response', path: 'M20 30h80M20 43h80M20 58h80M60 12v18m-6-6 6 6 6-6M30 30c10 0 12 13 30 13s20-13 30-13' },
-  { id: 'drip', name: 'DRIP', short: 'D', category: 'Drainage', purpose: 'Subsurface drainage', description: 'Check water inflow, a permeable base, and edgedrain spacing.', color: 'var(--phase-materials)', topics: 'Inflow · Base · Edgedrains', path: 'M20 25h80M20 38l80 10M20 55h80M30 14v10m20-10v10m20-10v10M82 46v15m-6-6 6 6 6-6' },
-  { id: 'pavement-me', name: 'AASHTOWare Pavement ME Design', short: 'ME', category: 'Design', purpose: 'Pavement performance', description: 'Set design criteria and compare predicted distress for trial sections.', color: 'var(--phase-loads)', topics: 'Traffic · Climate · Distress', path: 'M24 15v46h76M30 52c20-3 24-20 35-18s15-8 28-17M30 43c18 0 24-5 34-6s20-7 29-12' },
+  { id: 'faarfield', name: 'FAARFIELD', category: 'Design', purpose: 'Airport pavements', description: 'Build an aircraft mix, design a section, and check pavement life.', color: 'var(--phase-design)', topics: 'Aircraft · Layers · CDF' },
+  { id: 'winjulea', name: 'WinJULEA', category: 'Analysis', purpose: 'Layered elastic analysis', description: 'Apply wheel loads and read stresses, strains, and deflections.', color: 'var(--phase-analysis)', topics: 'Loads · Moduli · Response' },
+  { id: 'drip', name: 'DRIP', category: 'Drainage', purpose: 'Subsurface drainage', description: 'Check water inflow, a permeable base, and edgedrain spacing.', color: 'var(--phase-materials)', topics: 'Inflow · Base · Edgedrains' },
+  { id: 'pavement-me', name: 'AASHTOWare Pavement ME Design', category: 'Design', purpose: 'Pavement performance', description: 'Set design criteria and compare predicted distress for trial sections.', color: '#dd353c', topics: 'Traffic · Climate · Distress' },
 ];
 ---
 <SoftwareDocsLayout title="Documentation · CEE 406" description="Guides and user manuals for the software used in CEE 406." activeModule="index">
@@ -22,7 +22,7 @@ const software = [
     <div class="library-grid" id="software-guides">
       {software.map(item => <article class="software-card" style={`--software-color: ${item.color}`} data-software-card data-category={item.category} data-search={`${item.name} ${item.category} ${item.purpose} ${item.description} ${item.topics}`.toLowerCase()}>
         <a class="software-card-main" href={`${base}documentation/${item.id}/`} aria-label={`${item.name} guide`}>
-          <div class="software-card-art" aria-hidden="true"><span class="software-monogram">{item.short}</span><svg viewBox="0 0 120 76" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d={item.path}/></svg></div>
+          <div class="software-card-art" data-brand={item.id} aria-hidden="true"><div class="software-logo-stage"><img class="software-logo" src={`${base}documentation/branding/${item.id}-logo.png`} width="320" height="160" alt="" decoding="async" /></div>{item.id === 'winjulea' && <span class="software-art-caption">Historical splash screen</span>}</div>
           <div class="software-card-copy"><h3>{item.name}</h3><span class="software-purpose">{item.purpose}</span><p>{item.description}</p><span class="software-open">Open guide <span aria-hidden="true">→</span></span></div>
         </a>
         <a class="software-manual" href={`${base}documentation/${item.id}/#manual`} aria-label={`${item.name} user's manual`}>User’s manual <span aria-hidden="true">→</span></a>
@@ -103,13 +103,16 @@ const software = [
   :global([data-theme="dark"]) .software-card:hover, :global([data-theme="dark"]) .software-card:focus-within { box-shadow: 0 10px 28px #00000026; }
   .software-card-main { flex: 1; display: flex; flex-direction: column; border-radius: 14px 14px 0 0; }
   .software-card-main:focus-visible, .software-manual:focus-visible { outline: 2px solid var(--software-color); outline-offset: -4px; }
-  .software-card-art { height: 6.75rem; display: flex; align-items: center; justify-content: space-between; position: relative; padding: 1rem 1.5rem; isolation: isolate; overflow: hidden; background: linear-gradient(120deg, color-mix(in srgb, var(--software-color) 7%, var(--color-surface)), var(--color-surface-alt)); color: var(--software-color); }
-  .software-card-art::before { content: ''; position: absolute; inset: 0; z-index: -1; background-image: radial-gradient(var(--software-color) .65px, transparent .65px); background-size: 12px 12px; opacity: .12; mask-image: linear-gradient(90deg, transparent 25%, #000); }
-  .software-card-art::after { content: ''; position: absolute; left: 1.5rem; bottom: 0; height: 1px; width: 2rem; background: var(--software-color); opacity: .45; transition: width .35s ease, opacity .35s ease; }
-  .software-card-art svg { width: 7.5rem; height: 4.75rem; opacity: .75; margin-right: -.3rem; transition: opacity .25s ease, transform .35s ease; }
-  .software-card-main:hover .software-card-art::after, .software-card-main:focus-visible .software-card-art::after { width: 4rem; opacity: .75; }
-  .software-card-main:hover .software-card-art svg, .software-card-main:focus-visible .software-card-art svg { opacity: 1; transform: translateY(-2px); }
-  .software-monogram { font-family: var(--font-heading); font-size: 1.8rem; font-weight: 500; letter-spacing: -.05em; }
+  .software-card-art { height: 11.5rem; position: relative; isolation: isolate; overflow: hidden; display: grid; place-items: center; padding: 1.5rem; background: linear-gradient(135deg, color-mix(in srgb, var(--software-color) 10%, #f5f7fb), #edf1f7); }
+  .software-card-art::before { content: ''; position: absolute; width: 15rem; height: 15rem; border: 1px solid color-mix(in srgb, var(--software-color) 12%, transparent); border-radius: 50%; box-shadow: 0 0 0 28px color-mix(in srgb, var(--software-color) 3%, transparent), 0 0 0 56px color-mix(in srgb, var(--software-color) 2%, transparent); z-index: -1; transform: translate(50%, -15%); }
+  .software-logo-stage { display: grid; place-items: center; width: 100%; height: 100%; transition: transform .4s cubic-bezier(.2,.7,.2,1); }
+  .software-art-caption { position: absolute; right: .85rem; bottom: .5rem; font-size: .625rem; color: #53627a; }
+  .software-logo { display: block; width: min(100%, 19rem); height: 8rem; object-fit: contain; filter: drop-shadow(0 6px 8px #14223a14); }
+  [data-brand="faarfield"] .software-logo { width: 7rem; height: 7rem; }
+  [data-brand="drip"] .software-logo { width: 14rem; height: 8.5rem; border-radius: 4px; }
+  [data-brand="winjulea"] .software-logo { width: 13rem; height: 9rem; border-radius: 4px; }
+  .software-card-main:hover .software-logo-stage, .software-card-main:focus-visible .software-logo-stage { transform: translateY(-3px) scale(1.025); }
+  :global([data-theme="dark"]) .software-card-art { background: linear-gradient(135deg, color-mix(in srgb, var(--software-color) 8%, #edf1f7), #e4e9f2); }
   .software-card-copy { padding: 1.4rem 1.5rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
   .software-purpose { font-size: .75rem; color: var(--color-text-muted); margin-bottom: .75rem; }
   .software-card h3 { font-size: 1.0625rem; line-height: 1.4; margin: 0 0 .3rem; color: var(--color-text); }
@@ -130,7 +133,7 @@ const software = [
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   @media (max-width: 560px) { .library-grid { grid-template-columns: 1fr; } .library-tools { gap: .5rem; } .library-filters { width: 100%; } .library-filters button { flex: 1; } }
   @media (prefers-reduced-motion: reduce) {
-    .software-card, .software-open > span, .software-card-art svg, .software-card-art::after, .software-manual, .software-manual > span, .library-filters button { transition: none; }
-    .software-card:hover, .software-card-main:hover .software-open > span, .software-card-main:hover .software-card-art svg, .software-card-main:focus-visible .software-card-art svg, .software-manual:hover > span, .software-manual:focus-visible > span { transform: none; }
+    .software-card, .software-open > span, .software-logo-stage, .software-manual, .software-manual > span, .library-filters button { transition: none; }
+    .software-card:hover, .software-card-main:hover .software-open > span, .software-card-main:hover .software-logo-stage, .software-card-main:focus-visible .software-logo-stage, .software-manual:hover > span, .software-manual:focus-visible > span { transform: none; }
   }
 </style>

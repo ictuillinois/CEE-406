@@ -14,6 +14,14 @@ Images are decoded and deduplicated in `public/documentation/faarfield/`.
 Cross-references become static routes. Standalone scripts, layout, and inline
 formatting are removed. The original Box source is unchanged.
 
+The importer converts consecutive numbered paragraphs into native ordered lists:
+26 lists with 121 items across 16 topics. It requires at least two consecutive
+numbers and preserves the starting number, inline markup, and technical body.
+Figures and intervening prose end a list; isolated labels remain paragraphs.
+Only the redundant plain-text list markers are removed. All 163 topic records,
+825 links, 145 anchors, and 175 figure references were compared before and after;
+their metadata, technical wording, link targets, and figure attributes match.
+
 To reimport (Python with beautifulsoup4):
 
 ```powershell
@@ -49,6 +57,23 @@ license and version; no institutional entitlement or account is assumed. The
 guide covers trial designs, criteria/reliability, reports, and alternatives.
 The commercial Manual of Practice is not copied. Resources checked October 1,
 2026; version-specific interface screenshots should follow the class installation.
+
+## Artwork and list polish
+
+Software cards and sidebar links now use authentic supplied or published artwork.
+FAARFIELD uses its configured FAA application icon; DRIP uses its manual cover
+wordmark and window icon; Pavement ME uses its official 2026 product lockup and
+square mark. WinJULEA uses its published historical splash artwork and associated
+ERDC mark, explicitly distinguished from a verified standalone product logo.
+Asset sources and extraction details are in
+`public/documentation/branding/README.md`. Original proportions and colors are
+retained; logos sit on light backgrounds in both themes.
+
+All four course guides use numbered actions and supporting bullets, with two-level
+feature, concept, assumption, and limitation lists. Declarative explanations are
+not numbered as actions. Technical claims, citations, tables, section IDs, and
+interactive widgets are preserved. Nested list spacing and markers follow the
+site typography.
 
 ## Third iteration
 

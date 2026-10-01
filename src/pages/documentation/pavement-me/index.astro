@@ -48,46 +48,72 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   </section>
   <section id="project" data-section class="doc-section">
     <h2>Project</h2>
-    <p>Name the project and each design so you can distinguish alternatives. Record the design life, construction and traffic-opening dates, location, unit system, and software version.</p>
-    <p>Select the strategy that matches the assignment: new pavement or rehabilitation, and the appropriate pavement type. An overlay analysis also needs information about the existing pavement and its condition.</p>
-    <p>Write the proposed layer sequence on paper before entering it. Confirm that the screen represents that sequence, including thicknesses, material types, and the underlying foundation.</p>
+    <ol class="doc-list">
+      <li>Name the project and each design so you can distinguish alternatives.<ul><li>Record the design life, construction and traffic-opening dates, location, unit system, and software version.</li></ul></li>
+      <li>Select the strategy that matches the assignment: new pavement or rehabilitation, and the appropriate pavement type.<ul><li>An overlay analysis also needs information about the existing pavement and its condition.</li></ul></li>
+      <li>Write the proposed layer sequence on paper before entering it.<ul><li>Confirm that the screen represents that sequence, including thicknesses, material types, and the underlying foundation.</li></ul></li>
+    </ol>
   </section>
   <section id="traffic" data-section class="doc-section">
     <h2>Traffic</h2>
-    <p>Enter the base-year two-way average annual daily truck traffic (AADTT), then its design-direction and design-lane percentages. AADTT counts trucks; AADT includes other vehicles. Check these fields before applying distribution factors.</p>
-    <p>Review vehicle-class distributions, growth functions, axle-load spectra, axles per truck, and wheel geometry. These describe load applications rather than a single ESAL total. The <a href={`${help}traffic.html`}>traffic help</a> defines the fields.</p>
-    <p>Class percentages total 100. Monthly adjustment factors total 12 per class; they are not monthly percentages totaling 100. Where hourly percentages are required for a rigid design, they total 100.</p>
+    <ol class="doc-list">
+      <li>Enter the base-year two-way average annual daily truck traffic (AADTT), then its design-direction and design-lane percentages.<ul><li>AADTT counts trucks; AADT includes other vehicles.</li><li>Check these fields before applying distribution factors.</li></ul></li>
+      <li>Review vehicle-class distributions, growth functions, axle-load spectra, axles per truck, and wheel geometry.<ul><li>These describe load applications rather than a single ESAL total.</li><li>The <a href={`${help}traffic.html`}>traffic help</a> defines the fields.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Class percentages total 100.<ul><li>Monthly adjustment factors total 12 per class; they are not monthly percentages totaling 100.</li><li>Where hourly percentages are required for a rigid design, they total 100.</li></ul></li>
+    </ul>
     <DocCallout kind="tip" label="Avoid applying the lane factors twice">If your source already gives design-lane truck traffic, recover or confirm the two-way value before entering it in the two-way AADTT field. Keep the direction and lane percentages with your source. See the <a href={`${help}traffic.html`}>general traffic inputs</a>.</DocCallout>
     <p>Use project data when available, then the regional or default data allowed by the assignment. Record the source. Keep the selected growth function with the growth rate: linear and compound growth are different forecasts.</p>
   </section>
   <section id="climate" data-section class="doc-section">
     <h2>Climate</h2>
-    <p>Choose climate data that represent the project location and check the selected record. Review the <a href={`${help}climate.html`}>climate help</a> for the options supported by your version.</p>
-    <p>Document the data source and location. Check any groundwater-depth input and its units. Use the same climate selection across structural alternatives unless climate is the variable being studied.</p>
-    <p>Climate influences the pavement’s temperature and moisture conditions. A modulus measured at one laboratory condition does not describe every condition over the design life.</p>
+    <ol class="doc-list">
+      <li>Choose climate data that represent the project location and check the selected record.<ul><li>Review the <a href={`${help}climate.html`}>climate help</a> for the options supported by your version.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Document the data source and location.<ul><li>Check any groundwater-depth input and its units.</li><li>Use the same climate selection across structural alternatives unless climate is the variable being studied.</li></ul></li>
+      <li>Climate influences the pavement’s temperature and moisture conditions.<ul><li>A modulus measured at one laboratory condition does not describe every condition over the design life.</li></ul></li>
+    </ul>
   </section>
   <section id="materials" data-section class="doc-section">
     <h2>Materials</h2>
-    <p>Review each layer individually. Thickness, stiffness, mixture properties, and other required fields depend on the material and design strategy.</p>
-    <p>For asphalt, dynamic modulus varies with temperature and loading frequency. The <a href={`${help}new_flexible_design.html`}>new flexible design help</a> covers dynamic modulus, binder properties, mixture inputs, and the available input levels. Use laboratory data or the specified predictive inputs consistently.</p>
-    <p>For unbound layers and subgrade, use the assigned material characterization. Check whether a value represents a measured, correlated, or default property. Elastic modulus, resilient modulus, CBR, and modulus of subgrade reaction are different quantities.</p>
-    <p>Rigid designs require concrete properties and structural details appropriate to the selected strategy. Check joint, shoulder, and load-transfer inputs where applicable. Do not carry an asphalt input assumption into a concrete field.</p>
+    <ol class="doc-list">
+      <li>Review each layer individually.<ul><li>Thickness, stiffness, mixture properties, and other required fields depend on the material and design strategy.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>For asphalt, dynamic modulus varies with temperature and loading frequency.<ul><li>The <a href={`${help}new_flexible_design.html`}>new flexible design help</a> covers dynamic modulus, binder properties, mixture inputs, and the available input levels.</li><li>Use laboratory data or the specified predictive inputs consistently.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>For unbound layers and subgrade, use the assigned material characterization.<ul><li>Check whether a value represents a measured, correlated, or default property.</li><li>Elastic modulus, resilient modulus, CBR, and modulus of subgrade reaction are different quantities.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Rigid designs require concrete properties and structural details appropriate to the selected strategy.<ul><li>Check joint, shoulder, and load-transfer inputs where applicable.</li><li>Do not carry an asphalt input assumption into a concrete field.</li></ul></li>
+    </ul>
     <h3>Input levels</h3>
     <p>The hierarchy expresses the source and detail of an input. Select the level supported by your data; choosing a higher level without its required measurements does not improve the analysis. List any defaults you retained.</p>
   </section>
   <section id="criteria" data-section class="doc-section">
     <h2>Criteria</h2>
-    <p>Enter the assigned performance limits and reliability for the design strategy. Check the unit of every limit before comparing it with a prediction.</p>
-    <p>Reliability concerns the uncertainty in predicted performance. It is separate from the input-data hierarchy. Keep reliability and limits fixed when comparing structural alternatives.</p>
-    <p>Record the calibration used. Follow the course or agency instructions for local coefficients; do not adjust coefficients simply to make a trial section pass.</p>
+    <ol class="doc-list">
+      <li>Enter the assigned performance limits and reliability for the design strategy.<ul><li>Check the unit of every limit before comparing it with a prediction.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Reliability concerns the uncertainty in predicted performance.<ul><li>It is separate from the input-data hierarchy.</li><li>Keep reliability and limits fixed when comparing structural alternatives.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Record the calibration used.<ul><li>Follow the course or agency instructions for local coefficients; do not adjust coefficients simply to make a trial section pass.</li></ul></li>
+    </ol>
     <p>The software’s <a href={`${help}introduction.html`}>design process</a> checks distress and smoothness predictions against the selected criteria at the specified reliability.</p>
   </section>
   <section id="assumptions" data-section class="doc-section">
     <h2>Assumptions</h2>
-    <p>A prediction belongs to its trial section and input set. Traffic growth, climate selection, material characterization, and calibration are assumptions you need to document. An unrecorded default is still an assumption.</p>
-    <p>Input levels describe the available evidence; reliability describes the performance check. A project can use measured material data and still need a reliability level for each criterion. Do not treat a change in input level as a change in reliability.</p>
-    <p>Keep the meaning of a performance measure with its value. Asphalt rut depth, total pavement rut depth, cracking area, transverse crack length, and IRI describe different outcomes. A number without the model and unit cannot establish that a design meets its limit.</p>
-    <p>Calibration is part of the model. Use the coefficients required by the assignment or agency and record their source. A fitted coefficient is not a construction adjustment; changing it just to obtain a passing section removes the basis for the comparison.</p>
+    <ul class="doc-list">
+      <li>A prediction belongs to its trial section and input set.<ul><li>Traffic growth, climate selection, material characterization, and calibration are assumptions you need to document.</li><li>An unrecorded default is still an assumption.</li></ul></li>
+      <li>Input levels describe the available evidence; reliability describes the performance check.<ul><li>A project can use measured material data and still need a reliability level for each criterion.</li><li>Do not treat a change in input level as a change in reliability.</li></ul></li>
+      <li>Keep the meaning of a performance measure with its value.<ul><li>Asphalt rut depth, total pavement rut depth, cracking area, transverse crack length, and IRI describe different outcomes.</li><li>A number without the model and unit cannot establish that a design meets its limit.</li></ul></li>
+      <li>Calibration is part of the model.<ul><li>Use the coefficients required by the assignment or agency and record their source.</li><li>A fitted coefficient is not a construction adjustment; changing it just to obtain a passing section removes the basis for the comparison.</li></ul></li>
+    </ul>
     <DocCallout kind="note" label="Feasible under these inputs">A passing run meets the entered performance checks under the modeled conditions. Your recommendation still needs the course’s construction, cost, and data-quality considerations.</DocCallout>
   </section>
   <section id="run" data-section class="doc-section">
@@ -103,10 +129,16 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   </section>
   <section id="results" data-section class="doc-section">
     <h2>Results</h2>
-    <p>Review the summary and the performance curves. Check the reported value, its unit, applicable reliability, and limit for each criterion. Identify the first criterion to reach its limit and the age at which that happens.</p>
-    <p>For a flexible section, distinguish total rutting from layer contributions where those outputs are available. For cracking, keep the model’s measure and units with the result. Different cracking measures cannot be compared as if they were the same percentage.</p>
-    <p>For rigid pavement, review the outputs applicable to its strategy. Check smoothness as well as structural distress. A design can satisfy one limit and fail another.</p>
-    <p>Use the report’s applicable performance check. Do not compare a mean prediction with a reliability-adjusted limit or output without confirming how the report expresses reliability.</p>
+    <ol class="doc-list">
+      <li>Review the summary and the performance curves.<ul><li>Check the reported value, its unit, applicable reliability, and limit for each criterion.</li><li>Identify the first criterion to reach its limit and the age at which that happens.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>For a flexible section, distinguish total rutting from layer contributions where those outputs are available.<ul><li>For cracking, keep the model’s measure and units with the result.</li><li>Different cracking measures cannot be compared as if they were the same percentage.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>For rigid pavement, review the outputs applicable to its strategy.<ul><li>Check smoothness as well as structural distress.</li><li>A design can satisfy one limit and fail another.</li></ul></li>
+      <li>Use the report’s applicable performance check.<ul><li>Do not compare a mean prediction with a reliability-adjusted limit or output without confirming how the report expresses reliability.</li></ul></li>
+    </ol>
     <DocDecision id="pavement-me-review" label="Where did the trial design fall short?" choices={[
       { value: 'rutting', label: 'Rutting', title: 'Review the layer contributions', body: 'For flexible designs, identify which layers contribute to the reported rutting. Check the relevant material inputs before changing the trial section.', href: '#materials', linkLabel: 'Review material inputs' },
       { value: 'cracking', label: 'Cracking', title: 'Read the exact cracking measure', body: 'Keep the model, units, and applicable reliability with the result. Review the inputs for that distress rather than treating every cracking output as the same percentage.', href: '#criteria', linkLabel: 'Review the performance criteria' },
@@ -115,13 +147,19 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
   </section>
   <section id="compare-designs" data-section class="doc-section">
     <h2>Compare designs</h2>
-    <p>Copy the baseline and change one variable first: thickness, a material input, or another assigned design feature. Keep traffic, climate, criteria, reliability, and calibration fixed.</p>
-    <p>For each alternative, record the changed input, governing criterion, predicted performance, and whether every required limit is met. Explain the improvement and any remaining failure.</p>
-    <p>After understanding individual effects, compare practical combinations. A passing prediction establishes feasibility under the modeled conditions; selecting an alternative also requires the assignment’s cost and construction considerations.</p>
+    <ol class="doc-list">
+      <li>Copy the baseline and change one variable first: thickness, a material input, or another assigned design feature.<ul><li>Keep traffic, climate, criteria, reliability, and calibration fixed.</li></ul></li>
+      <li>For each alternative, record the changed input, governing criterion, predicted performance, and whether every required limit is met.<ul><li>Explain the improvement and any remaining failure.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>After understanding individual effects, compare practical combinations.<ul><li>A passing prediction establishes feasibility under the modeled conditions; selecting an alternative also requires the assignment’s cost and construction considerations.</li></ul></li>
+    </ul>
     <p>A useful submission includes the saved designs, input sources, baseline and alternative reports, a short comparison table, and the reason for your selected section.</p>
     <details class="doc-example"><summary>Try a thickness comparison</summary>
-      <p>Copy the baseline, increase one layer’s thickness by the assigned increment, and rerun. Keep traffic, climate, materials, criteria, reliability, and calibration fixed.</p>
-      <p>Compare every applicable distress and smoothness result. Report the thickness change, governing criterion, and whether either design meets all limits. This is a sensitivity exercise; no improvement is assumed before the run.</p>
+      <ol class="doc-list">
+      <li>Copy the baseline, increase one layer’s thickness by the assigned increment, and rerun.<ul><li>Keep traffic, climate, materials, criteria, reliability, and calibration fixed.</li></ul></li>
+      <li>Compare every applicable distress and smoothness result.<ul><li>Report the thickness change, governing criterion, and whether either design meets all limits.</li><li>This is a sensitivity exercise; no improvement is assumed before the run.</li></ul></li>
+    </ol>
     </details>
   </section>
   <section id="practice" data-section class="doc-section">
@@ -129,30 +167,42 @@ const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'
     <p>Use the class trial section, traffic source, climate record, and performance limits. These exercises teach input review and comparison; they do not supply a complete design dataset or an official benchmark result.</p>
     <h3>Build a baseline</h3>
     <ol class="doc-list">
-      <li>Create a project and select the assigned design strategy. Name the design “Baseline” and record the version and dates.</li>
-      <li>Enter the layer sequence. Compare it with a sketch showing every material and thickness.</li>
-      <li>Enter two-way base-year AADTT, direction and lane percentages, distributions, axle loads, and growth. Keep the original traffic source beside the inputs.</li>
-      <li>Select the assigned climate record. Record its location and the groundwater assumption.</li>
-      <li>Review every material input and its level. Mark defaults in your case log rather than silently treating them as measurements.</li>
-      <li>Enter the limits, reliability, and assigned calibration. Review the complete input summary before running.</li>
-      <li>Run the design, read warnings, and save the report. List every applicable performance measure with its predicted value, unit, limit, and pass/fail status.</li>
+      <li>Create a project and select the assigned design strategy.<ul><li>Name the design “Baseline” and record the version and dates.</li></ul></li>
+      <li>Enter the layer sequence.<ul><li>Compare it with a sketch showing every material and thickness.</li></ul></li>
+      <li>Enter two-way base-year AADTT, direction and lane percentages, distributions, axle loads, and growth.<ul><li>Keep the original traffic source beside the inputs.</li></ul></li>
+      <li>Select the assigned climate record.<ul><li>Record its location and the groundwater assumption.</li></ul></li>
+      <li>Review every material input and its level.<ul><li>Mark defaults in your case log rather than silently treating them as measurements.</li></ul></li>
+      <li>Enter the limits, reliability, and assigned calibration.<ul><li>Review the complete input summary before running.</li></ul></li>
+      <li>Run the design, read warnings, and save the report.<ul><li>List every applicable performance measure with its predicted value, unit, limit, and pass/fail status.</li></ul></li>
     </ol>
     <DocCallout kind="tip" label="Check the truck count by hand">For an illustrative two-way AADTT of 2,000, 50% in the design direction, and 80% in the design lane, the base-year design-lane count is 2,000 × 0.50 × 0.80 = 800 trucks/day. Enter 2,000 in the two-way field, not 800. This checks the factors; it does not replace axle-load spectra.</DocCallout>
     <h3>Change one layer</h3>
     <ol class="doc-list">
-      <li>Copy the baseline and name it for the changed thickness. Use the increment assigned in class.</li>
-      <li>Change only that layer’s thickness. Compare the input summaries to confirm that traffic, climate, criteria, reliability, and calibration are identical.</li>
-      <li>Run the alternative. Compare all applicable performance outputs at the same design age, including smoothness.</li>
-      <li>Identify the governing criterion in each design. Record whether the governing criterion changed and whether either design satisfies every required limit.</li>
-      <li>Inspect the curves, not only the terminal values. If a limit is reached earlier, record that age.</li>
-      <li>Explain the result using the relevant response and distress model. Do not assume every criterion must improve by the same amount.</li>
+      <li>Copy the baseline and name it for the changed thickness.<ul><li>Use the increment assigned in class.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Change only that layer’s thickness.<ul><li>Compare the input summaries to confirm that traffic, climate, criteria, reliability, and calibration are identical.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Run the alternative.<ul><li>Compare all applicable performance outputs at the same design age, including smoothness.</li></ul></li>
+      <li>Identify the governing criterion in each design.<ul><li>Record whether the governing criterion changed and whether either design satisfies every required limit.</li></ul></li>
+    </ol>
+    <ul class="doc-list">
+      <li>Inspect the curves, not only the terminal values.<ul><li>If a limit is reached earlier, record that age.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
+      <li>Explain the result using the relevant response and distress model.<ul><li>Do not assume every criterion must improve by the same amount.</li></ul></li>
     </ol>
     <h3>Test an uncertain input</h3>
     <ol class="doc-list">
       <li>Return to the baseline and choose one uncertain input allowed by the assignment, such as truck growth or an unbound material property.</li>
-      <li>Define a supported low and high value. Keep the traffic growth function with its rate; a compound forecast differs from a linear one.</li>
+    </ol>
+    <ul class="doc-list">
+      <li>Define a supported low and high value.<ul><li>Keep the traffic growth function with its rate; a compound forecast differs from a linear one.</li></ul></li>
+    </ul>
+    <ol class="doc-list">
       <li>Save and run both cases with the original structure and design criteria.</li>
-      <li>Compare the governing outputs. State whether the recommendation depends on the uncertain input.</li>
+      <li>Compare the governing outputs.<ul><li>State whether the recommendation depends on the uncertain input.</li></ul></li>
       <li>Identify the additional measurement or source that would most help resolve that uncertainty.</li>
     </ol>
     <p>Submit the saved designs, input sources, reports, and a comparison table. Use one row per case: changed input, governing criterion, predicted value, limit, and whether all criteria pass.</p>

@@ -10,6 +10,66 @@ import re
 import sys
 from pathlib import Path
 from bs4 import BeautifulSoup
+from bs4.element import NavigableString
+
+
+numbered_prefix = re.compile(r"^\s*(\d+)([.)])\s+")
+
+
+def next_element(node):
+    """Ignore formatting whitespace, but never cross another content node."""
+    for sibling in node.next_siblings:
+        if isinstance(sibling, NavigableString):
+            if not sibling.strip():
+                continue
+            return None
+        return sibling
+    return None
+
+
+def semantic_numbered_lists(page, soup):
+    """Convert consecutive numbered paragraphs without editing their bodies.
+
+    Require at least two items, matching separators, and ascending consecutive
+    numbers. Figures, intervening prose, and resets end a run. Keep all inline
+    markup and paragraph attributes; only replace the plain-text list prefix
+    with native list numbering. Isolated and ambiguous labels stay unchanged.
+    """
+    lists = items = 0
+    for paragraph in list(page.find_all("p")):
+        if paragraph.name != "p" or paragraph.find_parent(["ol", "ul"]):
+            continue
+        match = numbered_prefix.match(paragraph.get_text())
+        if not match:
+            continue
+        run = [(paragraph, match)]
+        following = next_element(paragraph)
+        while following is not None and following.name == "p":
+            prefix = numbered_prefix.match(following.get_text())
+            if (not prefix or prefix[2] != match[2]
+                    or int(prefix[1]) != int(match[1]) + len(run)):
+                break
+            run.append((following, prefix))
+            following = next_element(following)
+        if len(run) < 2:
+            continue
+        ordered = soup.new_tag("ol", attrs={"class": "reference-list"})
+        if int(match[1]) != 1:
+            ordered["start"] = str(int(match[1]))
+        paragraph.insert_before(ordered)
+        for item, prefix in run:
+            remaining = prefix.end()
+            for text in list(item.find_all(string=True)):
+                if not remaining:
+                    break
+                removed = min(remaining, len(text))
+                text.replace_with(str(text)[removed:])
+                remaining -= removed
+            item.name = "li"
+            ordered.append(item.extract())
+        lists += 1
+        items += len(run)
+    return lists, items
 
 root = Path(__file__).resolve().parents[1]
 source = BeautifulSoup(Path(sys.argv[1]).read_text(encoding="utf-8"), "html.parser")
@@ -19,6 +79,7 @@ pages = source.select(".section-page")[1:]
 ids = {page["id"] for page in pages}
 topics = []
 group = "Introduction"
+list_count = item_count = 0
 for page in pages:
     heading = page.find(re.compile(r"^h[1-6]$"))
     title = re.sub(r"\s+", " ", heading.get_text(" ", strip=True))
@@ -50,8 +111,12 @@ for page in pages:
                 el["href"] = "__BASE__documentation/faarfield/reference/" + target + "/"
             elif el.get("href", "").lower().startswith("javascript:"):
                 del el["href"]
+    lists, items = semantic_numbered_lists(page, source)
+    list_count += lists
+    item_count += items
     body = "".join(str(child) for child in page.contents).strip()
     topics.append({"id": page["id"], "title": title, "group": group, "html": body})
 output = root / "src/data/faarfield-reference.json"
 output.write_text(json.dumps(topics, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-print(f"Imported {len(topics)} topics and {len(list(assets.iterdir()))} images.")
+print(f"Imported {len(topics)} topics and {len(list(assets.iterdir()))} images; "
+      f"converted {list_count} numbered lists ({item_count} items).")
