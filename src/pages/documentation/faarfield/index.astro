@@ -1,0 +1,63 @@
+---
+import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
+import { faarfieldDownload } from '../../../data/documentation';
+const base = import.meta.env.BASE_URL;
+const reference = `${base}documentation/faarfield/reference/`;
+const toc = ['Download', 'Start a job', 'Pavement', 'Traffic', 'Run', 'Results', 'Reference'].map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label }));
+---
+<SoftwareDocsLayout title="FAARFIELD · CEE 406" description="A course guide to FAARFIELD, with the FAA help reference." activeModule="faarfield" toc={toc}>
+  <header class="doc-header">
+    <span class="doc-header__badge">Course guide</span>
+    <h1 class="doc-header__title">FAARFIELD</h1>
+    <p class="doc-header__desc">Design and evaluate flexible and rigid airport pavements.</p>
+  </header>
+  <section id="download" data-section class="doc-section">
+    <h2>Download</h2>
+    <p>Get the installer and readme from the <a href={faarfieldDownload}>FAA download page</a>. The FAA recommends Windows 10 or newer. Follow the readme for installation.</p>
+    <p>This reference was copied from the prepared FAARFIELD 2.1.1 documentation. The FAA now lists version 2.1.2. Some help topics retain older version labels; use the current readme for installation and the version assigned in class for coursework.</p>
+  </section>
+  <section id="start-a-job" data-section class="doc-section">
+    <h2>Start a job</h2>
+    <ol class="doc-list">
+      <li>Open FAARFIELD and select <strong>New Job</strong>.</li>
+      <li>Name the job and its pavement section. A job can contain several sections.</li>
+      <li>Save the job before entering your inputs. Use a separate section for each alternative you want to compare.</li>
+      <li>Check <strong>Units</strong> in Design Options. Choose Metric (SI) or US Customary before entering values.</li>
+    </ol>
+    <p>See <a href={`${reference}jobsandjobfiles/`}>jobs and job files</a> and <a href={`${reference}units/`}>units</a>.</p>
+  </section>
+  <section id="pavement" data-section class="doc-section">
+    <h2>Pavement</h2>
+    <p>Select the pavement type first: a new flexible or rigid section, or the appropriate overlay type. Enter the design life, layer materials, thicknesses, and the required material properties.</p>
+    <p>For thickness design, check which layer the program will adjust. For a life analysis, enter the existing section thicknesses. Use the assignment values; library defaults are not a substitute for the specified inputs.</p>
+    <p>See <a href={`${reference}definingpavementstructure/`}>pavement structure</a>, <a href={`${reference}materiallibrary/`}>materials</a>, and <a href={`${reference}designlayer/`}>design layer</a>.</p>
+  </section>
+  <section id="traffic" data-section class="doc-section">
+    <h2>Traffic</h2>
+    <p>Add each aircraft from the library. Check its model, gear configuration, gross weight, annual departures, and annual growth. Similar aircraft names can have different landing gear.</p>
+    <p>Enter annual departures in the departures field. Keep the design life separate; do not enter total lifetime departures as an annual value.</p>
+    <p>See <a href={`${reference}definingsectiontrafficmix/`}>traffic mix</a> and <a href={`${reference}viewingaircraftgearconfigurations/`}>gear configurations</a>.</p>
+  </section>
+  <section id="run" data-section class="doc-section">
+    <h2>Run</h2>
+    <ul class="doc-list">
+      <li><strong>Thickness Design:</strong> find a thickness for the section and traffic you entered.</li>
+      <li><strong>Life:</strong> estimate structural life with the section thicknesses held fixed.</li>
+      <li><strong>Life and Compaction:</strong> see the <a href={`${reference}lifeandcompactionmode/`}>mode reference</a> for the additional compaction analysis.</li>
+      <li><strong>ACR/PCR:</strong> evaluate pavement strength reporting. This answers a different question from thickness design.</li>
+    </ul>
+    <p>Select the mode for the current section, check the inputs, and click <strong>Run</strong>. Read the Calculation Status tab for progress and messages. Rigid pavement calculations can take longer.</p>
+  </section>
+  <section id="results" data-section class="doc-section">
+    <h2>Results</h2>
+    <p>Open the <strong>Section Report</strong> and <strong>CDF Graph</strong> from the Explorer. Check the final layer thicknesses, calculated life, traffic, and options before using the result.</p>
+    <p>Cumulative damage factor (CDF) compares applied traffic with the model’s allowable traffic. A value of 1 represents the model’s damage limit. Read the CDF profile across the pavement; the largest aircraft by weight may not control the design.</p>
+    <p>Use <strong>Save As PDF</strong> to export reports and graphs. Save the job file too, so you can reopen the inputs. For a comparison, record what changed and keep the other inputs fixed.</p>
+    <p>See <a href={`${reference}appendixbcumulativedamagefactor/`}>CDF</a>, <a href={`${reference}reportsandgraphs/`}>reports</a>, and <a href={`${reference}pdfoutputsofreportsandgraphs/`}>PDF output</a>.</p>
+  </section>
+  <section id="reference" data-section class="doc-section">
+    <h2>Reference</h2>
+    <p>The <a href={reference}>FAA help reference</a> includes all 163 imported topics, figures, material definitions, design options, and worked examples. Its technical text is retained from the supplied help documentation.</p>
+    <p>For current software and guidance, use the <a href={faarfieldDownload}>FAA FAARFIELD page</a>.</p>
+  </section>
+</SoftwareDocsLayout>

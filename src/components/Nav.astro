@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Tools', href: `${base}tools/` },
   { label: 'Homeworks', href: `${base}homeworks/` },
   { label: 'Textbook', href: `${base}textbook/` },
+  { label: 'Documentation', href: `${base}documentation/` },
 ];
 
 function isActive(href: string) {
@@ -292,7 +293,12 @@ function isActive(href: string) {
     .nav-brand-org { display: none; }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
+    .nav-inner { gap: 0.5rem; }
+    .nav-brand { min-width: 0; flex-shrink: 1; }
+    .nav-brand-text { min-width: 0; }
+    .nav-brand-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .nav-toggle, .nav-right { flex-shrink: 0; }
     .nav-toggle { display: flex; }
 
     .nav-links {

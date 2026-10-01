@@ -1,0 +1,27 @@
+---
+import DocsLayout from './DocsLayout.astro';
+import { documentationModules } from '../data/documentation';
+interface Props {
+  title: string;
+  description: string;
+  activeModule: string;
+  toc?: { id: string; label: string }[];
+}
+const base = import.meta.env.BASE_URL;
+---
+<DocsLayout {...Astro.props} sidebarLabel="Software" sidebarModules={documentationModules(base)}>
+  <nav class="doc-breadcrumb" aria-label="Breadcrumb">
+    <a href={`${base}documentation/`}>Documentation</a>
+    {Astro.props.activeModule !== 'index' && <><span aria-hidden="true"> / </span><span>{Astro.props.title.replace(' · CEE 406', '')}</span></>}
+  </nav>
+  <nav class="software-mobile" aria-label="Software guides">
+    {documentationModules(base).map(item => <a href={item.href} aria-current={item.id === Astro.props.activeModule ? 'page' : undefined}>{item.label}</a>)}
+  </nav>
+  <slot />
+</DocsLayout>
+<style>
+  .software-mobile { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-bottom: 1.5rem; font-size: .8125rem; }
+  .software-mobile a { color: var(--color-text-muted); }
+  .software-mobile a[aria-current] { color: var(--color-accent); }
+  @media (min-width: 768px) { .software-mobile { display: none; } }
+</style>

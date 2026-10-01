@@ -7,12 +7,14 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  indexMain?: boolean;
 }
 
 const base = import.meta.env.BASE_URL;
 const {
   title = 'CEE 406 · Pavement Design I',
   description = 'Course portal for CEE 406 Pavement Design I at the University of Illinois Urbana-Champaign: homeworks, online tools, and textbook.',
+  indexMain = true,
 } = Astro.props;
 ---
 
@@ -45,7 +47,7 @@ const {
   <body>
     <SearchModal />
     <Nav />
-    <main>
+    <main data-pagefind-body={indexMain ? '' : undefined}>
       <slot />
     </main>
     <Footer />

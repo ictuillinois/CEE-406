@@ -1,0 +1,16 @@
+---
+import SoftwareDocsLayout from '../../layouts/SoftwareDocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+---
+<SoftwareDocsLayout title="Documentation · CEE 406" description="Guides for the software used in CEE 406." activeModule="index">
+  <header class="doc-header">
+    <h1 class="doc-header__title">Documentation</h1>
+    <p class="doc-header__desc">Setup, inputs, and results for the software we use in class.</p>
+  </header>
+  <section aria-label="Software guides">
+    <a class="doc-link-card" href={`${base}documentation/faarfield/`}><div><strong>FAARFIELD</strong><span>Airport pavement design and evaluation. Start with the course guide or browse the help reference.</span></div></a>
+    <a class="doc-link-card" href={`${base}documentation/winjulea/`}><div><strong>WinJULEA</strong><span>Layered elastic analysis. Build a section, apply wheel loads, and read stresses and strains.</span></div></a>
+    <a class="doc-link-card" href={`${base}documentation/drip/`}><div><strong>DRIP</strong><span>Subsurface drainage. Check inflow, a permeable base, separators, and edgedrains.</span></div></a>
+    <a class="doc-link-card" href={`${base}documentation/pavement-me/`}><div><strong>AASHTOWare Pavement ME Design</strong><span>Predict pavement performance and compare trial sections against design criteria.</span></div></a>
+  </section>
+</SoftwareDocsLayout>

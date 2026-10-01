@@ -1,0 +1,182 @@
+---
+import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
+const base = import.meta.env.BASE_URL;
+const headings = ['Setup', 'Model', 'Units', 'Layers', 'Loads', 'Evaluation points', 'Run and save', 'Read the output', 'Example', 'Multiple wheels', 'Sublayers', 'Checks', 'Troubleshooting', 'References'];
+const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label }));
+---
+<SoftwareDocsLayout title="WinJULEA · CEE 406" description="A course guide to layered elastic pavement analysis with WinJULEA." activeModule="winjulea" toc={toc}>
+  <header class="doc-header">
+    <span class="doc-header__badge">Course guide · first draft</span>
+    <h1 class="doc-header__title">WinJULEA</h1>
+    <p class="doc-header__desc">Calculate pavement stresses, strains, and displacements under wheel loads.</p>
+  </header>
+  <section id="setup" data-section class="doc-section">
+    <h2>Setup</h2>
+    <p>Use the Windows copy provided in class. Keep its accompanying files together and save your analyses in a folder you can write to.</p>
+    <p>The <a href="https://transportation.erdc.dren.mil/pcase/downloads/PCASE209%20User%20Manual.pdf">USACE PCASE 2.09 manual</a> lists WinJULEA under Utilities. That is a historical distribution reference; a current standalone installer has not been verified. Use the course copy for a consistent version.</p>
+    <p>This guide covers the analysis workflow. Menu labels, file formats, and output conventions should be checked against the copy used in class.</p>
+  </section>
+  <section id="model" data-section class="doc-section">
+    <h2>Model</h2>
+    <p>A layered elastic analysis represents the pavement as horizontal layers. Each layer has a thickness, elastic modulus E, and Poisson’s ratio ν. The bottom layer extends indefinitely downward.</p>
+    <p>The usual wheel model is a static vertical pressure distributed uniformly over a circular area. Layers are homogeneous, isotropic, and linear elastic, and extend indefinitely sideways. Choose interface conditions to match the intended bond between layers.</p>
+    <p>The analysis gives the response to a load. Fatigue life and permanent deformation require separate relationships and traffic inputs. Asphalt temperature and loading rate enter through your choice of modulus; an elastic run does not calculate their effects on its own.</p>
+  </section>
+  <section id="units" data-section class="doc-section">
+    <h2>Units</h2>
+    <p>Choose a consistent system before typing. Pressure and modulus must use the same stress unit. Thickness, contact radius, wheel spacing, coordinates, and displacement must use the same length unit. Check any unit labels in your version.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Quantity</th><th>SI example</th><th>US example</th></tr></thead>
+      <tbody>
+        <tr><td>Thickness, radius, coordinates</td><td>mm</td><td>in</td></tr>
+        <tr><td>Modulus and pressure</td><td>MPa = N/mm²</td><td>psi = lb/in²</td></tr>
+        <tr><td>Wheel force</td><td>N</td><td>lb</td></tr>
+        <tr><td>Stress</td><td>MPa</td><td>psi</td></tr>
+        <tr><td>Displacement</td><td>mm</td><td>in</td></tr>
+        <tr><td>Strain and Poisson’s ratio</td><td>Dimensionless</td><td>Dimensionless</td></tr>
+      </tbody>
+    </table></div>
+    <p>If you use kPa and mm, the corresponding force unit is 0.001 N. Convert pressure to MPa when calculating a wheel force in N from an area in mm².</p>
+    <p>1 MPa = 1,000 kPa. 1 ksi = 1,000 psi. Strain of 0.0002 is 200 microstrain (µε). Convert strain only after checking how the output displays it.</p>
+  </section>
+  <section id="layers" data-section class="doc-section">
+    <h2>Layers</h2>
+    <ol class="doc-list">
+      <li>List layers from the surface down: asphalt, base, any subbase, then subgrade.</li>
+      <li>Enter the thickness of each finite layer. Use the program’s halfspace convention for the last layer; do not invent a finite subgrade thickness.</li>
+      <li>Enter E and ν for each material. Use the assigned values and convert E to the chosen stress unit.</li>
+      <li>Set the interface conditions. Use full bond unless the assignment specifies otherwise.</li>
+      <li>Record the cumulative depth to each interface.</li>
+    </ol>
+    <p>Splitting one material into several identical, fully bonded layers should preserve its response. Changing their moduli creates a different model.</p>
+    <p>Do not treat an intermediate interface parameter as a measured percentage of bond. Its meaning depends on the solver’s definition. Check the installed help before using partial bond values.</p>
+  </section>
+  <section id="loads" data-section class="doc-section">
+    <h2>Loads</h2>
+    <p>For a uniform circular contact, wheel force P, pressure p, and radius a satisfy <strong>P = pπa²</strong>. If force and pressure are given, calculate <strong>a = √(P/(πp))</strong>. Radius is half the diameter.</p>
+    <p>Identify whether an assigned force is for one wheel, a dual pair, or an entire axle. Divide it according to the stated load distribution before creating individual contacts.</p>
+    <p>Place each wheel center in a common plan coordinate system. For a single wheel, the origin is convenient. For a dual pair with center-to-center spacing s, place centers at x = −s/2 and x = +s/2, with the same y.</p>
+    <p>Enter the load quantities requested by your copy of WinJULEA. If it requests pressure and radius, use those; if it requests force and another contact quantity, calculate the remaining value. Check the implied wheel force before running.</p>
+  </section>
+  <section id="evaluation-points" data-section class="doc-section">
+    <h2>Evaluation points</h2>
+    <p>Load coordinates locate the wheels. Evaluation coordinates locate where you want a response. Use the pavement surface as the depth origin and document the direction of the depth axis.</p>
+    <ul class="doc-list">
+      <li><strong>Surface:</strong> evaluate vertical displacement under and around the load.</li>
+      <li><strong>Bottom of asphalt:</strong> evaluate horizontal strains on the asphalt side of the interface.</li>
+      <li><strong>Top of subgrade:</strong> evaluate vertical strain on the subgrade side.</li>
+      <li><strong>Depth profile:</strong> hold x and y fixed and evaluate several depths.</li>
+      <li><strong>Wheel group:</strong> include points beneath wheels and between them.</li>
+    </ul>
+    <p>A point exactly at an interface can be ambiguous because strain depends on the material. Select the layer explicitly if the program permits it. Otherwise use points just above and below the boundary, with a small offset relative to the layer thickness, and record that offset.</p>
+    <p>A sparse set of points can miss the critical response. Add points around the largest value and repeat until the location and value change little.</p>
+  </section>
+  <section id="run-and-save" data-section class="doc-section">
+    <h2>Run and save</h2>
+    <ol class="doc-list">
+      <li>Save the input using a name that identifies the section and load case.</li>
+      <li>Review layers, units, bond conditions, wheel coordinates, and evaluation points.</li>
+      <li>Run the analysis and read any messages before interpreting the output.</li>
+      <li>Save the results with the inputs. Include headings and units when copying a table.</li>
+      <li>For an alternative, save a new case and change one input at a time.</li>
+    </ol>
+    <p>Keep a short case log: file name, changed input, response location, and resulting value. A screenshot alone is difficult to reproduce.</p>
+  </section>
+  <section id="read-the-output" data-section class="doc-section">
+    <h2>Read the output</h2>
+    <p>Match each result to its evaluation point, depth, and layer. Read the output headings; do not assign meaning from row position alone.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Response</th><th>What to check</th></tr></thead>
+      <tbody>
+        <tr><td>Normal stresses</td><td>Direction, sign convention, and stress units.</td></tr>
+        <tr><td>Normal strains</td><td>Direction and whether values are dimensionless or in microstrain.</td></tr>
+        <tr><td>Shear stresses or strains</td><td>Coordinate plane; engineering and tensor shear strains differ by a factor of two.</td></tr>
+        <tr><td>Principal stresses</td><td>Ordering and sign convention. These directions need not align with x, y, and z.</td></tr>
+        <tr><td>Displacements</td><td>Direction and length unit; inches and mils differ by a factor of 1,000.</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Signs</h3>
+    <p>Confirm the installed version’s conventions with its help and a single-wheel case. Vertical stress immediately below the center of a downward pressure is compressive. Use that known condition to identify the printed sign. Keep signed values in your saved results.</p>
+    <h3>Critical strains</h3>
+    <p>Horizontal tensile strain near the bottom of asphalt is commonly used in fatigue relationships. Vertical compressive strain at the top of subgrade is commonly used in subgrade rutting relationships. Use the location and component specified by the assignment.</p>
+    <p>A transfer function may require a positive strain magnitude. Convert the relevant tensile or compressive response to that form only after confirming its sign and units. Do not pass a microstrain value into a formula that expects dimensionless strain.</p>
+    <h3>Profiles</h3>
+    <p>Plot depth downward, mark the interfaces, and label the response axis with its units. Strain may jump across an interface as the material changes. That jump alone does not indicate a failed run.</p>
+  </section>
+  <section id="example" data-section class="doc-section">
+    <h2>Example</h2>
+    <p>Use this small practice case to check your workflow. These are illustrative inputs, separate from the homework cases.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Layer</th><th>Thickness (mm)</th><th>E (MPa)</th><th>ν</th></tr></thead>
+      <tbody>
+        <tr><td>Asphalt</td><td>100</td><td>3,000</td><td>0.35</td></tr>
+        <tr><td>Base</td><td>250</td><td>200</td><td>0.35</td></tr>
+        <tr><td>Subgrade</td><td>Halfspace</td><td>60</td><td>0.45</td></tr>
+      </tbody>
+    </table></div>
+    <p>Use fully bonded interfaces and one circular load at x = 0, y = 0. Set pressure to 0.70 MPa and radius to 100 mm. The implied wheel force is about 21,991 N.</p>
+    <ol class="doc-list">
+      <li>Evaluate under the wheel at depths 25, 50, 99.9, 100.1, 200, 349.9, 350.1, and 500 mm.</li>
+      <li>Record horizontal strains near the bottom of asphalt and vertical strain just inside the subgrade.</li>
+      <li>Plot vertical stress and strain against depth. Mark interfaces at 100 and 350 mm.</li>
+      <li>Double the pressure while holding radius fixed. Wheel force doubles; linear elastic stresses, strains, and displacements should double at each unchanged point.</li>
+      <li>Restore the original pressure and compare the case with <a href={`${base}tools/leaps/`}>LEAPS</a>, using circular loading and identical inputs.</li>
+    </ol>
+    <p>The pressure scaling check tests your setup without needing a reference solution. When comparing programs, align units, signs, bond conditions, and the side of each interface first.</p>
+  </section>
+  <section id="multiple-wheels" data-section class="doc-section">
+    <h2>Multiple wheels</h2>
+    <p>Represent each tire contact separately. Use center-to-center spacing, and keep each wheel’s force, pressure, radius, and location consistent.</p>
+    <p>Evaluate beneath each wheel and between adjacent wheels. A response influenced by several contacts can peak away from a wheel center.</p>
+    <p>Linear elasticity permits superposition. Add matching stress, strain, and displacement components at the same point in the same coordinate system. Compute principal values from the combined stress tensor; adding individual principal stresses does not give the combined principal stresses.</p>
+  </section>
+  <section id="sublayers" data-section class="doc-section">
+    <h2>Sublayers</h2>
+    <p>Divide asphalt into sublayers when the assigned modulus varies through its depth. The sublayer thicknesses must add to the original asphalt thickness. Enter each modulus and evaluate the required responses within that sublayer.</p>
+    <p>For a mid-depth request, add half the sublayer thickness to the depth of its top. Do not use half the total asphalt thickness for every sublayer.</p>
+    <p>Keep bond assumptions consistent. Apply a sublayer’s transfer function to the response in that material, with the modulus and strain units the relationship expects. The elastic analysis itself does not accumulate damage or permanent strain over repetitions.</p>
+  </section>
+  <section id="checks" data-section class="doc-section">
+    <h2>Checks</h2>
+    <ul class="doc-list">
+      <li><strong>Force:</strong> pressure × contact area equals the intended force per wheel.</li>
+      <li><strong>Depth:</strong> cumulative thickness agrees with every interface and evaluation layer.</li>
+      <li><strong>Symmetry:</strong> mirrored points under a symmetric load arrangement give matching normal responses.</li>
+      <li><strong>Scaling:</strong> doubling pressure at fixed contact radius doubles the elastic responses.</li>
+      <li><strong>Sampling:</strong> refining points near a peak gives a stable critical response.</li>
+      <li><strong>Comparison:</strong> another solver uses the same model, units, coordinates, and bond conditions.</li>
+    </ul>
+    <p>Changing force at fixed pressure also changes contact radius. That is a different test from pressure scaling at fixed radius.</p>
+  </section>
+  <section id="troubleshooting" data-section class="doc-section">
+    <h2>Troubleshooting</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Problem</th><th>Check first</th></tr></thead>
+      <tbody>
+        <tr><td>Responses differ by about 1,000×</td><td>MPa/kPa, psi/ksi, or inches/mils.</td></tr>
+        <tr><td>Strains differ by about 1,000,000×</td><td>Dimensionless strain versus microstrain.</td></tr>
+        <tr><td>Unexpected force</td><td>Radius versus diameter; wheel versus axle load.</td></tr>
+        <tr><td>Unexpected interface strain</td><td>Depth, selected layer, interface side, and modulus.</td></tr>
+        <tr><td>Two programs disagree</td><td>Signs, units, contact model, bond settings, and point locations.</td></tr>
+        <tr><td>Run fails</td><td>Missing inputs, nonpositive thickness or modulus, invalid ν, and halfspace entry.</td></tr>
+        <tr><td>Cannot save</td><td>Write access to the working folder and whether the file is open elsewhere.</td></tr>
+      </tbody>
+    </table></div>
+    <p>When asking for help, include the input file, software version, unit system, error message, and the evaluation point you are checking.</p>
+  </section>
+  <section id="references" data-section class="doc-section">
+    <h2>References</h2>
+    <ul class="doc-list">
+      <li><a href="https://transportation.erdc.dren.mil/pcase/downloads/PCASE209%20User%20Manual.pdf">USACE PCASE 2.09 User Manual</a>, Utilities menu: identifies WinJULEA as a multilayer linear elastic analysis utility.</li>
+      <li>Huang, <em>Pavement Analysis and Design</em>, 2nd edition: layered elastic theory and pavement response. See the <a href={`${base}textbook/`}>course reading map</a>.</li>
+      <li><a href="https://www.johanncardenas.com/e-labs/leaps/documentation.html">LEAPS documentation</a>: comparison solver, circular loading, units, and interface assumptions.</li>
+    </ul>
+    <p>This is a course workflow guide, not an official WinJULEA manual. Version-specific screenshots and verified output labels can be added from the class installation.</p>
+  </section>
+</SoftwareDocsLayout>
+<style>
+  .table-wrap { overflow-x: auto; margin: 1rem 0; }
+  table { width: 100%; border-collapse: collapse; font-size: .875rem; text-align: left; }
+  th, td { padding: .6rem .75rem; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+  th { color: var(--color-text-muted); font-weight: 500; background: var(--color-surface-alt); }
+</style>

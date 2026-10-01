@@ -33,7 +33,7 @@ const { title, description, activeModule, toc = [], sidebarLabel = 'Getting Star
 const modules = sidebarModules;
 ---
 
-<BaseLayout title={title} description={description}>
+<BaseLayout title={title} description={description} indexMain={false}>
   <div class="docs-shell">
     <!-- Left sidebar: submodule nav -->
     <aside class="docs-sidebar" id="docs-sidebar">
@@ -72,7 +72,7 @@ const modules = sidebarModules;
     </aside>
 
     <!-- Center: main content -->
-    <main class="docs-content">
+    <main class="docs-content" data-pagefind-body>
       <slot />
     </main>
 

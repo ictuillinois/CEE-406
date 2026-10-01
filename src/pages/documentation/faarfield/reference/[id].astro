@@ -1,0 +1,36 @@
+---
+import SoftwareDocsLayout from '../../../../layouts/SoftwareDocsLayout.astro';
+import topics from '../../../../data/faarfield-reference.json';
+export function getStaticPaths() {
+  return topics.map((topic, index) => ({ params: { id: topic.id }, props: { topic, index } }));
+}
+const { topic, index } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const previous = topics[index - 1];
+const next = topics[index + 1];
+---
+<SoftwareDocsLayout title={`${topic.title} · CEE 406`} description={`FAARFIELD help reference: ${topic.title}.`} activeModule="reference">
+  <header class="doc-header">
+    <span class="doc-header__badge">FAARFIELD reference</span>
+    <h1 class="doc-header__title">{topic.title}</h1>
+    <p class="source-note">FAA help text · supplied FAARFIELD 2.1.1 documentation</p>
+  </header>
+  <div class="doc-section faa-reference" set:html={topic.html.replaceAll('__BASE__', base)} />
+  <nav class="reference-pagination" aria-label="Reference topics">
+    {previous && <a href={`${base}documentation/faarfield/reference/${previous.id}/`}>← {previous.title}</a>}
+    <a href={`${base}documentation/faarfield/reference/`}>All topics</a>
+    {next && <a href={`${base}documentation/faarfield/reference/${next.id}/`}>{next.title} →</a>}
+  </nav>
+</SoftwareDocsLayout>
+<style>
+  .source-note { font-size: .75rem; color: var(--color-text-muted); }
+  .faa-reference { overflow-wrap: anywhere; overflow-x: auto; }
+  .faa-reference :global(img) { max-width: 100%; height: auto; display: block; margin: 1rem auto; border-radius: 5px; background: white; }
+  .faa-reference :global(table) { border-collapse: collapse; max-width: 100%; font-size: .875rem; margin: 1rem 0; }
+  .faa-reference :global(td), .faa-reference :global(th) { border: 1px solid var(--color-border); padding: .5rem; }
+  .faa-reference :global(li) { font-size: .9375rem; line-height: 1.65; margin-bottom: .5rem; }
+  .faa-reference :global(.doc-caption) { color: var(--color-text-muted); font-size: .8125rem; text-align: center; }
+  .faa-reference :global(.doc-code) { font-family: var(--font-mono); font-size: .875em; }
+  .reference-pagination { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; border-top: 1px solid var(--color-border); padding-top: 1rem; font-size: .8125rem; }
+  .reference-pagination a { color: var(--color-accent); }
+</style>

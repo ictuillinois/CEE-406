@@ -1,0 +1,91 @@
+---
+import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
+const download = 'https://me-design.com/medesign/DRIP.html?AspxAutoDetectCookieSupport=1';
+const manual = 'https://www.fhwa.dot.gov/pavement/pubs/010942.pdf';
+const headings = ['Download', 'Start a case', 'Geometry', 'Materials', 'Inflow', 'Permeable base', 'Separator', 'Edgedrain', 'Results', 'Checks', 'References'];
+const toc = headings.map(label => ({ id: label.toLowerCase().replaceAll(' ', '-'), label }));
+---
+<SoftwareDocsLayout title="DRIP · CEE 406" description="A course guide to pavement subsurface drainage with DRIP." activeModule="drip" toc={toc}>
+  <header class="doc-header">
+    <span class="doc-header__badge">Course guide</span>
+    <h1 class="doc-header__title">DRIP</h1>
+    <p class="doc-header__desc">Drainage Requirements in Pavements. Check how water enters and leaves a pavement section.</p>
+  </header>
+  <section id="download" data-section class="doc-section">
+    <h2>Download</h2>
+    <p>The <a href={download}>Pavement ME resource page</a> provides a DRIP 2.0 download and user guide. DRIP is a Windows program developed by FHWA and Applied Research Associates for subsurface drainage calculations.</p>
+    <p>Extract the download and read its installation instructions. Keep the supplied files together. The documentation is for an older Windows application; modern Windows compatibility has not been tested here.</p>
+    <p>Use the <a href={manual}>FHWA user guide</a> alongside this page. It is an archived 2002 reference.</p>
+  </section>
+  <section id="start-a-case" data-section class="doc-section">
+    <h2>Start a case</h2>
+    <p>Save a case for the assigned section. Choose the unit system and write down the drainage objective before entering values: carry an inflow, meet a time-to-drain target, or check an existing system.</p>
+    <p>Work through geometry, material gradations, inflow, the permeable base, separation, and the edgedrain. Keep a sketch beside the inputs so every width, slope, and outlet location has a clear meaning.</p>
+    <p>Use one case per alternative. For comparisons, change one input at a time and retain the original case.</p>
+  </section>
+  <section id="geometry" data-section class="doc-section">
+    <h2>Geometry</h2>
+    <p>DRIP supports crowned and uniformly sloped sections and calculates a drainage path from transverse and longitudinal slopes.</p>
+    <p>Sketch the crown or high point, the edge that receives the flow, and the drain location. Check which part of the pavement contributes water to that drain. The total roadway width is not always the width feeding one side.</p>
+    <p>Keep percent and decimal slopes distinct: 2% is 0.02. Follow the unit shown beside the input. Do not replace the drainage path with the transverse width without checking the geometry.</p>
+  </section>
+  <section id="materials" data-section class="doc-section">
+    <h2>Materials</h2>
+    <p>Use sieve data for the base, subgrade, and proposed separator. DRIP can calculate gradation characteristics, porosity, and estimated permeability from a gradation.</p>
+    <p>Check that sieve openings use the selected length unit and that percent passing stays between 0 and 100. Passing should increase as sieve opening increases. Keep measured permeability separate from a gradation-based estimate.</p>
+    <p>Confirm the time unit of permeability. A value in cm/s cannot be entered unchanged in a field requesting m/day. For reference, 1 cm/s = 864 m/day.</p>
+    <p>For a sensitivity study, vary permeability over a justified range rather than assuming one estimate describes every field condition.</p>
+  </section>
+  <section id="inflow" data-section class="doc-section">
+    <h2>Inflow</h2>
+    <p>The program includes infiltration-ratio and crack-infiltration approaches, with meltwater calculations.</p>
+    <p>Use the method specified in the assignment. Record the rainfall source, event duration, infiltration assumptions, and contributing width. Rainfall intensity and total rainfall depth are different inputs.</p>
+    <p>Do not count the same water twice by combining alternative infiltration estimates. If another source of water is included, identify it separately and explain the assumption.</p>
+  </section>
+  <section id="permeable-base" data-section class="doc-section">
+    <h2>Permeable base</h2>
+    <p>DRIP offers depth-of-flow and time-to-drain analyses. Use the mode that matches the question.</p>
+    <p>For a flow-capacity check, compare the calculated water depth with the available drainage-layer thickness. For a time check, record the specified degree of drainage and compare the calculated time with its target.</p>
+    <p>Keep these conclusions separate. A layer that carries the selected inflow does not automatically meet a drainage-time target.</p>
+    <p>Test an alternative thickness, permeability, or drainage path. Record the changed input and resulting flow depth or drainage time. Avoid changing several variables together until you understand their individual effects.</p>
+  </section>
+  <section id="separator" data-section class="doc-section">
+    <h2>Separator</h2>
+    <p>The separator analysis covers aggregate layers and geotextiles.</p>
+    <p>Check both particle retention and water movement. A permeable base can lose drainage capacity if adjacent fines migrate into it.</p>
+    <p>Identify the material on each side of a proposed separator. Record the gradations or fabric properties used and the criterion that controls. If a check fails, describe the needed change rather than reporting only “failed.”</p>
+    <p>A hydraulic check does not establish construction survivability or long-term field performance. Include those requirements when selecting a material for an actual project.</p>
+  </section>
+  <section id="edgedrain" data-section class="doc-section">
+    <h2>Edgedrain</h2>
+    <p>DRIP includes pipe and geocomposite fin-drain analyses, including capacity and outlet spacing.</p>
+    <p>Trace the full route from base to collector to outlet. Check that the collector receives the intended contributing flow, and record its slope, outlet spacing, and applicable material properties.</p>
+    <p>Do not assume that a larger pipe fixes an obstructed outlet or a discontinuous connection to the base. In a design sketch, show where water leaves the system and how the outlet can be inspected.</p>
+  </section>
+  <section id="results" data-section class="doc-section">
+    <h2>Results</h2>
+    <p>Use <strong>File → Export Summary</strong> for an HTML record of inputs and results, or <strong>Print Summary</strong>. Save the case file as well.</p>
+    <p>For coursework, report the unit system, geometry, inflow method, material inputs, flow depth or drainage time, separator check, and collector/outlet check. State which target governs and what you changed to meet it.</p>
+    <p>Keep plots tied to their case names. A graph without units or the changed input is difficult to interpret.</p>
+  </section>
+  <section id="checks" data-section class="doc-section">
+    <h2>Checks</h2>
+    <ul class="doc-list">
+      <li>Width and drainage path match the sketch.</li>
+      <li>Slopes, permeability, rainfall, and flow rates use the displayed units.</li>
+      <li>Gradations are ordered and percent passing is valid.</li>
+      <li>The analysis mode matches the assigned target.</li>
+      <li>The separator and outlet receive their own checks.</li>
+      <li>Every alternative has saved inputs and a result you can reproduce.</li>
+    </ul>
+    <p>If a result looks unreasonable, start with units and geometry. Then review the selected method and its assumptions before changing the material inputs.</p>
+  </section>
+  <section id="references" data-section class="doc-section">
+    <h2>References</h2>
+    <ul class="doc-list">
+      <li><a href={download}>DRIP download and resources</a>.</li>
+      <li><a href={manual}>FHWA DRIP 2.0 User’s Guide</a>: operation, technical background, examples, and sensitivity analysis.</li>
+      <li><a href="https://www.fhwa.dot.gov/PAVEMENT/pub_details.cfm?id=43">FHWA publication record</a>, FHWA-IF-02-053.</li>
+    </ul>
+  </section>
+</SoftwareDocsLayout>
