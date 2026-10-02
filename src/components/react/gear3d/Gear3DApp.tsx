@@ -473,14 +473,14 @@ export default function Gear3DApp() {
                 <div className="g3-field">
                   <label htmlFor="g3-geometry">Tire detail</label>
                   <select id="g3-geometry" className="g3-select" defaultValue="auto">
-                    <option value="auto">Auto: by tire count</option>
+                    <option value="auto">Auto: adaptive</option>
                     <option value="draft">Draft: 112 segments</option>
                     <option value="standard">Standard: 240</option>
                     <option value="high">High: 352</option>
                   </select>
                 </div>
                 <p className="g3-note">
-                  Live resolution follows the selected quality and the device budget. Figure exports keep their requested size. <strong>Orbiting drops to a lighter ratio and the full
+                  Auto adapts tire detail to the device. Choose High for close-ups. Figure exports keep their requested size. <strong>Orbiting drops to a lighter ratio and the full
                   frame is drawn once the view settles</strong>, so the cost lands on the
                   still image rather than on the drag.
                 </p>

@@ -192,6 +192,14 @@ sub('shell width',
 }
 .cee-tool.g3-tool > * + * { margin-top: 1.25rem; }
 
+/* The course page already names the tool. Its fixed navigation is 3.25rem tall. */
+@media (max-width: 1100px) {
+    .cee-tool.g3-tool .app-header { display: none; }
+    .cee-tool.g3-tool > * + * { margin-top: .5rem; }
+    .cee-tool.g3-tool .g3-toolbar { top: 3.5rem; }
+    .cee-tool.g3-tool > .cee-howto > summary { padding: .65rem .85rem; font-size: .875rem; }
+}
+
 /* One 24-unit grid at 1.75 weight, the same hand as Icon.astro. Sized in em so
    a glyph tracks the text beside it — which is also why the upstream rules
    that set \`font-size\` on an icon still size these. */

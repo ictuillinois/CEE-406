@@ -24,6 +24,17 @@ Preserve that note when re-copying.
 
 ## Re-running
 
+Compact layouts put the full-width viewer before controls on portrait phones
+and tablets. Stable viewport units limit buffer reallocations as browser chrome
+moves. Touch/compact Auto geometry uses Standard detail through eight tires and
+Draft above eight; explicit quality selections remain unchanged. This offsets
+the extra pixel coverage from the larger viewer without adding rendering passes.
+The mobile-emulated default truck rendered 503,622 triangles at 0.60 MP, within
+the existing 1.5 MP settled / 0.75 MP moving budgets. Validation includes the
+production build, 60 course Gear3D tests, 196 upstream checks, responsive browser
+layouts, notices, scenery/save controls, and atomic vehicle switching. Physical
+device performance is not measured by browser emulation.
+
 Interaction rendering in upstream `ac29062` reuses directional-light shadow
 maps during camera movement and buffer resizing. Scene edits, lighting changes,
 resizes affecting the shadow budget, and context restoration refresh them.

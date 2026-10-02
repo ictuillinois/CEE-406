@@ -442,7 +442,7 @@ function rebuild(opts = {}) {
     app.layout = resolveLayout(unit);
     app.assembly = buildAssembly(app.layout, app.materials, {
         showAxles: true,
-        quality: app.store.view.quality,
+        quality: app.viewport.geometryQuality(app.store.view.quality,app.layout.wheels.length),
         minQuality: app.viewport.geometryFloor(),
         seed: app.store.doc.seed
     });
@@ -1211,7 +1211,7 @@ function setupToolbar() {
  * @returns {void}
  */
 function setupHandheldPanels() {
-    if (!window.matchMedia || !window.matchMedia('(max-width: 719px)').matches) return;
+    if (!window.matchMedia || !window.matchMedia('(max-width: 719px), (max-width: 1100px) and (orientation: portrait), (max-width: 1100px) and (max-height: 500px)').matches) return;
 
     const panels = root.querySelectorAll('.g3-left details');
     panels.forEach((d, i) => { if (i > 0) d.open = false; });
