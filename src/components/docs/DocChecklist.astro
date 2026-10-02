@@ -1,10 +1,10 @@
 ---
-interface Props { id: string; title: string; items: string[]; }
-const { id, title, items } = Astro.props;
+interface Props { id: string; title: string; items: string[]; note?: string; }
+const { id, title, items, note = 'Mark each item as you check your case.' } = Astro.props;
 ---
 <fieldset class="doc-checklist" data-checklist={id}>
   <legend>{title}</legend>
-  <p class="checklist-note">Mark each item as you check your case.</p>
+  <p class="checklist-note">{note}</p>
   {items.map((item, index) => <label><input type="checkbox" value={index} /><span>{item}</span></label>)}
   <div class="checklist-actions" hidden>
     <span class="checklist-count" role="status" aria-live="polite"></span>
@@ -48,4 +48,5 @@ const { id, title, items } = Astro.props;
   .checklist-count { font-size: .75rem; color: var(--color-text-muted); }
   button { font: inherit; font-size: .8125rem; color: var(--color-text); background: var(--color-surface-alt); border: 1px solid var(--color-border); padding: .4rem .75rem; border-radius: 5px; cursor: pointer; }
   input:focus-visible, button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+  @media (pointer: coarse) { label, button { min-height: 44px; } }
 </style>

@@ -1,0 +1,148 @@
+---
+import SoftwareDocsLayout from '../../../layouts/SoftwareDocsLayout.astro';
+import DocCallout from '../../../components/docs/DocCallout.astro';
+import DocChecklist from '../../../components/docs/DocChecklist.astro';
+import DocDecision from '../../../components/docs/DocDecision.astro';
+const base = import.meta.env.BASE_URL;
+const webstore = 'https://webstore.illinois.edu/shop/CISCO_AnyConnect_VPN.aspx';
+const macVPN = 'https://answers.illinois.edu/illinois/47629';
+const winVPN = 'https://answers.illinois.edu/illinois/47507';
+const macRDP = 'https://answers.uillinois.edu/ahs/142960';
+const microsoft = 'https://learn.microsoft.com/en-us/windows-app/get-started-connect-devices-desktops-apps?pivots=remote-pc&tabs=macos-pc';
+const headings = [['start','Before you start'],['network','Network'],['vpn','Install and connect the VPN'],['mac','Connect from a Mac'],['windows','Connect from Windows'],['work','Start working'],['finish','Save and sign out'],['help','Troubleshooting'],['references','References']];
+const toc = headings.map(([id,label])=>({id,label}));
+---
+<SoftwareDocsLayout title="Remote access · CEE 406" description="Connect to the CEE 406 Windows workstation from a Mac or PC using the Illinois network and Remote Desktop." activeModule="remote-access" toc={toc}>
+ <header class="doc-header">
+  <span class="doc-header__badge">Class workstation</span>
+  <h1 class="doc-header__title">Remote access</h1>
+  <p class="doc-header__desc">Use the class Windows workstation from your Mac or PC. All course software is already installed; you control it from your own computer.</p>
+ </header>
+ <figure class="remote-overview"><img src={`${base}documentation/branding/remote-access-logo.svg`} width="800" height="400" alt="Your computer connects through the Illinois network to the CEE-ALQADI-20 class workstation." decoding="async" /><figcaption>Connect to the Illinois network, then open the remote Windows desktop.</figcaption></figure>
+ <section id="start" data-section class="doc-section">
+  <h2>Before you start</h2>
+  <ul class="doc-list">
+   <li><strong>Have your Illinois NetID and password ready.</strong><ul><li>You will also need your enrolled MFA method for VPN sign-in.</li></ul></li>
+   <li><strong>Confirm your access with the instructor or TA.</strong><ul><li>Your account must be allowed to use Remote Desktop on this workstation. Class enrollment alone does not configure access.</li><li>Class staff must keep the workstation powered on, connected to the network, and configured for remote access.</li></ul></li>
+   <li><strong>Book prolonged sessions in advance.</strong><ul><li>The dedicated workstation allows one connected student at a time.</li><li>Arrange your timeslot with class staff before an extended session, especially when software is needed for an assignment. Confirm the booking method with the instructor or TA.</li></ul></li>
+   <li><strong>Use the class connection details.</strong><ul><li>The workstation name is <code>CEE-ALQADI-20</code>.</li><li>Illinois’s published instructions use the AD domain <code>ad.uillinois.edu</code>. If the short name cannot be found, use the full address confirmed by class staff; the standard campus form is <code>CEE-ALQADI-20.ad.uillinois.edu</code>.</li></ul></li>
+  </ul>
+  <div class="remote-settings">
+   <div><span>Computer name</span><code id="remote-host">CEE-ALQADI-20</code><button type="button" data-copy-value="CEE-ALQADI-20" hidden>Copy name</button></div>
+   <div><span>Remote Desktop username</span><code>UOFI\yourNetID</code><small>Replace <code>yourNetID</code> with your own NetID.</small></div>
+   <p data-copy-status role="status" aria-live="polite"></p>
+  </div>
+  <DocCallout kind="note" label="Access first"><p>If your account has not been approved, ask class staff before troubleshooting passwords or changing settings. Install the clients on your own computer; students do not need to change the workstation’s firewall or Remote Desktop settings.</p></DocCallout>
+  <DocCallout kind="note" label="One student at a time"><p>Book a timeslot before prolonged use. Finish within your agreed time and sign out so the next student can connect. Do not accept a prompt that would disconnect another student.</p></DocCallout>
+ </section>
+ <section id="network" data-section class="doc-section">
+  <h2>Network</h2>
+  <DocDecision id="remote-network" label="Where are you connecting from?" choices={[
+   {value:'away',label:'Off campus or on another network',title:'Connect the VPN first',body:'Home Wi-Fi, a hotspot, and campus guest Wi-Fi need the Illinois VPN for this direct connection. Keep it connected throughout your session.',href:'#vpn',linkLabel:'Install and connect the VPN →'},
+   {value:'campus',label:'IllinoisNet or a campus wired connection',title:'Use your campus connection',body:'Connect to IllinoisNet or a university campus wired network. If the workstation is unreachable, try the Illinois VPN and check with class staff.',href:'#mac',linkLabel:'Continue to Remote Desktop →'},
+  ]} />
+  <p>This guide uses a direct connection through IllinoisNet or the VPN. Leave the Remote Desktop <strong>Gateway</strong> unset unless class staff give you a different configuration. <a href="https://www.techservices.illinois.edu/services/vpn-essentials/">Illinois VPN guidance</a>.</p>
+ </section>
+ <section id="vpn" data-section class="doc-section">
+  <h2>Install and connect the VPN</h2>
+  <p>If Cisco Secure Client is already installed, start at step 4. Older installations may be labeled Cisco AnyConnect.</p>
+  <ol class="doc-list">
+   <li>Open the <a href={webstore}>Illinois WebStore’s free Urbana VPN offer</a> and sign in.<ul><li>Add the offer to your cart and complete the free order.</li><li>Open <strong>Order History</strong>, select the blue order number, and download the installer for your Mac or Windows computer.</li></ul></li>
+   <li>Open the downloaded package and run its installer.<ul><li>On Mac, open the downloaded disk image and its Cisco installer.</li><li>On Windows, right-click the downloaded ZIP and select <strong>Extract All → Extract</strong>. Run the Cisco installer from the extracted folder, rather than inside the ZIP.</li><li>Follow the installer prompts, accept its license agreement, and finish the installation.</li><li>Use your local administrator credentials when requested. On a managed computer, ask your IT support team to install it.</li></ul></li>
+   <li>Allow the permissions required by the installer.<ul><li>On Mac, allow the Cisco VPN background service and Socket Filter extension in System Settings when prompted.</li><li>Follow the current <a href={macVPN}>Mac installation guide</a> or <a href={winVPN}>Windows installation guide</a> if a permission or installer screen differs.</li></ul></li>
+   <li>Open <strong>Cisco Secure Client</strong> and select the Illinois <strong>Split Tunnel</strong> profile, then <strong>Connect</strong>.<ul><li>If the profile list is empty, enter <code>connect.vpn.illinois.edu</code>. Illinois documents this as the setup address; it connects using Tunnel All and downloads the profiles.</li></ul></li>
+   <li>Complete the university sign-in.<ul><li>Use your full email address, <code>yourNetID@illinois.edu</code>, and your NetID password.</li><li>Complete the MFA prompt with your enrolled method, then return to Cisco Secure Client.</li></ul></li>
+   <li>Wait until Cisco shows <strong>Connected</strong>.<ul><li>Keep the VPN connected while using the workstation. Next, choose the instructions for your computer below.</li></ul></li>
+  </ol>
+  <DocCallout kind="tip" label="Two sign-ins"><p>The VPN uses <code>yourNetID@illinois.edu</code>. The remote Windows desktop uses <code>UOFI\yourNetID</code>. Both use your Illinois NetID password.</p></DocCallout>
+  <DocDecision id="remote-platform" label="Which computer are you using?" choices={[
+   {value:'mac',label:'Mac',title:'Use Windows App',body:'Download Microsoft’s client, add the class PC, and open its Windows desktop.',href:'#mac',linkLabel:'Mac instructions →'},
+   {value:'windows',label:'Windows',title:'Use Remote Desktop Connection',body:'The client is included with Windows. Open it and enter the class PC name.',href:'#windows',linkLabel:'Windows instructions →'},
+  ]} />
+ </section>
+ <section id="mac" data-section class="doc-section">
+  <h2>Connect from a Mac</h2>
+  <ol class="doc-list">
+   <li>Install <strong>Windows App</strong> by Microsoft from the Mac App Store.<ul><li>Use the download link in <a href={microsoft}>Microsoft’s Mac connection guide</a>. This replaces the older Microsoft Remote Desktop client.</li></ul></li>
+   <li>Open Windows App, select <strong>Devices → + → Add PC</strong>.<ul><li>You can add a remote PC without signing in to Windows App. You do not need a Windows 365 subscription or a workspace feed.</li></ul></li>
+   <li>Enter <code>CEE-ALQADI-20</code> in <strong>PC Name</strong>.<ul><li>If the name is not found, use the instructor-confirmed full address described above.</li><li>Use <strong>CEE 406 workstation</strong> as the friendly name. Keep the user account set to ask when needed and leave Gateway unset for this network/VPN workflow.</li></ul></li>
+   <li>Select <strong>Add</strong>, then double-click the saved PC.<ul><li>When asked for credentials, enter <code>UOFI\yourNetID</code> and your NetID password.</li><li>If macOS requests local-network access for Windows App, allow it for this connection.</li></ul></li>
+   <li>Wait for the Windows desktop.<ul><li>The workstation desktop is your remote session. Open the assigned course software there.</li></ul></li>
+  </ol>
+  <DocCallout kind="note" label="Check the computer identity"><p>If Windows App shows a certificate or identity warning, verify the destination with class staff before continuing. Do not accept an unexpected computer name.</p></DocCallout>
+  <p><a href={macRDP}>Illinois’s Mac Remote Desktop guide</a> documents the campus naming and account format. Its gateway workflow differs from the direct VPN route used here.</p>
+ </section>
+ <section id="windows" data-section class="doc-section">
+  <h2>Connect from Windows</h2>
+  <ol class="doc-list">
+   <li>Open Start, search for <strong>Remote Desktop Connection</strong>, and open it.<ul><li>Alternatively, press <kbd>Windows</kbd> + <kbd>R</kbd>, type <code>mstsc</code>, and press Enter.</li></ul></li>
+   <li>In <strong>Computer</strong>, enter <code>CEE-ALQADI-20</code> and select <strong>Connect</strong>.<ul><li>If the name is not found, use the instructor-confirmed full address described above.</li></ul></li>
+   <li>Choose <strong>More choices → Use a different account</strong> if Windows suggests your personal account.<ul><li>Enter <code>UOFI\yourNetID</code> and your NetID password.</li></ul></li>
+   <li>Wait for the Windows desktop, then open the assigned course software.<ul><li>These steps follow the university’s <a href="https://answers.illinois.edu/illinois.las/74122">Remote Desktop walkthrough</a>.</li></ul></li>
+  </ol>
+  <DocCallout kind="note" label="Check the computer identity"><p>If you see a certificate or identity warning, verify the destination with class staff before continuing. Do not disable certificate checks or accept an unexpected computer name.</p></DocCallout>
+ </section>
+ <section id="work" data-section class="doc-section">
+  <h2>Start working</h2>
+  <ul class="doc-list">
+   <li>Open the software named in your assignment from the remote Start menu or desktop.<ul><li>All software used during CEE 406 is already installed on the dedicated workstation. You do not need to download the course programs there.</li><li>If a program is missing or a license prompt prevents you from working, contact the instructor or TA.</li></ul></li>
+   <li>Use the relevant <a href={`${base}documentation/`}>software guide</a> for your homework or project.<ul><li>A file opened or saved inside the remote desktop belongs to the workstation, not automatically to your Mac or PC.</li></ul></li>
+   <li>Respect other students’ sessions.<ul><li>Only one student can be connected at a time. Book prolonged sessions in advance and follow your reserved timeslot.</li><li>If Windows warns that another user will be disconnected, cancel and contact class staff.</li></ul></li>
+  </ul>
+  <DocChecklist id="remote-access-first-session" title="First connection" note="Track your progress here. These checks do not test your network or sign you in." items={[
+   'Class staff have confirmed my workstation access.',
+   'I have booked a timeslot if I need a prolonged session.',
+   'I am on IllinoisNet/campus wired networking, or Cisco shows Connected.',
+   'I opened the remote desktop with my own UOFI account.',
+   'I can open the assigned course software.',
+   'I know where my files are saved and how to retrieve them.',
+  ]} />
+ </section>
+ <section id="finish" data-section class="doc-section">
+  <h2>Save and sign out</h2>
+  <ol class="doc-list">
+   <li>Save your project and results in your own folder on the workstation.<ul><li>Use your NetID in folder and file names where needed to keep class work separate.</li></ul></li>
+   <li>Copy the files you need to your own Illinois Box or OneDrive.<ul><li>You can upload through a browser inside the remote desktop. Check the upload before leaving.</li></ul></li>
+   <li>Close the course software, then use the remote Windows <strong>Start → account icon → Sign out</strong>.<ul><li>Closing the Remote Desktop window only disconnects; it may leave your programs running.</li><li>Do not shut down or restart the shared workstation.</li></ul></li>
+   <li>After signing out, disconnect Cisco Secure Client if you used the VPN.</li>
+  </ol>
+ </section>
+ <section id="help" data-section class="doc-section">
+  <h2>Troubleshooting</h2>
+  <details><summary>The computer cannot be found or the connection times out</summary><ol class="doc-list"><li>Confirm IllinoisNet or an active Illinois VPN connection.<ul><li>Guest Wi-Fi and home Wi-Fi alone are not the campus connection.</li></ul></li><li>Check the PC name and try the full address confirmed by class staff.<ul><li>The standard Illinois AD suffix is <code>ad.uillinois.edu</code>.</li></ul></li><li>Ask class staff to check workstation power, network access, Remote Desktop settings, and account permissions.</li></ol></details>
+  <details><summary>My credentials are rejected or access is denied</summary><ul class="doc-list"><li>Use your own <code>UOFI\yourNetID</code> for Remote Desktop.<ul><li>Check that the saved account is not a personal Windows or Microsoft account.</li></ul></li><li>If credentials work for Illinois services but workstation access is denied, ask class staff to check your Remote Desktop permissions.</li></ul></details>
+  <details><summary>Cisco will not connect</summary><ul class="doc-list"><li>Check your internet connection, installed Cisco permissions, and MFA prompt.<ul><li>Follow the <a href={macVPN}>Mac</a> or <a href={winVPN}>Windows</a> installation guide for the exact message.</li></ul></li><li>For VPN problems, contact <a href="mailto:consult@illinois.edu">consult@illinois.edu</a> or <a href="tel:+12172447000">217-244-7000</a>.<ul><li>Report your operating system and the error text. Do not send your password or MFA codes.</li></ul></li></ul></details>
+  <details><summary>The desktop is slow, disconnected, or already in use</summary><ul class="doc-list"><li>Keep the VPN connected and use a stable network.<ul><li>For a slow connection, try a smaller remote window or lower resolution in the client’s display settings.</li></ul></li><li>Reconnect to the same workstation with your own account after a dropped connection.</li><li>If another student is using it, contact class staff rather than forcing that student off.</li></ul></details>
+  <DocCallout kind="tip" label="Ask the right team"><p>The instructor or TA handles workstation access, software, and class scheduling. Technology Services helps with the Illinois VPN and NetID sign-in.</p></DocCallout>
+ </section>
+ <section id="references" data-section class="doc-section">
+  <h2>References</h2>
+  <ul class="doc-list"><li><a href={webstore}>Illinois WebStore: Urbana VPN</a>.</li><li>Illinois Cisco installation: <a href={macVPN}>macOS</a> and <a href={winVPN}>Windows</a>.</li><li><a href={macRDP}>Illinois: Remote Desktop from a Mac</a>.</li><li><a href={microsoft}>Microsoft: Windows App remote PC connections</a>.</li><li><a href="https://learn.microsoft.com/en-us/windows-app/user-account-settings-add-remove-manage">Microsoft: Windows App accounts</a>.</li></ul>
+  <p class="remote-source-note">Instructions checked October 1, 2026. The workstation name, preinstalled course software, and one-user booking requirement were supplied for CEE 406. Class staff must confirm its full DNS address and your account permissions. This page does not test workstation availability.</p>
+ </section>
+</SoftwareDocsLayout>
+<script>
+ document.querySelectorAll<HTMLButtonElement>('[data-copy-value]').forEach(button=>{
+  button.hidden=false;
+  button.addEventListener('click',async()=>{
+   const status=document.querySelector<HTMLElement>('[data-copy-status]');
+   try { await navigator.clipboard.writeText(button.dataset.copyValue!); if(status) status.textContent='Computer name copied.'; }
+   catch { if(status) status.textContent='Copy CEE-ALQADI-20 from the text above.'; }
+  });
+ });
+</script>
+<style>
+ .remote-overview { margin: 0 0 2rem; padding: 1rem; border-radius: 12px; background: #eef3f8; }
+ .remote-overview img { display: block; width: 100%; height: auto; max-height: 18rem; object-fit: contain; }
+ .remote-overview figcaption { color: #3e5369; font-size: .8125rem; text-align: center; line-height: 1.5; }
+ .remote-settings { padding: 1rem; border: 1px solid var(--color-border); border-radius: 8px; }
+ .remote-settings > div { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; margin: .4rem 0 .85rem; }
+ .remote-settings span, .remote-settings small { width: 100%; font-size: .8125rem; color: var(--color-text-muted); }
+ .remote-settings code { overflow-wrap: anywhere; }
+ .remote-settings button { min-height: 44px; padding: .4rem .75rem; border-radius: 6px; border: 1px solid var(--color-border); color: var(--color-text); background: var(--color-surface-alt); font: inherit; font-size: .8125rem; cursor: pointer; }
+ .remote-settings button:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; }
+ [data-copy-status] { margin: 0; font-size: .8125rem; }
+ .remote-source-note { font-size: .8125rem; color: var(--color-text-muted); }
+ .doc-section code { overflow-wrap: anywhere; }
+ .doc-section details summary { min-height: 44px; padding-block: .75rem; cursor: pointer; font-size: .9rem; }
+</style>

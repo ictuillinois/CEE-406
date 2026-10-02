@@ -13,13 +13,13 @@ const guides = documentationModules(base).filter(item => item.id !== 'index');
 const guideIndex = guides.findIndex(item => item.id === Astro.props.activeModule);
 const nextGuide = guideIndex >= 0 ? guides[(guideIndex + 1) % guides.length] : undefined;
 ---
-<DocsLayout {...Astro.props} variant="software" sidebarLabel="Software" sidebarModules={documentationModules(base)}>
+<DocsLayout {...Astro.props} variant="software" sidebarLabel="Guides" sidebarModules={documentationModules(base)}>
  <div class="software-docs" data-library={Astro.props.activeModule === 'index' ? '' : undefined}>
   {Astro.props.activeModule !== 'index' && <nav class="doc-breadcrumb" aria-label="Breadcrumb">
     <a href={`${base}documentation/`}>Documentation</a>
     {Astro.props.activeModule !== 'index' && <><span aria-hidden="true"> / </span><span>{Astro.props.title.replace(' · CEE 406', '')}</span></>}
   </nav>}
-  {Astro.props.activeModule !== 'index' && <nav class="software-mobile" aria-label="Software guides">
+  {Astro.props.activeModule !== 'index' && <nav class="software-mobile" aria-label="Documentation guides">
     {documentationModules(base).map(item => <a href={item.href} aria-current={item.id === Astro.props.activeModule ? 'page' : undefined}>
       {item.icon.startsWith('image:') && <span class="software-mobile__brand" aria-hidden="true"><img src={item.icon.slice(6)} width="24" height="24" alt="" /></span>}
       <span>{item.label}</span>
@@ -28,7 +28,7 @@ const nextGuide = guideIndex >= 0 ? guides[(guideIndex + 1) % guides.length] : u
   {!!Astro.props.toc?.length && <details class="software-sections"><summary>On this page <span>{Astro.props.toc.length} sections</span></summary><nav aria-label="Page sections">{Astro.props.toc.map(item => <a href={`#${item.id}`}>{item.label}</a>)}</nav></details>}
   {!!Astro.props.toc?.length && <GuideTools sections={Astro.props.toc} />}
   <slot />
-  {Astro.props.activeModule !== 'index' && <footer class="software-footer"><a href={`${base}documentation/`}>← All software</a>{nextGuide && <a href={nextGuide.href} class="software-next">Next guide: {nextGuide.label} →</a>}<button type="button" data-print-guide hidden>Print guide</button></footer>}
+  {Astro.props.activeModule !== 'index' && <footer class="software-footer"><a href={`${base}documentation/`}>← All guides</a>{nextGuide && <a href={nextGuide.href} class="software-next">Next guide: {nextGuide.label} →</a>}<button type="button" data-print-guide hidden>Print guide</button></footer>}
  </div>
 </DocsLayout>
 <script>

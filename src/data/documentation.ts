@@ -7,5 +7,6 @@ export function documentationModules(base: string) {
     { id: 'winjulea', label: 'WinJULEA', icon: `image:${base}documentation/branding/winjulea-icon.png`, href: `${base}documentation/winjulea/` },
     { id: 'drip', label: 'DRIP', icon: `image:${base}documentation/branding/drip-icon.png`, href: `${base}documentation/drip/` },
     { id: 'pavement-me', label: 'Pavement ME Design', icon: `image:${base}documentation/branding/pavement-me-icon.png`, href: `${base}documentation/pavement-me/` },
+    { id: 'remote-access', label: 'Remote access', icon: `image:${base}documentation/branding/remote-access-icon.svg`, href: `${base}documentation/remote-access/` },
   ];
 }
