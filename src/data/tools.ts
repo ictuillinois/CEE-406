@@ -197,6 +197,17 @@ export const tools: Tool[] = [
     </svg>`,
   },
   {
+    name: 'Gauss Distribution',
+    slug: 'gauss-distribution',
+    color: '#E87722',
+    hws: ['Ch. 10', 'Ch. 11'],
+    ref: 'Huang Tables 10.1 & 11.15',
+    image: 'gauss-distribution.webp',
+    imageAlt: 'Gauss Distribution showing a shaded normal curve, selectable probability outputs, distribution controls, and Table 10.1 area for z = 1.34.',
+    desc: 'Explore the bell curve and switch between table areas, cumulative, and tail probabilities. Compute distribution statistics and visualize reliability deviates from Tables 10.1 and 11.15.',
+    glyph: `<svg viewBox="0 0 120 44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 37h104" opacity="0.3"/><path class="anim" d="M8 36C35 36 38 6 60 6S85 36 112 36"/><path d="M60 6v30M80 18v18" opacity="0.5"/></svg>`,
+  },
+  {
     name: 'Stress Explorer',
     slug: 'stress-explorer',
     color: '#0ea5e9',

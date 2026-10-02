@@ -60,6 +60,7 @@ export const HOMEWORK_WEEK: Record<string, number> = {
    unlock fails the build rather than shipping.                             */
 
 export const RELEASED_TOOLS: Record<string, true> = {
+  'gauss-distribution': true,
   gear3d: true,
   'cross-section-studio': true,
   'contact-stress': true,

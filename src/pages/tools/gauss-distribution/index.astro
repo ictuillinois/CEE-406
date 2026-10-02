@@ -1,0 +1,22 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import GaussApp from '../../../components/react/gauss/GaussApp';
+const base = import.meta.env.BASE_URL;
+---
+<BaseLayout title="Gauss Distribution · CEE 406 Tools" description="Explore the Gaussian distribution visually: Table 10.1 areas, cumulative and tail probabilities, distribution statistics, and Table 11.15 reliability deviates from Huang Chapters 10 and 11.">
+  <div class="container gauss-page">
+    <nav class="doc-breadcrumb" aria-label="Breadcrumb"><a href={base}>Home</a><span class="doc-breadcrumb__sep">/</span><a href={`${base}tools/`}>Tools</a><span class="doc-breadcrumb__sep">/</span><span class="doc-breadcrumb__current">Gauss Distribution</span></nav>
+    <header class="gauss-page-head"><div><p class="gauss-eyebrow">PROBABILITY, MADE VISIBLE</p><h1>Gauss Distribution</h1><p>Move from a bell curve to a probability. Explore normal areas in Table 10.1 and reliability deviates in Table 11.15.</p></div><div class="gauss-references"><a href={`${base}textbook/ch10/`}>Chapter 10 · Reliability ↗</a><a href={`${base}textbook/ch11/`}>Chapter 11 · Flexible design ↗</a></div></header>
+    <GaussApp client:only="react" />
+  </div>
+</BaseLayout>
+<style>
+  .gauss-page { padding-top: 1.5rem; padding-bottom: 5rem; }
+  .gauss-page-head { display:flex; align-items: center; justify-content: space-between; gap: 20px; margin: 1.5rem 0 2rem; }
+  .gauss-page-head h1 { font-size: clamp(1.8rem, 3.5vw, 2.4rem); margin: 5px 0 9px; letter-spacing: -.04em; }
+  .gauss-page-head p:not(.gauss-eyebrow) { color:var(--color-text-muted); font-size:14px; line-height:1.7; max-width: 660px; margin:0; }
+  .gauss-eyebrow { font: 10px var(--font-mono); letter-spacing:.13em; color: var(--color-text-muted); margin:0; }
+  .gauss-page-head a { color:var(--color-text-muted); font-size:12px; white-space:nowrap; }
+  .gauss-references { display:grid; gap:8px; }
+  @media(max-width: 700px) { .gauss-page-head { display:block; } .gauss-page-head a { display:inline-block; margin-top:14px; } }
+</style>
